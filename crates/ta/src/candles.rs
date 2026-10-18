@@ -93,6 +93,27 @@ impl Candles {
             .map(|(i, &t)| Bar::new(t, self.o[i], self.h[i], self.l[i], self.c[i], self.v[i]))
             .collect()
     }
+
+    /// (H+L)/2.
+    #[must_use]
+    pub fn hl2(&self) -> crate::series::Series {
+        self.h
+            .iter()
+            .zip(&self.l)
+            .map(|(h, l)| (h + l) / 2.0)
+            .collect()
+    }
+
+    /// (H+L+C)/3.
+    #[must_use]
+    pub fn hl3(&self) -> crate::series::Series {
+        self.h
+            .iter()
+            .zip(&self.l)
+            .zip(&self.c)
+            .map(|((h, l), c)| (h + l + c) / 3.0)
+            .collect()
+    }
 }
 
 #[cfg(test)]

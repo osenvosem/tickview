@@ -76,10 +76,6 @@ fn rec_alpha(src: &[f64], alpha: f64, len: usize, seed: Seed) -> Series {
     let mut out = nan_like(src);
     let mut prev = f64::NAN;
     for i in 0..src.len() {
-        let ready = match seed {
-            Seed::FirstBar | Seed::Value(_) => i >= 1,
-            Seed::Sma => i >= len,
-        };
         let cur = if src[i].is_finite() { src[i] } else { f64::NAN };
         if i == 0 {
             out[0] = match seed {
@@ -88,15 +84,18 @@ fn rec_alpha(src: &[f64], alpha: f64, len: usize, seed: Seed) -> Series {
                 Seed::Sma if len == 1 && cur.is_finite() => cur,
                 _ => f64::NAN,
             };
-        } else if ready || (matches!(seed, Seed::Sma) && i == len - 1) {
-            if matches!(seed, Seed::Sma) && i == len - 1 {
-                let w = &src[i + 1 - len..=i];
-                out[i] = if all_finite(w) { mean(w) } else { prev };
-            } else if cur.is_finite() && prev.is_finite() {
-                out[i] = alpha * cur + (1.0 - alpha) * prev;
-            } else {
-                out[i] = prev;
-            }
+        } else if matches!(seed, Seed::Sma)
+            && prev.is_nan()
+            && i + 1 >= len
+            && all_finite(&src[i + 1 - len..=i])
+        {
+            // lazy SMA seed: first window that is fully defined
+            out[i] = mean(&src[i + 1 - len..=i]);
+        } else if cur.is_finite() && prev.is_finite() {
+            out[i] = alpha * cur + (1.0 - alpha) * prev;
+        } else if matches!(seed, Seed::FirstBar) && cur.is_finite() && prev.is_nan() {
+            // first *defined* bar seeds when bar 0 was undefined
+            out[i] = cur;
         } else {
             out[i] = prev;
         }
@@ -329,6 +328,9 @@ fn rolling_bound(src: &[f64], len: usize, max: bool) -> Series {
     let mut out = nan_like(src);
     for i in len - 1..src.len() {
         let w = &src[i + 1 - len..=i];
+        if !w.iter().all(|v| v.is_finite()) {
+            continue;
+        }
         out[i] = if max {
             w.iter().fold(f64::NEG_INFINITY, |m, &x| m.max(x))
         } else {
@@ -605,5 +607,24 @@ mod tests {
         assert_series(&cum_sum(&v(&[1., f64::NAN, 3.])), &v(&[1., 1., 4.]));
         assert_series(&nz_prev(&v(&[1., f64::NAN, 3.])), &v(&[1., 1., 3.]));
         assert_series(&change(&v(&[2., 5., 5.])), &v(&[f64::NAN, 3., 0.]));
+    }
+}
+
+#[cfg(test)]
+mod bound_tests {
+    use super::*;
+
+    #[test]
+    fn bounds_propagate_nan_in_window() {
+        let src = [1., 9., 10., f64::NAN, 7., 5., 3.];
+        let h = highest(&src, 5);
+        let l = lowest(&src, 5);
+        assert!(h[4].is_nan() && h[5].is_nan() && h[6].is_nan());
+        assert!(l[4].is_nan() && l[5].is_nan());
+        // once the NaN leaves the window, values resume
+        let src2 = [1., 9., 10., f64::NAN, 7., 5., 3., 4.];
+        let l2 = lowest(&src2, 3);
+        assert!(l2[4].is_nan()); // window [10, NaN, 7]
+        assert_eq!(l2[6], 3.0);
     }
 }
