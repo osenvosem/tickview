@@ -405,6 +405,7 @@ pub fn tsi(src: &[f64], long: usize, short: usize, sig: usize) -> Tsi {
 }
 
 /// Relative Vibration Index (10): EMA(4C−H−L−2C[1]) / EMA(H−L).
+#[allow(clippy::needless_range_loop)]
 #[must_use]
 pub fn rvi(cd: &Candles, len: usize) -> Series {
     let n = cd.len();
@@ -451,6 +452,7 @@ pub fn trix(src: &[f64], len: usize, sig: usize) -> Trix {
 
 /// Detrended Price Oscillator (20): C − SMA shifted right by len/2+1 bars.
 #[must_use]
+#[allow(clippy::needless_range_loop)]
 pub fn dpo(src: &[f64], len: usize) -> Series {
     let m = sma(src, len);
     let n = src.len();

@@ -1,7 +1,7 @@
 //! Volume indicators, Pine-semantics-aligned. Goldens via `scripts/pyref/volumes.py`.
 
+use crate::Candles;
 use crate::series::{Seed, Series, ema_seed, sma};
-use crate::{Bar, Candles};
 
 #[derive(Clone, Debug)]
 pub struct PviDvi {
@@ -70,6 +70,7 @@ pub fn chaikin_oscillator(ad_line: &[f64], fast: usize, slow: usize) -> Series {
 
 /// Chaikin Money Flow: Σ(MFM·V)/ΣV over `len`.
 #[must_use]
+#[allow(clippy::needless_range_loop)]
 pub fn cmf(h: &[f64], l: &[f64], c: &[f64], v: &[f64], len: usize) -> Series {
     let n = c.len();
     let mut out = vec![f64::NAN; n];
@@ -98,6 +99,7 @@ pub fn cmf(h: &[f64], l: &[f64], c: &[f64], v: &[f64], len: usize) -> Series {
 
 /// Money Flow Index on typical price (TV default 14).
 #[must_use]
+#[allow(clippy::needless_range_loop)]
 pub fn mfi(cd: &Candles, len: usize) -> Series {
     let tp = cd.hl3();
     let n = tp.len();
@@ -135,6 +137,7 @@ pub fn mfi(cd: &Candles, len: usize) -> Series {
 
 /// Ease of Movement (`box_size` scales volume; TV auto-scales, we expose it).
 #[must_use]
+#[allow(clippy::needless_range_loop)]
 pub fn ease_of_movement(cd: &Candles, len: usize, box_size: f64) -> Series {
     let n = cd.len();
     let mut raw = vec![f64::NAN; n];
@@ -263,6 +266,7 @@ pub fn accelerated_oscillator(ao: &[f64], smooth: usize) -> Series {
 
 /// Volume Ratio: 100·(upVol + ½·unchVol)/(downVol + ½·unchVol).
 #[must_use]
+#[allow(clippy::needless_range_loop)]
 pub fn volume_ratio(c: &[f64], v: &[f64], len: usize) -> Series {
     let n = c.len();
     let mut out = vec![f64::NAN; n];
@@ -317,6 +321,7 @@ pub fn elder_force(c: &[f64], v: &[f64], len: usize) -> Series {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Bar;
 
     include!("gold_vols.rs");
 
