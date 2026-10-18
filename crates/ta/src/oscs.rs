@@ -46,7 +46,7 @@ pub struct Trix {
 }
 
 /// Recompute `f` over the defined (non-NaN) span and re-expand to full length.
-fn compact_apply<F>(src: &Series, f: F) -> Series
+pub(crate) fn compact_apply<F>(src: &Series, f: F) -> Series
 where
     F: Fn(&[f64]) -> Series,
 {
