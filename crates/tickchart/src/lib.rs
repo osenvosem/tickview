@@ -1,2 +1,12 @@
-//! `tickchart` — egui custom chart widget: scales, painter, panes,
-//! interactions, drawings. Consumes `ta` types; never fetches data itself.
+//! `tickchart` — interactive financial chart widget for egui.
+//!
+//! Layers: pure geometry/scales (`barfmt`, `priceaxis`, `timeaxis`) ->
+//! bar geometry & hit-testing -> egui painter -> interactive chart widget.
+
+pub mod barfmt;
+pub mod priceaxis;
+pub mod timeaxis;
+
+pub use barfmt::{fmt_compact, fmt_price};
+pub use priceaxis::{PriceAxis, PriceTick, nice_step};
+pub use timeaxis::{TickLabel, choose_step, fmt_tick, ticks};
