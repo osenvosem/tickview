@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = ["crates/ta", "crates/marketdata", "crates/tickchart", "crates/app", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+
+[workspace.dependencies]
+ta = { path = "crates/ta" }
+marketdata = { path = "crates/marketdata" }
+tickchart = { path = "crates/tickchart" }
+
+[workspace.lints.clippy]
+correctness = { level = "deny" }
+suspicious = { level = "warn" }
+style = { level = "warn" }
+complexity = { level = "warn" }
+perf = { level = "warn" }
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

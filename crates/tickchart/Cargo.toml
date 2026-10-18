@@ -1,0 +1,13 @@
+[package]
+name = "tickchart"
+description = "egui interactive financial chart widget"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+ta = { workspace = true }

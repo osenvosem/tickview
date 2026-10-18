@@ -1,0 +1,4 @@
+/target
+.omp/
+.DS_Store
+*.log
