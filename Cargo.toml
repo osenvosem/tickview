@@ -11,9 +11,11 @@ license = "MIT"
 [workspace.dependencies]
 ta = { path = "crates/ta" }
 marketdata = { path = "crates/marketdata" }
+tickchart = { path = "crates/tickchart" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tickchart = { path = "crates/tickchart" }
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
 
 [workspace.lints.clippy]
 correctness = { level = "deny" }
