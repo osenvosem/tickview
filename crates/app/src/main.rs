@@ -107,6 +107,7 @@ struct TickView {
     toast: Option<String>,
 
     snap: Option<std::path::PathBuf>,
+    pending_indicators: Vec<TvId>,
     frames: usize,
     data_frames: usize,
     poll_every: Duration,
@@ -282,6 +283,7 @@ impl TickView {
             alert_cond: 0,
             toast: None,
             snap: std::env::var_os("TICKVIEW_SNAPSHOT").map(std::path::PathBuf::from),
+            pending_indicators: Vec::new(),
             frames: 0,
             data_frames: 0,
             poll_every: Duration::from_secs(5),
@@ -289,6 +291,18 @@ impl TickView {
             next_watch: Instant::now(),
             cfg,
         };
+        if let Ok(list) = std::env::var("TICKVIEW_INDICATORS") {
+            me.pending_indicators = list
+                .split(',')
+                .filter_map(|n| {
+                    let n = n.trim().to_lowercase();
+                    defs()
+                        .iter()
+                        .find(|d| d.tv_name.eq_ignore_ascii_case(&n))
+                        .map(|d| d.id)
+                })
+                .collect();
+        }
         me.chart.chart_type = tickchart::ChartType::ALL[me.cfg.chart_type.min(4)];
         me.chart.log_scale = me.cfg.log;
         me.request_history(None, 500);
@@ -377,12 +391,13 @@ impl TickView {
                             } else if iv == self.interval && *sym == self.symbol {
                                 let follow =
                                     self.chart.view.right_offset < self.chart.view.spacing * 2.0;
-                                self.candles = Candles::from_bars(&bars);
+                                let merged = merge_tail(self.bars_current(), bars);
+                                self.candles = Candles::from_bars(&merged);
                                 self.chart.view.count = self.candles.len();
                                 if follow {
                                     self.chart.view.right_offset = 0.0;
                                 }
-                                self.status = format!("{} bars", bars.len());
+                                self.status = format!("{} bars", merged.len());
                                 self.error = None;
                                 self.recompute_all();
                                 if let Some(&last) = self.candles.c.last() {
@@ -507,6 +522,15 @@ impl eframe::App for TickView {
         self.poll();
 
         // self-window screenshot smoke hook (TICKVIEW_SNAPSHOT=/path/out.bmp)
+        if !self.pending_indicators.is_empty() && !self.loading && !self.candles.o.is_empty() {
+            let ids = std::mem::take(&mut self.pending_indicators);
+            let cd = self.candles.clone();
+            let ax = self.anchors();
+            for id in ids {
+                self.chart
+                    .add_indicator(&cd, &ax, id, Params::with_defaults(def(id)));
+            }
+        }
         self.frames += 1;
         if self.snap.is_some() && !self.loading {
             self.data_frames += 1;
@@ -1026,6 +1050,20 @@ impl eframe::App for TickView {
     fn save(&mut self, _storage: &mut dyn eframe::Storage) {
         self.persist();
     }
+}
+
+/// Merge a freshly fetched tail into existing history, replacing overlap.
+fn merge_tail(mut cur: Vec<Bar>, fresh: Vec<Bar>) -> Vec<Bar> {
+    if fresh.is_empty() {
+        return cur;
+    }
+    if cur.is_empty() || fresh[0].t <= cur[0].t || fresh.len() >= cur.len() {
+        return fresh;
+    }
+    let cut = cur.iter().take_while(|b| b.t < fresh[0].t).count();
+    cur.truncate(cut);
+    cur.extend(fresh);
+    cur
 }
 
 fn write_bmp(path: &std::path::Path, img: &egui::ColorImage) -> std::io::Result<()> {

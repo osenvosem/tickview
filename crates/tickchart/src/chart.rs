@@ -403,7 +403,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 .hover
                 .unwrap_or(cd.len().saturating_sub(1))
                 .min(cd.len().saturating_sub(1));
-            let head = if cd.len() > 0 && cd.c[i].is_finite() {
+            let head = if !cd.o.is_empty() && cd.c[i].is_finite() {
                 format!(
                     "{} · {}   O {:.2}  H {:.2}  L {:.2}  C {:.2}  {:+.2}%",
                     st.symbol,
