@@ -203,6 +203,56 @@ impl DrawingToolState {
     }
 }
 
+/// Stroke pattern for a drawing.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum LineStyle {
+    #[default]
+    Solid,
+    Dashed,
+    Dotted,
+}
+
+/// Per-drawing visual style. Missing config fields fall back to these defaults.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct DrawingStyle {
+    pub color: Option<[u8; 4]>,
+    pub width: u8,
+    pub line: LineStyle,
+    pub fill: bool,
+    pub fill_opacity: u8,
+    pub text: String,
+}
+
+impl Default for DrawingStyle {
+    fn default() -> Self {
+        Self {
+            color: None,
+            width: 1,
+            line: LineStyle::Solid,
+            fill: true,
+            fill_opacity: 12,
+            text: String::new(),
+        }
+    }
+}
+
+impl DrawingStyle {
+    #[must_use]
+    pub fn color_or(&self, pal: &Palette) -> Color32 {
+        match self.color {
+            Some([r, g, b, a]) => Color32::from_rgba_unmultiplied(r, g, b, a),
+            None => pal.text,
+        }
+    }
+
+    #[must_use]
+    pub fn stroke(&self, pal: &Palette, selected: bool) -> Stroke {
+        let width = f32::from(self.width) + if selected { 0.8 } else { 0.0 };
+        Stroke::new(width, self.color_or(pal))
+    }
+}
+
 /// A point in chart space. Timestamps survive history pagination.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Anchor {
@@ -217,12 +267,40 @@ pub struct Drawing {
     pub kind: DrawingKind,
     pub a: Anchor,
     pub b: Anchor,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub c: Option<Anchor>,
+    #[serde(default)]
+    pub style: DrawingStyle,
 }
 
 impl Drawing {
     #[must_use]
     pub fn new(id: u64, kind: DrawingKind, a: Anchor, b: Anchor) -> Self {
-        Self { id, kind, a, b }
+        Self {
+            id,
+            kind,
+            a,
+            b,
+            c: None,
+            style: DrawingStyle::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_c(id: u64, kind: DrawingKind, a: Anchor, b: Anchor, c: Anchor) -> Self {
+        Self {
+            id,
+            kind,
+            a,
+            b,
+            c: Some(c),
+            style: DrawingStyle::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn last_anchor(&self) -> Anchor {
+        self.c.unwrap_or(self.b)
     }
 
     /// Hit test against a mapped drawing in screen space.
@@ -757,5 +835,47 @@ mod tests {
         let json = serde_json::to_string(&d).unwrap();
         let back: Drawing = serde_json::from_str(&json).unwrap();
         assert_eq!(back, d);
+    }
+
+    #[test]
+    fn legacy_drawing_json_loads_with_defaults() {
+        let json = r#"{"id":1,"kind":"TrendLine",
+            "a":{"t":0,"price":10.0},"b":{"t":60,"price":11.0}}"#;
+        let d: Drawing = serde_json::from_str(json).unwrap();
+        assert!(d.c.is_none());
+        assert_eq!(d.style.width, 1);
+        assert_eq!(d.style.line, LineStyle::Solid);
+        assert!(d.style.color.is_none());
+        assert!(d.style.text.is_empty());
+    }
+
+    #[test]
+    fn style_and_third_anchor_round_trip() {
+        let mut d = Drawing::with_c(
+            7,
+            DrawingKind::Rect,
+            Anchor { t: 0, price: 10.0 },
+            Anchor { t: 60, price: 12.0 },
+            Anchor { t: 30, price: 13.0 },
+        );
+        d.style.color = Some([255, 0, 0, 255]);
+        d.style.width = 3;
+        d.style.line = LineStyle::Dashed;
+        d.style.fill_opacity = 40;
+        d.style.text = "hello".into();
+        let back: Drawing = serde_json::from_str(&serde_json::to_string(&d).unwrap()).unwrap();
+        assert_eq!(back, d);
+    }
+
+    #[test]
+    fn style_stroke_uses_palette_default_then_explicit_color() {
+        let pal = Palette::dark();
+        assert_eq!(DrawingStyle::default().color_or(&pal), pal.text);
+        let mut s = DrawingStyle::default();
+        s.color = Some([255, 0, 0, 255]);
+        assert_eq!(s.color_or(&pal), Color32::from_rgb(255, 0, 0));
+        let stroke = s.stroke(&pal, false);
+        assert_eq!(stroke.color, Color32::from_rgb(255, 0, 0));
+        assert!(s.stroke(&pal, true).width > stroke.width);
     }
 }
