@@ -110,6 +110,12 @@ enum Msg {
         bars: Result<Vec<Bar>, String>,
         cached: bool,
     },
+    Stream {
+        sym: Box<Symbol>,
+        iv: Interval,
+        bar: Bar,
+    },
+    StreamDead,
     Index(SearchIndex),
 }
 
@@ -349,6 +355,7 @@ pub enum SearchPurpose {
 pub struct TickView {
     job_tx: Sender<Job>,
     msg_rx: Receiver<Msg>,
+    msg_tx: Sender<Msg>,
     pub index: Arc<SearchIndex>,
 
     pub tabs: Vec<Tab>,
@@ -394,6 +401,10 @@ pub struct TickView {
     next_watch: Instant,
     dirty_drawings: bool,
     save_at: Instant,
+    stream_tx: Option<Sender<Msg>>,
+    stream_shutdown: Arc<std::sync::atomic::AtomicBool>,
+    stream_key: Option<(Symbol, Interval)>,
+    pub stream_ok: bool,
     pending_phase4: bool,
     pending_zoomrect: bool,
     cfg: SavedConfig,
@@ -603,6 +614,7 @@ impl TickView {
         let mut me = Self {
             job_tx: jt,
             msg_rx: mr,
+            msg_tx: mt.clone(),
             index,
             tabs,
             active,
@@ -644,6 +656,10 @@ impl TickView {
             save_at: Instant::now(),
             pending_phase4: false,
             pending_zoomrect: false,
+            stream_tx: None,
+            stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            stream_key: None,
+            stream_ok: false,
             cfg,
         };
 
@@ -715,6 +731,7 @@ impl TickView {
 
         me.apply_chart_palettes();
         me.request_history(me.active, None, 500);
+        me.restart_stream();
         {
             let jt = me.job_tx.clone();
             std::thread::spawn(move || {
@@ -915,6 +932,7 @@ impl TickView {
         tab.error = None;
         self.request_history(ti, None, 500);
         self.persist();
+        self.restart_stream();
     }
 
     pub fn switch_interval(&mut self, iv: Interval) {
@@ -934,6 +952,7 @@ impl TickView {
             self.request_compare(ti, sym, iv);
         }
         self.persist();
+        self.restart_stream();
     }
 
     pub fn switch_chart_type(&mut self, ct: ChartType) {
@@ -997,6 +1016,7 @@ impl TickView {
             self.request_history(self.active, None, 500);
         }
         self.persist();
+        self.restart_stream();
     }
 
     pub fn select_tab(&mut self, idx: usize) {
@@ -1008,6 +1028,7 @@ impl TickView {
             self.request_history(idx, None, 500);
         }
         self.persist();
+        self.restart_stream();
     }
 
     fn anchors(&self, tab_idx: usize) -> Anchors {
@@ -1145,8 +1166,99 @@ impl TickView {
                     self.index = Arc::new(idx);
                     self.refresh_search();
                 }
+                Msg::Stream { sym, iv, bar } => {
+                    self.stream_ok = true;
+                    if let Some(ti) = self
+                        .tabs
+                        .iter()
+                        .position(|t| t.symbol == *sym && t.interval == iv)
+                    {
+                        let mut bars = self.bars_current(ti);
+                        match bars.last_mut() {
+                            Some(last) if bar.t >= last.t => *last = bar,
+                            _ => bars.push(bar),
+                        }
+                        self.tabs[ti].candles = Candles::from_bars(&bars);
+                        self.tabs[ti].chart.view.count = bars.len();
+                        self.tabs[ti].error = None;
+                        self.apply_pending(ti);
+                        self.recompute(ti);
+                        self.alert_tick(&sym, bar.c, ctx);
+                    }
+                    ctx.request_repaint();
+                }
+                Msg::StreamDead => {
+                    self.stream_ok = false;
+                    ctx.request_repaint();
+                }
             }
         }
+    }
+
+    /// (Re)build the live kline websocket worker for the active tab.
+    /// Only Binance crypto symbols stream; everything else polls.
+    fn restart_stream(&mut self) {
+        use std::sync::atomic::Ordering;
+        self.stream_shutdown.store(true, Ordering::Relaxed);
+        self.stream_shutdown = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        self.stream_ok = false;
+        self.stream_tx = None;
+        self.stream_key = None;
+        let ti = self.active;
+        let sym = self.tabs[ti].symbol.clone();
+        let iv = self.tabs[ti].interval;
+        if !self.cfg.stream_enabled()
+            || sym.kind != SymbolKind::Crypto
+            || !sym.exchange.eq_ignore_ascii_case("BINANCE")
+        {
+            return;
+        }
+        self.stream_key = Some((sym.clone(), iv));
+        self.stream_tx = Some(self.msg_tx.clone());
+        let shutdown = Arc::clone(&self.stream_shutdown);
+        let mt = self.msg_tx.clone();
+        std::thread::spawn(move || {
+            let stream_sym = sym.ticker.to_ascii_lowercase();
+            let iv_str = marketdata::kline_interval(iv);
+            loop {
+                if shutdown.load(Ordering::Relaxed) {
+                    return;
+                }
+                match marketdata::KlineStream::connect(&stream_sym, &iv_str) {
+                    Ok(mut st) => loop {
+                        if shutdown.load(Ordering::Relaxed) {
+                            return;
+                        }
+                        match st.next_final_bar(Duration::from_secs(30)) {
+                            Ok(Some(bar)) => {
+                                let msg = Msg::Stream {
+                                    sym: Box::new(sym.clone()),
+                                    iv,
+                                    bar,
+                                };
+                                if mt.send(msg).is_err() {
+                                    return;
+                                }
+                            }
+                            Ok(None) => {}
+                            Err(_) => {
+                                let _ = mt.send(Msg::StreamDead);
+                                break;
+                            }
+                        }
+                    },
+                    Err(_) => {
+                        let _ = mt.send(Msg::StreamDead);
+                        for _ in 0..25 {
+                            if shutdown.load(Ordering::Relaxed) {
+                                return;
+                            }
+                            std::thread::sleep(Duration::from_millis(200));
+                        }
+                    }
+                }
+            }
+        });
     }
 
     fn apply_pending(&mut self, ti: usize) {
@@ -1213,7 +1325,9 @@ impl TickView {
         let now = Instant::now();
         if now >= self.next_poll {
             self.next_poll = now + self.poll_every;
-            self.request_history(self.active, None, 5);
+            if !self.stream_ok {
+                self.request_history(self.active, None, 5);
+            }
             for a in self.alerts.alerts.iter().filter(|a| a.active) {
                 let _ = self.job_tx.send(Job::Quote(Box::new(a.symbol.clone())));
             }
@@ -2417,6 +2531,7 @@ impl TickView {
         }
         let mut open = true;
         let mut chosen = None;
+        let mut streaming = self.cfg.stream_enabled();
         egui::Window::new("Settings")
             .open(&mut open)
             .collapsible(false)
@@ -2463,6 +2578,11 @@ impl TickView {
                     .changed()
                 {
                     self.persist();
+                }
+                if widgets::checkbox(ui, p, &mut streaming, "Live streaming (crypto)").changed() {
+                    self.cfg.stream = Some(streaming);
+                    self.persist();
+                    self.restart_stream();
                 }
                 if ui.button("Reset chart view").clicked() {
                     self.tabs[self.active].chart.view.right_offset = 0.0;

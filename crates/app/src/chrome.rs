@@ -534,8 +534,10 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     (p.warning, "LOADING")
                 } else if table.loading {
                     (p.warning, "SYNCING")
-                } else {
+                } else if app.stream_ok {
                     (p.up, "LIVE")
+                } else {
+                    (p.up, "POLLING")
                 };
                 widgets::dot(ui, dot, 3.0);
                 ui.label(

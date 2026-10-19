@@ -15,6 +15,8 @@ pub enum DataError {
     Empty(String),
     #[error("not supported: {0}")]
     NotSupported(&'static str),
+    #[error("stream disconnected")]
+    StreamClosed,
 }
 
 impl From<std::io::Error> for DataError {
