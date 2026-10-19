@@ -144,6 +144,61 @@ pub(crate) fn shift_right(src: &[f64], k: usize) -> Series {
     out
 }
 
+/// Ichimoku cloud. Spans are displaced `displacement` bars forward.
+#[derive(Clone, Debug)]
+pub struct Ichimoku {
+    pub conversion: Series,
+    pub base: Series,
+    pub span_a: Series,
+    pub span_b: Series,
+}
+
+/// Ichimoku (TV defaults 9/26/52, displacement 26; spans shifted ahead).
+#[must_use]
+#[allow(clippy::needless_range_loop)]
+pub fn ichimoku(
+    cd: &Candles,
+    conv_len: usize,
+    base_len: usize,
+    sb_len: usize,
+    disp: usize,
+) -> Ichimoku {
+    let n = cd.len();
+    let ch = crate::series::highest(&cd.h, conv_len);
+    let cl = crate::series::lowest(&cd.l, conv_len);
+    let bh = crate::series::highest(&cd.h, base_len);
+    let bl = crate::series::lowest(&cd.l, base_len);
+    let sh = crate::series::highest(&cd.h, sb_len);
+    let sl = crate::series::lowest(&cd.l, sb_len);
+    let mut conversion = vec![f64::NAN; n];
+    let mut base = vec![f64::NAN; n];
+    let mut span_a = vec![f64::NAN; n];
+    let mut span_b = vec![f64::NAN; n];
+    for i in 0..n {
+        if ch[i].is_finite() && cl[i].is_finite() {
+            conversion[i] = (ch[i] + cl[i]) / 2.0;
+        }
+        if bh[i].is_finite() && bl[i].is_finite() {
+            base[i] = (bh[i] + bl[i]) / 2.0;
+        }
+        if i >= disp {
+            let j = i - disp;
+            if conversion[j].is_finite() && base[j].is_finite() {
+                span_a[i] = (conversion[j] + base[j]) / 2.0;
+            }
+            if sh[i].is_finite() && sl[i].is_finite() {
+                span_b[i] = (sh[i] + sl[i]) / 2.0;
+            }
+        }
+    }
+    Ichimoku {
+        conversion,
+        base,
+        span_a,
+        span_b,
+    }
+}
+
 /// Vortex (14).
 #[must_use]
 #[allow(clippy::needless_range_loop)]
@@ -232,5 +287,10 @@ mod tests {
         let vx = vortex(&cd, 14);
         approx(&vx.plus, &VORTEX_P, "vortex_p");
         approx(&vx.minus, &VORTEX_M, "vortex_m");
+        let ich = ichimoku(&cd, 9, 26, 52, 26);
+        approx(&ich.conversion, &ICHI_CONV, "ichi_conv");
+        approx(&ich.base, &ICHI_BASE, "ichi_base");
+        approx(&ich.span_a, &ICHI_SA, "ichi_sa");
+        approx(&ich.span_b, &ICHI_SB, "ichi_sb");
     }
 }

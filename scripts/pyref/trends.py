@@ -242,6 +242,24 @@ for i in range(19,N):
         s+=hc*lc+ho*lo
     rs[i]=math.sqrt(max(s/20,0.0))*math.sqrt(252)*100
 arr("ROGERS",rs)
+# Ichimoku (9,26,52,displacement 26)
+def highest(src,l,i):
+    w=src[i-l+1:i+1]
+    return max(w) if all(not isnan(x) for x in w) else NAN
+def lowest(src,l,i):
+    w=src[i-l+1:i+1]
+    return min(w) if all(not isnan(x) for x in w) else NAN
+conv=[NAN]*N; base=[NAN]*N; sa=[NAN]*N; sb=[NAN]*N
+for i in range(N):
+    if i>=8: conv[i]=(highest(HIGH,9,i)+lowest(LOW,9,i))/2
+    if i>=25: base[i]=(highest(HIGH,26,i)+lowest(LOW,26,i))/2
+for i in range(N):
+    j=i-26
+    if j>=0:
+        if not isnan(conv[j]) and not isnan(base[j]): sa[i]=(conv[j]+base[j])/2
+        if i>=51: sb[i]=(highest(HIGH,52,i)+lowest(LOW,52,i))/2
+arr("ICHI_CONV",conv); arr("ICHI_BASE",base); arr("ICHI_SA",sa); arr("ICHI_SB",sb)
+
 # Pivots daily (anchor=DAY): day H/L, prev H/L/C + line families
 days=sorted(set(DAY))
 day_hl={}; day_close={}

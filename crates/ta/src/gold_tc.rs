@@ -286,6 +286,32 @@
         f64::NAN, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0,];
 
+    const ICHI_CONV: [f64; 40] = [
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, 13.0,
+        13.5, 14.25, 14.75, 15.5, 16.25, 16.75, 17.5, 18.25, 18.75, 19.5, 20.25, 20.75, 21.5,
+        22.25, 22.75, 23.5, 24.25, 24.75, 25.5, 26.25, 26.75, 27.5, 28.25, 28.75, 29.5, 30.25,
+        30.75, 31.5, 32.25, 32.75, 33.5,];
+
+    const ICHI_BASE: [f64; 40] = [
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, 18.5, 19.5, 19.75,
+        20.25, 21.5, 21.75, 22.25, 23.5, 23.75, 24.25, 25.5, 25.75, 26.25, 27.5, 27.75,];
+
+    const ICHI_SA: [f64; 40] = [
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN,];
+
+    const ICHI_SB: [f64; 40] = [
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
+        f64::NAN, f64::NAN, f64::NAN, f64::NAN,];
+
     const PIV_DH: [f64; 40] = [
         f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN, f64::NAN,
         f64::NAN, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 24.0, 24.0, 24.0,

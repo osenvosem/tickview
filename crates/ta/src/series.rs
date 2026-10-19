@@ -628,3 +628,88 @@ mod bound_tests {
         assert_eq!(l2[6], 3.0);
     }
 }
+
+/// Double EMA: 2·EMA − EMA(EMA).
+#[must_use]
+pub fn dema(src: &[f64], len: usize) -> Series {
+    let e = ema_seed(src, len, Seed::Sma);
+    let e2 = ema_seed(&e, len, Seed::Sma);
+    (0..src.len())
+        .map(|i| {
+            if e[i].is_finite() && e2[i].is_finite() {
+                2.0 * e[i] - e2[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect()
+}
+
+/// Triple EMA: 3·E1 − 3·E2 + E3.
+#[must_use]
+pub fn tema(src: &[f64], len: usize) -> Series {
+    let e1 = ema_seed(src, len, Seed::Sma);
+    let e2 = ema_seed(&e1, len, Seed::Sma);
+    let e3 = ema_seed(&e2, len, Seed::Sma);
+    (0..src.len())
+        .map(|i| {
+            if e1[i].is_finite() && e2[i].is_finite() && e3[i].is_finite() {
+                3.0 * e1[i] - 3.0 * e2[i] + e3[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect()
+}
+
+/// Zero-lag EMA: EMA(src + (src − src[lag])), lag = (len−1)/2.
+#[must_use]
+pub fn zlema(src: &[f64], len: usize) -> Series {
+    let lag = (len.saturating_sub(1)) / 2;
+    let n = src.len();
+    let adj: Series = (0..n)
+        .map(|i| {
+            if i >= lag && src[i].is_finite() && src[i - lag].is_finite() {
+                src[i] + (src[i] - src[i - lag])
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    ema_seed(&adj, len, Seed::Sma)
+}
+
+/// Kaufman Adaptive MA (efficiency window 10, fast 2, slow 30).
+#[must_use]
+pub fn kama(src: &[f64], er_len: usize, fast: usize, slow: usize) -> Series {
+    let n = src.len();
+    let mut out = vec![f64::NAN; n];
+    if er_len == 0 || fast == 0 || slow == 0 || n <= er_len {
+        return out;
+    }
+    let af_fast = 2.0 / (fast as f64 + 1.0);
+    let as_ = 2.0 / (slow as f64 + 1.0);
+    let mut prev_out = f64::NAN;
+    for i in er_len..n {
+        if !src[i].is_finite() || !src[i - er_len].is_finite() {
+            out[i] = prev_out;
+            continue;
+        }
+        let chg = (src[i] - src[i - er_len]).abs();
+        let vol: f64 = (i + 1 - er_len..=i)
+            .map(|j| (src[j] - src[j - 1]).abs())
+            .collect::<Vec<f64>>()
+            .iter()
+            .sum();
+        let er = if vol != 0.0 { chg / vol } else { 0.0 };
+        let sc = (er * (af_fast - as_) + as_).powi(2);
+        let base = if prev_out.is_finite() {
+            prev_out
+        } else {
+            src[i - er_len]
+        };
+        prev_out = base + sc * (src[i] - base);
+        out[i] = prev_out;
+    }
+    out
+}

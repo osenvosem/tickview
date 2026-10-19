@@ -545,6 +545,7 @@ mod tests {
 
     include!("gold_tc.rs");
 
+    #[allow(clippy::type_complexity)]
     fn cols() -> (
         Candles,
         Vec<f64>,

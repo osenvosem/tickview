@@ -249,9 +249,10 @@ pub fn cci(cd: &Candles, len: usize) -> Series {
     out
 }
 
-/// ADX / +DI / −DI (14) with Wilder smoothing.
+/// ADX / +DI / −DI with Wilder smoothing; `adx_smooth` smooths the DX line.
 #[must_use]
-pub fn adx(cd: &Candles, len: usize) -> Adx {
+#[allow(clippy::similar_names)]
+pub fn adx(cd: &Candles, len: usize, adx_smooth: usize) -> Adx {
     let n = cd.len();
     let mut dp = vec![f64::NAN; n];
     let mut dm = vec![f64::NAN; n];
@@ -283,7 +284,7 @@ pub fn adx(cd: &Candles, len: usize) -> Adx {
             }
         })
         .collect();
-    let adx_line = compact_apply(&dx, |d| rma(d, len));
+    let adx_line = compact_apply(&dx, |d| rma(d, adx_smooth.max(1)));
     Adx {
         adx: adx_line,
         di_plus: dip,
@@ -470,6 +471,114 @@ pub fn dpo(src: &[f64], len: usize) -> Series {
     out
 }
 
+/// MA Bias: (src/SMA − 1)·100.
+#[must_use]
+pub fn bias(src: &[f64], len: usize) -> Series {
+    let m = sma(src, len);
+    (0..src.len())
+        .map(|i| {
+            if m[i].is_finite() && m[i] != 0.0 && src[i].is_finite() {
+                (src[i] / m[i] - 1.0) * 100.0
+            } else {
+                f64::NAN
+            }
+        })
+        .collect()
+}
+
+/// Z-score: (src − SMA)/σ.
+#[must_use]
+pub fn z_score(src: &[f64], len: usize) -> Series {
+    let m = sma(src, len);
+    let sd = crate::series::stdev(src, len);
+    (0..src.len())
+        .map(|i| {
+            if m[i].is_finite() && sd[i].is_finite() && sd[i] != 0.0 {
+                (src[i] - m[i]) / sd[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect()
+}
+
+/// TV Momentum modes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MomMode {
+    /// Close − Close[len]
+    Abs,
+    /// (Close − Close[len])/Close[1]·100
+    Ratio100,
+    /// (Close − Close[len])/Close[1]
+    Ratio,
+}
+
+/// TV Momentum with the three study modes.
+#[must_use]
+pub fn momentum(src: &[f64], len: usize, mode: MomMode) -> Series {
+    let n = src.len();
+    let mut out = vec![f64::NAN; n];
+    if len == 0 {
+        return out;
+    }
+    for i in len..n {
+        let d = if src[i].is_finite() && src[i - len].is_finite() {
+            src[i] - src[i - len]
+        } else {
+            f64::NAN
+        };
+        out[i] = match mode {
+            MomMode::Abs => d,
+            MomMode::Ratio100 | MomMode::Ratio => {
+                let pv = src[i - 1];
+                if d.is_finite() && pv.is_finite() && pv != 0.0 {
+                    let r = d / pv;
+                    if mode == MomMode::Ratio100 {
+                        r * 100.0
+                    } else {
+                        r
+                    }
+                } else {
+                    f64::NAN
+                }
+            }
+        };
+    }
+    out
+}
+
+/// Elder's Force Index lives in `vols`; bull/bear power here.
+#[derive(Clone, Debug)]
+pub struct ElderRay {
+    pub bull: Series,
+    pub bear: Series,
+}
+
+/// Bull/Bear Power vs EMA of close.
+#[must_use]
+pub fn elder_ray(cd: &Candles, len: usize) -> ElderRay {
+    let e = ema_seed(&cd.c, len, Seed::Sma);
+    let bull: Series = (0..cd.len())
+        .map(|i| {
+            if e[i].is_finite() {
+                cd.h[i] - e[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    let bear: Series = (0..cd.len())
+        .map(|i| {
+            if e[i].is_finite() {
+                cd.l[i] - e[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    ElderRay { bull, bear }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -533,7 +642,7 @@ mod tests {
         approx(&cmo(&c, 20), &CMO, "cmo");
         approx(&williams_r(&h, &l, &c, 14), &WILLR, "willr");
         approx(&cci(&cd, 20), &CCI, "cci");
-        let a = adx(&cd, 14);
+        let a = adx(&cd, 14, 14);
         approx(&a.adx, &ADX, "adx");
         approx(&a.di_plus, &DI_P, "di+");
         approx(&a.di_minus, &DI_M, "di-");
