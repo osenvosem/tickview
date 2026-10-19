@@ -14,8 +14,8 @@ use marketdata::{
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
 use tickchart::{
-    Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, DrawingKind, LineStyle,
-    Measure, StyleEdit,
+    Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, Drawing, DrawingKind,
+    LineStyle, Measure, StyleEdit,
 };
 
 use crate::icons::Icon;
@@ -393,6 +393,8 @@ pub struct TickView {
     next_watch: Instant,
     dirty_drawings: bool,
     save_at: Instant,
+    pending_phase4: bool,
+    pending_zoomrect: bool,
     cfg: SavedConfig,
 }
 
@@ -638,6 +640,8 @@ impl TickView {
             next_watch: Instant::now(),
             dirty_drawings: false,
             save_at: Instant::now(),
+            pending_phase4: false,
+            pending_zoomrect: false,
             cfg,
         };
 
@@ -697,6 +701,8 @@ impl TickView {
                     let tab = &mut me.tabs[me.active];
                     tab.chart.tools.selected = tab.chart.drawings.last().map(|d| d.id);
                 }
+                "phase4drawings" => me.pending_phase4 = true,
+                "zoomrect" => me.pending_zoomrect = true,
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -719,6 +725,62 @@ impl TickView {
 
     pub fn toast(&mut self, text: impl Into<String>) {
         self.toast = Some((text.into(), Instant::now()));
+    }
+
+    /// Visible price span of a tab's loaded candles (fallback 0..1).
+    #[must_use]
+    fn price_span(&self, ti: usize) -> (f64, f64) {
+        let cd = &self.tabs[ti].candles;
+        let lo = cd.l.iter().cloned().fold(f64::INFINITY, f64::min);
+        let hi = cd.h.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        if lo.is_finite() && hi.is_finite() && hi > lo {
+            (lo, hi)
+        } else {
+            (0.0, 1.0)
+        }
+    }
+
+    /// Seed phase-4 demo drawings scaled to the loaded price range.
+    fn seed_phase4(&mut self, ti: usize) {
+        let (lo, hi) = self.price_span(ti);
+        let span = hi - lo;
+        let n = self.tabs[ti].candles.t.len();
+        let ts = |k: usize| self.tabs[ti].candles.t[k];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let mut fork = Drawing::with_c(
+            9001,
+            DrawingKind::Pitchfork,
+            a(ts(0), lo + span * 0.35),
+            a(ts(n / 2), lo + span * 0.72),
+            a(ts(n - 1), lo + span * 0.50),
+        );
+        fork.style = tickchart::kind_defaults(DrawingKind::Pitchfork);
+        let mut schiff = Drawing::with_c(
+            9002,
+            DrawingKind::SchiffPitchfork,
+            a(ts(0), lo + span * 0.12),
+            a(ts(n / 2), lo + span * 0.44),
+            a(ts(n - 1), lo + span * 0.28),
+        );
+        schiff.style = tickchart::kind_defaults(DrawingKind::SchiffPitchfork);
+        let mut reg = Drawing::with_c(
+            9003,
+            DrawingKind::RegTrend,
+            a(ts(0), lo + span * 0.30),
+            a(ts(n - 1), lo + span * 0.62),
+            a(ts(n / 2), lo + span * 0.46),
+        );
+        reg.reg_dev = 2.0;
+        let long = Drawing::with_c(
+            9004,
+            DrawingKind::LongPosition,
+            a(ts(n / 2), lo + span * 0.40),
+            a(ts(n - 1), lo + span * 0.62),
+            a(ts(n - 1), lo + span * 0.22),
+        );
+        let tab = &mut self.tabs[ti];
+        tab.chart.drawings.extend([fork, schiff, reg, long]);
+        tab.chart.tools.selected = Some(9003);
     }
 
     fn apply_chart_palettes(&mut self) {
@@ -978,6 +1040,18 @@ impl TickView {
                                 let merged = merge_tail(self.bars_current(ti), bars);
                                 self.tabs[ti].candles = Candles::from_bars(&merged);
                                 self.tabs[ti].chart.view.count = self.tabs[ti].candles.len();
+                                if self.pending_phase4 && self.tabs[ti].candles.t.len() >= 10 {
+                                    self.seed_phase4(ti);
+                                    self.pending_phase4 = false;
+                                }
+                                if self.pending_zoomrect && self.tabs[ti].candles.t.len() >= 2 {
+                                    let (lo, hi) = self.price_span(ti);
+                                    self.tabs[ti].chart.price_zoom =
+                                        Some((lo + (hi - lo) * 0.30, lo + (hi - lo) * 0.70));
+                                    self.tabs[ti].chart.zoom_sel =
+                                        Some((egui::pos2(220.0, 140.0), egui::pos2(560.0, 320.0)));
+                                    self.pending_zoomrect = false;
+                                }
                                 if follow {
                                     self.tabs[ti].chart.view.right_offset = 0.0;
                                 }

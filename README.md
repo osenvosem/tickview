@@ -66,19 +66,22 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `ta` | indicator engine: 66 TV-named studies, TV default params, golden-value tests |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine |
-| `tickchart` | chart engine: axes, geometry, eight series styles, drawings with styles/lock/measure, compare overlay, panes, crosshair, legend, last-price marks, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, drawings with styles/lock/measure/pitchforks/regression/positions, compare overlay, panes, crosshair, legend, last-price marks, rect zoom, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
 
-`cargo test --workspace` passes 177 tests and `cargo clippy --workspace
+`cargo test --workspace` passes 202 tests and `cargo clippy --workspace
 --all-targets` is clean. Dark and light builds were captured at 1440×900 and
 visually checked for the shell, tab strip, command bar, watchlist, status bar,
 RSI separate pane, indicator editor, settings, alerts and symbol search. Phase 2
 was additionally checked with drawings and a compare overlay in dark/light,
 plus baseline, hollow-candle and columns styles. Phase 3 was checked with the
 full drawing set, per-drawing styling toolbar, note bubble, channel fill, fib
-extension labels and the measure overlay in dark/light
-(`docs/screenshots/`).
+extension labels and the measure overlay in dark/light. Phase 4 added the
+brush, pitchfork/Schiff, regression-trend band with deviation slider, and
+long/short position tools with R/R and delta chips, plus shift-rectangle zoom, all
+verified in dark/light screenshots (`docs/screenshots/phase4-*.png`) and via
+persisted-drawing reload.
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

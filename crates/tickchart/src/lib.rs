@@ -18,7 +18,7 @@ pub use chart::{ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind};
 pub use compare::CompareSeries;
 pub use drawings::{
     Anchor, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState, LineStyle, Measure,
-    StyleEdit, apply_style_edit, clamp_popup,
+    StyleEdit, apply_style_edit, clamp_popup, kind_defaults,
 };
 
 pub use painter::{ChartType, Palette};
