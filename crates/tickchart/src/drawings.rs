@@ -6,6 +6,7 @@ use egui::{Align2, Color32, FontId, Painter, Pos2, Rect, Shape, Stroke, Vec2};
 use serde::{Deserialize, Serialize};
 use ta::Candles;
 
+use crate::barfmt::fmt_price;
 use crate::bars::View;
 use crate::painter::Palette;
 use crate::priceaxis::PriceAxis;
@@ -317,10 +318,13 @@ impl DrawingToolState {
         let draft = self.draft.take()?;
         let id = self.next_id;
         self.next_id += 1;
-        Some(match draft.c {
+        let mut d = match draft.c {
             Some(c) => Drawing::with_c(id, draft.kind, draft.a, draft.b, c),
             None => Drawing::new(id, draft.kind, draft.a, draft.b),
-        })
+        };
+        d.extra = draft.extra;
+        d.style = kind_defaults(draft.kind);
+        Some(d)
     }
 
     /// Move the anchor the next click would replace.
@@ -431,6 +435,7 @@ pub enum StyleEdit {
     Line(LineStyle),
     FillOpacity(u8),
     Text(String),
+    Deviation(f32),
 }
 
 /// Apply one toolbar edit, clamping numeric ranges to the UI limits.
@@ -441,6 +446,7 @@ pub fn apply_style_edit(d: &mut Drawing, edit: StyleEdit) {
         StyleEdit::Line(line) => d.style.line = line,
         StyleEdit::FillOpacity(opacity) => d.style.fill_opacity = opacity.min(80),
         StyleEdit::Text(text) => d.style.text = text,
+        StyleEdit::Deviation(v) => d.reg_dev = v.clamp(0.5, 3.0),
     }
 }
 
@@ -490,6 +496,30 @@ pub struct Drawing {
 #[must_use]
 fn default_reg_dev() -> f32 {
     1.0
+}
+
+/// Initial style for a finished drawing (TV default: pitchforks unfilled).
+#[must_use]
+pub fn kind_defaults(kind: DrawingKind) -> DrawingStyle {
+    match kind {
+        DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => DrawingStyle {
+            fill: false,
+            ..DrawingStyle::default()
+        },
+        _ => DrawingStyle::default(),
+    }
+}
+
+/// Profit/loss tints for position tools; an explicit style color overrides both.
+#[must_use]
+pub fn position_colors(d: &Drawing, pal: &Palette) -> (Color32, Color32) {
+    match d.style.color {
+        Some([r, g, b, a]) => {
+            let c = Color32::from_rgba_unmultiplied(r, g, b, a);
+            (c, c)
+        }
+        None => (pal.up, pal.down),
+    }
 }
 
 impl Drawing {
@@ -1112,12 +1142,120 @@ fn draw_one(
                 Stroke::new(0.5, color),
             ));
         }
-        DrawingKind::Brush
-        | DrawingKind::Pitchfork
-        | DrawingKind::SchiffPitchfork
-        | DrawingKind::RegTrend
-        | DrawingKind::LongPosition
-        | DrawingKind::ShortPosition => {}
+        DrawingKind::Brush => {
+            let mut pts = vec![pa];
+            for anchor in &d.extra {
+                match map_opt(*anchor) {
+                    Some(q) => pts.push(q),
+                    None => break,
+                }
+            }
+            if pts.len() >= 2 {
+                p.add(PathShape {
+                    points: pts,
+                    closed: false,
+                    fill: Color32::TRANSPARENT,
+                    stroke: stroke.into(),
+                });
+            }
+        }
+        DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
+            let Some(pc) = pc else { return };
+            let schiff = matches!(d.kind, DrawingKind::SchiffPitchfork);
+            let Some([med, s1, s2]) = pitchfork_lines(pa, pb, pc, schiff, plot) else {
+                return;
+            };
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    vec![med.0, s1.1, s2.1],
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            paint_line(p, med.0, med.1, stroke, dash);
+            let side_dash = dash_spec(LineStyle::Dashed);
+            paint_line(p, s1.0, s1.1, stroke, side_dash);
+            paint_line(p, s2.0, s2.1, stroke, side_dash);
+        }
+        DrawingKind::RegTrend => {
+            let Some((la, lb, half)) = d.reg_geometry(cd, view, axis, plot) else {
+                return;
+            };
+            let oa = Pos2::new(la.x, la.y - half);
+            let ob = Pos2::new(lb.x, lb.y - half);
+            let ua = Pos2::new(la.x, la.y + half);
+            let ub = Pos2::new(lb.x, lb.y + half);
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    vec![oa, ob, ub, ua],
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            let band_dash = dash_spec(LineStyle::Dotted);
+            paint_line(p, oa, ob, stroke, band_dash);
+            paint_line(p, ua, ub, stroke, band_dash);
+            paint_line(p, la, lb, stroke, dash);
+        }
+        DrawingKind::LongPosition | DrawingKind::ShortPosition => {
+            let Some(pc) = pc else { return };
+            let x0 = pa.x.max(plot.min.x);
+            let x1 = plot.max.x;
+            let entry_p = axis.price_of(pa.y);
+            let target_p = axis.price_of(pb.y);
+            let stop_p = axis.price_of(pc.y);
+            let (profit, loss) = position_colors(d, pal);
+            let profit_rect = Rect::from_two_pos(Pos2::new(x0, pa.y), Pos2::new(x1, pb.y));
+            let loss_rect = Rect::from_two_pos(Pos2::new(x0, pa.y), Pos2::new(x1, pc.y));
+            p.rect_filled(
+                profit_rect,
+                0.0,
+                Color32::from_rgba_unmultiplied(profit.r(), profit.g(), profit.b(), 40),
+            );
+            p.rect_filled(
+                loss_rect,
+                0.0,
+                Color32::from_rgba_unmultiplied(loss.r(), loss.g(), loss.b(), 40),
+            );
+            let level = Stroke::new(1.0, color);
+            for y in [pa.y, pb.y, pc.y] {
+                p.line_segment([Pos2::new(x0, y), Pos2::new(x1, y)], level);
+            }
+            let chip = |p: &Painter, center: Pos2, text: &str, tint: Color32| {
+                let w = 6.4 * text.chars().count() as f32 + 10.0;
+                let r = Rect::from_min_max(
+                    Pos2::new((center.x - w * 0.5).max(plot.min.x + 4.0), center.y - 8.0),
+                    Pos2::new((center.x + w * 0.5).min(plot.max.x - 4.0), center.y + 8.0),
+                );
+                p.rect_filled(r, 2.0, pal.bg);
+                p.text(r.center(), Align2::CENTER_CENTER, text, font.clone(), tint);
+            };
+            chip(p, Pos2::new(x0 + 40.0, pa.y), &fmt_price(entry_p), color);
+            chip(p, Pos2::new(x0 + 40.0, pb.y), &fmt_price(target_p), profit);
+            chip(p, Pos2::new(x0 + 40.0, pc.y), &fmt_price(stop_p), loss);
+            chip(
+                p,
+                Pos2::new(x1 - 60.0, pb.y),
+                &position_delta(entry_p, target_p),
+                profit,
+            );
+            chip(
+                p,
+                Pos2::new(x1 - 60.0, pc.y),
+                &position_delta(entry_p, stop_p),
+                loss,
+            );
+            let rr_txt = match position_rr(entry_p, target_p, stop_p) {
+                Some(r) => format!("R/R 1 : {r:.2}"),
+                None => "R/R —".into(),
+            };
+            chip(
+                p,
+                Pos2::new(x0 + 48.0, (pa.y + pb.y) * 0.5),
+                &rr_txt,
+                pal.text,
+            );
+        }
         DrawingKind::Note => {
             let rect = note_rect(pa, &d.style.text);
             p.rect_filled(rect, 4.0, pal.bg);
@@ -2101,5 +2239,28 @@ mod tests {
         assert!(reg_band_hit(a, b, 12.0, Pos2::new(150.0, 140.0)));
         assert!(!reg_band_hit(a, b, 12.0, Pos2::new(150.0, 175.0)));
         assert!(!reg_band_hit(a, b, 12.0, Pos2::new(30.0, 205.0))); // before start x
+    }
+
+    #[test]
+    fn deviation_edit_clamps_to_ui_range() {
+        let mut d = Drawing::new(1, DrawingKind::RegTrend, anchor(0, 10.0), anchor(60, 12.0));
+        apply_style_edit(&mut d, StyleEdit::Deviation(9.0));
+        assert_eq!(d.reg_dev, 3.0);
+        apply_style_edit(&mut d, StyleEdit::Deviation(0.1));
+        assert_eq!(d.reg_dev, 0.5);
+    }
+
+    #[test]
+    fn pitchfork_finishes_unfilled_and_rect_stays_filled() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Pitchfork);
+        st.click(anchor(0, 10.0));
+        st.click(anchor(60, 12.0));
+        let done = st.click(anchor(120, 14.0));
+        assert!(done.is_some_and(|d| !d.style.fill));
+        let mut st2 = DrawingToolState::default();
+        st2.set_tool(DrawTool::Rect);
+        st2.click(anchor(0, 10.0));
+        assert!(st2.click(anchor(60, 12.0)).is_some_and(|d| d.style.fill));
     }
 }
