@@ -9,7 +9,7 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 148 unit/golden tests
+cargo test --workspace               # 177 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -26,9 +26,13 @@ curated offline symbol index so search works before the network responds.
   styles (candles, hollow candles, bars, columns, line, area, baseline, Heikin
   Ashi), log scale, and a status bar with provider state, bar count, UTC clock
   and active tool.
-- Drawing tools: trend line, ray, horizontal/vertical line, rectangle, ellipse
-  and Fibonacci retracement. Click to place, select, drag to move, and
-  Delete/Backspace to remove; magnet snaps anchors to OHLC values. Drawings are
+- Drawing tools: trend line, ray, extended line, horizontal ray, horizontal/
+  vertical line, parallel channel, rectangle, ellipse, Fibonacci retracement and
+  extension, arrow, note and price/time measure. Click to place (two- and
+  three-point tools finish on the final click), select, drag to move, and
+  Delete/Backspace to remove; a floating toolbar edits the selected drawing's
+  color, line width and style, fill opacity and note text, and a lock button
+  freezes all drawing editing. Magnet snaps anchors to OHLC values. Drawings are
   stored by timestamp and persisted per symbol.
 - Compare overlay: search from the command bar, normalized close line with a
   percentage legend, and click the legend to remove it. Stored per tab and
@@ -53,7 +57,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare` | open a dialog for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure` | open a dialog or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
@@ -62,16 +66,19 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `ta` | indicator engine: 66 TV-named studies, TV default params, golden-value tests |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine |
-| `tickchart` | chart engine: axes, geometry, eight series styles, drawings, compare overlay, panes, crosshair, legend, last-price marks, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, drawings with styles/lock/measure, compare overlay, panes, crosshair, legend, last-price marks, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
 
-`cargo test --workspace` passes 148 tests and `cargo clippy --workspace
+`cargo test --workspace` passes 177 tests and `cargo clippy --workspace
 --all-targets` is clean. Dark and light builds were captured at 1440×900 and
 visually checked for the shell, tab strip, command bar, watchlist, status bar,
 RSI separate pane, indicator editor, settings, alerts and symbol search. Phase 2
 was additionally checked with drawings and a compare overlay in dark/light,
-plus baseline, hollow-candle and columns styles.
+plus baseline, hollow-candle and columns styles. Phase 3 was checked with the
+full drawing set, per-drawing styling toolbar, note bubble, channel fill, fib
+extension labels and the measure overlay in dark/light
+(`docs/screenshots/`).
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

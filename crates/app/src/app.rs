@@ -14,7 +14,8 @@ use marketdata::{
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
 use tickchart::{
-    ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, DrawingKind, LineStyle, StyleEdit,
+    Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, DrawingKind, LineStyle,
+    Measure, StyleEdit,
 };
 
 use crate::icons::Icon;
@@ -646,6 +647,22 @@ impl TickView {
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
                 "compare" => me.open_compare_search(),
+                "measure" => {
+                    me.tool = Tool::Measure;
+                    let tab = &mut me.tabs[me.active];
+                    tab.chart.tools.set_tool(DrawTool::Measure);
+                    tab.chart.tools.measure = Some(Measure {
+                        a: Anchor {
+                            t: 1_780_272_000,
+                            price: 300.0,
+                        },
+                        b: Anchor {
+                            t: 1_785_715_200,
+                            price: 330.0,
+                        },
+                        done: true,
+                    });
+                }
                 "drawings" => {
                     let tab = &mut me.tabs[me.active];
                     tab.chart.tools.selected = tab.chart.drawings.last().map(|d| d.id);

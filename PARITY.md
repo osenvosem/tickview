@@ -16,7 +16,7 @@ full web platform.
 | Indicator browser and settings | Partial | 66 studies, per-param editor, persistent; no Pine/custom studies |
 | Right watchlist | Partial | Add/remove, filter, selection, quote change bars, context menu; no sections or sparklines |
 | Alerts | Partial | Price crossing above/below, polling, persisted; no sounds or notifications |
-| Drawing tools | Partial | Trend/ray/H/V line, rectangle, ellipse, fib; select/move/delete, magnet, per-symbol persistence. No channel/text/measure/brush/pitchfork yet |
+| Drawing tools | Done | Trend/ray/extended line, horizontal ray, H/V line, parallel channel, rectangle, ellipse, fib retracement, fib extension, arrow, note, measure; select/move/delete, per-drawing style toolbar, lock, magnet, per-symbol persistence. Deferred: brush, pitchfork, regression and position tools, crosshair-rectangle modifier |
 | Compare symbol overlay | Done | Normalized close line, timestamp alignment, percent legend, search, remove/replace, per-tab persistence |
 | Layout persistence | Done | Config v2, atomic writes, transparent v1 migration; drawings and compare included |
 | Command bar and status bar | Done | Symbol, intervals, styles, studies, alerts, theme, settings, UTC clock |
