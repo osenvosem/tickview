@@ -368,6 +368,43 @@ impl DrawingStyle {
     }
 }
 
+/// A partial style change from the floating settings toolbar.
+#[derive(Clone, Debug, PartialEq)]
+pub enum StyleEdit {
+    Color([u8; 4]),
+    Width(u8),
+    Line(LineStyle),
+    FillOpacity(u8),
+    Text(String),
+}
+
+/// Apply one toolbar edit, clamping numeric ranges to the UI limits.
+pub fn apply_style_edit(d: &mut Drawing, edit: StyleEdit) {
+    match edit {
+        StyleEdit::Color(color) => d.style.color = Some(color),
+        StyleEdit::Width(width) => d.style.width = width.clamp(1, 4),
+        StyleEdit::Line(line) => d.style.line = line,
+        StyleEdit::FillOpacity(opacity) => d.style.fill_opacity = opacity.min(80),
+        StyleEdit::Text(text) => d.style.text = text,
+    }
+}
+
+/// Place a popup near `anchor` while keeping it inside `bounds`.
+#[must_use]
+pub fn clamp_popup(anchor: Pos2, bounds: Rect, size: Vec2) -> Pos2 {
+    let mut x = anchor.x + 12.0;
+    let mut y = anchor.y + 12.0;
+    if x + size.x > bounds.max.x {
+        x = anchor.x - size.x - 12.0;
+    }
+    if y + size.y > bounds.max.y {
+        y = anchor.y - size.y - 12.0;
+    }
+    x = x.clamp(bounds.min.x, (bounds.max.x - size.x).max(bounds.min.x));
+    y = y.clamp(bounds.min.y, (bounds.max.y - size.y).max(bounds.min.y));
+    Pos2::new(x, y)
+}
+
 /// A point in chart space. Timestamps survive history pagination.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Anchor {
@@ -1589,5 +1626,36 @@ mod tests {
         let long = note_rect(Pos2::new(10.0, 100.0), &"x".repeat(40));
         assert!(long.width() > empty.width());
         assert_eq!(long.max.y, 100.0);
+    }
+
+    #[test]
+    fn style_edits_mutate_only_the_target_drawing() {
+        let a = anchor(0, 10.0);
+        let b = anchor(60, 12.0);
+        let mut d = Drawing::new(1, DrawingKind::TrendLine, a, b);
+        let other = Drawing::new(2, DrawingKind::TrendLine, a, b);
+        apply_style_edit(&mut d, StyleEdit::Color([1, 2, 3, 255]));
+        apply_style_edit(&mut d, StyleEdit::Width(9));
+        apply_style_edit(&mut d, StyleEdit::Line(LineStyle::Dotted));
+        apply_style_edit(&mut d, StyleEdit::FillOpacity(200));
+        apply_style_edit(&mut d, StyleEdit::Text("x".into()));
+        assert_eq!(d.style.color, Some([1, 2, 3, 255]));
+        assert_eq!(d.style.width, 4);
+        assert_eq!(d.style.line, LineStyle::Dotted);
+        assert_eq!(d.style.fill_opacity, 80);
+        assert_eq!(d.style.text, "x");
+        assert_eq!(other.style, DrawingStyle::default());
+    }
+
+    #[test]
+    fn clamp_popup_stays_inside_the_bounds() {
+        let bounds = Rect::from_min_size(Pos2::ZERO, Vec2::new(800.0, 600.0));
+        let right = clamp_popup(Pos2::new(790.0, 300.0), bounds, Vec2::new(160.0, 120.0));
+        assert!(right.x + 160.0 <= bounds.max.x);
+        let bottom = clamp_popup(Pos2::new(300.0, 590.0), bounds, Vec2::new(160.0, 120.0));
+        assert!(bottom.y + 120.0 <= bounds.max.y);
+        let tiny = Rect::from_min_size(Pos2::ZERO, Vec2::new(40.0, 30.0));
+        let forced = clamp_popup(Pos2::new(35.0, 25.0), tiny, Vec2::new(160.0, 120.0));
+        assert!(forced.x >= tiny.min.x && forced.y >= tiny.min.y);
     }
 }

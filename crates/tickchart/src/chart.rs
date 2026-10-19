@@ -56,6 +56,8 @@ pub struct ChartState {
     pub tools: DrawingToolState,
     pub magnet: bool,
     pub locked: bool,
+    /// Last screen rect of the floating drawing toolbar; clicks there are not chart clicks.
+    pub popup_rect: Option<Rect>,
     pub compare: Option<CompareSeries>,
     symbol_drawings: BTreeMap<String, Vec<Drawing>>,
     crosshair_pos: Option<Pos2>,
@@ -109,6 +111,7 @@ impl ChartState {
             tools: DrawingToolState::default(),
             magnet: false,
             locked: false,
+            popup_rect: None,
             compare: None,
             symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
@@ -711,6 +714,9 @@ fn handle_input(
     let press = ctx.input(|i| i.pointer.press_origin()).or(pointer);
     let in_price = pointer.is_some_and(|p| price_rect.contains(p));
     let drawing_tool = st.tools.tool.is_tool() && !st.locked;
+    let over_popup = st
+        .popup_rect
+        .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
 
     // Live preview of the second/third anchor.
     if !st.locked
@@ -743,7 +749,8 @@ fn handle_input(
     if resp.drag_started() {
         st.drag_pane = None;
         st.drag_drawing = None;
-        if let Some(pos) = press
+        if !over_popup
+            && let Some(pos) = press
             && !drawing_tool
         {
             let plot_h = (full.height() - AXIS_H).max(50.0);
@@ -807,6 +814,7 @@ fn handle_input(
 
     // Click: place a drawing, or select/deselect under the cursor.
     if resp.clicked()
+        && !over_popup
         && let Some(pos) = pointer
         && price_rect.contains(pos)
         && pos.y > price_rect.min.y + 26.0
@@ -1349,6 +1357,21 @@ mod tests {
             vec![egui::Event::PointerMoved(Pos2::new(800.0, 350.0)), key],
         );
         assert!(ev.drawing_toolbar_pos.is_none());
+    }
+
+    #[test]
+    fn clicks_inside_the_drawing_toolbar_are_ignored() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        let pos = Pos2::new(800.0, 350.0);
+        st.popup_rect = Some(Rect::from_center_size(pos, Vec2::new(120.0, 60.0)));
+        click(&ctx, &mut st, &cd, pos);
+        assert!(st.drawings.is_empty());
+        st.popup_rect = None;
+        click(&ctx, &mut st, &cd, pos);
+        assert_eq!(st.drawings.len(), 1);
     }
 
     #[test]

@@ -13,7 +13,9 @@ use marketdata::{
 };
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
-use tickchart::{ChartEvent, ChartState, ChartType, CompareSeries, DrawTool};
+use tickchart::{
+    ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, DrawingKind, LineStyle, StyleEdit,
+};
 
 use crate::icons::Icon;
 use crate::store::{self, SavedConfig};
@@ -23,6 +25,40 @@ use crate::theme::{
 use crate::widgets;
 
 type Hub = Arc<DataHub<Router>>;
+
+/// TradingView's fixed color row for drawing styles.
+pub const SWATCHES: [[u8; 4]; 8] = [
+    [41, 98, 255, 255],
+    [38, 166, 154, 255],
+    [239, 83, 80, 255],
+    [255, 109, 0, 255],
+    [255, 235, 59, 255],
+    [156, 39, 176, 255],
+    [255, 255, 255, 255],
+    [120, 123, 134, 255],
+];
+
+fn toolbar_choice(
+    ui: &mut egui::Ui,
+    p: &Palette,
+    selected: bool,
+    label: impl Into<String>,
+) -> bool {
+    let text = RichText::new(label)
+        .font(font_regular(type_size::TINY))
+        .color(if selected { p.accent } else { p.muted });
+    ui.add(
+        egui::Button::new(text)
+            .fill(if selected { p.accent_soft } else { p.panel_alt })
+            .stroke(Stroke::new(
+                1.0,
+                if selected { p.accent } else { p.hairline },
+            ))
+            .corner_radius(3.0)
+            .min_size(vec2(18.0, 20.0)),
+    )
+    .clicked()
+}
 
 pub const INTERVALS: [(&str, &str); 8] = [
     ("1m", "1m"),
@@ -610,6 +646,10 @@ impl TickView {
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
                 "compare" => me.open_compare_search(),
+                "drawings" => {
+                    let tab = &mut me.tabs[me.active];
+                    tab.chart.tools.selected = tab.chart.drawings.last().map(|d| d.id);
+                }
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -1317,7 +1357,207 @@ impl TickView {
                         p.down,
                     );
                 }
+
+                self.tabs[ti].chart.popup_rect = None;
+                self.drawing_toolbar(ui, ev, p);
             });
+    }
+
+    fn mark_drawings_dirty(&mut self, ctx: &egui::Context) {
+        self.dirty_drawings = true;
+        self.save_at = Instant::now() + Duration::from_millis(350);
+        ctx.request_repaint();
+    }
+
+    fn drawing_toolbar(&mut self, ui: &mut egui::Ui, ev: ChartEvent, p: &Palette) {
+        let ti = self.active;
+        if self.tabs[ti].locked {
+            return;
+        }
+        let Some(anchor) = ev.drawing_toolbar_pos else {
+            return;
+        };
+        let Some(id) = self.tabs[ti].chart.tools.selected else {
+            return;
+        };
+        let Some(drawing) = self.tabs[ti].chart.drawings.iter().find(|d| d.id == id) else {
+            return;
+        };
+        let kind = drawing.kind;
+        let style = drawing.style.clone();
+        let fills = kind.supports_fill();
+        let has_text = kind == DrawingKind::Note;
+        let approx_h = if has_text {
+            176.0
+        } else if fills {
+            154.0
+        } else {
+            132.0
+        };
+        let pos = tickchart::clamp_popup(anchor, ui.max_rect(), vec2(236.0, approx_h));
+
+        let mut edit: Option<StyleEdit> = None;
+        let mut delete = false;
+        let area = egui::Area::new(egui::Id::unique(("drawing-toolbar", ti, id)))
+            .order(egui::Order::Foreground)
+            .fixed_pos(pos)
+            .constrain_to(ui.max_rect())
+            .show(ui.ctx(), |ui| {
+                let visuals = ui.visuals_mut();
+                visuals.override_text_color = Some(p.text);
+                visuals.weak_text_color = Some(p.muted);
+                visuals.extreme_bg_color = p.panel_alt;
+                visuals.text_edit_bg_color = Some(p.panel_alt);
+                visuals.selection.bg_fill = p.selection;
+                visuals.selection.stroke = Stroke::new(1.0, p.accent);
+                visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, p.text);
+                visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, p.text);
+                visuals.widgets.active.fg_stroke = Stroke::new(1.0, p.text);
+                visuals.widgets.inactive.bg_fill = p.hairline;
+                visuals.widgets.hovered.bg_fill = p.accent;
+                visuals.widgets.active.bg_fill = p.accent;
+                visuals.selection.bg_fill = p.accent;
+                ui.set_width(236.0);
+                egui::Frame::new()
+                    .fill(p.panel)
+                    .stroke(Stroke::new(1.0, p.hairline))
+                    .corner_radius(4.0)
+                    .inner_margin(egui::Margin::symmetric(8, 6))
+                    .show(ui, |ui| {
+                        ui.set_width(220.0);
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new(kind.label())
+                                    .font(font_semibold(type_size::TINY))
+                                    .color(p.text),
+                            );
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    if widgets::icon_button(
+                                        ui,
+                                        p,
+                                        Icon::Trash,
+                                        vec2(20.0, 20.0),
+                                        false,
+                                        true,
+                                        "Delete drawing",
+                                    )
+                                    .clicked()
+                                    {
+                                        delete = true;
+                                    }
+                                },
+                            );
+                        });
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 5.0;
+                            for &swatch in &SWATCHES {
+                                let color = Color32::from_rgb(swatch[0], swatch[1], swatch[2]);
+                                let (rect, resp) =
+                                    ui.allocate_exact_size(vec2(15.0, 15.0), Sense::click());
+                                ui.painter().rect_filled(rect, 2.0, color);
+                                let active = style.color == Some(swatch);
+                                ui.painter().rect_stroke(
+                                    rect,
+                                    2.0,
+                                    Stroke::new(
+                                        if active { 2.0 } else { 1.0 },
+                                        if active { p.text } else { p.hairline },
+                                    ),
+                                    egui::StrokeKind::Inside,
+                                );
+                                if resp.clicked() {
+                                    edit = Some(StyleEdit::Color(swatch));
+                                }
+                            }
+                        });
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new("WIDTH")
+                                    .font(font_mono(type_size::TINY))
+                                    .color(p.muted),
+                            );
+                            for width in 1..=4u8 {
+                                if toolbar_choice(ui, p, style.width == width, width.to_string()) {
+                                    edit = Some(StyleEdit::Width(width));
+                                }
+                            }
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new("LINE")
+                                    .font(font_mono(type_size::TINY))
+                                    .color(p.muted),
+                            );
+                            for (line, label) in [
+                                (LineStyle::Solid, "Solid"),
+                                (LineStyle::Dashed, "Dashed"),
+                                (LineStyle::Dotted, "Dotted"),
+                            ] {
+                                if toolbar_choice(ui, p, style.line == line, label) {
+                                    edit = Some(StyleEdit::Line(line));
+                                }
+                            }
+                        });
+                        if fills {
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new("FILL")
+                                        .font(font_mono(type_size::TINY))
+                                        .color(p.muted),
+                                );
+                                ui.spacing_mut().slider_width = 105.0;
+                                let mut opacity = style.fill_opacity;
+                                if ui
+                                    .add(egui::Slider::new(&mut opacity, 0..=80).show_value(false))
+                                    .changed()
+                                {
+                                    edit = Some(StyleEdit::FillOpacity(opacity));
+                                }
+                            });
+                        }
+                        if has_text {
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new("NOTE")
+                                        .font(font_mono(type_size::TINY))
+                                        .color(p.muted),
+                                );
+                                let mut text = style.text.clone();
+                                if ui
+                                    .add(
+                                        egui::TextEdit::singleline(&mut text)
+                                            .desired_width(150.0)
+                                            .text_color(p.text)
+                                            .background_color(p.panel_alt)
+                                            .hint_text("Note text"),
+                                    )
+                                    .changed()
+                                {
+                                    edit = Some(StyleEdit::Text(text));
+                                }
+                            });
+                        }
+                    });
+            });
+
+        self.tabs[ti].chart.popup_rect = Some(area.response.rect);
+
+        if delete {
+            let tab = &mut self.tabs[ti];
+            tab.chart.drawings.retain(|d| d.id != id);
+            tab.chart.tools.selected = None;
+            tab.chart.popup_rect = None;
+            self.mark_drawings_dirty(ui.ctx());
+        } else if let Some(edit) = edit {
+            if let Some(drawing) = self.tabs[ti].chart.drawings.iter_mut().find(|d| d.id == id) {
+                tickchart::apply_style_edit(drawing, edit);
+            }
+            self.mark_drawings_dirty(ui.ctx());
+        }
     }
 
     fn windows(&mut self, ctx: &egui::Context, p: &Palette) {
