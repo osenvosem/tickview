@@ -140,7 +140,38 @@ pub enum PVal {
 #[derive(Clone, Debug, Default)]
 pub struct Params(BTreeMap<&'static str, PVal>);
 
+impl PVal {
+    /// Numeric payload (0.0 for non-numeric variants).
+    #[must_use]
+    pub fn n(self) -> f64 {
+        match self {
+            Self::N(v) => v,
+            _ => 0.0,
+        }
+    }
+
+    /// Boolean payload.
+    #[must_use]
+    pub fn b(self) -> bool {
+        matches!(self, Self::B(true))
+    }
+
+    /// Enum variant index.
+    #[must_use]
+    pub fn e(self) -> u32 {
+        match self {
+            Self::E(v) => v,
+            _ => 0,
+        }
+    }
+}
+
 impl Params {
+    /// Raw stored override, if any.
+    pub fn get(&self, key: &str) -> Option<PVal> {
+        self.0.get(key).copied()
+    }
+
     #[must_use]
     pub fn with_defaults(def: &Def) -> Self {
         let mut m = BTreeMap::new();

@@ -26,6 +26,13 @@ impl BarsSource for Router {
     }
 }
 
+impl DataHub<Router> {
+    /// Latest quote passthrough (alerts, watchlist).
+    pub fn quote(&self, sym: &Symbol) -> Result<crate::Quote, DataError> {
+        self.source.fetch_quote(sym)
+    }
+}
+
 pub struct DataHub<S: BarsSource> {
     source: S,
     cache: CandleCache,
@@ -124,7 +131,7 @@ impl<S: BarsSource> DataHub<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Quote, SymbolKind};
+    use crate::SymbolKind;
     use std::sync::Mutex;
 
     struct FakeSource {

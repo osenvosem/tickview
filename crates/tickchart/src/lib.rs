@@ -11,6 +11,7 @@ pub mod priceaxis;
 pub mod timeaxis;
 
 pub use barfmt::{fmt_compact, fmt_price};
+pub use chart::ui as chart_ui;
 pub use chart::{ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind};
 pub use painter::{ChartType, Palette};
 pub use priceaxis::{PriceAxis, PriceTick, nice_step};

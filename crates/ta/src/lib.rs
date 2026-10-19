@@ -10,6 +10,10 @@ pub mod channels;
 pub mod oscs;
 pub mod rating;
 pub mod registry;
+pub use registry::{
+    Anchors, Def, Output, Pane, Params, PlotData, PlotStyle, Scale, TvId, compute, def, defs,
+    source_series,
+};
 pub mod series;
 pub mod trends;
 pub mod vols;

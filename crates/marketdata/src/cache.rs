@@ -46,7 +46,6 @@ impl CandleCache {
         })
     }
 
-    #[must_use]
     pub fn in_memory() -> Result<Self, DataError> {
         Self::init(Connection::open_in_memory().map_err(|e| DataError::Parse(e.to_string()))?)
     }
@@ -99,7 +98,7 @@ impl CandleCache {
         let mut sql = String::from(
             "SELECT t,o,h,l,c,v FROM bars WHERE sym=?1 AND iv=?2 AND (:to IS NULL OR t < :to) AND (:from IS NULL OR t >= :from) ORDER BY t DESC LIMIT :lim",
         );
-        sql.push_str(";");
+        sql.push(';');
         let mut stmt = conn
             .prepare_cached(&sql)
             .map_err(|e| DataError::Parse(e.to_string()))?;
