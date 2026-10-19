@@ -27,6 +27,13 @@ pub struct SavedIndicator {
     #[serde(default)]
     pub params: Vec<(String, SavedVal)>,
 }
+/// A named, reusable indicator set for the active chart.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StudyTemplate {
+    pub name: String,
+    #[serde(default)]
+    pub indicators: Vec<SavedIndicator>,
+}
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "value")]
@@ -159,6 +166,12 @@ pub struct SavedConfig {
     pub show_watchlist: bool,
     #[serde(default = "default_true")]
     pub magnet: bool,
+    /// Named reusable indicator sets.
+    #[serde(default)]
+    pub study_templates: Vec<StudyTemplate>,
+    /// Crypto live streaming toggle; absent means enabled.
+    #[serde(default)]
+    pub stream: Option<bool>,
 
     // ---- v1 compatibility ----
     #[serde(default)]
@@ -182,6 +195,8 @@ impl Default for SavedConfig {
             alerts: Vec::new(),
             show_watchlist: true,
             magnet: true,
+            study_templates: Vec::new(),
+            stream: None,
             symbol: None,
             interval: String::new(),
             chart_type: 0,
@@ -191,6 +206,14 @@ impl Default for SavedConfig {
 }
 
 impl SavedConfig {
+    /// Live websocket streaming is enabled unless explicitly turned off.
+    /// Streaming worker consumes this in the same phase (task 4).
+    #[allow(dead_code)]
+    #[must_use]
+    pub fn stream_enabled(&self) -> bool {
+        self.stream != Some(false)
+    }
+
     /// Fill in the v2 tab list from v1 fields when needed.
     pub fn migrate(&mut self) {
         if self.version < 2 && self.tabs.is_empty() {
@@ -481,5 +504,50 @@ mod tests {
         let (id, params) = saved.to_params().expect("known study");
         assert_eq!(id, ta::registry::TvId::Rsi);
         assert!((params.get("length").unwrap().n() - 21.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn pre_phase5_config_defaults_templates_and_stream() {
+        let json = r#"{"version":2,"tabs":[]}"#;
+        let cfg: SavedConfig = serde_json::from_str(json).unwrap();
+        assert!(cfg.study_templates.is_empty());
+        assert!(cfg.stream_enabled());
+    }
+
+    #[test]
+    fn study_template_round_trips_params() {
+        let mut cfg = SavedConfig::default();
+        cfg.study_templates.push(StudyTemplate {
+            name: "Momentum basic".into(),
+            indicators: vec![
+                SavedIndicator {
+                    name: "Relative Strength Index (RSI)".into(),
+                    params: vec![("length".into(), SavedVal::N(21.0))],
+                },
+                SavedIndicator {
+                    name: "Moving Average".into(),
+                    params: vec![("short".into(), SavedVal::E(2))],
+                },
+            ],
+        });
+        cfg.study_templates.push(StudyTemplate {
+            name: "Momentum basic".into(),
+            indicators: Vec::new(),
+        });
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.study_templates.len(), 2);
+        assert_eq!(back.study_templates[0].indicators.len(), 2);
+        let (id, params) = back.study_templates[0].indicators[0]
+            .to_params()
+            .expect("known study");
+        assert_eq!(id, ta::registry::TvId::Rsi);
+        assert!((params.get("length").unwrap().n() - 21.0).abs() < 1e-9);
+    }
+    #[test]
+    fn explicit_stream_false_is_honored() {
+        let json = r#"{"version":2,"tabs":[],"stream":false}"#;
+        let cfg: SavedConfig = serde_json::from_str(json).unwrap();
+        assert!(!cfg.stream_enabled());
     }
 }
