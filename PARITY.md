@@ -14,6 +14,7 @@ full web platform.
 | Intervals | Partial | 1m, 5m, 15m, 1H, 4H, 1D, 1W, 1M; no seconds or tick bars |
 | Chart styles | Done | Candles, hollow candles, bars, columns, line, area, baseline, Heikin Ashi |
 | Indicator browser and settings | Partial | 66 studies, per-param editor, persistent; no Pine/custom studies |
+| Study default audit | Done | 42 studies' numeric/bool defaults pinned against TradingView Desktop 3.4.1.8194 `studies_metadata` wire payload (`docs/evidence/tv-studies-defaults.json`); audit fixed 11 drifts: VWMA length 20, Keltner mult 1, Stoch %K smoothing 3, CMO 9, KST 10/10/10/15 + signal 9, TRIX 18, HV 10; enum inputs recorded for review |
 | Right watchlist | Partial | Add/remove, filter, selection, quote change bars, context menu; no sections or sparklines |
 | Alerts | Partial | Price crossing above/below, polling, persisted; no sounds or notifications |
 | Drawing tools | Done | Trend/ray/extended line, horizontal ray, H/V line, parallel channel, rectangle, ellipse, fib retracement, fib extension, arrow, note, measure, freehand brush, pitchfork, Schiff pitchfork, regression trend (2σ default, deviation slider), long/short position tool with R/R and delta labels; select/move/delete, per-drawing style toolbar, lock, magnet, per-symbol persistence; shift-drag rectangle zoom (price + time), Esc resets. Deferred: crosshair-rectangle modifier, brush/pitchfork auto-styles beyond color/width/line |

@@ -9,7 +9,7 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 177 unit/golden tests
+cargo test --workspace               # 203 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -57,7 +57,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure` | open a dialog or preset chart state for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|phase4drawings\|zoomrect` | open a dialog or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
@@ -71,7 +71,7 @@ curated offline symbol index so search works before the network responds.
 
 ## Verification
 
-`cargo test --workspace` passes 202 tests and `cargo clippy --workspace
+`cargo test --workspace` passes 203 tests and `cargo clippy --workspace
 --all-targets` is clean. Dark and light builds were captured at 1440×900 and
 visually checked for the shell, tab strip, command bar, watchlist, status bar,
 RSI separate pane, indicator editor, settings, alerts and symbol search. Phase 2
