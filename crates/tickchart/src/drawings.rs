@@ -457,12 +457,37 @@ impl Drawing {
                     .iter()
                     .any(|(_, y)| (p.y - *y).abs() <= TOL)
             }
-            DrawingKind::ExtLine
-            | DrawingKind::HRay
-            | DrawingKind::Channel
-            | DrawingKind::FibExt
-            | DrawingKind::Arrow
-            | DrawingKind::Note => false,
+            DrawingKind::ExtLine => self
+                .ext_geometry(map, plot)
+                .is_some_and(|(a, b)| distance_to_segment(p, a, b) <= TOL),
+            DrawingKind::HRay => self
+                .hray_geometry(map, plot)
+                .is_some_and(|(a, b)| distance_to_segment(p, a, b) <= TOL),
+            DrawingKind::Channel => {
+                self.channel_geometry(map, plot)
+                    .is_some_and(|(ba, bb, oa, ob)| {
+                        distance_to_segment(p, ba, bb) <= TOL
+                            || distance_to_segment(p, oa, ob) <= TOL
+                    })
+            }
+            DrawingKind::FibExt => {
+                let pa = map(self.a);
+                let Some(c) = self.c else {
+                    return false;
+                };
+                let pc = map(c);
+                let x0 = pa.x.min(pc.x);
+                let x1 = pa.x.max(pc.x);
+                if p.x < x0 || p.x > x1 {
+                    return false;
+                }
+                let pb = map(self.b);
+                fib_ext_levels(f64::from(pa.y), f64::from(pb.y), f64::from(pc.y))
+                    .iter()
+                    .any(|(_, y)| (p.y - *y).abs() <= TOL)
+            }
+            DrawingKind::Arrow => distance_to_segment(p, a, b) <= TOL || p.distance(b) <= 10.0,
+            DrawingKind::Note => note_rect(a, &self.style.text).contains(p),
         }
     }
 
@@ -491,6 +516,110 @@ impl Drawing {
         }
         Some((origin, origin + d * best))
     }
+
+    /// Screen-space endpoints of an infinite line clipped to the plot.
+    #[must_use]
+    pub fn ext_geometry(&self, map: impl Fn(Anchor) -> Pos2, plot: Rect) -> Option<(Pos2, Pos2)> {
+        clip_line(map(self.a), map(self.b), plot)
+    }
+
+    /// Horizontal ray from the first anchor to the plot's right edge.
+    #[must_use]
+    pub fn hray_geometry(&self, map: impl Fn(Anchor) -> Pos2, plot: Rect) -> Option<(Pos2, Pos2)> {
+        let a = map(self.a);
+        if a.y < plot.min.y || a.y > plot.max.y || a.x > plot.max.x {
+            return None;
+        }
+        let start = Pos2::new(a.x.max(plot.min.x), a.y);
+        (start.x < plot.max.x).then_some((start, Pos2::new(plot.max.x, a.y)))
+    }
+
+    /// Two clipped parallels: the base through `a`/`b` and its offset through `c`.
+    #[must_use]
+    pub fn channel_geometry(
+        &self,
+        map: impl Fn(Anchor) -> Pos2,
+        plot: Rect,
+    ) -> Option<(Pos2, Pos2, Pos2, Pos2)> {
+        let a = map(self.a);
+        let b = map(self.b);
+        let c = map(self.c?);
+        let d = b - a;
+        let len2 = d.length_sq();
+        if len2 < 1e-9 {
+            return None;
+        }
+        let v = c - a;
+        let perp = v - d * (v.dot(d) / len2);
+        let (ba, bb) = clip_line(a, b, plot)?;
+        let (oa, ob) = clip_line(a + perp, b + perp, plot)?;
+        Some((ba, bb, oa, ob))
+    }
+}
+
+/// Clip an infinite line through `a`/`b` to `rect`.
+#[must_use]
+fn clip_line(a: Pos2, b: Pos2, rect: Rect) -> Option<(Pos2, Pos2)> {
+    let d = b - a;
+    if d.length_sq() < 1e-9 {
+        return None;
+    }
+    let mut t0 = f32::NEG_INFINITY;
+    let mut t1 = f32::INFINITY;
+    for (origin, dir, min, max) in [
+        (a.x, d.x, rect.min.x, rect.max.x),
+        (a.y, d.y, rect.min.y, rect.max.y),
+    ] {
+        if dir.abs() < 1e-9 {
+            if origin < min || origin > max {
+                return None;
+            }
+        } else {
+            let ta = (min - origin) / dir;
+            let tb = (max - origin) / dir;
+            t0 = t0.max(ta.min(tb));
+            t1 = t1.min(ta.max(tb));
+        }
+    }
+    if t0 > t1 {
+        return None;
+    }
+    Some((a + d * t0, a + d * t1))
+}
+
+/// Bubble rectangle for a note, anchored at its bottom-left corner.
+#[must_use]
+pub fn note_rect(anchor: Pos2, text: &str) -> Rect {
+    let width = (7.0 * text.chars().count() as f32 + 16.0).max(48.0);
+    Rect::from_min_max(
+        Pos2::new(anchor.x, anchor.y - 20.0),
+        Pos2::new(anchor.x + width, anchor.y),
+    )
+}
+
+/// Seven Fibonacci extension levels projected from `c` as `(ratio, price)`.
+#[must_use]
+pub fn fib_ext_levels(a: f64, b: f64, c: f64) -> [(f32, f32); 7] {
+    const RATIOS: [f32; 7] = [0.382, 0.618, 1.0, 1.618, 2.618, 3.618, 4.236];
+    let delta = (b - a) as f32;
+    let base = c as f32;
+    RATIOS.map(|r| (r, base + delta * r))
+}
+
+/// Price, percentage and bar-count summary for the measure overlay.
+#[must_use]
+pub fn measure_summary(a: Anchor, b: Anchor, cd: &Candles) -> String {
+    let delta = b.price - a.price;
+    let mut summary = format!("{delta:+.2}");
+    if a.price != 0.0 {
+        summary.push_str(&format!(" ({:+.2}%)", delta / a.price * 100.0));
+    }
+    if let (Some(ia), Some(ib)) = (nearest_index(cd, a.t), nearest_index(cd, b.t)) {
+        let bars = ia.abs_diff(ib);
+        let suffix = if bars == 1 { "bar" } else { "bars" };
+        summary.push_str(&format!(" · {bars} {suffix}"));
+    }
+    summary
 }
 
 /// Screen position for a persisted anchor; `None` if its bar is gone.
@@ -703,13 +832,23 @@ pub fn move_drawing(d: &mut Drawing, from: Anchor, to: Anchor, cd: &Candles) -> 
     let di = to_i as i64 - from_i as i64;
     let dp = to.price - from.price;
     for anchor in [&mut d.a, &mut d.b] {
-        let Some(i) = nearest_index(cd, anchor.t) else {
+        if !shift_anchor(anchor, di, dp, cd) {
             return false;
-        };
-        let shifted = (i as i64 + di).clamp(0, cd.t.len() as i64 - 1) as usize;
-        anchor.t = cd.t[shifted];
-        anchor.price += dp;
+        }
     }
+    if let Some(c) = &mut d.c {
+        return shift_anchor(c, di, dp, cd);
+    }
+    true
+}
+
+fn shift_anchor(anchor: &mut Anchor, di: i64, dp: f64, cd: &Candles) -> bool {
+    let Some(i) = nearest_index(cd, anchor.t) else {
+        return false;
+    };
+    let shifted = (i as i64 + di).clamp(0, cd.t.len() as i64 - 1) as usize;
+    anchor.t = cd.t[shifted];
+    anchor.price += dp;
     true
 }
 
@@ -1123,5 +1262,168 @@ mod tests {
                 "{t:?}"
             );
         }
+    }
+
+    fn plot() -> Rect {
+        Rect::from_min_max(Pos2::ZERO, Pos2::new(300.0, 300.0))
+    }
+
+    fn anchor(t: i64, price: f64) -> Anchor {
+        Anchor { t, price }
+    }
+
+    fn long_candles() -> Candles {
+        let bars: Vec<Bar> = (0..5)
+            .map(|i| Bar {
+                t: i * 60,
+                o: 10.0 + i as f64,
+                h: 12.0 + i as f64,
+                l: 9.0 + i as f64,
+                c: 11.0 + i as f64,
+                v: 1.0,
+            })
+            .collect();
+        Candles::from_bars(&bars)
+    }
+
+    #[test]
+    fn ext_line_clips_to_plot_both_directions() {
+        let d = Drawing::new(
+            1,
+            DrawingKind::ExtLine,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+        );
+        let (a, b) = d.ext_geometry(map, plot()).expect("ext line");
+        let (lo, hi) = if a.x <= b.x { (a, b) } else { (b, a) };
+        assert!((lo.x - 0.0).abs() < 1e-4, "{lo:?}");
+        assert!((lo.y - 0.0).abs() < 1e-4, "{lo:?}");
+        assert!((hi.x - 300.0).abs() < 1e-4, "{hi:?}");
+        assert!((hi.y - 300.0).abs() < 1e-4, "{hi:?}");
+    }
+
+    #[test]
+    fn hray_starts_at_anchor_and_stops_at_right_edge() {
+        let d = Drawing::new(1, DrawingKind::HRay, anchor(100, 100.0), anchor(200, 200.0));
+        let (a, b) = d.hray_geometry(map, plot()).expect("hray");
+        assert!((a.x - 100.0).abs() < 1e-4);
+        assert!((a.y - 100.0).abs() < 1e-4);
+        assert!((b.x - 300.0).abs() < 1e-4);
+        assert!((b.y - 100.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn channel_offset_is_parallel_through_c() {
+        let d = Drawing::with_c(
+            1,
+            DrawingKind::Channel,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+            anchor(100, 200.0),
+        );
+        let (ba, bb, oa, ob) = d.channel_geometry(map, plot()).expect("channel");
+        let base_slope = (bb.y - ba.y) / (bb.x - ba.x);
+        let offset_slope = (ob.y - oa.y) / (ob.x - oa.x);
+        assert!((base_slope - offset_slope).abs() < 1e-4);
+        assert!(
+            distance_to_segment(Pos2::new(100.0, 200.0), oa, ob) < 1e-3,
+            "offset must pass through c"
+        );
+    }
+
+    #[test]
+    fn fib_ext_levels_project_from_c() {
+        let l = fib_ext_levels(10.0, 20.0, 30.0);
+        assert_eq!(l.len(), 7);
+        assert!((l[2].1 - 40.0).abs() < 1e-4);
+        assert!((l[0].1 - (30.0 + 10.0 * 0.382)).abs() < 1e-4);
+    }
+
+    #[test]
+    fn measure_summary_formats_price_percent_and_bars() {
+        let cd = candles();
+        let summary = measure_summary(anchor(0, 10.0), anchor(120, 12.0), &cd);
+        assert_eq!(summary, "+2.00 (+20.00%) · 2 bars");
+        let no_base = measure_summary(anchor(0, 0.0), anchor(60, 3.0), &cd);
+        assert_eq!(no_base, "+3.00 · 1 bar");
+    }
+
+    #[test]
+    fn new_kinds_hit_where_they_are_drawn_and_miss_far_away() {
+        let p = plot();
+        let ext = Drawing::new(
+            1,
+            DrawingKind::ExtLine,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+        );
+        assert!(ext.hit(Pos2::new(50.0, 50.0), map, p));
+        assert!(!ext.hit(Pos2::new(50.0, 250.0), map, p));
+
+        let hray = Drawing::new(2, DrawingKind::HRay, anchor(100, 100.0), anchor(200, 250.0));
+        assert!(hray.hit(Pos2::new(250.0, 100.0), map, p));
+        assert!(!hray.hit(Pos2::new(50.0, 100.0), map, p));
+        assert!(!hray.hit(Pos2::new(250.0, 250.0), map, p));
+
+        let channel = Drawing::with_c(
+            3,
+            DrawingKind::Channel,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+            anchor(100, 200.0),
+        );
+        assert!(channel.hit(Pos2::new(150.0, 150.0), map, p));
+        assert!(channel.hit(Pos2::new(50.0, 150.0), map, p));
+        assert!(!channel.hit(Pos2::new(250.0, 50.0), map, p));
+
+        let fib = Drawing::with_c(
+            4,
+            DrawingKind::FibExt,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+            anchor(250, 50.0),
+        );
+        assert!(fib.hit(Pos2::new(150.0, 150.0), map, p));
+        assert!(!fib.hit(Pos2::new(150.0, 250.0), map, p));
+
+        let arrow = Drawing::new(
+            5,
+            DrawingKind::Arrow,
+            anchor(100, 100.0),
+            anchor(200, 200.0),
+        );
+        assert!(arrow.hit(Pos2::new(150.0, 150.0), map, p));
+        assert!(arrow.hit(Pos2::new(196.0, 196.0), map, p));
+        assert!(!arrow.hit(Pos2::new(50.0, 50.0), map, p));
+
+        let note = Drawing::new(6, DrawingKind::Note, anchor(100, 100.0), anchor(100, 100.0));
+        assert!(note.hit(Pos2::new(120.0, 90.0), map, p));
+        assert!(!note.hit(Pos2::new(120.0, 140.0), map, p));
+    }
+
+    #[test]
+    fn channel_with_a_degenerate_base_returns_none_instead_of_dividing_by_zero() {
+        let d = Drawing::with_c(
+            1,
+            DrawingKind::Channel,
+            anchor(100, 100.0),
+            anchor(100, 100.0),
+            anchor(150, 150.0),
+        );
+        assert!(d.channel_geometry(map, plot()).is_none());
+    }
+
+    #[test]
+    fn move_drawing_shifts_the_third_anchor() {
+        let cd = long_candles();
+        let mut d = Drawing::with_c(
+            1,
+            DrawingKind::Channel,
+            anchor(0, 10.0),
+            anchor(60, 11.0),
+            anchor(120, 12.0),
+        );
+        assert!(move_drawing(&mut d, anchor(0, 10.0), anchor(60, 13.0), &cd));
+        assert_eq!(d.c, Some(anchor(180, 15.0)));
     }
 }
