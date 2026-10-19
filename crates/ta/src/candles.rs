@@ -155,3 +155,61 @@ mod tests {
         assert_eq!(c.bar(1).h, 3.0);
     }
 }
+
+/// Heikin-Ashi transformation of a candle set (TV built-in chart type).
+#[must_use]
+pub fn heikin_ashi(cd: &Candles) -> Candles {
+    let n = cd.len();
+    let mut o = vec![f64::NAN; n];
+    let mut h = vec![f64::NAN; n];
+    let mut l = vec![f64::NAN; n];
+    let mut c = vec![f64::NAN; n];
+    for i in 0..n {
+        let hc = (cd.o[i] + cd.h[i] + cd.l[i] + cd.c[i]) / 4.0;
+        let ho = if i == 0 {
+            (cd.o[i] + cd.c[i]) / 2.0
+        } else {
+            (o[i - 1] + c[i - 1]) / 2.0
+        };
+        o[i] = ho;
+        c[i] = hc;
+        h[i] = cd.h[i].max(ho).max(hc);
+        l[i] = cd.l[i].min(ho).min(hc);
+    }
+    let bars: Vec<crate::Bar> = (0..n)
+        .map(|i| crate::Bar {
+            t: cd.t[i],
+            o: o[i],
+            h: h[i],
+            l: l[i],
+            c: c[i],
+            v: cd.v[i],
+        })
+        .collect();
+    Candles::from_bars(&bars)
+}
+
+#[cfg(test)]
+mod ha_tests {
+    use super::*;
+    use crate::Bar;
+
+    #[test]
+    fn ha_hand_computed() {
+        // python ref: bar0 o=10 h=12 l=8 c=11 -> ha_o=10.5 ha_c=10.25 ha_h=12 ha_l=8
+        // bar1 o=11 h=13 l=10 c=12 -> ha_o=(10.5+10.25)/2=10.375 ha_c=11.5 ha_h=13 ha_l=10
+        let bars = vec![
+            Bar { t: 0, o: 10.0, h: 12.0, l: 8.0, c: 11.0, v: 1.0 },
+            Bar { t: 1, o: 11.0, h: 13.0, l: 10.0, c: 12.0, v: 1.0 },
+        ];
+        let ha = heikin_ashi(&Candles::from_bars(&bars));
+        assert_eq!(ha.o[0], 10.5);
+        assert_eq!(ha.c[0], 10.25);
+        assert_eq!(ha.h[0], 12.0);
+        assert_eq!(ha.l[0], 8.0);
+        assert_eq!(ha.o[1], 10.375);
+        assert_eq!(ha.c[1], 11.5);
+        assert_eq!(ha.h[1], 13.0);
+        assert_eq!(ha.l[1], 10.0);
+    }
+}
