@@ -23,6 +23,12 @@ pub enum Icon {
     Arrow,
     Text,
     Measure,
+    Brush,
+    Pitchfork,
+    Schiff,
+    Regression,
+    LongPosition,
+    ShortPosition,
     Magnet,
     Search,
     Bell,
@@ -77,6 +83,12 @@ impl Icon {
         Self::Arrow,
         Self::Text,
         Self::Measure,
+        Self::Brush,
+        Self::Pitchfork,
+        Self::Schiff,
+        Self::Regression,
+        Self::LongPosition,
+        Self::ShortPosition,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -131,6 +143,12 @@ impl Icon {
             Self::Arrow => "arrow",
             Self::Text => "text",
             Self::Measure => "measure",
+            Self::Brush => "brush",
+            Self::Pitchfork => "pitchfork",
+            Self::Schiff => "schiff-pitchfork",
+            Self::Regression => "regression-trend",
+            Self::LongPosition => "long-position",
+            Self::ShortPosition => "short-position",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -297,6 +315,39 @@ impl Icon {
                 line(7.0, 15.0, 10.0, 17.0);
                 line(12.0, 12.0, 15.0, 14.0);
                 line(17.0, 9.0, 20.0, 11.0);
+            }
+            Self::Brush => {
+                line(3.0, 17.0, 8.0, 10.0);
+                line(8.0, 10.0, 12.0, 14.0);
+                line(12.0, 14.0, 16.0, 7.0);
+                line(16.0, 7.0, 21.0, 11.0);
+            }
+            Self::Pitchfork => {
+                line(5.0, 19.0, 19.0, 5.0);
+                line(3.0, 13.0, 13.0, 3.0);
+                line(11.0, 21.0, 21.0, 11.0);
+                dot(5.0, 19.0, 1.6);
+            }
+            Self::Schiff => {
+                line(5.0, 18.0, 19.0, 6.0);
+                line(3.0, 12.0, 13.0, 2.0);
+                line(11.0, 22.0, 21.0, 12.0);
+                dot(5.0, 18.0, 1.6);
+            }
+            Self::Regression => {
+                line(3.0, 18.0, 21.0, 8.0);
+                line(3.0, 14.0, 21.0, 4.0);
+                line(3.0, 22.0, 21.0, 12.0);
+            }
+            Self::LongPosition => {
+                fill_path(&[(4.0, 5.0), (20.0, 5.0), (20.0, 12.0), (4.0, 12.0)]);
+                line(4.0, 12.0, 20.0, 12.0);
+                round_rect(4.0, 12.0, 20.0, 19.0, 1.0);
+            }
+            Self::ShortPosition => {
+                fill_path(&[(4.0, 12.0), (20.0, 12.0), (20.0, 19.0), (4.0, 19.0)]);
+                line(4.0, 12.0, 20.0, 12.0);
+                round_rect(4.0, 5.0, 20.0, 12.0, 1.0);
             }
             Self::Magnet => {
                 path(&[
@@ -581,6 +632,6 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 49);
+        assert_eq!(Icon::ALL.len(), 55);
     }
 }

@@ -183,10 +183,16 @@ pub enum Tool {
     Arrow,
     Text,
     Measure,
+    Brush,
+    Pitchfork,
+    Schiff,
+    Regression,
+    LongPosition,
+    ShortPosition,
 }
 
 impl Tool {
-    pub const ALL: [Self; 16] = [
+    pub const ALL: [Self; 22] = [
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
@@ -203,6 +209,12 @@ impl Tool {
         Self::Arrow,
         Self::Text,
         Self::Measure,
+        Self::Brush,
+        Self::Pitchfork,
+        Self::Schiff,
+        Self::Regression,
+        Self::LongPosition,
+        Self::ShortPosition,
     ];
 
     #[must_use]
@@ -224,6 +236,12 @@ impl Tool {
             Self::Arrow => Icon::Arrow,
             Self::Text => Icon::Text,
             Self::Measure => Icon::Measure,
+            Self::Brush => Icon::Brush,
+            Self::Pitchfork => Icon::Pitchfork,
+            Self::Schiff => Icon::Schiff,
+            Self::Regression => Icon::Regression,
+            Self::LongPosition => Icon::LongPosition,
+            Self::ShortPosition => Icon::ShortPosition,
         }
     }
 
@@ -246,6 +264,12 @@ impl Tool {
             Self::Arrow => "Arrow",
             Self::Text => "Note",
             Self::Measure => "Measure",
+            Self::Brush => "Brush",
+            Self::Pitchfork => "Pitchfork",
+            Self::Schiff => "Schiff pitchfork",
+            Self::Regression => "Regression trend",
+            Self::LongPosition => "Long position",
+            Self::ShortPosition => "Short position",
         }
     }
 }
@@ -269,6 +293,12 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Arrow => DrawTool::Arrow,
         Tool::Text => DrawTool::Note,
         Tool::Measure => DrawTool::Measure,
+        Tool::Brush => DrawTool::Brush,
+        Tool::Pitchfork => DrawTool::Pitchfork,
+        Tool::Schiff => DrawTool::SchiffPitchfork,
+        Tool::Regression => DrawTool::RegTrend,
+        Tool::LongPosition => DrawTool::LongPos,
+        Tool::ShortPosition => DrawTool::ShortPos,
     }
 }
 
@@ -1402,15 +1432,20 @@ impl TickView {
         };
         let kind = drawing.kind;
         let style = drawing.style.clone();
+        let reg_dev = drawing.reg_dev;
         let fills = kind.supports_fill();
         let has_text = kind == DrawingKind::Note;
-        let approx_h = if has_text {
+        let deviations = kind == DrawingKind::RegTrend;
+        let mut approx_h = if has_text {
             176.0
         } else if fills {
             154.0
         } else {
             132.0
         };
+        if deviations && !has_text && !fills {
+            approx_h += 18.0;
+        }
         let pos = tickchart::clamp_popup(anchor, ui.max_rect(), vec2(236.0, approx_h));
 
         let mut edit: Option<StyleEdit> = None;
@@ -1533,6 +1568,23 @@ impl TickView {
                                     .changed()
                                 {
                                     edit = Some(StyleEdit::FillOpacity(opacity));
+                                }
+                            });
+                        }
+                        if deviations {
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new("DEV")
+                                        .font(font_mono(type_size::TINY))
+                                        .color(p.muted),
+                                );
+                                ui.spacing_mut().slider_width = 105.0;
+                                let mut dev = reg_dev;
+                                if ui
+                                    .add(egui::Slider::new(&mut dev, 0.5..=3.0).step_by(0.1))
+                                    .changed()
+                                {
+                                    edit = Some(StyleEdit::Deviation(dev));
                                 }
                             });
                         }

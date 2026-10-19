@@ -602,6 +602,12 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                             Tool::Arrow => "ARROW",
                             Tool::Text => "NOTE",
                             Tool::Measure => "MEASURE",
+                            Tool::Brush => "BRUSH",
+                            Tool::Pitchfork => "PITCHFORK",
+                            Tool::Schiff => "SCHIFF",
+                            Tool::Regression => "REGRESSION",
+                            Tool::LongPosition => "LONG",
+                            Tool::ShortPosition => "SHORT",
                         })
                         .font(font_mono(type_size::TINY))
                         .color(if app.magnet {
