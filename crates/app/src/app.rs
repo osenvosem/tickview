@@ -90,6 +90,8 @@ pub struct Tab {
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
     pub compare_symbol: Option<Symbol>,
+    /// Drawings are locked against mouse editing.
+    pub locked: bool,
 }
 
 impl Tab {
@@ -116,6 +118,7 @@ impl Tab {
             error: None,
             pending,
             compare_symbol: None,
+            locked: false,
         }
     }
 
@@ -131,28 +134,36 @@ pub enum Tool {
     Crosshair,
     TrendLine,
     Ray,
+    ExtLine,
+    HRay,
     HLine,
     VLine,
     Channel,
     Rect,
     Ellipse,
     Fib,
+    FibExt,
+    Arrow,
     Text,
     Measure,
 }
 
 impl Tool {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 16] = [
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
         Self::Ray,
+        Self::ExtLine,
+        Self::HRay,
         Self::HLine,
         Self::VLine,
         Self::Channel,
         Self::Rect,
         Self::Ellipse,
         Self::Fib,
+        Self::FibExt,
+        Self::Arrow,
         Self::Text,
         Self::Measure,
     ];
@@ -164,12 +175,16 @@ impl Tool {
             Self::Crosshair => Icon::Crosshair,
             Self::TrendLine => Icon::TrendLine,
             Self::Ray => Icon::Ray,
+            Self::ExtLine => Icon::ExtLine,
+            Self::HRay => Icon::HRay,
             Self::HLine => Icon::HLine,
             Self::VLine => Icon::VLine,
             Self::Channel => Icon::Channel,
             Self::Rect => Icon::Rect,
             Self::Ellipse => Icon::Ellipse,
             Self::Fib => Icon::Fib,
+            Self::FibExt => Icon::FibExt,
+            Self::Arrow => Icon::Arrow,
             Self::Text => Icon::Text,
             Self::Measure => Icon::Measure,
         }
@@ -182,13 +197,17 @@ impl Tool {
             Self::Crosshair => "Crosshair",
             Self::TrendLine => "Trend line",
             Self::Ray => "Ray",
+            Self::ExtLine => "Extended line",
+            Self::HRay => "Horizontal ray",
             Self::HLine => "Horizontal line",
             Self::VLine => "Vertical line",
             Self::Channel => "Parallel channel",
             Self::Rect => "Rectangle",
             Self::Ellipse => "Ellipse",
             Self::Fib => "Fib retracement",
-            Self::Text => "Text",
+            Self::FibExt => "Fib extension",
+            Self::Arrow => "Arrow",
+            Self::Text => "Note",
             Self::Measure => "Measure",
         }
     }
@@ -201,12 +220,18 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Crosshair => DrawTool::Crosshair,
         Tool::TrendLine => DrawTool::TrendLine,
         Tool::Ray => DrawTool::Ray,
+        Tool::ExtLine => DrawTool::ExtLine,
+        Tool::HRay => DrawTool::HRay,
         Tool::HLine => DrawTool::HLine,
         Tool::VLine => DrawTool::VLine,
+        Tool::Channel => DrawTool::Channel,
         Tool::Rect => DrawTool::Rect,
         Tool::Ellipse => DrawTool::Ellipse,
         Tool::Fib => DrawTool::Fib,
-        Tool::Channel | Tool::Text | Tool::Measure => DrawTool::Cursor,
+        Tool::FibExt => DrawTool::FibExt,
+        Tool::Arrow => DrawTool::Arrow,
+        Tool::Text => DrawTool::Note,
+        Tool::Measure => DrawTool::Measure,
     }
 }
 
@@ -482,6 +507,8 @@ impl TickView {
                 }
                 tab.chart
                     .restore_drawings(saved.symbol.ticker.clone(), saved.drawings.clone());
+                tab.locked = saved.drawings_locked;
+                tab.chart.locked = tab.locked;
                 tab.compare_symbol = saved.compare.clone();
                 tabs.push(tab);
                 next_tab_id += 1;
@@ -1057,6 +1084,7 @@ impl TickView {
                     spacing: tab.chart.view.spacing,
                     indicators,
                     drawings: tab.chart.drawings_by_symbol(),
+                    drawings_locked: tab.locked,
                     compare: tab.compare_symbol.clone(),
                 }
             })
@@ -1235,6 +1263,7 @@ impl TickView {
                 let tab = &mut self.tabs[ti];
                 tab.chart.tools.set_tool(tool);
                 tab.chart.magnet = magnet;
+                tab.chart.locked = tab.locked;
                 let ev: ChartEvent = tickchart::chart_ui(ui, &mut tab.chart, &tab.candles);
                 if ev.changed {
                     self.dirty_drawings = true;
@@ -2091,5 +2120,22 @@ mod tests {
     fn quote_key_is_exchange_qualified() {
         let s = Symbol::new("AAPL", "NASDAQ", SymbolKind::Stock, "USD");
         assert_eq!(quote_key(&s), "NASDAQ:AAPL");
+    }
+
+    #[test]
+    fn every_rail_tool_maps_to_a_chart_tool() {
+        let mut icons = std::collections::HashSet::new();
+        for tool in Tool::ALL {
+            assert!(!tool.label().is_empty());
+            assert!(icons.insert(tool.icon()), "duplicate icon for {tool:?}");
+            let mapped = draw_tool(tool);
+            if tool == Tool::Cursor {
+                assert_eq!(mapped, DrawTool::Cursor);
+            } else {
+                assert_ne!(mapped, DrawTool::Cursor, "{tool:?} is not wired");
+            }
+        }
+        assert_eq!(draw_tool(Tool::Text), DrawTool::Note);
+        assert_eq!(draw_tool(Tool::Measure), DrawTool::Measure);
     }
 }

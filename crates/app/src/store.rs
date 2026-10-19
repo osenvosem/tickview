@@ -121,6 +121,9 @@ pub struct SavedTab {
     /// Drawings keyed by ticker; switching symbols hides/restores them.
     #[serde(default)]
     pub drawings: BTreeMap<String, Vec<tickchart::Drawing>>,
+    /// Drawings are locked against mouse editing.
+    #[serde(default)]
+    pub drawings_locked: bool,
     /// Optional compare overlay symbol.
     #[serde(default)]
     pub compare: Option<Symbol>,
@@ -211,6 +214,7 @@ impl SavedConfig {
                     log: self.log,
                     right_offset: 0.0,
                     spacing: 8.0,
+                    drawings_locked: false,
                     drawings: BTreeMap::new(),
                     indicators: Vec::new(),
                     compare: None,
@@ -317,6 +321,7 @@ mod tests {
             log: false,
             right_offset: 0.0,
             spacing: 8.0,
+            drawings_locked: false,
             drawings: BTreeMap::new(),
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
@@ -359,6 +364,7 @@ mod tests {
                 log: false,
                 right_offset: 0.0,
                 spacing: 8.0,
+                drawings_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -367,6 +373,45 @@ mod tests {
         };
         let json = serde_json::to_string(&cfg).unwrap();
         let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.tabs[0].drawings["AAPL"], vec![drawing]);
+    }
+
+    #[test]
+    fn saved_tab_round_trips_drawings_lock_and_style() {
+        let mut drawing = tickchart::Drawing::with_c(
+            7,
+            tickchart::DrawingKind::Channel,
+            tickchart::Anchor { t: 0, price: 10.0 },
+            tickchart::Anchor { t: 60, price: 12.0 },
+            tickchart::Anchor {
+                t: 120,
+                price: 15.0,
+            },
+        );
+        drawing.style.color = Some([41, 98, 255, 255]);
+        drawing.style.width = 3;
+        drawing.style.line = tickchart::LineStyle::Dashed;
+        drawing.style.fill_opacity = 40;
+        drawing.style.text = "channel".into();
+
+        let cfg = SavedConfig {
+            tabs: vec![SavedTab {
+                symbol: sample_symbol(),
+                interval: "1D".into(),
+                chart_type: "Candles".into(),
+                log: false,
+                right_offset: 0.0,
+                spacing: 8.0,
+                drawings_locked: true,
+                drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
+                indicators: Vec::new(),
+                compare: None,
+            }],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert!(back.tabs[0].drawings_locked);
         assert_eq!(back.tabs[0].drawings["AAPL"], vec![drawing]);
     }
 
@@ -380,6 +425,7 @@ mod tests {
                 log: false,
                 right_offset: 0.0,
                 spacing: 8.0,
+                drawings_locked: false,
                 drawings: BTreeMap::new(),
                 indicators: Vec::new(),
                 compare: Some(Symbol::new(
@@ -416,6 +462,7 @@ mod tests {
             log: false,
             right_offset: 0.0,
             spacing: 8.0,
+            drawings_locked: false,
             drawings: BTreeMap::new(),
             indicators: Vec::new(),
             compare: None,

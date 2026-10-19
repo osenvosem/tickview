@@ -11,12 +11,16 @@ pub enum Icon {
     Crosshair,
     TrendLine,
     Ray,
+    ExtLine,
+    HRay,
     HLine,
     VLine,
     Channel,
     Rect,
     Ellipse,
     Fib,
+    FibExt,
+    Arrow,
     Text,
     Measure,
     Magnet,
@@ -61,12 +65,16 @@ impl Icon {
         Self::Crosshair,
         Self::TrendLine,
         Self::Ray,
+        Self::ExtLine,
+        Self::HRay,
         Self::HLine,
         Self::VLine,
         Self::Channel,
         Self::Rect,
         Self::Ellipse,
         Self::Fib,
+        Self::FibExt,
+        Self::Arrow,
         Self::Text,
         Self::Measure,
         Self::Magnet,
@@ -111,12 +119,16 @@ impl Icon {
             Self::Crosshair => "crosshair",
             Self::TrendLine => "trend-line",
             Self::Ray => "ray",
+            Self::ExtLine => "extended-line",
+            Self::HRay => "horizontal-ray",
             Self::HLine => "horizontal-line",
             Self::VLine => "vertical-line",
             Self::Channel => "channel",
             Self::Rect => "rectangle",
             Self::Ellipse => "ellipse",
             Self::Fib => "fibonacci",
+            Self::FibExt => "fibonacci-extension",
+            Self::Arrow => "arrow",
             Self::Text => "text",
             Self::Measure => "measure",
             Self::Magnet => "magnet",
@@ -221,6 +233,16 @@ impl Icon {
                 dot(4.0, 20.0, 2.0);
                 fill_path(&[(21.0, 4.0), (16.4, 5.2), (19.8, 8.6)]);
             }
+            Self::ExtLine => {
+                line(3.0, 20.0, 21.0, 4.0);
+                fill_path(&[(3.0, 20.0), (8.2, 18.0), (5.6, 15.4)]);
+                fill_path(&[(21.0, 4.0), (15.8, 6.0), (18.4, 8.6)]);
+            }
+            Self::HRay => {
+                line(4.0, 12.0, 19.0, 12.0);
+                dot(4.0, 12.0, 2.0);
+                fill_path(&[(21.0, 12.0), (15.8, 9.8), (15.8, 14.2)]);
+            }
             Self::HLine => {
                 line(3.0, 12.0, 21.0, 12.0);
                 dot(3.0, 12.0, 1.8);
@@ -250,6 +272,18 @@ impl Icon {
                 line(3.0, 17.0, 21.0, 17.0);
                 line(5.0, 4.0, 19.0, 20.0);
                 dot(19.0, 20.0, 1.6);
+            }
+            Self::FibExt => {
+                line(3.0, 7.0, 14.0, 7.0);
+                line(3.0, 12.0, 18.0, 12.0);
+                line(3.0, 17.0, 22.0, 17.0);
+                line(6.0, 20.0, 18.0, 4.0);
+                dot(6.0, 20.0, 1.6);
+                fill_path(&[(19.0, 3.0), (14.0, 4.4), (17.2, 7.6)]);
+            }
+            Self::Arrow => {
+                line(3.0, 20.0, 18.0, 5.0);
+                fill_path(&[(20.0, 3.0), (14.2, 4.8), (18.2, 8.8)]);
             }
             Self::Text => {
                 line(5.0, 5.0, 19.0, 5.0);
@@ -547,6 +581,6 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 45);
+        assert_eq!(Icon::ALL.len(), 49);
     }
 }

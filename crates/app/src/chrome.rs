@@ -452,12 +452,7 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             ui.vertical_centered(|ui| {
                 ui.spacing_mut().item_spacing.y = 3.0;
                 for (i, tool) in Tool::ALL.iter().enumerate() {
-                    if i == 2 {
-                        ui.add_space(5.0);
-                        widgets::hline(ui, p);
-                        ui.add_space(3.0);
-                    }
-                    if i == 11 {
+                    if matches!(i, 2 | 6 | 9) {
                         ui.add_space(5.0);
                         widgets::hline(ui, p);
                         ui.add_space(3.0);
@@ -473,12 +468,7 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                         tool.label(),
                     );
                     if resp.clicked() {
-                        if matches!(*tool, Tool::Channel | Tool::Text | Tool::Measure) {
-                            app.tool = Tool::Cursor;
-                            app.toast(format!("{} is not available yet", tool.label()));
-                        } else {
-                            app.tool = *tool;
-                        }
+                        app.tool = *tool;
                     }
                 }
 
@@ -500,15 +490,26 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.magnet = !app.magnet;
                     app.persist();
                 }
-                let _ = widgets::icon_button(
+                let locked = app.tabs[app.active].locked;
+                if widgets::icon_button(
                     ui,
                     p,
-                    Icon::Lock,
+                    if locked { Icon::Unlock } else { Icon::Lock },
                     vec2(30.0, 30.0),
-                    false,
-                    false,
-                    "Lock drawings (next phase)",
-                );
+                    locked,
+                    true,
+                    "Lock drawings",
+                )
+                .clicked()
+                {
+                    let tab = &mut app.tabs[app.active];
+                    tab.locked = !locked;
+                    tab.chart.locked = tab.locked;
+                    if tab.locked {
+                        tab.chart.tools.cancel();
+                    }
+                    app.persist();
+                }
             });
         });
 }
@@ -589,13 +590,17 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                             Tool::Crosshair => "CROSSHAIR",
                             Tool::TrendLine => "TREND",
                             Tool::Ray => "RAY",
+                            Tool::ExtLine => "EXT LINE",
+                            Tool::HRay => "H RAY",
                             Tool::HLine => "H-LINE",
                             Tool::VLine => "V-LINE",
                             Tool::Channel => "CHANNEL",
                             Tool::Rect => "RECT",
                             Tool::Ellipse => "ELLIPSE",
                             Tool::Fib => "FIB",
-                            Tool::Text => "TEXT",
+                            Tool::FibExt => "FIB EXT",
+                            Tool::Arrow => "ARROW",
+                            Tool::Text => "NOTE",
                             Tool::Measure => "MEASURE",
                         })
                         .font(font_mono(type_size::TINY))

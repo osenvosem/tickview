@@ -16,7 +16,9 @@ pub use barfmt::{fmt_compact, fmt_price};
 pub use chart::ui as chart_ui;
 pub use chart::{ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind};
 pub use compare::CompareSeries;
-pub use drawings::{Anchor, DrawTool, Drawing, DrawingKind, DrawingToolState};
+pub use drawings::{
+    Anchor, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState, LineStyle,
+};
 
 pub use painter::{ChartType, Palette};
 pub use priceaxis::{PriceAxis, PriceTick, nice_step};
