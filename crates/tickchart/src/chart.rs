@@ -266,16 +266,19 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
 
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
-        let ax = pane_axis(pane, cd, &st.panes, pi, (vs, ve), st.log_scale, r.height());
-        painter::draw_price_grid(&p, r, &ax, font_sm.clone(), &pal);
+        let ax = pane_axis(pane, cd, &st.panes, pi, (vs, ve), st.log_scale, r.height())
+            .with_offset(r.min.y);
+        let compact = pane.kind == PaneKind::Volume;
+        painter::draw_price_grid(&p, r, &ax, font_sm.clone(), &pal, compact);
+        let pp = p.clone().with_clip_rect(r);
         match pane.kind {
             PaneKind::Price => {
-                painter::draw_bars(&p, &st.view, &ax, cd, st.chart_type, &pal);
+                painter::draw_bars(&pp, &st.view, &ax, cd, st.chart_type, &pal);
             }
             PaneKind::Volume => {
                 let col = volume_color(cd, &st.view, vs, ve, &pal);
                 let colw = painter::body_width(st.view.spacing);
-                draw_volume(&p, &st.view, &ax, cd, col, colw);
+                draw_volume(&pp, &st.view, &ax, cd, col, colw);
             }
             PaneKind::Indicator(_) => {}
         }
@@ -307,7 +310,8 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
 
     // Last price line + axis tag.
     if let Some(&last) = cd.c.last() {
-        let ax = price_axis_for(price_lo, price_hi, st.log_scale, rects[0].1.height());
+        let ax = price_axis_for(price_lo, price_hi, st.log_scale, rects[0].1.height())
+            .with_offset(rects[0].1.min.y);
         let y = ax.y_of(last);
         let prev = cd.c.len().saturating_sub(2);
         let col = if cd.c[prev] <= last { pal.up } else { pal.down };
@@ -395,7 +399,28 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         let mut x = r.min.x + 4.0;
         let y = r.min.y + 3.0;
         if pane.kind == PaneKind::Price {
-            let head = format!("{} · {}", st.symbol, st.interval);
+            let i = st
+                .hover
+                .unwrap_or(cd.len().saturating_sub(1))
+                .min(cd.len().saturating_sub(1));
+            let head = if cd.len() > 0 && cd.c[i].is_finite() {
+                format!(
+                    "{} · {}   O {:.2}  H {:.2}  L {:.2}  C {:.2}  {:+.2}%",
+                    st.symbol,
+                    st.interval,
+                    cd.o[i],
+                    cd.h[i],
+                    cd.l[i],
+                    cd.c[i],
+                    if i > 0 && cd.c[i - 1] != 0.0 {
+                        (cd.c[i] - cd.c[i - 1]) / cd.c[i - 1] * 100.0
+                    } else {
+                        0.0
+                    }
+                )
+            } else {
+                format!("{} · {}", st.symbol, st.interval)
+            };
             let hr = p.text(
                 Pos2::new(x + 4.0, y + 2.0),
                 Align2::LEFT_TOP,

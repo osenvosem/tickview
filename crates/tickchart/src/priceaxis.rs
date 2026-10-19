@@ -7,6 +7,8 @@ pub struct PriceAxis {
     pub max: f64,
     pub log: bool,
     pub height_px: f32,
+    /// Absolute y of the pane's top edge on screen.
+    pub y_offset: f32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -68,7 +70,15 @@ impl PriceAxis {
             max: hi,
             log: log && lo > 0.0,
             height_px,
+            y_offset: 0.0,
         }
+    }
+
+    /// Shift all screen y by `off` (pane top edge).
+    #[must_use]
+    pub fn with_offset(mut self, off: f32) -> Self {
+        self.y_offset = off;
+        self
     }
 
     #[must_use]
@@ -76,16 +86,16 @@ impl PriceAxis {
         if self.log {
             let (l0, l1) = (self.min.ln(), self.max.ln());
             let t = (p.ln() - l0) / (l1 - l0);
-            ((1.0 - t) * self.height_px as f64) as f32
+            ((1.0 - t) * self.height_px as f64) as f32 + self.y_offset
         } else {
             let t = (p - self.min) / (self.max - self.min);
-            ((1.0 - t) * self.height_px as f64) as f32
+            ((1.0 - t) * self.height_px as f64) as f32 + self.y_offset
         }
     }
 
     #[must_use]
     pub fn price_of(&self, y: f32) -> f64 {
-        let t = 1.0 - y as f64 / self.height_px as f64;
+        let t = 1.0 - (y - self.y_offset) as f64 / self.height_px as f64;
         if self.log {
             let (l0, l1) = (self.min.ln(), self.max.ln());
             (l0 + (l1 - l0) * t).exp()

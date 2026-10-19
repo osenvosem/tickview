@@ -106,6 +106,9 @@ struct TickView {
     alert_cond: usize,
     toast: Option<String>,
 
+    snap: Option<std::path::PathBuf>,
+    frames: usize,
+    data_frames: usize,
     poll_every: Duration,
     next_poll: Instant,
     next_watch: Instant,
@@ -184,9 +187,11 @@ impl TickView {
         let (jt, jr) = bounded::<Job>(64);
         let (mt, mr) = bounded::<Msg>(256);
 
-        // history/quote worker
-        {
+        // history/quote workers
+        for _ in 0..4 {
             let hub = Arc::clone(&hub);
+            let jr = jr.clone();
+            let mt = mt.clone();
             std::thread::spawn(move || {
                 let agent = ureq::Agent::config_builder()
                     .user_agent("TickView/0.1")
@@ -276,6 +281,9 @@ impl TickView {
             alert_price: 0.0,
             alert_cond: 0,
             toast: None,
+            snap: std::env::var_os("TICKVIEW_SNAPSHOT").map(std::path::PathBuf::from),
+            frames: 0,
+            data_frames: 0,
             poll_every: Duration::from_secs(5),
             next_poll: Instant::now() + Duration::from_secs(5),
             next_watch: Instant::now(),
@@ -497,6 +505,27 @@ impl eframe::App for TickView {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.drain(ctx);
         self.poll();
+
+        // self-window screenshot smoke hook (TICKVIEW_SNAPSHOT=/path/out.bmp)
+        self.frames += 1;
+        if self.snap.is_some() && !self.loading {
+            self.data_frames += 1;
+        }
+        if self.snap.is_some() {
+            if self.data_frames == 12 {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(7u64)));
+            }
+            let evs = ctx.input_mut(|i| std::mem::take(&mut i.events));
+            for ev in evs {
+                if let egui::Event::Screenshot { image, .. } = ev {
+                    if let Some(path) = self.snap.take() {
+                        let _ = write_bmp(&path, &image);
+                        self.status = format!("snapshot → {}", path.display());
+                    }
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            }
+        }
 
         // top bar
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
@@ -997,6 +1026,38 @@ impl eframe::App for TickView {
     fn save(&mut self, _storage: &mut dyn eframe::Storage) {
         self.persist();
     }
+}
+
+fn write_bmp(path: &std::path::Path, img: &egui::ColorImage) -> std::io::Result<()> {
+    use std::io::Write;
+    let w = img.size[0] as i32;
+    let h = img.size[1] as i32;
+    let row = ((w * 3 + 3) / 4 * 4) as usize;
+    let size = 54 + row * h as usize;
+    let mut f = std::fs::File::create(path)?;
+    let mut hdr = [0u8; 54];
+    hdr[0..2].copy_from_slice(b"BM");
+    hdr[2..6].copy_from_slice(&(size as u32).to_le_bytes());
+    hdr[10..14].copy_from_slice(&54u32.to_le_bytes());
+    hdr[14..18].copy_from_slice(&40u32.to_le_bytes());
+    hdr[18..22].copy_from_slice(&w.to_le_bytes());
+    hdr[22..26].copy_from_slice(&h.to_le_bytes());
+    hdr[26..28].copy_from_slice(&1u16.to_le_bytes());
+    hdr[28..30].copy_from_slice(&24u16.to_le_bytes());
+    hdr[34..38].copy_from_slice(&((row * h as usize) as u32).to_le_bytes());
+    f.write_all(&hdr)?;
+    let mut buf = vec![0u8; row];
+    for yb in 0..h {
+        let ys = (h - 1 - yb) as usize;
+        for x in 0..w as usize {
+            let px = img.pixels[ys * w as usize + x];
+            buf[x * 3] = px.b();
+            buf[x * 3 + 1] = px.g();
+            buf[x * 3 + 2] = px.r();
+        }
+        f.write_all(&buf)?;
+    }
+    Ok(())
 }
 
 fn ui_to_painter(ctx: &egui::Context) -> egui::Painter {

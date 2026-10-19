@@ -274,7 +274,14 @@ pub fn draw_series(
 }
 
 /// Horizontal grid lines + price labels (labels to the right of `clip`).
-pub fn draw_price_grid(p: &Painter, clip: Rect, ax: &PriceAxis, font: FontId, pal: &Palette) {
+pub fn draw_price_grid(
+    p: &Painter,
+    clip: Rect,
+    ax: &PriceAxis,
+    font: FontId,
+    pal: &Palette,
+    compact: bool,
+) {
     let stroke = Stroke::new(1.0f32, pal.grid);
     for t in ax.ticks(7) {
         let y = ax.y_of(t.value);
@@ -282,7 +289,11 @@ pub fn draw_price_grid(p: &Painter, clip: Rect, ax: &PriceAxis, font: FontId, pa
         p.text(
             Pos2::new(clip.max.x + 4.0, y),
             egui::Align2::LEFT_CENTER,
-            crate::fmt_price(t.value).as_str(),
+            if compact {
+                crate::fmt_compact(t.value)
+            } else {
+                crate::fmt_price(t.value)
+            },
             font.clone(),
             pal.text,
         );
