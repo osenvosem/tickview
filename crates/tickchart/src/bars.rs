@@ -48,7 +48,8 @@ impl View {
             return (0, 0);
         }
         let last_x = self.x_of(self.count - 1);
-        let end = ((self.width - last_x) / self.spacing).ceil() as usize + (self.count - 1);
+        let end_f = ((self.width - last_x) / self.spacing).ceil();
+        let end = (end_f as i64 + self.count as i64 - 1).clamp(0, self.count as i64) as usize;
         let start_f = ((self.count - 1) as f32) - (last_x / self.spacing);
         let start = if start_f <= 1.0 {
             0usize
@@ -87,6 +88,17 @@ impl View {
     /// Pan by dx px (positive = drag content right = show older bars).
     pub fn pan(&mut self, dx: f32) {
         self.right_offset = (self.right_offset + dx).max(0.0);
+    }
+
+    /// Fit index range `[bi0, bi1)` to the plot width. The newest bars may
+    /// leave the right edge (negative offset) so history windows display fully.
+    pub fn fit(&mut self, bi0: usize, bi1: usize) {
+        let n = bi1.saturating_sub(bi0);
+        if n < 2 || self.count == 0 || bi1 > self.count || self.width <= 0.0 {
+            return;
+        }
+        self.spacing = (self.width / n as f32).clamp(MIN_SPACING, MAX_SPACING);
+        self.right_offset = self.width - (self.count as f32 - 1.0 - bi0 as f32) * self.spacing;
     }
 }
 
@@ -131,6 +143,26 @@ mod tests {
         assert_eq!(z.spacing, MAX_SPACING);
         z.zoom_at(200.0, 0.0001);
         assert_eq!(z.spacing, MIN_SPACING);
+    }
+
+    #[test]
+    fn fit_anchors_range_to_plot_width() {
+        let mut v = View::new(400.0, 100);
+        v.fit(10, 21);
+        assert!((v.spacing - 400.0 / 11.0).abs() < 1e-3);
+        assert!((v.right_offset - (400.0 - 89.0 * v.spacing)).abs() < 1e-3);
+        let (s, e) = v.visible();
+        assert!(s == 9 || s == 10, "start {s}");
+        assert!((20..=21).contains(&e), "end {e}");
+    }
+
+    #[test]
+    fn fit_ignores_degenerate_and_out_of_range() {
+        let mut v = View::new(400.0, 3);
+        v.fit(2, 2);
+        v.fit(5, 9);
+        assert_eq!(v.right_offset, 24.0);
+        assert_eq!(v.spacing, 6.0);
     }
 
     #[test]

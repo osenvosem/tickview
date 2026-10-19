@@ -58,6 +58,12 @@ pub struct ChartState {
     pub locked: bool,
     /// Last screen rect of the floating drawing toolbar; clicks there are not chart clicks.
     pub popup_rect: Option<Rect>,
+    /// Price range override from rectangle zoom (price space).
+    pub price_zoom: Option<(f64, f64)>,
+    /// Live rectangle-zoom selection in screen space.
+    pub zoom_sel: Option<(Pos2, Pos2)>,
+    /// Whether the last primary press happened with shift (rect-zoom arm).
+    zoom_pending: bool,
     pub compare: Option<CompareSeries>,
     symbol_drawings: BTreeMap<String, Vec<Drawing>>,
     crosshair_pos: Option<Pos2>,
@@ -112,6 +118,9 @@ impl ChartState {
             magnet: false,
             locked: false,
             popup_rect: None,
+            price_zoom: None,
+            zoom_sel: None,
+            zoom_pending: false,
             compare: None,
             symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
@@ -365,17 +374,20 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
 
     // Time grid + axis labels.
     let (vs, ve) = st.view.visible();
-    let price_axis = pane_axis(
-        &st.panes[0],
-        cd,
-        &st.panes,
-        0,
-        (vs, ve),
-        st.log_scale,
-        price_rect.height(),
-        st.compare.as_ref(),
-    )
-    .with_offset(price_rect.min.y);
+    let price_axis = apply_price_zoom(
+        pane_axis(
+            &st.panes[0],
+            cd,
+            &st.panes,
+            0,
+            (vs, ve),
+            st.log_scale,
+            price_rect.height(),
+            st.compare.as_ref(),
+        )
+        .with_offset(price_rect.min.y),
+        st.price_zoom,
+    );
     let mut x_ticks: Vec<f32> = Vec::new();
     if vs < ve && cd.len() > 1 {
         let t0 = cd.t[vs];
@@ -405,17 +417,20 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     // Pane scales + draw.
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
-        let ax = pane_axis(
-            pane,
-            cd,
-            &st.panes,
-            pi,
-            (vs, ve),
-            st.log_scale,
-            r.height(),
-            st.compare.as_ref(),
-        )
-        .with_offset(r.min.y);
+        let ax = apply_price_zoom(
+            pane_axis(
+                pane,
+                cd,
+                &st.panes,
+                pi,
+                (vs, ve),
+                st.log_scale,
+                r.height(),
+                st.compare.as_ref(),
+            )
+            .with_offset(r.min.y),
+            if pi == 0 { st.price_zoom } else { None },
+        );
         let compact = pane.kind == PaneKind::Volume;
         painter::draw_price_grid(&p, r, &ax, font_sm.clone(), &pal, compact);
         let pp = p.clone().with_clip_rect(r);
@@ -479,6 +494,17 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         &pal,
         font_sm.clone(),
     );
+
+    if let Some((a, b)) = st.zoom_sel {
+        let sel = Rect::from_two_pos(a, b);
+        p.rect_filled(sel, 0.0, Color32::from_rgba_unmultiplied(120, 170, 255, 28));
+        p.rect_stroke(
+            sel,
+            0.0,
+            Stroke::new(1.0, pal.crosshair),
+            egui::StrokeKind::Inside,
+        );
+    }
 
     ev.drawing_toolbar_pos = st
         .tools
@@ -718,6 +744,22 @@ fn handle_input(
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
 
+    if ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary)) {
+        st.zoom_pending = ctx.input(|i| {
+            i.modifiers.shift
+                || i.events.iter().any(|e| {
+                    matches!(
+                        e,
+                        egui::Event::PointerButton {
+                            modifiers: m,
+                            pressed: true,
+                            ..
+                        } if m.shift
+                    )
+                })
+        });
+    }
+
     // Live preview of the second/third anchor.
     if !st.locked
         && (st.tools.draft.is_some() || st.tools.measure.is_some())
@@ -732,10 +774,13 @@ fn handle_input(
         if ctx.input(|i| i.key_pressed(egui::Key::Escape))
             && (st.tools.draft.is_some()
                 || st.tools.selected.is_some()
-                || st.tools.measure.is_some())
+                || st.tools.measure.is_some()
+                || st.price_zoom.is_some())
         {
             st.tools.cancel();
             st.drag_drawing = None;
+            st.zoom_sel = None;
+            st.price_zoom = None;
         }
         if !st.locked
             && (ctx.input(|i| i.key_pressed(egui::Key::Delete))
@@ -749,6 +794,19 @@ fn handle_input(
     if resp.drag_started() {
         st.drag_pane = None;
         st.drag_drawing = None;
+        let shift_press = st.zoom_pending;
+        if let Some(pos) = press
+            && price_rect.contains(pos)
+            && !over_popup
+        {
+            if shift_press && !drawing_tool {
+                st.zoom_sel = Some((pos, pos));
+            } else if drawing_tool && st.tools.tool == crate::drawings::DrawTool::Brush {
+                if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false) {
+                    st.tools.begin_brush(anchor);
+                }
+            }
+        }
         if !over_popup
             && let Some(pos) = press
             && !drawing_tool
@@ -781,7 +839,14 @@ fn handle_input(
     }
 
     if resp.dragged() {
-        if let Some(drag) = &mut st.drag_drawing {
+        if let Some(sel) = &mut st.zoom_sel {
+            if let Some(pos) = pointer {
+                sel.1 = Pos2::new(
+                    pos.x.clamp(price_rect.min.x, price_rect.max.x),
+                    pos.y.clamp(price_rect.min.y, price_rect.max.y),
+                );
+            }
+        } else if let Some(drag) = &mut st.drag_drawing {
             if let Some(pos) = pointer
                 && price_rect.contains(pos)
                 && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
@@ -794,6 +859,14 @@ fn handle_input(
                     ev.changed = true;
                 }
             }
+        } else if drawing_tool
+            && st.tools.tool == crate::drawings::DrawTool::Brush
+            && st.tools.draft.is_some()
+            && let Some(pos) = pointer
+            && price_rect.contains(pos)
+            && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
+        {
+            st.tools.push_brush(anchor);
         } else if let Some(dp) = st.drag_pane {
             if dp < st.panes.len().saturating_sub(1) {
                 let dy = resp.drag_delta().y;
@@ -810,6 +883,28 @@ fn handle_input(
     if resp.drag_stopped() || (!resp.dragged() && resp.changed()) {
         st.drag_pane = None;
         st.drag_drawing = None;
+        if let Some((a, b)) = st.zoom_sel.take() {
+            let sel = Rect::from_two_pos(a, b);
+            if sel.width() >= 8.0 && sel.height() >= 8.0 {
+                let lo = ax.price_of(sel.max.y);
+                let hi = ax.price_of(sel.min.y);
+                if lo.is_finite() && hi.is_finite() && lo < hi {
+                    st.price_zoom = Some((lo, hi));
+                }
+                if let (Some(i0), Some(i1)) =
+                    (st.view.index_at(sel.min.x), st.view.index_at(sel.max.x))
+                {
+                    st.view.fit(i0, (i1 + 1).min(st.view.count.max(i0 + 2)));
+                }
+            }
+        }
+        if st.tools.tool == crate::drawings::DrawTool::Brush && st.tools.draft.is_some() {
+            if let Some(drawing) = st.tools.finish_brush() {
+                st.tools.selected = Some(drawing.id);
+                st.drawings.push(drawing);
+                ev.changed = true;
+            }
+        }
     }
 
     // Click: place a drawing, or select/deselect under the cursor.
@@ -820,7 +915,9 @@ fn handle_input(
         && pos.y > price_rect.min.y + 26.0
     {
         if drawing_tool {
-            if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
+            if st.tools.tool == crate::drawings::DrawTool::Brush {
+                st.tools.cancel();
+            } else if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
                 if st.tools.tool == crate::drawings::DrawTool::Measure {
                     st.tools.measure_click(anchor);
                 } else if let Some(drawing) = st.tools.click(anchor) {
@@ -839,6 +936,7 @@ fn handle_input(
     if resp.double_clicked() && !drawing_tool {
         st.view.right_offset = 0.0;
         st.view.spacing = 8.0;
+        st.price_zoom = None;
     }
 
     // Wheel: plain/ctrl zoom time, shift pans.
@@ -872,6 +970,13 @@ fn handle_input(
         if ctx.input(|i| i.key_pressed(egui::Key::ArrowRight)) {
             st.view.pan(-step);
         }
+    }
+}
+
+fn apply_price_zoom(ax: PriceAxis, zoom: Option<(f64, f64)>) -> PriceAxis {
+    match zoom {
+        Some((lo, hi)) => ax.with_range(lo, hi),
+        None => ax,
     }
 }
 
@@ -1420,5 +1525,147 @@ mod tests {
         assert!((st.panes[2].height_frac - 0.28).abs() < 1e-6);
         let sum: f32 = st.panes.iter().map(|p| p.height_frac).sum();
         assert!((sum - 1.0).abs() < 1e-6);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn drag(
+        ctx: &egui::Context,
+        st: &mut ChartState,
+        cd: &Candles,
+        from: Pos2,
+        to: Pos2,
+        modifiers: egui::Modifiers,
+    ) -> ChartEvent {
+        let press = |pos: Pos2, pressed: bool| egui::Event::PointerButton {
+            pos,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers,
+        };
+        frame(ctx, st, cd, vec![egui::Event::PointerMoved(from)]);
+        frame(ctx, st, cd, vec![press(from, true)]);
+        let mid = Pos2::new((from.x + to.x) * 0.5, (from.y + to.y) * 0.5);
+        frame(ctx, st, cd, vec![egui::Event::PointerMoved(mid)]);
+        let ev_mid = frame(ctx, st, cd, vec![egui::Event::PointerMoved(to)]);
+        frame(ctx, st, cd, vec![press(to, false)]);
+        ev_mid
+    }
+
+    #[test]
+    fn brush_drag_creates_freehand_polyline() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::Brush);
+        drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(799.0, 200.0),
+            Pos2::new(812.0, 300.0),
+            egui::Modifiers::default(),
+        );
+        assert_eq!(st.drawings.len(), 1);
+        let d = &st.drawings[0];
+        assert_eq!(d.kind, crate::drawings::DrawingKind::Brush);
+        assert!(d.extra.len() >= 2, "freehand captures many points");
+        assert!(st.tools.selected.is_some());
+    }
+
+    #[test]
+    fn brush_press_without_motion_creates_nothing() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::Brush);
+        click(&ctx, &mut st, &cd, Pos2::new(300.0, 250.0));
+        assert!(st.drawings.is_empty());
+        assert!(st.tools.draft.is_none());
+    }
+
+    #[test]
+    fn brush_ignored_while_locked() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.locked = true;
+        st.tools.set_tool(crate::drawings::DrawTool::Brush);
+        drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(799.0, 200.0),
+            Pos2::new(812.0, 300.0),
+            egui::Modifiers::default(),
+        );
+        assert!(st.drawings.is_empty());
+    }
+
+    #[test]
+    fn shift_drag_release_zooms_price_and_time() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        let ev = drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(800.0, 240.0),
+            Pos2::new(814.0, 180.0),
+            egui::Modifiers::SHIFT,
+        );
+        assert!(!ev.changed, "view zoom must not mark drawings dirty");
+        let (lo, hi) = st.price_zoom.expect("price zoom applied");
+        assert!(lo < hi);
+        assert!(st.view.spacing > 6.0, "time zooms into selection");
+        assert_eq!(st.zoom_sel, None);
+    }
+
+    #[test]
+    fn tiny_shift_drag_cancels_selection() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        let sp0 = st.view.spacing;
+        drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(120.0, 240.0),
+            Pos2::new(126.0, 244.0),
+            egui::Modifiers::SHIFT,
+        );
+        assert!(st.price_zoom.is_none());
+        assert_eq!(st.view.spacing, sp0);
+    }
+
+    #[test]
+    fn escape_clears_price_zoom_override() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(800.0, 240.0),
+            Pos2::new(814.0, 180.0),
+            egui::Modifiers::SHIFT,
+        );
+        assert!(st.price_zoom.is_some());
+        let key = egui::Event::Key {
+            key: egui::Key::Escape,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::default(),
+        };
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(Pos2::new(520.0, 180.0)), key],
+        );
+        assert!(st.price_zoom.is_none());
     }
 }

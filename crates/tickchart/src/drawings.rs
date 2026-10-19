@@ -343,6 +343,37 @@ impl DrawingToolState {
         }
     }
 
+    /// Start capturing freehand points (brush drag press).
+    pub fn begin_brush(&mut self, anchor: Anchor) {
+        self.draft = Some(Draft {
+            kind: DrawingKind::Brush,
+            a: anchor,
+            b: anchor,
+            c: None,
+            count: 1,
+            extra: Vec::new(),
+        });
+    }
+
+    /// Append one captured point to the brush draft.
+    pub fn push_brush(&mut self, anchor: Anchor) {
+        if let Some(draft) = &mut self.draft
+            && draft.kind == DrawingKind::Brush
+        {
+            draft.b = anchor;
+            draft.extra.push(anchor);
+        }
+    }
+
+    /// Finish the brush draft; requires at least two captured points.
+    pub fn finish_brush(&mut self) -> Option<Drawing> {
+        let draft = self.draft.as_ref()?;
+        if draft.kind != DrawingKind::Brush || draft.extra.len() < 2 {
+            return None;
+        }
+        self.finish()
+    }
+
     /// First click starts a measurement; a second click finalizes it.
     pub fn measure_click(&mut self, anchor: Anchor) -> bool {
         if self.measure.as_ref().is_none_or(|m| m.done) {
@@ -502,10 +533,12 @@ fn default_reg_dev() -> f32 {
 #[must_use]
 pub fn kind_defaults(kind: DrawingKind) -> DrawingStyle {
     match kind {
-        DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => DrawingStyle {
-            fill: false,
-            ..DrawingStyle::default()
-        },
+        DrawingKind::Brush | DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
+            DrawingStyle {
+                fill: false,
+                ..DrawingStyle::default()
+            }
+        }
         _ => DrawingStyle::default(),
     }
 }
