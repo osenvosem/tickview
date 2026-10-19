@@ -26,10 +26,16 @@ pub enum DrawingKind {
     FibExt,
     Arrow,
     Note,
+    Brush,
+    Pitchfork,
+    SchiffPitchfork,
+    RegTrend,
+    LongPosition,
+    ShortPosition,
 }
 
 impl DrawingKind {
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 19] = [
         Self::TrendLine,
         Self::Ray,
         Self::ExtLine,
@@ -43,6 +49,12 @@ impl DrawingKind {
         Self::FibExt,
         Self::Arrow,
         Self::Note,
+        Self::Brush,
+        Self::Pitchfork,
+        Self::SchiffPitchfork,
+        Self::RegTrend,
+        Self::LongPosition,
+        Self::ShortPosition,
     ];
 
     #[must_use]
@@ -61,6 +73,12 @@ impl DrawingKind {
             Self::FibExt => "Fib extension",
             Self::Arrow => "Arrow",
             Self::Note => "Note",
+            Self::Brush => "Brush",
+            Self::Pitchfork => "Pitchfork",
+            Self::SchiffPitchfork => "Schiff Pitchfork",
+            Self::RegTrend => "Regression trend",
+            Self::LongPosition => "Long position",
+            Self::ShortPosition => "Short position",
         }
     }
 
@@ -68,8 +86,13 @@ impl DrawingKind {
     #[must_use]
     pub fn points(self) -> u8 {
         match self {
-            Self::HLine | Self::VLine | Self::HRay | Self::Note => 1,
-            Self::Channel | Self::FibExt => 3,
+            Self::HLine | Self::VLine | Self::HRay | Self::Note | Self::Brush => 1,
+            Self::Channel
+            | Self::FibExt
+            | Self::Pitchfork
+            | Self::SchiffPitchfork
+            | Self::LongPosition
+            | Self::ShortPosition => 3,
             _ => 2,
         }
     }
@@ -77,7 +100,13 @@ impl DrawingKind {
     /// Whether this kind paints a filled body.
     #[must_use]
     pub fn supports_fill(self) -> bool {
-        matches!(self, Self::Rect | Self::Channel)
+        matches!(self, Self::Rect | Self::Channel | Self::RegTrend)
+    }
+
+    /// Whether creation is a drag-capture gesture instead of discrete clicks.
+    #[must_use]
+    pub fn is_drag(self) -> bool {
+        matches!(self, Self::Brush)
     }
 }
 
@@ -100,11 +129,17 @@ pub enum DrawTool {
     FibExt,
     Arrow,
     Note,
+    Brush,
+    Pitchfork,
+    SchiffPitchfork,
+    RegTrend,
+    LongPos,
+    ShortPos,
     Measure,
 }
 
 impl DrawTool {
-    pub const ALL: [Self; 16] = [
+    pub const ALL: [Self; 22] = [
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
@@ -121,6 +156,12 @@ impl DrawTool {
         Self::Arrow,
         Self::Note,
         Self::Measure,
+        Self::Brush,
+        Self::Pitchfork,
+        Self::SchiffPitchfork,
+        Self::RegTrend,
+        Self::LongPos,
+        Self::ShortPos,
     ];
 
     #[must_use]
@@ -141,6 +182,12 @@ impl DrawTool {
             Self::FibExt => "Fib extension",
             Self::Arrow => "Arrow",
             Self::Note => "Note",
+            Self::Brush => "Brush",
+            Self::Pitchfork => "Pitchfork",
+            Self::SchiffPitchfork => "Schiff Pitchfork",
+            Self::RegTrend => "Regression trend",
+            Self::LongPos => "Long position",
+            Self::ShortPos => "Short position",
             Self::Measure => "Measure",
         }
     }
@@ -162,6 +209,12 @@ impl DrawTool {
             Self::FibExt => Some(DrawingKind::FibExt),
             Self::Arrow => Some(DrawingKind::Arrow),
             Self::Note => Some(DrawingKind::Note),
+            Self::Brush => Some(DrawingKind::Brush),
+            Self::Pitchfork => Some(DrawingKind::Pitchfork),
+            Self::SchiffPitchfork => Some(DrawingKind::SchiffPitchfork),
+            Self::RegTrend => Some(DrawingKind::RegTrend),
+            Self::LongPos => Some(DrawingKind::LongPosition),
+            Self::ShortPos => Some(DrawingKind::ShortPosition),
         }
     }
 
@@ -173,13 +226,14 @@ impl DrawTool {
 }
 
 /// In-progress one-to-three-click drawing.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Draft {
     pub kind: DrawingKind,
     pub a: Anchor,
     pub b: Anchor,
     pub c: Option<Anchor>,
     pub count: u8,
+    pub extra: Vec<Anchor>,
 }
 
 /// Transient two-click price/time measurement.
@@ -250,6 +304,7 @@ impl DrawingToolState {
             b: anchor,
             c: None,
             count: 1,
+            extra: Vec::new(),
         });
         if kind.points() == 1 {
             self.finish()
@@ -423,6 +478,18 @@ pub struct Drawing {
     pub c: Option<Anchor>,
     #[serde(default)]
     pub style: DrawingStyle,
+    /// Freehand polyline vertices beyond `a` (brush strokes). Timestamped like anchors.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extra: Vec<Anchor>,
+    /// Regression channel band multiplier (regression trend only).
+    #[serde(default = "default_reg_dev")]
+    pub reg_dev: f32,
+}
+
+/// Regression channel band multiplier default.
+#[must_use]
+fn default_reg_dev() -> f32 {
+    1.0
 }
 
 impl Drawing {
@@ -435,6 +502,9 @@ impl Drawing {
             b,
             c: None,
             style: DrawingStyle::default(),
+
+            extra: Vec::new(),
+            reg_dev: default_reg_dev(),
         }
     }
 
@@ -447,11 +517,18 @@ impl Drawing {
             b,
             c: Some(c),
             style: DrawingStyle::default(),
+            extra: Vec::new(),
+            reg_dev: default_reg_dev(),
         }
     }
 
     #[must_use]
     pub fn last_anchor(&self) -> Anchor {
+        if self.kind == DrawingKind::Brush {
+            if let Some(&last) = self.extra.last() {
+                return last;
+            }
+        }
         self.c.unwrap_or(self.b)
     }
 
@@ -465,6 +542,12 @@ impl Drawing {
         let a = map(self.a);
         let b = map(self.b);
         match self.kind {
+            DrawingKind::Brush
+            | DrawingKind::Pitchfork
+            | DrawingKind::SchiffPitchfork
+            | DrawingKind::RegTrend
+            | DrawingKind::LongPosition
+            | DrawingKind::ShortPosition => false,
             DrawingKind::TrendLine => distance_to_segment(p, a, b) <= TOL,
             DrawingKind::Ray => self
                 .ray_geometry(map, plot)
@@ -704,6 +787,8 @@ pub fn paint(
             b: draft.b,
             c: draft.c,
             style: DrawingStyle::default(),
+            extra: draft.extra.clone(),
+            reg_dev: default_reg_dev(),
         };
         draw_one(&p, &d, true, true, cd, view, axis, plot, pal, font.clone());
     }
@@ -862,6 +947,12 @@ fn draw_one(
                 Stroke::new(0.5, color),
             ));
         }
+        DrawingKind::Brush
+        | DrawingKind::Pitchfork
+        | DrawingKind::SchiffPitchfork
+        | DrawingKind::RegTrend
+        | DrawingKind::LongPosition
+        | DrawingKind::ShortPosition => {}
         DrawingKind::Note => {
             let rect = note_rect(pa, &d.style.text);
             p.rect_filled(rect, 4.0, pal.bg);
@@ -1006,6 +1097,11 @@ pub fn move_drawing(d: &mut Drawing, from: Anchor, to: Anchor, cd: &Candles) -> 
     let di = to_i as i64 - from_i as i64;
     let dp = to.price - from.price;
     for anchor in [&mut d.a, &mut d.b] {
+        if !shift_anchor(anchor, di, dp, cd) {
+            return false;
+        }
+    }
+    for anchor in &mut d.extra {
         if !shift_anchor(anchor, di, dp, cd) {
             return false;
         }
@@ -1336,6 +1432,12 @@ mod tests {
             DrawingKind::FibExt => DrawTool::FibExt,
             DrawingKind::Arrow => DrawTool::Arrow,
             DrawingKind::Note => DrawTool::Note,
+            DrawingKind::Brush => DrawTool::Brush,
+            DrawingKind::Pitchfork => DrawTool::Pitchfork,
+            DrawingKind::SchiffPitchfork => DrawTool::SchiffPitchfork,
+            DrawingKind::RegTrend => DrawTool::RegTrend,
+            DrawingKind::LongPosition => DrawTool::LongPos,
+            DrawingKind::ShortPosition => DrawTool::ShortPos,
         }
     }
 
@@ -1657,5 +1759,44 @@ mod tests {
         let tiny = Rect::from_min_size(Pos2::ZERO, Vec2::new(40.0, 30.0));
         let forced = clamp_popup(Pos2::new(35.0, 25.0), tiny, Vec2::new(160.0, 120.0));
         assert!(forced.x >= tiny.min.x && forced.y >= tiny.min.y);
+    }
+
+    #[test]
+    fn new_kinds_report_points_and_drag() {
+        assert_eq!(DrawingKind::Pitchfork.points(), 3);
+        assert_eq!(DrawingKind::SchiffPitchfork.points(), 3);
+        assert_eq!(DrawingKind::LongPosition.points(), 3);
+        assert_eq!(DrawingKind::ShortPosition.points(), 3);
+        assert_eq!(DrawingKind::RegTrend.points(), 2);
+        assert!(DrawingKind::Brush.is_drag());
+        assert!(!DrawingKind::TrendLine.is_drag());
+        assert!(DrawingKind::RegTrend.supports_fill());
+    }
+
+    #[test]
+    fn every_new_tool_maps_to_a_kind() {
+        for tool in [
+            DrawTool::Brush,
+            DrawTool::Pitchfork,
+            DrawTool::SchiffPitchfork,
+            DrawTool::RegTrend,
+            DrawTool::LongPos,
+            DrawTool::ShortPos,
+        ] {
+            assert!(tool.kind().is_some(), "{tool:?} unwired");
+        }
+        assert_eq!(DrawTool::ALL.len(), 22);
+        assert_eq!(DrawingKind::ALL.len(), 19);
+    }
+
+    #[test]
+    fn drawing_json_from_before_phase4_loads_with_defaults() {
+        let json = r#"{"id":3,"kind":"Fib","a":{"t":0,"price":1.0},"b":{"t":60,"price":2.0}}"#;
+        let d: Drawing = serde_json::from_str(json).unwrap();
+        assert_eq!(d.reg_dev, 1.0);
+        assert!(d.extra.is_empty());
+        let out = serde_json::to_string(&d).unwrap();
+        let back: Drawing = serde_json::from_str(&out).unwrap();
+        assert_eq!(back, d);
     }
 }

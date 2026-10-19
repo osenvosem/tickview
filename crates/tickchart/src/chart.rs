@@ -469,7 +469,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     drawings::paint(
         &p,
         &st.drawings,
-        st.tools.draft,
+        st.tools.draft.clone(),
         st.tools.selected,
         st.tools.measure,
         cd,
