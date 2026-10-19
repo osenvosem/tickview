@@ -1,7 +1,7 @@
 //! Cache-first history orchestration over a bars source (Router in prod).
 
 use crate::cache::CandleCache;
-use crate::{Bar, DataError, Interval, Router, Symbol};
+use crate::{Bar, DataError, Interval, Quote, Router, Symbol, Unit};
 
 /// Anything that can serve bars — `Router` in production, fakes in tests.
 pub trait BarsSource {
@@ -47,6 +47,37 @@ impl<S: BarsSource> DataHub<S> {
     #[must_use]
     pub fn cache(&self) -> &CandleCache {
         &self.cache
+    }
+
+    /// Best-effort last quote derived from the newest two daily bars in the
+    /// local cache. Used to paint watchlists before the network responds.
+    pub fn cached_quote(&self, sym: &Symbol) -> Result<Quote, DataError> {
+        let iv = Interval {
+            unit: Unit::Day,
+            mult: 1,
+        };
+        let bars = self.cache.load(sym, iv, None, None, 2)?;
+        let Some(last) = bars.last() else {
+            return Err(DataError::Unavailable("no cached quote".into()));
+        };
+        let prev = bars
+            .get(bars.len().saturating_sub(2))
+            .map_or(last.c, |b| b.c);
+        let change = last.c - prev;
+        let change_pct = if prev.abs() > f64::EPSILON {
+            change / prev * 100.0
+        } else {
+            0.0
+        };
+        Ok(Quote {
+            symbol: sym.ticker.clone(),
+            last: last.c,
+            change,
+            change_pct,
+            volume: last.v,
+            at: last.t,
+            stale: true,
+        })
     }
 
     /// Cached bars without touching the source.
@@ -265,6 +296,39 @@ mod tests {
             .fail
             .store(true, std::sync::atomic::Ordering::SeqCst);
         assert!(cold.history(&sym(), iv(), None, 10).is_err());
+    }
+
+    #[test]
+    fn cached_quote_uses_last_two_daily_bars() {
+        let h = hub(0);
+        let day = Interval {
+            unit: Unit::Day,
+            mult: 1,
+        };
+        let bars = [
+            Bar {
+                t: 0,
+                o: 10.,
+                h: 12.,
+                l: 9.,
+                c: 10.,
+                v: 100.,
+            },
+            Bar {
+                t: 86_400,
+                o: 10.,
+                h: 13.,
+                l: 10.,
+                c: 11.,
+                v: 200.,
+            },
+        ];
+        h.cache().store(&sym(), day, &bars).unwrap();
+        let q = h.cached_quote(&sym()).unwrap();
+        assert_eq!(q.last, 11.0);
+        assert!((q.change - 1.0).abs() < 1e-9);
+        assert!((q.change_pct - 10.0).abs() < 1e-9);
+        assert!(q.stale);
     }
 
     #[test]

@@ -13,10 +13,11 @@ workspace = true
 ta = { workspace = true }
 marketdata = { workspace = true }
 tickchart = { workspace = true }
-eframe = "0.32.3"
-egui = "0.32.3"
+eframe = "0.37.0"
+egui = "0.37.0"
 crossbeam-channel = "0.5.17"
 serde = { workspace = true }
 ureq.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
+image = { version = "0.25", default-features = false, features = ["png"] }

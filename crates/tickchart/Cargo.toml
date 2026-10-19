@@ -12,4 +12,4 @@ workspace = true
 [dependencies]
 ta = { workspace = true }
 chrono = { workspace = true }
-egui = "0.32.3"
+egui = "0.37.0"

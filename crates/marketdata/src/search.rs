@@ -243,11 +243,98 @@ pub fn curated_crypto() -> Vec<SearchEntry> {
         .collect()
 }
 
-/// Default offline index: curated crypto/X + indices (SEC/Binance lists refresh
-/// into this at app start).
+/// Curated US large-cap stocks/ETFs so the app is useful and searchable offline.
+#[must_use]
+pub fn curated_stocks() -> Vec<SearchEntry> {
+    [
+        ("AAPL", "Apple Inc.", "NASDAQ", SymbolKind::Stock, 1000),
+        ("MSFT", "Microsoft Corp.", "NASDAQ", SymbolKind::Stock, 990),
+        ("NVDA", "NVIDIA Corp.", "NASDAQ", SymbolKind::Stock, 985),
+        ("AMZN", "Amazon.com Inc.", "NASDAQ", SymbolKind::Stock, 980),
+        (
+            "GOOGL",
+            "Alphabet Inc. Class A",
+            "NASDAQ",
+            SymbolKind::Stock,
+            975,
+        ),
+        (
+            "META",
+            "Meta Platforms Inc.",
+            "NASDAQ",
+            SymbolKind::Stock,
+            970,
+        ),
+        ("TSLA", "Tesla Inc.", "NASDAQ", SymbolKind::Stock, 965),
+        ("AVGO", "Broadcom Inc.", "NASDAQ", SymbolKind::Stock, 940),
+        ("NFLX", "Netflix Inc.", "NASDAQ", SymbolKind::Stock, 930),
+        (
+            "AMD",
+            "Advanced Micro Devices",
+            "NASDAQ",
+            SymbolKind::Stock,
+            920,
+        ),
+        ("INTC", "Intel Corp.", "NASDAQ", SymbolKind::Stock, 900),
+        ("ADBE", "Adobe Inc.", "NASDAQ", SymbolKind::Stock, 890),
+        ("COST", "Costco Wholesale", "NASDAQ", SymbolKind::Stock, 880),
+        ("PEP", "PepsiCo Inc.", "NASDAQ", SymbolKind::Stock, 860),
+        ("ORCL", "Oracle Corp.", "NYSE", SymbolKind::Stock, 870),
+        ("CRM", "Salesforce Inc.", "NYSE", SymbolKind::Stock, 850),
+        (
+            "JPM",
+            "JPMorgan Chase & Co.",
+            "NYSE",
+            SymbolKind::Stock,
+            950,
+        ),
+        ("V", "Visa Inc.", "NYSE", SymbolKind::Stock, 945),
+        ("MA", "Mastercard Inc.", "NYSE", SymbolKind::Stock, 935),
+        ("UNH", "UnitedHealth Group", "NYSE", SymbolKind::Stock, 910),
+        ("XOM", "Exxon Mobil Corp.", "NYSE", SymbolKind::Stock, 895),
+        ("JNJ", "Johnson & Johnson", "NYSE", SymbolKind::Stock, 885),
+        ("WMT", "Walmart Inc.", "NYSE", SymbolKind::Stock, 875),
+        ("PG", "Procter & Gamble", "NYSE", SymbolKind::Stock, 865),
+        ("HD", "Home Depot Inc.", "NYSE", SymbolKind::Stock, 855),
+        ("DIS", "Walt Disney Co.", "NYSE", SymbolKind::Stock, 845),
+        ("KO", "Coca-Cola Co.", "NYSE", SymbolKind::Stock, 835),
+        ("BA", "Boeing Co.", "NYSE", SymbolKind::Stock, 825),
+        (
+            "TSM",
+            "Taiwan Semiconductor",
+            "NYSE",
+            SymbolKind::Stock,
+            915,
+        ),
+        ("BABA", "Alibaba Group", "NYSE", SymbolKind::Stock, 805),
+        ("SPY", "SPDR S&P 500 ETF", "NYSEARCA", SymbolKind::Etf, 960),
+        ("QQQ", "Invesco QQQ Trust", "NASDAQ", SymbolKind::Etf, 955),
+        (
+            "IWM",
+            "iShares Russell 2000 ETF",
+            "NYSEARCA",
+            SymbolKind::Etf,
+            830,
+        ),
+    ]
+    .into_iter()
+    .map(|(t, n, x, k, r)| SearchEntry {
+        ticker: t.into(),
+        name: n.into(),
+        exchange: x.into(),
+        kind: k,
+        currency: "USD".into(),
+        rank: r,
+    })
+    .collect()
+}
+
+/// Default offline index: curated stocks/ETFs, crypto, FX and indices (SEC/Binance
+/// lists refresh into this at app start).
 #[must_use]
 pub fn default_index() -> SearchIndex {
     let mut idx = SearchIndex::default();
+    idx.extend(curated_stocks());
     idx.extend(curated_indices());
     idx.extend(curated_fx());
     idx.extend(curated_crypto());
@@ -323,6 +410,16 @@ mod tests {
         assert_eq!(e.len(), 1);
         assert_eq!(e[0].ticker, "BTCUSDT");
         assert_eq!(e[0].exchange, "BINANCE");
+    }
+
+    #[test]
+    fn default_index_includes_popular_stocks_offline() {
+        let idx = default_index();
+        let aapl = idx.search("AAPL", 3);
+        assert_eq!(aapl[0].ticker, "AAPL");
+        assert_eq!(aapl[0].exchange, "NASDAQ");
+        assert_eq!(aapl[0].kind, SymbolKind::Stock);
+        assert_eq!(aapl[0].description, "Apple Inc.");
     }
 
     #[test]

@@ -70,12 +70,12 @@ impl ChartState {
                 Pane {
                     kind: PaneKind::Price,
                     layers: Vec::new(),
-                    height_frac: 0.66,
+                    height_frac: 0.82,
                 },
                 Pane {
                     kind: PaneKind::Volume,
                     layers: Vec::new(),
-                    height_frac: 0.14,
+                    height_frac: 0.18,
                 },
             ],
             palette: Palette::default(),
@@ -110,8 +110,8 @@ impl ChartState {
                 layers: vec![layer],
                 height_frac: 0.2,
             });
+            self.relayout_default();
         }
-        self.normalize_fractions();
     }
 
     #[must_use]
@@ -122,10 +122,13 @@ impl ChartState {
             p.layers.retain(|l| l.id != id);
             removed |= p.layers.len() != n;
         }
+        let before = self.panes.len();
         self.panes.retain(|p| {
             matches!(p.kind, PaneKind::Price | PaneKind::Volume) || !p.layers.is_empty()
         });
-        self.normalize_fractions();
+        if self.panes.len() != before {
+            self.relayout_default();
+        }
         removed
     }
 
@@ -147,6 +150,70 @@ impl ChartState {
                     l.data = compute(id, &l.params, cd, ax);
                 }
             }
+        }
+    }
+
+    /// Show or hide the dedicated volume pane (FX/index symbols often have no volume).
+    pub fn set_volume_pane(&mut self, visible: bool) {
+        let before = self.panes.len();
+        if visible {
+            if !self
+                .panes
+                .iter()
+                .any(|p| matches!(p.kind, PaneKind::Volume))
+            {
+                self.panes.push(Pane {
+                    kind: PaneKind::Volume,
+                    layers: Vec::new(),
+                    height_frac: 0.18,
+                });
+            }
+        } else {
+            self.panes.retain(|p| !matches!(p.kind, PaneKind::Volume));
+        }
+        if self.panes.len() != before {
+            self.relayout_default();
+        }
+    }
+
+    /// Default vertical rhythm: price dominant, volume a slim strip, and
+    /// separate study panes large enough to read.
+    fn relayout_default(&mut self) {
+        let volume = self
+            .panes
+            .iter()
+            .any(|p| matches!(p.kind, PaneKind::Volume));
+        let sep = self
+            .panes
+            .iter()
+            .filter(|p| matches!(p.kind, PaneKind::Indicator(_)))
+            .count();
+        let (price, volume_frac) = match (volume, sep) {
+            (_, 0) if volume => (0.82, 0.18),
+            (_, 0) => (1.0, 0.0),
+            (true, 1) => (0.60, 0.12),
+            (false, 1) => (0.72, 0.0),
+            (true, 2) => (0.55, 0.10),
+            (false, 2) => (0.64, 0.0),
+            (true, _) => (0.52, 0.09),
+            (false, _) => (0.58, 0.0),
+        };
+        let each = if sep > 0 {
+            (1.0 - price - volume_frac) / sep as f32
+        } else {
+            0.0
+        };
+        let mut rem = 1.0;
+        for p in &mut self.panes {
+            p.height_frac = match p.kind {
+                PaneKind::Price => price,
+                PaneKind::Volume => volume_frac,
+                PaneKind::Indicator(_) => each,
+            };
+            rem -= p.height_frac;
+        }
+        if let Some(last) = self.panes.last_mut() {
+            last.height_frac = (last.height_frac + rem).max(0.08);
         }
     }
 
@@ -276,9 +343,8 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 painter::draw_bars(&pp, &st.view, &ax, cd, st.chart_type, &pal);
             }
             PaneKind::Volume => {
-                let col = volume_color(cd, &st.view, vs, ve, &pal);
                 let colw = painter::body_width(st.view.spacing);
-                draw_volume(&pp, &st.view, &ax, cd, col, colw);
+                draw_volume(&pp, &st.view, &ax, cd, &pal, colw);
             }
             PaneKind::Indicator(_) => {}
         }
@@ -291,7 +357,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                     continue;
                 }
                 let neg = if pl.style == PlotStyle::HistogramSigned {
-                    Some(Color32::from_rgb(0xEF, 0x53, 0x50))
+                    Some(pal.down)
                 } else {
                     None
                 };
@@ -356,11 +422,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             let v = ax.price_of(pos.y);
             let tr =
                 Rect::from_min_size(Pos2::new(plot.max.x, pos.y - 8.0), Vec2::new(AXIS_W, 16.0));
-            p.rect_filled(
-                tr,
-                CornerRadius::same(2),
-                Color32::from_rgb(0x36, 0x3A, 0x45),
-            );
+            p.rect_filled(tr, CornerRadius::same(2), pal.line);
             p.text(
                 Pos2::new(tr.center().x, tr.center().y),
                 Align2::CENTER_CENTER,
@@ -377,11 +439,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Pos2::new(bar_x - w / 2.0, full.max.y - AXIS_H),
                 Vec2::new(w, AXIS_H),
             );
-            p.rect_filled(
-                tr,
-                CornerRadius::same(2),
-                Color32::from_rgb(0x36, 0x3A, 0x45),
-            );
+            p.rect_filled(tr, CornerRadius::same(2), pal.line);
             p.text(
                 Pos2::new(tr.center().x, tr.center().y),
                 Align2::CENTER_CENTER,
@@ -452,7 +510,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Pos2::new(x - 2.0, y - 1.0),
                 Pos2::new(x + 8.0 + 7.0 * (name.len() + val.len()) as f32, y + 14.0),
             );
-            let resp = ui.interact(tr, ui.id().with(("legend", pi, l.id)), Sense::click());
+            let resp = ui.interact(tr, ui.scope_id().with(("legend", pi, l.id)), Sense::click());
             if resp.clicked() {
                 toggled.push((pi, l.id));
             }
@@ -540,7 +598,7 @@ fn handle_input(ctx: &egui::Context, resp: &Response, st: &mut ChartState) {
     }
     // Wheel: plain/ctrl zoom time, shift pans.
     let zoom = ctx.input(|i| i.zoom_delta());
-    let scroll = ctx.input(|i| i.raw_scroll_delta);
+    let scroll = ctx.input(|i| i.smooth_scroll_delta);
     let over = ctx
         .input(|i| i.pointer.hover_pos())
         .is_some_and(|p| resp.rect.contains(p));
@@ -672,18 +730,12 @@ fn price_axis_for(lo: f64, hi: f64, log: bool, height: f32) -> PriceAxis {
     PriceAxis::fit(lo, hi, log, height, 0.05)
 }
 
-fn volume_color(cd: &Candles, v: &View, vs: usize, ve: usize, pal: &Palette) -> Color32 {
-    // Single translucent column color; per-bar sign coloring applied in draw_volume.
-    let _ = (cd, v, vs, ve);
-    Color32::from_rgba_unmultiplied(pal.line.r(), pal.line.g(), pal.line.b(), 0x66)
-}
-
 fn draw_volume(
     p: &egui::Painter,
     v: &View,
     ax: &PriceAxis,
     cd: &Candles,
-    base: Color32,
+    pal: &Palette,
     colw: f32,
 ) {
     let (s, e) = v.visible();
@@ -696,12 +748,8 @@ fn draw_volume(
         let y = ax.y_of(val);
         let top = y.min(ax.y_of(0.0));
         let bot = y.max(ax.y_of(0.0));
-        let col = if cd.c[i] >= cd.o[i] {
-            Color32::from_rgba_unmultiplied(0x26, 0xA6, 0x9A, 0x99)
-        } else {
-            Color32::from_rgba_unmultiplied(0xEF, 0x53, 0x50, 0x99)
-        };
-        let _ = base;
+        let base = if cd.c[i] >= cd.o[i] { pal.up } else { pal.down };
+        let col = Color32::from_rgba_unmultiplied(base.r(), base.g(), base.b(), 0x99);
         p.rect_filled(
             Rect::from_min_max(
                 Pos2::new(x - colw / 2.0, top),
@@ -710,5 +758,40 @@ fn draw_volume(
             CornerRadius::ZERO,
             col,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn volume_pane_can_be_hidden_and_restored() {
+        let mut st = ChartState::new("AAPL", "1D");
+        assert_eq!(st.panes.len(), 2);
+        st.set_volume_pane(false);
+        assert_eq!(st.panes.len(), 1);
+        assert!(matches!(st.panes[0].kind, PaneKind::Price));
+        assert!((st.panes[0].height_frac - 1.0).abs() < 1e-6);
+        st.set_volume_pane(true);
+        assert_eq!(st.panes.len(), 2);
+        assert!(matches!(st.panes[1].kind, PaneKind::Volume));
+    }
+
+    #[test]
+    fn separate_pane_gets_readable_height() {
+        let mut st = ChartState::new("AAPL", "1D");
+        st.set_volume_pane(true);
+        st.panes.push(Pane {
+            kind: PaneKind::Indicator(TvId::Rsi),
+            layers: Vec::new(),
+            height_frac: 0.2,
+        });
+        st.relayout_default();
+        assert!((st.panes[0].height_frac - 0.60).abs() < 1e-6);
+        assert!((st.panes[1].height_frac - 0.12).abs() < 1e-6);
+        assert!((st.panes[2].height_frac - 0.28).abs() < 1e-6);
+        let sum: f32 = st.panes.iter().map(|p| p.height_frac).sum();
+        assert!((sum - 1.0).abs() < 1e-6);
     }
 }

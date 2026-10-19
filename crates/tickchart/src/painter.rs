@@ -53,18 +53,39 @@ pub struct Palette {
     pub crosshair: Color32,
 }
 
+impl Palette {
+    #[must_use]
+    pub const fn dark() -> Self {
+        Self {
+            up: Color32::from_rgb(0x0F, 0xAF, 0x94),
+            down: Color32::from_rgb(0xF0, 0x4E, 0x5E),
+            wick: Color32::from_rgb(0x5E, 0x68, 0x78),
+            line: Color32::from_rgb(0x3D, 0x7B, 0xFF),
+            area_fill: Color32::from_rgba_premultiplied(0x3D, 0x7B, 0xFF, 0x2E),
+            grid: Color32::from_rgb(0x1E, 0x26, 0x33),
+            text: Color32::from_rgb(0x8A, 0x94, 0xA6),
+            crosshair: Color32::from_rgb(0x5E, 0x68, 0x78),
+        }
+    }
+
+    #[must_use]
+    pub const fn light() -> Self {
+        Self {
+            up: Color32::from_rgb(0x06, 0x7A, 0x68),
+            down: Color32::from_rgb(0xD9, 0x2D, 0x42),
+            wick: Color32::from_rgb(0x98, 0xA2, 0xB3),
+            line: Color32::from_rgb(0x2F, 0x6B, 0xFF),
+            area_fill: Color32::from_rgba_premultiplied(0x2F, 0x6B, 0xFF, 0x24),
+            grid: Color32::from_rgb(0xED, 0xF0, 0xF5),
+            text: Color32::from_rgb(0x66, 0x70, 0x85),
+            crosshair: Color32::from_rgb(0x98, 0xA2, 0xB3),
+        }
+    }
+}
+
 impl Default for Palette {
     fn default() -> Self {
-        Self {
-            up: Color32::from_rgb(0x26, 0xA6, 0x9A),
-            down: Color32::from_rgb(0xEF, 0x53, 0x50),
-            wick: Color32::from_rgb(0x78, 0x7B, 0x86),
-            line: Color32::from_rgb(0x29, 0x62, 0xEB),
-            area_fill: Color32::from_rgba_premultiplied(0x29, 0x62, 0xEB, 0x33),
-            grid: Color32::from_rgb(0x2A, 0x2E, 0x39),
-            text: Color32::from_rgb(0xB2, 0xB5, 0xBE),
-            crosshair: Color32::from_rgb(0x75, 0x86, 0x96),
-        }
+        Self::dark()
     }
 }
 
