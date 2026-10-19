@@ -1,10 +1,14 @@
 //! Interactive multi-pane chart widget: panes, crosshair, pan/zoom, legend,
 //! last-price mark. Pure state (`ChartState`) + one `ui` entry point.
 
+use std::collections::BTreeMap;
+
 use egui::{Align2, Color32, CornerRadius, FontId, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2};
 
 use crate::barfmt::{fmt_compact, fmt_price};
 use crate::bars::View;
+use crate::compare::CompareSeries;
+use crate::drawings::{self, Anchor, Drawing, DrawingToolState};
 use crate::painter::{self, ChartType, Palette};
 use crate::priceaxis::PriceAxis;
 use crate::timeaxis;
@@ -48,8 +52,20 @@ pub struct ChartState {
     pub interval: String,
     /// Index being hovered by the crosshair.
     pub hover: Option<usize>,
+    pub drawings: Vec<Drawing>,
+    pub tools: DrawingToolState,
+    pub magnet: bool,
+    pub compare: Option<CompareSeries>,
+    symbol_drawings: BTreeMap<String, Vec<Drawing>>,
     crosshair_pos: Option<Pos2>,
     drag_pane: Option<usize>,
+    drag_drawing: Option<DrawingDrag>,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct DrawingDrag {
+    id: u64,
+    last: Anchor,
 }
 
 /// Events emitted to the app after a frame.
@@ -57,6 +73,10 @@ pub struct ChartState {
 pub struct ChartEvent {
     /// Chart panned to the oldest bar: app should fetch older history.
     pub load_more: bool,
+    /// Drawings were created, moved, or deleted; app should persist.
+    pub changed: bool,
+    /// The compare legend was clicked; app should clear its compare symbol.
+    pub compare_removed: bool,
 }
 
 impl ChartState {
@@ -82,9 +102,59 @@ impl ChartState {
             symbol: symbol.into(),
             interval: interval.into(),
             hover: None,
+            drawings: Vec::new(),
+            tools: DrawingToolState::default(),
+            magnet: false,
+            compare: None,
+            symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
             drag_pane: None,
+            drag_drawing: None,
         }
+    }
+
+    /// Restore persisted drawings for the current tab.
+    pub fn set_drawings(&mut self, drawings: Vec<Drawing>) {
+        self.tools = DrawingToolState::with_drawings(&drawings);
+        self.drawings = drawings;
+        self.symbol_drawings.clear();
+    }
+
+    /// All symbol drawing sets, including the current one.
+    #[must_use]
+    pub fn drawings_by_symbol(&self) -> BTreeMap<String, Vec<Drawing>> {
+        let mut map = self.symbol_drawings.clone();
+        if !self.drawings.is_empty() {
+            map.insert(self.symbol.clone(), self.drawings.clone());
+        }
+        map
+    }
+
+    /// Restore per-symbol drawings loaded from disk.
+    pub fn restore_drawings(
+        &mut self,
+        symbol: impl Into<String>,
+        mut drawings: BTreeMap<String, Vec<Drawing>>,
+    ) {
+        self.symbol = symbol.into();
+        self.drawings = drawings.remove(&self.symbol).unwrap_or_default();
+        self.symbol_drawings = drawings;
+        self.tools = DrawingToolState::with_drawings(&self.drawings);
+        self.drag_drawing = None;
+    }
+
+    /// Hide the current symbol's drawings and restore the target symbol's set.
+    pub fn set_symbol(&mut self, symbol: impl Into<String>) {
+        let symbol = symbol.into();
+        if symbol == self.symbol {
+            return;
+        }
+        let old = std::mem::take(&mut self.drawings);
+        self.symbol_drawings.insert(self.symbol.clone(), old);
+        self.drawings = self.symbol_drawings.remove(&symbol).unwrap_or_default();
+        self.tools = DrawingToolState::with_drawings(&self.drawings);
+        self.drag_drawing = None;
+        self.symbol = symbol;
     }
 
     /// Attach (or replace) an indicator; places it per the registry `Pane`.
@@ -244,8 +314,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     st.view.width = plot_w;
     st.view.count = cd.len();
 
-    handle_input(ui.ctx(), &resp, st);
-
     let font = FontId::proportional(11.0);
     let font_sm = FontId::proportional(10.0);
     let pal = st.palette;
@@ -263,8 +331,44 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         y += h;
     }
 
+    // Input needs the current price-pane mapping before pan/zoom is applied.
+    let (input_vs, input_ve) = st.view.visible();
+    let price_rect = rects[0].1;
+    let input_axis = pane_axis(
+        &st.panes[0],
+        cd,
+        &st.panes,
+        0,
+        (input_vs, input_ve),
+        st.log_scale,
+        price_rect.height(),
+        st.compare.as_ref(),
+    )
+    .with_offset(price_rect.min.y);
+    handle_input(
+        ui.ctx(),
+        &resp,
+        st,
+        cd,
+        plot,
+        price_rect,
+        &input_axis,
+        &mut ev,
+    );
+
     // Time grid + axis labels.
     let (vs, ve) = st.view.visible();
+    let price_axis = pane_axis(
+        &st.panes[0],
+        cd,
+        &st.panes,
+        0,
+        (vs, ve),
+        st.log_scale,
+        price_rect.height(),
+        st.compare.as_ref(),
+    )
+    .with_offset(price_rect.min.y);
     let mut x_ticks: Vec<f32> = Vec::new();
     if vs < ve && cd.len() > 1 {
         let t0 = cd.t[vs];
@@ -292,49 +396,19 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     painter::draw_vgrid(&p, plot, &x_ticks, &pal);
 
     // Pane scales + draw.
-    let mut price_lo = f64::INFINITY;
-    let mut price_hi = f64::NEG_INFINITY;
-    if vs < ve {
-        for i in vs..ve {
-            if cd.l[i].is_finite() {
-                price_lo = price_lo.min(cd.l[i]);
-            }
-            if cd.h[i].is_finite() {
-                price_hi = price_hi.max(cd.h[i]);
-            }
-        }
-        for pane in &st.panes {
-            if pane.kind != PaneKind::Price {
-                continue;
-            }
-            for l in &pane.layers {
-                if !l.visible {
-                    continue;
-                }
-                for pl in &l.data.plots {
-                    if pl.default_hidden {
-                        continue;
-                    }
-                    for i in vs..ve.min(pl.series.len()) {
-                        let v = pl.series[i];
-                        if v.is_finite() {
-                            price_lo = price_lo.min(v);
-                            price_hi = price_hi.max(v);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if !price_lo.is_finite() || !price_hi.is_finite() {
-        price_lo = 0.0;
-        price_hi = 1.0;
-    }
-
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
-        let ax = pane_axis(pane, cd, &st.panes, pi, (vs, ve), st.log_scale, r.height())
-            .with_offset(r.min.y);
+        let ax = pane_axis(
+            pane,
+            cd,
+            &st.panes,
+            pi,
+            (vs, ve),
+            st.log_scale,
+            r.height(),
+            st.compare.as_ref(),
+        )
+        .with_offset(r.min.y);
         let compact = pane.kind == PaneKind::Volume;
         painter::draw_price_grid(&p, r, &ax, font_sm.clone(), &pal, compact);
         let pp = p.clone().with_clip_rect(r);
@@ -374,10 +448,33 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
     }
 
+    if let Some(cmp) = &st.compare {
+        painter::draw_compare(
+            &p.with_clip_rect(price_rect),
+            &st.view,
+            &price_axis,
+            cd,
+            cmp,
+            painter::compare_color(),
+        );
+    }
+
+    drawings::paint(
+        &p,
+        &st.drawings,
+        st.tools.draft,
+        st.tools.selected,
+        cd,
+        &st.view,
+        &price_axis,
+        price_rect,
+        &pal,
+        font_sm.clone(),
+    );
+
     // Last price line + axis tag.
     if let Some(&last) = cd.c.last() {
-        let ax = price_axis_for(price_lo, price_hi, st.log_scale, rects[0].1.height())
-            .with_offset(rects[0].1.min.y);
+        let ax = price_axis;
         let y = ax.y_of(last);
         let prev = cd.c.len().saturating_sub(2);
         let col = if cd.c[prev] <= last { pal.up } else { pal.down };
@@ -418,6 +515,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 (vs, ve),
                 st.log_scale,
                 r.height(),
+                st.compare.as_ref(),
             );
             let v = ax.price_of(pos.y);
             let tr =
@@ -452,6 +550,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
 
     // Legends (overlaid labels; clicking a name toggles the indicator).
     let mut toggled: Vec<(usize, TvId)> = Vec::new();
+    let mut remove_compare = false;
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
         let mut x = r.min.x + 4.0;
@@ -487,6 +586,28 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 pal.text,
             );
             x = hr.max.x + 6.0;
+            if let Some(cmp) = &st.compare
+                && let Some(pct) = cmp.change_pct(cd, vs, ve)
+            {
+                let label = format!("■ {} {:+.2}%", cmp.symbol, pct);
+                let tr = p.text(
+                    Pos2::new(x, y),
+                    Align2::LEFT_TOP,
+                    &label,
+                    font_sm.clone(),
+                    painter::compare_color(),
+                );
+                let resp = ui.interact(
+                    tr.expand2(Vec2::new(2.0, 1.0)),
+                    ui.scope_id().with(("compare-legend", pi)),
+                    Sense::click(),
+                );
+                if resp.clicked() {
+                    remove_compare = true;
+                }
+                resp.on_hover_text("Click to remove compare");
+                x = tr.max.x + 6.0;
+            }
         }
         for l in &pane.layers {
             let d = def(l.id);
@@ -524,6 +645,10 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             x = tr.max.x + 6.0;
         }
     }
+    if remove_compare {
+        st.compare = None;
+        ev.compare_removed = true;
+    }
     for (pi, id) in toggled {
         let vis = !st.panes[pi]
             .layers
@@ -554,27 +679,54 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     ev
 }
 
-fn handle_input(ctx: &egui::Context, resp: &Response, st: &mut ChartState) {
-    if resp.dragged() {
-        if let Some(dp) = st.drag_pane {
-            if dp < st.panes.len().saturating_sub(1) {
-                let dy = resp.drag_delta().y;
-                let total = (resp.rect.height() - AXIS_H).max(1.0);
-                let df = (dy / total).clamp(-0.3, 0.3);
-                st.panes[dp].height_frac = (st.panes[dp].height_frac + df).max(0.08);
-                st.panes[dp + 1].height_frac = (st.panes[dp + 1].height_frac - df).max(0.08);
-                st.normalize_fractions();
-            }
-        } else {
-            st.view.pan(resp.drag_delta().x);
+#[allow(clippy::too_many_arguments)]
+fn handle_input(
+    ctx: &egui::Context,
+    resp: &Response,
+    st: &mut ChartState,
+    cd: &Candles,
+    full: Rect,
+    price_rect: Rect,
+    ax: &PriceAxis,
+    ev: &mut ChartEvent,
+) {
+    let pointer = resp.interact_pointer_pos().or_else(|| resp.hover_pos());
+    let press = ctx.input(|i| i.pointer.press_origin()).or(pointer);
+    let in_price = pointer.is_some_and(|p| price_rect.contains(p));
+    let drawing_tool = st.tools.tool.kind().is_some();
+
+    // Live preview of the second anchor.
+    if st.tools.draft.is_some()
+        && let Some(pos) = pointer
+        && in_price
+        && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
+    {
+        st.tools.update_draft(anchor);
+    }
+
+    if resp.hovered() {
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape))
+            && (st.tools.draft.is_some() || st.tools.selected.is_some())
+        {
+            st.tools.cancel();
+            st.drag_drawing = None;
+        }
+        if (ctx.input(|i| i.key_pressed(egui::Key::Delete))
+            || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
+            && st.tools.delete_selected(&mut st.drawings)
+        {
+            ev.changed = true;
         }
     }
+
     if resp.drag_started() {
         st.drag_pane = None;
-        if let Some(pos) = resp.interact_pointer_pos() {
-            // find separator y boundaries
-            let plot_h = (resp.rect.height() - AXIS_H).max(50.0);
-            let mut y = resp.rect.min.y;
+        st.drag_drawing = None;
+        if let Some(pos) = press
+            && !drawing_tool
+        {
+            let plot_h = (full.height() - AXIS_H).max(50.0);
+            let mut y = full.min.y;
             for (i, pane) in st
                 .panes
                 .iter()
@@ -587,15 +739,76 @@ fn handle_input(ctx: &egui::Context, resp: &Response, st: &mut ChartState) {
                     break;
                 }
             }
+            if st.drag_pane.is_none()
+                && price_rect.contains(pos)
+                && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
+            {
+                st.tools.selected = Some(id);
+                if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
+                    st.drag_drawing = Some(DrawingDrag { id, last: anchor });
+                }
+            }
         }
     }
-    if resp.drag_stopped() || !resp.dragged() && resp.changed() {
-        st.drag_pane = None;
+
+    if resp.dragged() {
+        if let Some(drag) = &mut st.drag_drawing {
+            if let Some(pos) = pointer
+                && price_rect.contains(pos)
+                && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
+            {
+                let last = drag.last;
+                if let Some(d) = st.drawings.iter_mut().find(|d| d.id == drag.id)
+                    && drawings::move_drawing(d, last, anchor, cd)
+                {
+                    drag.last = anchor;
+                    ev.changed = true;
+                }
+            }
+        } else if let Some(dp) = st.drag_pane {
+            if dp < st.panes.len().saturating_sub(1) {
+                let dy = resp.drag_delta().y;
+                let total = (full.height() - AXIS_H).max(1.0);
+                let df = (dy / total).clamp(-0.3, 0.3);
+                st.panes[dp].height_frac = (st.panes[dp].height_frac + df).max(0.08);
+                st.panes[dp + 1].height_frac = (st.panes[dp + 1].height_frac - df).max(0.08);
+                st.normalize_fractions();
+            }
+        } else if !drawing_tool {
+            st.view.pan(resp.drag_delta().x);
+        }
     }
-    if resp.double_clicked() {
+    if resp.drag_stopped() || (!resp.dragged() && resp.changed()) {
+        st.drag_pane = None;
+        st.drag_drawing = None;
+    }
+
+    // Click: place a drawing, or select/deselect under the cursor.
+    if resp.clicked()
+        && let Some(pos) = pointer
+        && price_rect.contains(pos)
+        && pos.y > price_rect.min.y + 26.0
+    {
+        if drawing_tool {
+            if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
+                && let Some(drawing) = st.tools.click(anchor)
+            {
+                st.tools.selected = Some(drawing.id);
+                st.drawings.push(drawing);
+                ev.changed = true;
+            }
+        } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
+            st.tools.selected = Some(id);
+        } else {
+            st.tools.selected = None;
+        }
+    }
+
+    if resp.double_clicked() && !drawing_tool {
         st.view.right_offset = 0.0;
         st.view.spacing = 8.0;
     }
+
     // Wheel: plain/ctrl zoom time, shift pans.
     let zoom = ctx.input(|i| i.zoom_delta());
     let scroll = ctx.input(|i| i.smooth_scroll_delta);
@@ -616,16 +829,39 @@ fn handle_input(ctx: &egui::Context, resp: &Response, st: &mut ChartState) {
             st.view.pan(dx * 0.5);
         }
     }
-    // Keyboard nudge.
-    let step = st.view.spacing * 2.0;
-    if ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft)) {
-        st.view.pan(step);
-    }
-    if ctx.input(|i| i.key_pressed(egui::Key::ArrowRight)) {
-        st.view.pan(-step);
+
+    // Keyboard nudge only while the chart is hovered, so text fields keep
+    // their arrow keys.
+    if resp.hovered() {
+        let step = st.view.spacing * 2.0;
+        if ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft)) {
+            st.view.pan(step);
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::ArrowRight)) {
+            st.view.pan(-step);
+        }
     }
 }
 
+fn hit_drawing(
+    st: &ChartState,
+    cd: &Candles,
+    ax: &PriceAxis,
+    pos: Pos2,
+    price_rect: Rect,
+) -> Option<u64> {
+    let map = |a: Anchor| {
+        let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
+        Pos2::new(st.view.x_of(i), ax.y_of(a.price))
+    };
+    st.drawings
+        .iter()
+        .rev()
+        .find(|d| d.hit(pos, map, price_rect))
+        .map(|d| d.id)
+}
+
+#[allow(clippy::too_many_arguments)]
 fn pane_axis(
     pane: &Pane,
     cd: &Candles,
@@ -634,11 +870,12 @@ fn pane_axis(
     vis: (usize, usize),
     log: bool,
     height: f32,
+    compare: Option<&CompareSeries>,
 ) -> PriceAxis {
     let (vs, ve) = vis;
     match pane.kind {
         PaneKind::Price => {
-            let (lo, hi) = price_range(cd, panes, pi, vs, ve);
+            let (lo, hi) = price_range(cd, panes, pi, vs, ve, compare);
             price_axis_for(lo, hi, log, height)
         }
         PaneKind::Volume => {
@@ -684,7 +921,14 @@ fn pane_axis(
 }
 
 /// Visible high/low incl. price-pane overlay plots.
-fn price_range(cd: &Candles, panes: &[Pane], pi: usize, vs: usize, ve: usize) -> (f64, f64) {
+fn price_range(
+    cd: &Candles,
+    panes: &[Pane],
+    pi: usize,
+    vs: usize,
+    ve: usize,
+    compare: Option<&CompareSeries>,
+) -> (f64, f64) {
     let mut lo = f64::INFINITY;
     let mut hi = f64::NEG_INFINITY;
     for i in vs..ve {
@@ -717,6 +961,12 @@ fn price_range(cd: &Candles, panes: &[Pane], pi: usize, vs: usize, ve: usize) ->
                 }
             }
         }
+    }
+    if let Some(cmp) = compare
+        && let Some((clo, chi)) = cmp.normalized_range(cd, vs, ve)
+    {
+        lo = lo.min(clo);
+        hi = hi.max(chi);
     }
     (lo, hi)
 }
@@ -764,6 +1014,200 @@ fn draw_volume(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ta::Bar;
+
+    fn ui_candles() -> Candles {
+        Candles::from_bars(&[
+            Bar {
+                t: 0,
+                o: 10.0,
+                h: 12.0,
+                l: 9.0,
+                c: 11.0,
+                v: 1.0,
+            },
+            Bar {
+                t: 60,
+                o: 11.0,
+                h: 13.0,
+                l: 10.0,
+                c: 12.0,
+                v: 1.0,
+            },
+            Bar {
+                t: 120,
+                o: 12.0,
+                h: 14.0,
+                l: 11.0,
+                c: 13.0,
+                v: 1.0,
+            },
+        ])
+    }
+
+    fn frame(
+        ctx: &egui::Context,
+        st: &mut ChartState,
+        cd: &Candles,
+        events: Vec<egui::Event>,
+    ) -> ChartEvent {
+        let raw = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0, 700.0))),
+            events,
+            ..Default::default()
+        };
+        let mut ev = ChartEvent::default();
+        let mut out = ctx.run_ui(raw, |ui| {
+            eprintln!(
+                "available={:?} max={:?}",
+                ui.available_rect_before_wrap(),
+                ui.max_rect()
+            );
+            ev = crate::chart::ui(ui, st, cd);
+        });
+        out.textures_delta.clear();
+        ev
+    }
+
+    fn click(ctx: &egui::Context, st: &mut ChartState, cd: &Candles, pos: Pos2) -> ChartEvent {
+        let modifiers = egui::Modifiers::default();
+        frame(ctx, st, cd, vec![egui::Event::PointerMoved(pos)]);
+        frame(
+            ctx,
+            st,
+            cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers,
+            }],
+        );
+        frame(
+            ctx,
+            st,
+            cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers,
+            }],
+        )
+    }
+
+    #[test]
+    fn click_creates_hline_and_delete_removes_it() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        let pos = Pos2::new(800.0, 350.0);
+        let ev = click(&ctx, &mut st, &cd, pos);
+        assert!(ev.changed);
+        assert_eq!(st.drawings.len(), 1);
+        assert!(st.tools.selected.is_some());
+
+        let key = egui::Event::Key {
+            key: egui::Key::Delete,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::default(),
+        };
+        let ev = frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(pos), key],
+        );
+        assert!(ev.changed);
+        assert!(st.drawings.is_empty());
+    }
+
+    #[test]
+    fn two_click_trend_line_completes() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.tools.set_tool(crate::drawings::DrawTool::TrendLine);
+        click(&ctx, &mut st, &cd, Pos2::new(740.0, 300.0));
+        assert!(st.drawings.is_empty());
+        assert!(st.tools.draft.is_some());
+        let ev = click(&ctx, &mut st, &cd, Pos2::new(812.0, 400.0));
+        assert!(ev.changed);
+        assert_eq!(st.drawings.len(), 1);
+        assert_eq!(st.drawings[0].kind, crate::drawings::DrawingKind::TrendLine);
+        assert!(st.tools.draft.is_none());
+    }
+
+    #[test]
+    fn escape_cancels_a_draft_without_changing_the_tool() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::TrendLine);
+        click(&ctx, &mut st, &cd, Pos2::new(800.0, 300.0));
+        assert!(st.tools.draft.is_some());
+        let key = egui::Event::Key {
+            key: egui::Key::Escape,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::default(),
+        };
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(Pos2::new(800.0, 300.0)), key],
+        );
+        assert!(st.tools.draft.is_none());
+        assert_eq!(st.tools.tool, crate::drawings::DrawTool::TrendLine);
+        assert!(st.drawings.is_empty());
+    }
+
+    #[test]
+    fn drag_moves_the_drawing_under_the_press_origin() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        let pos = Pos2::new(800.0, 350.0);
+        click(&ctx, &mut st, &cd, pos);
+        let price = st.drawings[0].a.price;
+        st.tools.set_tool(crate::drawings::DrawTool::Cursor);
+
+        let moved = pos + Vec2::new(4.0, 30.0);
+        let modifiers = egui::Modifiers::default();
+        frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(pos)]);
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers,
+            }],
+        );
+        let ev = frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(moved)]);
+        assert!(ev.changed);
+        assert!((st.drawings[0].a.price - price).abs() > 0.01);
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos: moved,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers,
+            }],
+        );
+    }
 
     #[test]
     fn volume_pane_can_be_hidden_and_restored() {
@@ -776,6 +1220,24 @@ mod tests {
         st.set_volume_pane(true);
         assert_eq!(st.panes.len(), 2);
         assert!(matches!(st.panes[1].kind, PaneKind::Volume));
+    }
+
+    #[test]
+    fn drawings_are_kept_per_symbol() {
+        let mut st = ChartState::new("AAPL", "1D");
+        let d = Drawing::new(
+            7,
+            crate::drawings::DrawingKind::TrendLine,
+            Anchor { t: 0, price: 10.0 },
+            Anchor { t: 60, price: 12.0 },
+        );
+        st.drawings.push(d.clone());
+        st.set_symbol("MSFT");
+        assert!(st.drawings.is_empty());
+        let map = st.drawings_by_symbol();
+        assert_eq!(map["AAPL"], vec![d.clone()]);
+        st.restore_drawings("AAPL", map);
+        assert_eq!(st.drawings, vec![d]);
     }
 
     #[test]

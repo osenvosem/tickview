@@ -237,19 +237,27 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 app.study_q.clear();
             }
 
-            if child.available_width() > 340.0
+            let compare_symbol = app.tabs[app.active].compare_symbol.clone();
+            let compare_label = compare_symbol
+                .as_ref()
+                .map_or_else(|| "Compare".to_owned(), |s| s.ticker.clone());
+            if child.available_width() > 300.0
                 && widgets::command_button(
                     &mut child,
                     p,
                     Some(Icon::Compare),
-                    "Compare",
-                    false,
+                    &compare_label,
+                    compare_symbol.is_some(),
                     true,
-                    "Compare another symbol (next phase)",
+                    if compare_symbol.is_some() {
+                        "Replace compare symbol"
+                    } else {
+                        "Compare another symbol"
+                    },
                 )
                 .clicked()
             {
-                app.toast("Compare overlay lands with the chart parity phase");
+                app.open_compare_search();
             }
 
             let right = child.available_width();
@@ -465,12 +473,11 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                         tool.label(),
                     );
                     if resp.clicked() {
-                        app.tool = *tool;
-                        if *tool != Tool::Cursor && *tool != Tool::Crosshair {
-                            app.toast(format!(
-                                "{} selected — drawing engine is the next phase",
-                                tool.label()
-                            ));
+                        if matches!(*tool, Tool::Channel | Tool::Text | Tool::Measure) {
+                            app.tool = Tool::Cursor;
+                            app.toast(format!("{} is not available yet", tool.label()));
+                        } else {
+                            app.tool = *tool;
                         }
                     }
                 }
@@ -491,6 +498,7 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 .clicked()
                 {
                     app.magnet = !app.magnet;
+                    app.persist();
                 }
                 let _ = widgets::icon_button(
                     ui,

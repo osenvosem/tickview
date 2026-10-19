@@ -9,7 +9,7 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 126 unit/golden tests
+cargo test --workspace               # 148 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -22,9 +22,19 @@ curated offline symbol index so search works before the network responds.
 - **Graphite Terminal** dark theme and a paper light theme, switchable at
   runtime and persisted.
 - Inter for UI, IBM Plex Mono for prices/axes, with a custom vector icon set.
-- Multi-chart tabs, symbol search (`⌘K`), eight intervals (1m–1M), five chart
-  styles (candles, bars, line, area, Heikin Ashi), log scale, and a status bar
-  with provider state, bar count, UTC clock and active tool.
+- Multi-chart tabs, symbol search (`⌘K`), eight intervals (1m–1M), eight chart
+  styles (candles, hollow candles, bars, columns, line, area, baseline, Heikin
+  Ashi), log scale, and a status bar with provider state, bar count, UTC clock
+  and active tool.
+- Drawing tools: trend line, ray, horizontal/vertical line, rectangle, ellipse
+  and Fibonacci retracement. Click to place, select, drag to move, and
+  Delete/Backspace to remove; magnet snaps anchors to OHLC values. Drawings are
+  stored by timestamp and persisted per symbol.
+- Compare overlay: search from the command bar, normalized close line with a
+  percentage legend, and click the legend to remove it. Stored per tab and
+  restored on boot.
+- Additional chart styles and the compare overlay share the same price axis;
+  the axis expands to keep the normalized compare line in view.
 - Right watchlist with add/remove, filter, selection, quote change bars and a
   context menu; stale quotes fall back to cached daily closes.
 - Indicator browser and per-parameter editor for 66 TradingView-named studies,
@@ -34,7 +44,8 @@ curated offline symbol index so search works before the network responds.
 - Screenshot capture, toast feedback, keyboard shortcuts (`⌘K`, `⌘T`, `⌘W`,
   `⌘,`, `Esc`).
 - Config v2 stores theme, watchlist, tabs, active tab, chart type, log scale,
-  alerts and indicator parameters; v1 configs migrate transparently.
+  alerts, indicator parameters, per-symbol drawings and the compare symbol; v1
+  configs migrate transparently.
 
 ## Debug hooks
 
@@ -42,7 +53,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor` | open a dialog for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare` | open a dialog for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
@@ -51,14 +62,16 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `ta` | indicator engine: 66 TV-named studies, TV default params, golden-value tests |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine |
-| `tickchart` | chart engine: axes, geometry, five series styles, panes, crosshair, legend, last-price marks, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, drawings, compare overlay, panes, crosshair, legend, last-price marks, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
 
-`cargo test --workspace` passes 126 tests and `cargo clippy --workspace
+`cargo test --workspace` passes 148 tests and `cargo clippy --workspace
 --all-targets` is clean. Dark and light builds were captured at 1440×900 and
 visually checked for the shell, tab strip, command bar, watchlist, status bar,
-RSI separate pane, indicator editor, settings, alerts and symbol search.
+RSI separate pane, indicator editor, settings, alerts and symbol search. Phase 2
+was additionally checked with drawings and a compare overlay in dark/light,
+plus baseline, hollow-candle and columns styles.
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

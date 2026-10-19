@@ -13,3 +13,7 @@ workspace = true
 ta = { workspace = true }
 chrono = { workspace = true }
 egui = "0.37.0"
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

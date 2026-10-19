@@ -1,6 +1,7 @@
 //! Persisted layout. Version 2 introduces tabs, theme, and indicator parameters.
 //! Version 1 files are migrated transparently.
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use marketdata::{Alert, Symbol};
@@ -117,6 +118,12 @@ pub struct SavedTab {
     pub spacing: f32,
     #[serde(default)]
     pub indicators: Vec<SavedIndicator>,
+    /// Drawings keyed by ticker; switching symbols hides/restores them.
+    #[serde(default)]
+    pub drawings: BTreeMap<String, Vec<tickchart::Drawing>>,
+    /// Optional compare overlay symbol.
+    #[serde(default)]
+    pub compare: Option<Symbol>,
 }
 
 impl SavedTab {
@@ -185,10 +192,14 @@ impl SavedConfig {
     pub fn migrate(&mut self) {
         if self.version < 2 && self.tabs.is_empty() {
             if let Some(symbol) = self.symbol.clone() {
-                let chart_type = tickchart::ChartType::ALL
-                    .get(self.chart_type)
-                    .copied()
-                    .unwrap_or(tickchart::ChartType::Candles);
+                // v1 stored an index into the original five styles.
+                let chart_type = match self.chart_type {
+                    1 => tickchart::ChartType::Bars,
+                    2 => tickchart::ChartType::Line,
+                    3 => tickchart::ChartType::Area,
+                    4 => tickchart::ChartType::HeikinAshi,
+                    _ => tickchart::ChartType::Candles,
+                };
                 self.tabs.push(SavedTab {
                     symbol,
                     interval: if self.interval.is_empty() {
@@ -200,7 +211,9 @@ impl SavedConfig {
                     log: self.log,
                     right_offset: 0.0,
                     spacing: 8.0,
+                    drawings: BTreeMap::new(),
                     indicators: Vec::new(),
+                    compare: None,
                 });
             }
         }
@@ -304,10 +317,12 @@ mod tests {
             log: false,
             right_offset: 0.0,
             spacing: 8.0,
+            drawings: BTreeMap::new(),
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
                 params: vec![("length".into(), SavedVal::N(21.0))],
             }],
+            compare: None,
         });
         let json = serde_json::to_string(&cfg).unwrap();
         let back: SavedConfig = serde_json::from_str(&json).unwrap();
@@ -319,6 +334,68 @@ mod tests {
         assert_eq!(
             back.tabs[0].indicators[0].name,
             "Relative Strength Index (RSI)"
+        );
+    }
+
+    #[test]
+    fn drawings_round_trip_through_config() {
+        let drawing = tickchart::Drawing::new(
+            3,
+            tickchart::DrawingKind::Fib,
+            tickchart::Anchor {
+                t: 1_700_000_000,
+                price: 100.0,
+            },
+            tickchart::Anchor {
+                t: 1_700_086_400,
+                price: 120.0,
+            },
+        );
+        let cfg = SavedConfig {
+            tabs: vec![SavedTab {
+                symbol: sample_symbol(),
+                interval: "1D".into(),
+                chart_type: "Candles".into(),
+                log: false,
+                right_offset: 0.0,
+                spacing: 8.0,
+                drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
+                indicators: Vec::new(),
+                compare: None,
+            }],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.tabs[0].drawings["AAPL"], vec![drawing]);
+    }
+
+    #[test]
+    fn compare_symbol_round_trips() {
+        let cfg = SavedConfig {
+            tabs: vec![SavedTab {
+                symbol: sample_symbol(),
+                interval: "1D".into(),
+                chart_type: "Candles".into(),
+                log: false,
+                right_offset: 0.0,
+                spacing: 8.0,
+                drawings: BTreeMap::new(),
+                indicators: Vec::new(),
+                compare: Some(Symbol::new(
+                    "SPY",
+                    "NYSE",
+                    marketdata::SymbolKind::Etf,
+                    "USD",
+                )),
+            }],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(
+            back.tabs[0].compare.as_ref().map(|s| s.ticker.as_str()),
+            Some("SPY")
         );
     }
 
@@ -339,7 +416,9 @@ mod tests {
             log: false,
             right_offset: 0.0,
             spacing: 8.0,
+            drawings: BTreeMap::new(),
             indicators: Vec::new(),
+            compare: None,
         });
         cfg.active_tab = 99;
         cfg.migrate();

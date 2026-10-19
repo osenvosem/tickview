@@ -13,7 +13,7 @@ use marketdata::{
 };
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
-use tickchart::{ChartEvent, ChartState, ChartType};
+use tickchart::{ChartEvent, ChartState, ChartType, CompareSeries, DrawTool};
 
 use crate::icons::Icon;
 use crate::store::{self, SavedConfig};
@@ -45,6 +45,11 @@ enum Job {
         limit: u32,
     },
     Quote(Box<Symbol>),
+    Compare {
+        tab: u64,
+        sym: Box<Symbol>,
+        iv: Interval,
+    },
     ReloadIndex,
 }
 
@@ -60,6 +65,13 @@ enum Msg {
     Quote {
         sym: Box<Symbol>,
         q: Result<Quote, String>,
+    },
+    Compare {
+        tab: u64,
+        sym: Box<Symbol>,
+        iv: Interval,
+        bars: Result<Vec<Bar>, String>,
+        cached: bool,
     },
     Index(SearchIndex),
 }
@@ -77,6 +89,7 @@ pub struct Tab {
     pub error: Option<String>,
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
+    pub compare_symbol: Option<Symbol>,
 }
 
 impl Tab {
@@ -102,6 +115,7 @@ impl Tab {
             status: String::from("loading…"),
             error: None,
             pending,
+            compare_symbol: None,
         }
     }
 
@@ -180,6 +194,22 @@ impl Tool {
     }
 }
 
+/// Map the shell tool rail to the chart's drawing tool.
+fn draw_tool(tool: Tool) -> DrawTool {
+    match tool {
+        Tool::Cursor => DrawTool::Cursor,
+        Tool::Crosshair => DrawTool::Crosshair,
+        Tool::TrendLine => DrawTool::TrendLine,
+        Tool::Ray => DrawTool::Ray,
+        Tool::HLine => DrawTool::HLine,
+        Tool::VLine => DrawTool::VLine,
+        Tool::Rect => DrawTool::Rect,
+        Tool::Ellipse => DrawTool::Ellipse,
+        Tool::Fib => DrawTool::Fib,
+        Tool::Channel | Tool::Text | Tool::Measure => DrawTool::Cursor,
+    }
+}
+
 /// Indicator add/edit dialog state.
 pub struct Editor {
     pub id: TvId,
@@ -218,6 +248,12 @@ fn pdefault(kind: ParamKind) -> PVal {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SearchPurpose {
+    Symbol,
+    Compare,
+}
+
 pub struct TickView {
     job_tx: Sender<Job>,
     msg_rx: Receiver<Msg>,
@@ -236,6 +272,7 @@ pub struct TickView {
     pub search_open: bool,
     pub search_focus: bool,
     pub search_sel: usize,
+    search_purpose: SearchPurpose,
 
     pub study_q: String,
     pub editor: Option<Editor>,
@@ -262,6 +299,8 @@ pub struct TickView {
     poll_every: Duration,
     next_poll: Instant,
     next_watch: Instant,
+    dirty_drawings: bool,
+    save_at: Instant,
     cfg: SavedConfig,
 }
 
@@ -349,6 +388,27 @@ impl TickView {
                             let out = hub.quote(&sym).map_err(|e| e.to_string());
                             let _ = mt.send(Msg::Quote { sym, q: out });
                         }
+                        Job::Compare { tab, sym, iv } => {
+                            if let Ok(cached) = hub.cached(&sym, iv, None, 500)
+                                && !cached.is_empty()
+                            {
+                                let _ = mt.send(Msg::Compare {
+                                    tab,
+                                    sym: sym.clone(),
+                                    iv,
+                                    bars: Ok(cached),
+                                    cached: true,
+                                });
+                            }
+                            let out = hub.history(&sym, iv, None, 500).map_err(|e| e.to_string());
+                            let _ = mt.send(Msg::Compare {
+                                tab,
+                                sym,
+                                iv,
+                                bars: out,
+                                cached: false,
+                            });
+                        }
                         Job::ReloadIndex => {
                             let idx = refresh_remote_index(&agent);
                             let _ = mt.send(Msg::Index(idx));
@@ -383,10 +443,13 @@ impl TickView {
             let symbol = cfg.symbol.clone().unwrap_or_else(default_symbol);
             let interval =
                 Interval::parse(&cfg.interval).unwrap_or_else(|| Interval::parse("1d").unwrap());
-            let chart_type = ChartType::ALL
-                .get(cfg.chart_type)
-                .copied()
-                .unwrap_or(ChartType::Candles);
+            let chart_type = match cfg.chart_type {
+                1 => ChartType::Bars,
+                2 => ChartType::Line,
+                3 => ChartType::Area,
+                4 => ChartType::HeikinAshi,
+                _ => ChartType::Candles,
+            };
             tabs.push(Tab::new(
                 next_tab_id,
                 symbol,
@@ -417,6 +480,9 @@ impl TickView {
                 if saved.spacing >= 2.0 {
                     tab.chart.view.spacing = saved.spacing;
                 }
+                tab.chart
+                    .restore_drawings(saved.symbol.ticker.clone(), saved.drawings.clone());
+                tab.compare_symbol = saved.compare.clone();
                 tabs.push(tab);
                 next_tab_id += 1;
             }
@@ -452,6 +518,7 @@ impl TickView {
             search_open: false,
             search_focus: false,
             search_sel: 0,
+            search_purpose: SearchPurpose::Symbol,
             study_q: String::new(),
             editor: None,
             indicators_open: false,
@@ -475,6 +542,8 @@ impl TickView {
             poll_every: Duration::from_secs(5),
             next_poll: Instant::now() + Duration::from_secs(5),
             next_watch: Instant::now(),
+            dirty_drawings: false,
+            save_at: Instant::now(),
             cfg,
         };
 
@@ -492,6 +561,16 @@ impl TickView {
             me.tabs[me.active].pending.extend(pending);
         }
 
+        for ti in 0..me.tabs.len() {
+            if let Some(sym) = me.tabs[ti].compare_symbol.clone() {
+                let _ = me.job_tx.send(Job::Compare {
+                    tab: me.tabs[ti].id,
+                    sym: Box::new(sym),
+                    iv: me.tabs[ti].interval,
+                });
+            }
+        }
+
         if let Ok(scene) = std::env::var("TICKVIEW_SCENE") {
             match scene.as_str() {
                 "search" => {
@@ -503,6 +582,7 @@ impl TickView {
                 "indicators" => me.indicators_open = true,
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
+                "compare" => me.open_compare_search(),
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -572,14 +652,64 @@ impl TickView {
         });
     }
 
+    fn request_compare(&mut self, ti: usize, sym: Symbol, iv: Interval) {
+        let Some(tab) = self.tabs.get_mut(ti) else {
+            return;
+        };
+        if tab.symbol == sym {
+            self.toast("The compared symbol must differ from the chart symbol");
+            return;
+        }
+        tab.compare_symbol = Some(sym.clone());
+        tab.chart.compare = None;
+        let _ = self.job_tx.send(Job::Compare {
+            tab: tab.id,
+            sym: Box::new(sym.clone()),
+            iv,
+        });
+        self.persist();
+    }
+
+    fn remove_compare(&mut self) {
+        let ti = self.active;
+        if self.tabs[ti].compare_symbol.take().is_some() {
+            self.tabs[ti].chart.compare = None;
+            self.persist();
+        }
+    }
+
+    pub fn open_compare_search(&mut self) {
+        self.search_purpose = SearchPurpose::Compare;
+        self.search_q.clear();
+        self.search_results.clear();
+        self.search_sel = 0;
+        self.search_open = true;
+        self.search_focus = true;
+    }
+
+    fn pick_search_symbol(&mut self, s: Symbol) {
+        match self.search_purpose {
+            SearchPurpose::Symbol => self.switch_symbol(s),
+            SearchPurpose::Compare => {
+                let iv = self.tabs[self.active].interval;
+                self.request_compare(self.active, s, iv);
+            }
+        }
+        self.search_open = false;
+    }
+
     pub fn switch_symbol(&mut self, s: Symbol) {
         let ti = self.active;
         if s == self.tabs[ti].symbol && !self.tabs[ti].candles.o.is_empty() {
             return;
         }
         let tab = &mut self.tabs[ti];
+        if tab.compare_symbol.as_ref() == Some(&s) {
+            tab.compare_symbol = None;
+            tab.chart.compare = None;
+        }
         tab.symbol = s.clone();
-        tab.chart.symbol = s.ticker.clone();
+        tab.chart.set_symbol(s.ticker.clone());
         tab.chart.view.right_offset = 0.0;
         tab.candles = Candles::default();
         tab.chart.view.count = 0;
@@ -602,6 +732,9 @@ impl TickView {
         tab.exhausted = false;
         tab.error = None;
         self.request_history(ti, None, 500);
+        if let Some(sym) = self.tabs[ti].compare_symbol.clone() {
+            self.request_compare(ti, sym, iv);
+        }
         self.persist();
     }
 
@@ -766,6 +899,38 @@ impl TickView {
                         self.alert_tick(&sym, q.last, ctx);
                     }
                 }
+                Msg::Compare {
+                    tab,
+                    sym,
+                    iv,
+                    bars,
+                    cached,
+                } => {
+                    let Some(ti) = self.tabs.iter().position(|t| t.id == tab) else {
+                        continue;
+                    };
+                    if self.tabs[ti].interval != iv
+                        || self.tabs[ti].compare_symbol.as_ref() != Some(&*sym)
+                    {
+                        continue;
+                    }
+                    match bars {
+                        Ok(bars) if !bars.is_empty() => {
+                            self.tabs[ti].chart.compare = Some(CompareSeries::new(
+                                sym.ticker.clone(),
+                                Candles::from_bars(&bars),
+                            ));
+                            if !cached {
+                                self.toast(format!("Comparing with {}", sym.ticker));
+                            }
+                        }
+                        Ok(_) => {}
+                        Err(e) => {
+                            self.toast(format!("Compare {}: {e}", sym.ticker));
+                        }
+                    }
+                    ctx.request_repaint();
+                }
                 Msg::Index(idx) => {
                     self.index = Arc::new(idx);
                     self.refresh_search();
@@ -891,6 +1056,8 @@ impl TickView {
                     right_offset: tab.chart.view.right_offset,
                     spacing: tab.chart.view.spacing,
                     indicators,
+                    drawings: tab.chart.drawings_by_symbol(),
+                    compare: tab.compare_symbol.clone(),
                 }
             })
             .collect();
@@ -995,6 +1162,7 @@ impl TickView {
     }
 
     pub(crate) fn open_search(&mut self) {
+        self.search_purpose = SearchPurpose::Symbol;
         self.search_open = true;
         self.search_focus = true;
         self.search_sel = 0;
@@ -1039,6 +1207,11 @@ impl eframe::App for TickView {
         self.windows(&ctx, &p);
         self.toast_area(&ctx, &p);
 
+        if self.dirty_drawings && Instant::now() >= self.save_at {
+            self.dirty_drawings = false;
+            self.persist();
+        }
+
         ctx.request_repaint_after(Duration::from_millis(900));
     }
 
@@ -1057,8 +1230,20 @@ impl TickView {
             )
             .show(ui, |ui| {
                 let ti = self.active;
+                let tool = draw_tool(self.tool);
+                let magnet = self.magnet;
                 let tab = &mut self.tabs[ti];
+                tab.chart.tools.set_tool(tool);
+                tab.chart.magnet = magnet;
                 let ev: ChartEvent = tickchart::chart_ui(ui, &mut tab.chart, &tab.candles);
+                if ev.changed {
+                    self.dirty_drawings = true;
+                    self.save_at = Instant::now() + Duration::from_millis(350);
+                }
+                if ev.compare_removed {
+                    self.remove_compare();
+                    self.toast("Compare overlay removed");
+                }
                 if ev.load_more
                     && !self.tabs[ti].loading
                     && !self.tabs[ti].exhausted
@@ -1119,7 +1304,15 @@ impl TickView {
             return;
         }
         let mut open = true;
-        egui::Window::new("Symbol search")
+        let title = match self.search_purpose {
+            SearchPurpose::Symbol => "Symbol search",
+            SearchPurpose::Compare => "Compare symbol",
+        };
+        let hint = match self.search_purpose {
+            SearchPurpose::Symbol => "Search symbol, e.g. AAPL, BTCUSDT, EURUSD",
+            SearchPurpose::Compare => "Compare with, e.g. SPY, QQQ, BTCUSDT",
+        };
+        egui::Window::new(title)
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
@@ -1131,7 +1324,7 @@ impl TickView {
                 widgets::dialog_bg(ui, p);
                 let re = ui.add(
                     egui::TextEdit::singleline(&mut self.search_q)
-                        .hint_text("Search symbol, e.g. AAPL, BTCUSDT, EURUSD")
+                        .hint_text(hint)
                         .desired_width(f32::INFINITY)
                         .font(font_regular(type_size::BODY)),
                 );
@@ -1146,8 +1339,7 @@ impl TickView {
                     && ui.input(|i| i.key_pressed(Key::Enter))
                     && let Some(s) = self.search_results.get(self.search_sel).cloned()
                 {
-                    self.switch_symbol(s);
-                    self.search_open = false;
+                    self.pick_search_symbol(s);
                 }
                 if re.has_focus() {
                     if ui.input(|i| i.key_pressed(Key::ArrowDown)) {
@@ -1233,8 +1425,7 @@ impl TickView {
                         }
                     });
                 if let Some(s) = pick {
-                    self.switch_symbol(s);
-                    self.search_open = false;
+                    self.pick_search_symbol(s);
                 }
             });
         if !open {

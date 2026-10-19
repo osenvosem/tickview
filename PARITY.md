@@ -12,15 +12,15 @@ full web platform.
 | Multi-symbol tabs | Done | Add, close, select, per-tab chart state, persisted |
 | Symbol search | Done | ⌘K, keyboard navigation, curated offline index, remote refresh |
 | Intervals | Partial | 1m, 5m, 15m, 1H, 4H, 1D, 1W, 1M; no seconds or tick bars |
-| Chart styles | Partial | Candles, bars, line, area, Heikin Ashi; no hollow/baseline/columns |
+| Chart styles | Done | Candles, hollow candles, bars, columns, line, area, baseline, Heikin Ashi |
 | Indicator browser and settings | Partial | 66 studies, per-param editor, persistent; no Pine/custom studies |
 | Right watchlist | Partial | Add/remove, filter, selection, quote change bars, context menu; no sections or sparklines |
 | Alerts | Partial | Price crossing above/below, polling, persisted; no sounds or notifications |
-| Drawing tools | Planned | Tool rail present; drawing engine is Phase 2 |
-| Compare symbol overlay | Planned | Command-bar control is a placeholder |
-| Layout persistence | Done | Config v2, atomic writes, transparent v1 migration |
+| Drawing tools | Partial | Trend/ray/H/V line, rectangle, ellipse, fib; select/move/delete, magnet, per-symbol persistence. No channel/text/measure/brush/pitchfork yet |
+| Compare symbol overlay | Done | Normalized close line, timestamp alignment, percent legend, search, remove/replace, per-tab persistence |
+| Layout persistence | Done | Config v2, atomic writes, transparent v1 migration; drawings and compare included |
 | Command bar and status bar | Done | Symbol, intervals, styles, studies, alerts, theme, settings, UTC clock |
-| Keyboard shortcuts | Partial | ⌘K, ⌘T, ⌘W, ⌘,, Esc; no full shortcut editor |
+| Keyboard shortcuts | Partial | ⌘K, ⌘T, ⌘W, ⌘,, Esc; Delete/Backspace removes selected drawing; no full shortcut editor |
 | Screenshot capture | Done | `TICKVIEW_SNAPSHOT` debug hook |
 | Live sockets / order book / replay | Planned | Polling REST providers only |
 | Broker execution / paper trading | Non-goal | Charting workstation scope |
