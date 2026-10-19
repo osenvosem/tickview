@@ -282,7 +282,7 @@ pub fn draw_price_grid(p: &Painter, clip: Rect, ax: &PriceAxis, font: FontId, pa
         p.text(
             Pos2::new(clip.max.x + 4.0, y),
             egui::Align2::LEFT_CENTER,
-            &crate::fmt_price(t.value),
+            crate::fmt_price(t.value).as_str(),
             font.clone(),
             pal.text,
         );
