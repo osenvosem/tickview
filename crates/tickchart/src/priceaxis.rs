@@ -74,6 +74,16 @@ impl PriceAxis {
         }
     }
 
+    /// Replace the fitted price range (rectangle-zoom override); rejects junk.
+    #[must_use]
+    pub fn with_range(mut self, lo: f64, hi: f64) -> Self {
+        if lo.is_finite() && hi.is_finite() && lo < hi {
+            self.min = lo;
+            self.max = hi;
+        }
+        self
+    }
+
     /// Shift all screen y by `off` (pane top edge).
     #[must_use]
     pub fn with_offset(mut self, off: f32) -> Self {

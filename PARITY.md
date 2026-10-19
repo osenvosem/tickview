@@ -1,3 +1,36 @@
+# TradingView parity
+
+Target: TradingView Desktop 3.4.1. Status is scoped to this build, not to the
+full web platform.
+
+## Desktop shell
+
+| Area | Status | Notes |
+|---|---|---|
+| Dark / light / system theme | Done | Graphite Terminal + paper palette, runtime switch, persisted |
+| Typography and icons | Done | Bundled Inter + IBM Plex Mono; custom vector icon set |
+| Multi-symbol tabs | Done | Add, close, select, per-tab chart state, persisted |
+| Symbol search | Done | ⌘K, keyboard navigation, curated offline index, remote refresh |
+| Intervals | Partial | 1m, 5m, 15m, 1H, 4H, 1D, 1W, 1M; no seconds or tick bars |
+| Chart styles | Done | Candles, hollow candles, bars, columns, line, area, baseline, Heikin Ashi |
+| Indicator browser and settings | Partial | 66 studies, per-param editor, persistent; no Pine/custom studies |
+| Study default audit | Done | 42 studies' numeric/bool defaults pinned against TradingView Desktop 3.4.1.8194 `studies_metadata` wire payload (`docs/evidence/tv-studies-defaults.json`); audit fixed 11 drifts: VWMA length 20, Keltner mult 1, Stoch %K smoothing 3, CMO 9, KST 10/10/10/15 + signal 9, TRIX 18, HV 10; enum inputs recorded for review |
+| Right watchlist | Partial | Add/remove, filter, selection, quote change bars, context menu; no sections or sparklines |
+| Alerts | Partial | Price crossing above/below, polling, persisted; no sounds or notifications |
+| Drawing tools | Done | Trend/ray/extended line, horizontal ray, H/V line, parallel channel, rectangle, ellipse, fib retracement, fib extension, arrow, note, measure, freehand brush, pitchfork, Schiff pitchfork, regression trend (2σ default, deviation slider), long/short position tool with R/R and delta labels; select/move/delete, per-drawing style toolbar, lock, magnet, per-symbol persistence; shift-drag rectangle zoom (price + time), Esc resets. Deferred: crosshair-rectangle modifier, brush/pitchfork auto-styles beyond color/width/line |
+| Compare symbol overlay | Done | Normalized close line, timestamp alignment, percent legend, search, remove/replace, per-tab persistence |
+| Layout persistence | Done | Config v2, atomic writes, transparent v1 migration; drawings and compare included |
+| Command bar and status bar | Done | Symbol, intervals, styles, studies, alerts, theme, settings, UTC clock |
+| Keyboard shortcuts | Partial | ⌘K, ⌘T, ⌘W, ⌘,, Esc; Delete/Backspace removes selected drawing; no full shortcut editor |
+| Screenshot capture | Done | `TICKVIEW_SNAPSHOT` debug hook |
+| Live sockets / order book / replay | Planned | Polling REST providers only |
+| Broker execution / paper trading | Non-goal | Charting workstation scope |
+| Pine Script / cloud sync / social | Non-goal | Charting workstation scope |
+
+## Studies (66)
+
+| Study | id | Pane |
+|---|---|---|
 | %B | `PercentB` | separate |
 | Accelerator Oscillator | `Accelerator` | separate |
 | Accumulation/Distribution | `AccumulationDistribution` | volume |

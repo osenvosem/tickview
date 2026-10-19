@@ -4,6 +4,7 @@ use egui::epaint::PathShape;
 use egui::{Color32, CornerRadius, FontId, Painter, Pos2, Rect, Stroke, Vec2};
 
 use crate::bars::View;
+use crate::compare::CompareSeries;
 use crate::priceaxis::PriceAxis;
 #[allow(unused_imports)]
 use ta::Candles;
@@ -13,18 +14,24 @@ use ta::registry::PlotStyle;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ChartType {
     Candles,
+    HollowCandles,
     Bars,
     Line,
     Area,
+    Baseline,
+    Columns,
     HeikinAshi,
 }
 
 impl ChartType {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 8] = [
         Self::Candles,
+        Self::HollowCandles,
         Self::Bars,
         Self::Line,
         Self::Area,
+        Self::Baseline,
+        Self::Columns,
         Self::HeikinAshi,
     ];
 
@@ -32,9 +39,12 @@ impl ChartType {
     pub fn label(self) -> &'static str {
         match self {
             Self::Candles => "Candles",
+            Self::HollowCandles => "Hollow candles",
             Self::Bars => "Bars",
             Self::Line => "Line",
             Self::Area => "Area",
+            Self::Baseline => "Baseline",
+            Self::Columns => "Columns",
             Self::HeikinAshi => "Heikin Ashi",
         }
     }
@@ -43,6 +53,7 @@ impl ChartType {
 /// TV dark-theme palette.
 #[derive(Clone, Copy, Debug)]
 pub struct Palette {
+    pub bg: Color32,
     pub up: Color32,
     pub down: Color32,
     pub wick: Color32,
@@ -53,19 +64,49 @@ pub struct Palette {
     pub crosshair: Color32,
 }
 
-impl Default for Palette {
-    fn default() -> Self {
+impl Palette {
+    #[must_use]
+    pub const fn dark() -> Self {
         Self {
-            up: Color32::from_rgb(0x26, 0xA6, 0x9A),
-            down: Color32::from_rgb(0xEF, 0x53, 0x50),
-            wick: Color32::from_rgb(0x78, 0x7B, 0x86),
-            line: Color32::from_rgb(0x29, 0x62, 0xEB),
-            area_fill: Color32::from_rgba_premultiplied(0x29, 0x62, 0xEB, 0x33),
-            grid: Color32::from_rgb(0x2A, 0x2E, 0x39),
-            text: Color32::from_rgb(0xB2, 0xB5, 0xBE),
-            crosshair: Color32::from_rgb(0x75, 0x86, 0x96),
+            bg: Color32::from_rgb(0x0F, 0x13, 0x1A),
+            up: Color32::from_rgb(0x0F, 0xAF, 0x94),
+            down: Color32::from_rgb(0xF0, 0x4E, 0x5E),
+            wick: Color32::from_rgb(0x5E, 0x68, 0x78),
+            line: Color32::from_rgb(0x3D, 0x7B, 0xFF),
+            area_fill: Color32::from_rgba_premultiplied(0x3D, 0x7B, 0xFF, 0x2E),
+            grid: Color32::from_rgb(0x1E, 0x26, 0x33),
+            text: Color32::from_rgb(0x8A, 0x94, 0xA6),
+            crosshair: Color32::from_rgb(0x5E, 0x68, 0x78),
         }
     }
+
+    #[must_use]
+    pub const fn light() -> Self {
+        Self {
+            bg: Color32::from_rgb(0xFF, 0xFF, 0xFF),
+            up: Color32::from_rgb(0x06, 0x7A, 0x68),
+            down: Color32::from_rgb(0xD9, 0x2D, 0x42),
+            wick: Color32::from_rgb(0x98, 0xA2, 0xB3),
+            line: Color32::from_rgb(0x2F, 0x6B, 0xFF),
+            area_fill: Color32::from_rgba_premultiplied(0x2F, 0x6B, 0xFF, 0x24),
+            grid: Color32::from_rgb(0xED, 0xF0, 0xF5),
+            text: Color32::from_rgb(0x66, 0x70, 0x85),
+            crosshair: Color32::from_rgb(0x98, 0xA2, 0xB3),
+        }
+    }
+}
+
+impl Default for Palette {
+    fn default() -> Self {
+        Self::dark()
+    }
+}
+
+/// Violet used for the compare overlay in both themes; distinct from the
+/// amber RSI/indicator series.
+#[must_use]
+pub const fn compare_color() -> Color32 {
+    Color32::from_rgb(0xC9, 0x8A, 0xFF)
 }
 
 #[must_use]
@@ -109,7 +150,7 @@ pub fn draw_bars(
         cd
     };
     match kind {
-        ChartType::Candles | ChartType::HeikinAshi => {
+        ChartType::Candles | ChartType::HeikinAshi | ChartType::HollowCandles => {
             for i in s..e {
                 let (o, h, l, c) = (data.o[i], data.h[i], data.l[i], data.c[i]);
                 if !h.is_finite() || !l.is_finite() {
@@ -124,11 +165,18 @@ pub fn draw_bars(
                 let y_top = ax.y_of(o.max(c));
                 let y_bot = ax.y_of(o.min(c));
                 let hgt = (y_bot - y_top).max(1.0);
-                p.rect_filled(
-                    Rect::from_min_size(Pos2::new(x - bw / 2.0, y_top), Vec2::new(bw, hgt)),
-                    CornerRadius::ZERO,
-                    color,
-                );
+                let body = Rect::from_min_size(Pos2::new(x - bw / 2.0, y_top), Vec2::new(bw, hgt));
+                if kind == ChartType::HollowCandles && c >= o {
+                    p.rect_filled(body, CornerRadius::ZERO, pal.bg);
+                    p.rect_stroke(
+                        body,
+                        CornerRadius::ZERO,
+                        Stroke::new(1.0f32, color),
+                        egui::StrokeKind::Inside,
+                    );
+                } else {
+                    p.rect_filled(body, CornerRadius::ZERO, color);
+                }
             }
         }
         ChartType::Bars => {
@@ -163,6 +211,72 @@ pub fn draw_bars(
                 p.line(pts, Stroke::new(1.5f32, pal.line));
             }
         }
+        ChartType::Baseline => {
+            let pts = close_path(data, v, ax, s, e);
+            if pts.len() > 1 {
+                let base = if data.c[s].is_finite() {
+                    data.c[s]
+                } else {
+                    (data.h[s] + data.l[s]) / 2.0
+                };
+                let base_y = ax.y_of(base);
+                let (up, down) = baseline_bands(&pts, base_y);
+                for poly in up {
+                    p.add(PathShape {
+                        points: poly,
+                        closed: true,
+                        fill: Color32::from_rgba_unmultiplied(
+                            pal.up.r(),
+                            pal.up.g(),
+                            pal.up.b(),
+                            0x2E,
+                        ),
+                        stroke: Stroke::NONE.into(),
+                    });
+                }
+                for poly in down {
+                    p.add(PathShape {
+                        points: poly,
+                        closed: true,
+                        fill: Color32::from_rgba_unmultiplied(
+                            pal.down.r(),
+                            pal.down.g(),
+                            pal.down.b(),
+                            0x2E,
+                        ),
+                        stroke: Stroke::NONE.into(),
+                    });
+                }
+                p.line_segment(
+                    [
+                        Pos2::new(v.x_of(s), base_y),
+                        Pos2::new(v.x_of(e.saturating_sub(1)), base_y),
+                    ],
+                    Stroke::new(1.0f32, pal.text),
+                );
+                p.line(pts, Stroke::new(1.5f32, pal.line));
+            }
+        }
+        ChartType::Columns => {
+            let zero = ax.y_of(0.0);
+            for i in s..e {
+                let c = data.c[i];
+                if !c.is_finite() {
+                    continue;
+                }
+                let x = v.x_of(i);
+                let y = ax.y_of(c);
+                let color = if c >= data.o[i] { pal.up } else { pal.down };
+                p.rect_filled(
+                    Rect::from_min_max(
+                        Pos2::new(x - bw / 2.0, zero.min(y)),
+                        Pos2::new(x + bw / 2.0, zero.max(y)),
+                    ),
+                    CornerRadius::ZERO,
+                    color,
+                );
+            }
+        }
         ChartType::Area => {
             let pts = close_path(data, v, ax, s, e);
             if pts.len() > 1 {
@@ -178,6 +292,89 @@ pub fn draw_bars(
                 });
                 p.line(pts, Stroke::new(1.5f32, pal.line));
             }
+        }
+    }
+}
+
+/// Split a polyline into fills above and below a horizontal baseline.
+#[must_use]
+pub(crate) fn baseline_bands(points: &[Pos2], baseline_y: f32) -> (Vec<Vec<Pos2>>, Vec<Vec<Pos2>>) {
+    let mut up = Vec::new();
+    let mut down = Vec::new();
+    for w in points.windows(2) {
+        let (a, b) = (w[0], w[1]);
+        let a_above = a.y <= baseline_y;
+        let b_above = b.y <= baseline_y;
+        if a_above == b_above {
+            let poly = vec![a, b, Pos2::new(b.x, baseline_y), Pos2::new(a.x, baseline_y)];
+            if a_above {
+                up.push(poly);
+            } else {
+                down.push(poly);
+            }
+        } else {
+            let dy = b.y - a.y;
+            let t = if dy.abs() < 1e-6 {
+                0.0
+            } else {
+                (baseline_y - a.y) / dy
+            };
+            let cross = Pos2::new(a.x + (b.x - a.x) * t, baseline_y);
+            if a_above {
+                up.push(vec![
+                    a,
+                    cross,
+                    Pos2::new(cross.x, baseline_y),
+                    Pos2::new(a.x, baseline_y),
+                ]);
+                down.push(vec![
+                    cross,
+                    b,
+                    Pos2::new(b.x, baseline_y),
+                    Pos2::new(cross.x, baseline_y),
+                ]);
+            } else {
+                down.push(vec![
+                    a,
+                    cross,
+                    Pos2::new(cross.x, baseline_y),
+                    Pos2::new(a.x, baseline_y),
+                ]);
+                up.push(vec![
+                    cross,
+                    b,
+                    Pos2::new(b.x, baseline_y),
+                    Pos2::new(cross.x, baseline_y),
+                ]);
+            }
+        }
+    }
+    (up, down)
+}
+
+/// Draw the timestamp-aligned compare line on the main price axis.
+pub fn draw_compare(
+    p: &Painter,
+    v: &View,
+    ax: &PriceAxis,
+    main: &Candles,
+    cmp: &CompareSeries,
+    color: Color32,
+) {
+    let (s, e) = v.visible();
+    let Some((main_base, cmp_base)) = cmp.baseline(main, s) else {
+        return;
+    };
+    let pts: Vec<Pos2> = (s..e)
+        .filter_map(|i| {
+            cmp.normalized_at(main, i, main_base, cmp_base)
+                .map(|val| Pos2::new(v.x_of(i), ax.y_of(val)))
+        })
+        .collect();
+    if pts.len() > 1 {
+        p.line(pts.clone(), Stroke::new(1.5f32, color));
+        if let Some(last) = pts.last() {
+            p.circle_filled(*last, 2.5, color);
         }
     }
 }
@@ -308,5 +505,40 @@ pub fn draw_vgrid(p: &Painter, clip: Rect, x_ticks: &[f32], pal: &Palette) {
             [Pos2::new(*x, clip.min.y), Pos2::new(*x, clip.max.y)],
             stroke,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chart_type_registry_has_unique_labels() {
+        assert_eq!(ChartType::ALL.len(), 8);
+        let mut labels: Vec<&str> = ChartType::ALL.iter().map(|t| t.label()).collect();
+        labels.sort_unstable();
+        labels.dedup();
+        assert_eq!(labels.len(), ChartType::ALL.len());
+    }
+
+    #[test]
+    fn baseline_bands_split_on_crossing() {
+        let pts = [
+            Pos2::new(0.0, 10.0),
+            Pos2::new(10.0, 10.0),
+            Pos2::new(20.0, 20.0),
+            Pos2::new(30.0, 20.0),
+        ];
+        let (up, down) = baseline_bands(&pts, 15.0);
+        assert_eq!(
+            up.len(),
+            2,
+            "one above segment and the upper half of a cross"
+        );
+        assert_eq!(down.len(), 2, "lower half of a cross and one below segment");
+        assert!(up.iter().all(|p| p.len() >= 3));
+        assert!(down.iter().all(|p| p.len() >= 3));
+        assert!(up.iter().flatten().any(|p| (p.y - 15.0).abs() < 1e-6));
+        assert!(down.iter().flatten().any(|p| (p.y - 15.0).abs() < 1e-6));
     }
 }

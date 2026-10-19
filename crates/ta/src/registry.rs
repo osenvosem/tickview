@@ -510,7 +510,7 @@ const DEFS_PRICE: &[Def] = &[
         scale: Scale::Auto,
         hlines: &[],
         params: &[
-            ip!("length", "Length", 9, 1, 5000),
+            ip!("length", "Length", 20, 1, 5000),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
         plots: &[pl!("VWMA", TEAL)],
@@ -666,7 +666,7 @@ const DEFS_PRICE: &[Def] = &[
         hlines: &[],
         params: &[
             ip!("length", "Length", 20, 1, 5000),
-            fp!("mult", "Multiplier", 2.0, 0.5, 10.0, 0.1),
+            fp!("mult", "Multiplier", 1.0, 0.5, 10.0, 0.1),
             ep!("source", "source", 4, SOURCE_VARIANTS),
         ],
         plots: &[
@@ -950,7 +950,7 @@ const DEFS_OSC: &[Def] = &[
         hlines: &[20.0, 50.0, 80.0],
         params: &[
             ip!("k_len", "%K Length", 14, 1, 5000),
-            ip!("smooth", "%K Smoothing", 1, 1, 500),
+            ip!("smooth", "%K Smoothing", 3, 1, 500),
             ip!("d_len", "%D Smoothing", 3, 1, 500),
         ],
         plots: &[pl!("%K", BLUE), pl!("%D", ORANGE)],
@@ -976,7 +976,7 @@ const DEFS_OSC: &[Def] = &[
         scale: Scale::Auto,
         hlines: &[0.0],
         params: &[
-            ip!("length", "Length", 20, 1, 5000),
+            ip!("length", "Length", 9, 1, 5000),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
         plots: &[pl!("CMO", PURPLE)],
@@ -1059,11 +1059,11 @@ const DEFS_OSC: &[Def] = &[
             ip!("r2", "ROC Length 2", 15, 1, 500),
             ip!("r3", "ROC Length 3", 20, 1, 500),
             ip!("r4", "ROC Length 4", 30, 1, 500),
-            ip!("s1", "SMA Length 1", 1, 1, 500),
-            ip!("s2", "SMA Length 2", 1, 1, 500),
-            ip!("s3", "SMA Length 3", 1, 1, 500),
-            ip!("s4", "SMA Length 4", 1, 1, 500),
-            ip!("signal", "Signal Length", 16, 1, 500),
+            ip!("s1", "SMA Length 1", 10, 1, 500),
+            ip!("s2", "SMA Length 2", 10, 1, 500),
+            ip!("s3", "SMA Length 3", 10, 1, 500),
+            ip!("s4", "SMA Length 4", 15, 1, 500),
+            ip!("signal", "Signal Length", 9, 1, 500),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
         plots: &[pl!("KST", BLUE), pl!("Signal", ORANGE)],
@@ -1101,7 +1101,7 @@ const DEFS_OSC: &[Def] = &[
         scale: Scale::Auto,
         hlines: &[0.0],
         params: &[
-            ip!("length", "Triple EMA Length", 9, 1, 500),
+            ip!("length", "Triple EMA Length", 18, 1, 500),
             ip!("signal", "Signal Length", 9, 1, 500),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
@@ -1216,7 +1216,7 @@ const DEFS_OSC: &[Def] = &[
         scale: Scale::Auto,
         hlines: &[],
         params: &[
-            ip!("length", "Length", 20, 1, 5000),
+            ip!("length", "Length", 10, 1, 5000),
             ip!("annualize", "Annualization (bars/year)", 252, 1, 365),
         ],
         plots: &[pl!("HV", PURPLE)],
