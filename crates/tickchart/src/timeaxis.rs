@@ -177,6 +177,18 @@ pub fn ticks(t0: i64, t1: i64, step: i64) -> Vec<i64> {
     out
 }
 
+/// Full timestamp label for crosshair tags (UTC).
+#[must_use]
+pub fn fmt_dt(t: i64) -> String {
+    use chrono::{DateTime, Timelike};
+    let dt = DateTime::from_timestamp(t, 0).map(|d| d.naive_utc());
+    match dt {
+        Some(d) if d.hour() == 0 && d.minute() == 0 => d.format("%Y-%m-%d").to_string(),
+        Some(d) => d.format("%Y-%m-%d %H:%M").to_string(),
+        None => String::new(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

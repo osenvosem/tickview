@@ -5,9 +5,13 @@
 
 pub mod barfmt;
 pub mod bars;
+pub mod chart;
+pub mod painter;
 pub mod priceaxis;
 pub mod timeaxis;
 
 pub use barfmt::{fmt_compact, fmt_price};
+pub use chart::{ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind};
+pub use painter::{ChartType, Palette};
 pub use priceaxis::{PriceAxis, PriceTick, nice_step};
 pub use timeaxis::{TickLabel, choose_step, fmt_tick, ticks};
