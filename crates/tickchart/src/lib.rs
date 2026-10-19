@@ -4,6 +4,7 @@
 //! bar geometry & hit-testing -> egui painter -> interactive chart widget.
 
 pub mod barfmt;
+pub mod bars;
 pub mod priceaxis;
 pub mod timeaxis;
 

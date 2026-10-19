@@ -199,8 +199,22 @@ mod ha_tests {
         // python ref: bar0 o=10 h=12 l=8 c=11 -> ha_o=10.5 ha_c=10.25 ha_h=12 ha_l=8
         // bar1 o=11 h=13 l=10 c=12 -> ha_o=(10.5+10.25)/2=10.375 ha_c=11.5 ha_h=13 ha_l=10
         let bars = vec![
-            Bar { t: 0, o: 10.0, h: 12.0, l: 8.0, c: 11.0, v: 1.0 },
-            Bar { t: 1, o: 11.0, h: 13.0, l: 10.0, c: 12.0, v: 1.0 },
+            Bar {
+                t: 0,
+                o: 10.0,
+                h: 12.0,
+                l: 8.0,
+                c: 11.0,
+                v: 1.0,
+            },
+            Bar {
+                t: 1,
+                o: 11.0,
+                h: 13.0,
+                l: 10.0,
+                c: 12.0,
+                v: 1.0,
+            },
         ];
         let ha = heikin_ashi(&Candles::from_bars(&bars));
         assert_eq!(ha.o[0], 10.5);

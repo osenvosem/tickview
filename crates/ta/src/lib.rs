@@ -15,7 +15,7 @@ pub mod trends;
 pub mod vols;
 
 pub use bar::Bar;
-pub use candles::{heikin_ashi, Candles};
+pub use candles::{Candles, heikin_ashi};
 pub use channels::{DayPivots, PivotKind, PivotSet};
 pub use oscs::{Adx, ElderRay, Kst, Macd, MomMode, Stoch, Trix, Tsi};
 pub use rating::{RatingLabel, Score};
