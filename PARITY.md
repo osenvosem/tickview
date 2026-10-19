@@ -21,9 +21,10 @@ full web platform.
 | Compare symbol overlay | Done | Normalized close line, timestamp alignment, percent legend, search, remove/replace, per-tab persistence |
 | Layout persistence | Done | Config v2, atomic writes, transparent v1 migration; drawings and compare included |
 | Command bar and status bar | Done | Symbol, intervals, styles, studies, alerts, theme, settings, UTC clock |
-| Keyboard shortcuts | Partial | ⌘K, ⌘T, ⌘W, ⌘,, Esc; Delete/Backspace removes selected drawing; no full shortcut editor |
+| Keyboard shortcuts | Partial | ⌘K, ⌘T, ⌘W, ⌘,, Esc, Delete/Backspace removes selected drawing, Space + ←/→ drive bar replay; no full shortcut editor |
 | Screenshot capture | Done | `TICKVIEW_SNAPSHOT` debug hook |
-| Live sockets / order book / replay | Planned | Polling REST providers only |
+| Live sockets / order book / replay | Partial | Binance spot kline websocket streams closed bars for crypto tabs (auto-reconnect, LIVE vs POLLING status, Settings toggle, REST tail polling suppressed while streaming); bar replay mode: cursor, status-bar transport (jump/step/play/speed x1–x64), Space + arrow keys; order book deferred |
+| Study templates | Done | Named reusable indicator sets: save current chart, apply replaces studies, delete; persisted in config v2 |
 | Broker execution / paper trading | Non-goal | Charting workstation scope |
 | Pine Script / cloud sync / social | Non-goal | Charting workstation scope |
 

@@ -207,8 +207,6 @@ impl Default for SavedConfig {
 
 impl SavedConfig {
     /// Live websocket streaming is enabled unless explicitly turned off.
-    /// Streaming worker consumes this in the same phase (task 4).
-    #[allow(dead_code)]
     #[must_use]
     pub fn stream_enabled(&self) -> bool {
         self.stream != Some(false)
