@@ -55,6 +55,7 @@ pub struct ChartState {
     pub drawings: Vec<Drawing>,
     pub tools: DrawingToolState,
     pub magnet: bool,
+    pub locked: bool,
     pub compare: Option<CompareSeries>,
     symbol_drawings: BTreeMap<String, Vec<Drawing>>,
     crosshair_pos: Option<Pos2>,
@@ -69,7 +70,7 @@ struct DrawingDrag {
 }
 
 /// Events emitted to the app after a frame.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ChartEvent {
     /// Chart panned to the oldest bar: app should fetch older history.
     pub load_more: bool,
@@ -77,6 +78,8 @@ pub struct ChartEvent {
     pub changed: bool,
     /// The compare legend was clicked; app should clear its compare symbol.
     pub compare_removed: bool,
+    /// Screen anchor for the floating drawing settings toolbar.
+    pub drawing_toolbar_pos: Option<Pos2>,
 }
 
 impl ChartState {
@@ -105,6 +108,7 @@ impl ChartState {
             drawings: Vec::new(),
             tools: DrawingToolState::default(),
             magnet: false,
+            locked: false,
             compare: None,
             symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
@@ -473,6 +477,18 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         font_sm.clone(),
     );
 
+    ev.drawing_toolbar_pos = st
+        .tools
+        .selected
+        .and_then(|id| st.drawings.iter().find(|d| d.id == id))
+        .and_then(|d| drawings::anchor_pos(d.last_anchor(), cd, &st.view, &price_axis))
+        .map(|pos| {
+            Pos2::new(
+                pos.x.clamp(plot.min.x, plot.max.x),
+                pos.y.clamp(plot.min.y, plot.max.y),
+            )
+        });
+
     // Last price line + axis tag.
     if let Some(&last) = cd.c.last() {
         let ax = price_axis;
@@ -694,10 +710,11 @@ fn handle_input(
     let pointer = resp.interact_pointer_pos().or_else(|| resp.hover_pos());
     let press = ctx.input(|i| i.pointer.press_origin()).or(pointer);
     let in_price = pointer.is_some_and(|p| price_rect.contains(p));
-    let drawing_tool = st.tools.tool.kind().is_some();
+    let drawing_tool = st.tools.tool.is_tool() && !st.locked;
 
-    // Live preview of the second anchor.
-    if st.tools.draft.is_some()
+    // Live preview of the second/third anchor.
+    if !st.locked
+        && (st.tools.draft.is_some() || st.tools.measure.is_some())
         && let Some(pos) = pointer
         && in_price
         && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
@@ -707,13 +724,16 @@ fn handle_input(
 
     if resp.hovered() {
         if ctx.input(|i| i.key_pressed(egui::Key::Escape))
-            && (st.tools.draft.is_some() || st.tools.selected.is_some())
+            && (st.tools.draft.is_some()
+                || st.tools.selected.is_some()
+                || st.tools.measure.is_some())
         {
             st.tools.cancel();
             st.drag_drawing = None;
         }
-        if (ctx.input(|i| i.key_pressed(egui::Key::Delete))
-            || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
+        if !st.locked
+            && (ctx.input(|i| i.key_pressed(egui::Key::Delete))
+                || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
             && st.tools.delete_selected(&mut st.drawings)
         {
             ev.changed = true;
@@ -741,6 +761,7 @@ fn handle_input(
                 }
             }
             if st.drag_pane.is_none()
+                && !st.locked
                 && price_rect.contains(pos)
                 && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
             {
@@ -791,12 +812,14 @@ fn handle_input(
         && pos.y > price_rect.min.y + 26.0
     {
         if drawing_tool {
-            if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
-                && let Some(drawing) = st.tools.click(anchor)
-            {
-                st.tools.selected = Some(drawing.id);
-                st.drawings.push(drawing);
-                ev.changed = true;
+            if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
+                if st.tools.tool == crate::drawings::DrawTool::Measure {
+                    st.tools.measure_click(anchor);
+                } else if let Some(drawing) = st.tools.click(anchor) {
+                    st.tools.selected = Some(drawing.id);
+                    st.drawings.push(drawing);
+                    ev.changed = true;
+                }
             }
         } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
             st.tools.selected = Some(id);
@@ -1208,6 +1231,124 @@ mod tests {
                 modifiers,
             }],
         );
+    }
+
+    #[test]
+    fn three_click_channel_creates_a_three_anchor_drawing() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.tools.set_tool(crate::drawings::DrawTool::Channel);
+        click(&ctx, &mut st, &cd, Pos2::new(740.0, 300.0));
+        click(&ctx, &mut st, &cd, Pos2::new(800.0, 350.0));
+        assert!(st.drawings.is_empty());
+        assert!(st.tools.draft.is_some());
+        let ev = click(&ctx, &mut st, &cd, Pos2::new(812.0, 400.0));
+        assert!(ev.changed);
+        assert_eq!(st.drawings.len(), 1);
+        assert_eq!(st.drawings[0].kind, crate::drawings::DrawingKind::Channel);
+        assert!(st.drawings[0].c.is_some());
+    }
+
+    #[test]
+    fn measure_click_click_sets_overlay_and_escape_clears_it() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.tools.set_tool(crate::drawings::DrawTool::Measure);
+        click(&ctx, &mut st, &cd, Pos2::new(740.0, 300.0));
+        assert!(st.tools.measure.is_some_and(|m| !m.done));
+        click(&ctx, &mut st, &cd, Pos2::new(812.0, 400.0));
+        assert!(st.tools.measure.is_some_and(|m| m.done));
+        assert!(st.drawings.is_empty());
+
+        let key = egui::Event::Key {
+            key: egui::Key::Escape,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::default(),
+        };
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(Pos2::new(800.0, 350.0)), key],
+        );
+        assert!(st.tools.measure.is_none());
+    }
+
+    #[test]
+    fn locked_chart_ignores_drawing_clicks_and_drags() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        let pos = Pos2::new(800.0, 350.0);
+        click(&ctx, &mut st, &cd, pos);
+        assert_eq!(st.drawings.len(), 1);
+        let price = st.drawings[0].a.price;
+
+        st.locked = true;
+        click(&ctx, &mut st, &cd, Pos2::new(740.0, 300.0));
+        assert_eq!(st.drawings.len(), 1);
+
+        let modifiers = egui::Modifiers::default();
+        let moved = pos + Vec2::new(0.0, 40.0);
+        frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(pos)]);
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers,
+            }],
+        );
+        frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(moved)]);
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos: moved,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers,
+            }],
+        );
+        assert!((st.drawings[0].a.price - price).abs() < 1e-9);
+    }
+
+    #[test]
+    fn selected_drawing_reports_a_toolbar_anchor_inside_the_plot() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        let ev = click(&ctx, &mut st, &cd, Pos2::new(800.0, 350.0));
+        let plot = Rect::from_min_size(Pos2::ZERO, Vec2::new(840.0, 676.0));
+        let anchor = ev.drawing_toolbar_pos.expect("toolbar anchor");
+        assert!(plot.contains(anchor), "{anchor:?}");
+
+        let key = egui::Event::Key {
+            key: egui::Key::Escape,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::default(),
+        };
+        let ev = frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(Pos2::new(800.0, 350.0)), key],
+        );
+        assert!(ev.drawing_toolbar_pos.is_none());
     }
 
     #[test]
