@@ -539,6 +539,7 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 } else {
                     (p.up, "POLLING")
                 };
+                let replaying = table.chart.replay;
                 widgets::dot(ui, dot, 3.0);
                 ui.label(
                     egui::RichText::new(state)
@@ -561,6 +562,91 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                             .font(font_regular(type_size::TINY))
                             .color(p.down),
                     );
+                }
+                if let Some(rp) = replaying {
+                    widgets::dot(ui, p.accent, 3.0);
+                    ui.label(
+                        egui::RichText::new(format!("REPLAY x{}", app.replay_speed))
+                            .font(font_mono(type_size::TINY))
+                            .color(p.accent),
+                    );
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::StepBack,
+                        vec2(22.0, 22.0),
+                        false,
+                        true,
+                        "Back to start",
+                    )
+                    .clicked()
+                    {
+                        app.step_replay(-9_999);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        if rp.playing { Icon::Pause } else { Icon::Play },
+                        vec2(22.0, 22.0),
+                        true,
+                        true,
+                        if rp.playing { "Pause" } else { "Play" },
+                    )
+                    .clicked()
+                    {
+                        app.toggle_replay_play();
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::StepFwd,
+                        vec2(22.0, 22.0),
+                        false,
+                        true,
+                        "Step forward",
+                    )
+                    .clicked()
+                    {
+                        app.step_replay(1);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::FastFwd,
+                        vec2(22.0, 22.0),
+                        false,
+                        true,
+                        "Playback speed",
+                    )
+                    .clicked()
+                    {
+                        app.cycle_replay_speed();
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::Close,
+                        vec2(22.0, 22.0),
+                        false,
+                        true,
+                        "Exit replay",
+                    )
+                    .clicked()
+                    {
+                        app.exit_replay();
+                    }
+                } else if widgets::icon_button(
+                    ui,
+                    p,
+                    Icon::Clock,
+                    vec2(22.0, 22.0),
+                    false,
+                    true,
+                    "Bar replay",
+                )
+                .clicked()
+                {
+                    app.enter_replay();
                 }
                 ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(

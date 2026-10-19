@@ -14,7 +14,10 @@ pub mod timeaxis;
 
 pub use barfmt::{fmt_compact, fmt_price};
 pub use chart::ui as chart_ui;
-pub use chart::{ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind};
+pub use chart::{
+    ChartEvent, ChartState, Layer, Pane as ChartPane, PaneKind, ReplayState, replay_advance,
+    replay_delay_ms,
+};
 pub use compare::CompareSeries;
 pub use drawings::{
     Anchor, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState, LineStyle, Measure,

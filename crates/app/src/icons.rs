@@ -62,6 +62,12 @@ pub enum Icon {
     Fullscreen,
     Download,
     Refresh,
+    Clock,
+    Play,
+    Pause,
+    StepBack,
+    StepFwd,
+    FastFwd,
 }
 
 #[allow(dead_code)]
@@ -182,6 +188,12 @@ impl Icon {
             Self::Fullscreen => "fullscreen",
             Self::Download => "download",
             Self::Refresh => "refresh",
+            Self::Clock => "clock",
+            Self::Play => "play",
+            Self::Pause => "pause",
+            Self::StepBack => "step-back",
+            Self::StepFwd => "step-fwd",
+            Self::FastFwd => "fast-fwd",
         }
     }
 
@@ -602,6 +614,65 @@ impl Icon {
             Self::Refresh => {
                 arc(12.0, 12.0, 7.0, -2.4, 1.3);
                 path(&[(18.4, 5.8), (19.5, 10.0), (15.3, 10.4)]);
+            }
+            Self::Clock => {
+                circle(12.0, 12.0, 8.0);
+                path(&[(12.0, 7.0), (12.0, 12.0), (15.5, 14.0)]);
+            }
+            Self::Play => {
+                painter.add(Shape::convex_polygon(
+                    vec![px(8.0, 6.0), px(19.0, 12.0), px(8.0, 18.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+            }
+            Self::Pause => {
+                painter.rect_filled(
+                    Rect::from_min_max(px(8.0, 6.0), px(11.0, 18.0)),
+                    CornerRadius::same(1),
+                    fill,
+                );
+                painter.rect_filled(
+                    Rect::from_min_max(px(13.0, 6.0), px(16.0, 18.0)),
+                    CornerRadius::same(1),
+                    fill,
+                );
+            }
+            Self::StepBack => {
+                painter.rect_filled(
+                    Rect::from_min_max(px(5.0, 6.0), px(7.0, 18.0)),
+                    CornerRadius::same(1),
+                    fill,
+                );
+                painter.add(Shape::convex_polygon(
+                    vec![px(19.0, 6.0), px(9.0, 12.0), px(19.0, 18.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+            }
+            Self::StepFwd => {
+                painter.add(Shape::convex_polygon(
+                    vec![px(5.0, 6.0), px(15.0, 12.0), px(5.0, 18.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+                painter.rect_filled(
+                    Rect::from_min_max(px(17.0, 6.0), px(19.0, 18.0)),
+                    CornerRadius::same(1),
+                    fill,
+                );
+            }
+            Self::FastFwd => {
+                painter.add(Shape::convex_polygon(
+                    vec![px(4.0, 6.0), px(12.0, 12.0), px(4.0, 18.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+                painter.add(Shape::convex_polygon(
+                    vec![px(12.0, 6.0), px(20.0, 12.0), px(12.0, 18.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
             }
         }
     }

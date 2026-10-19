@@ -40,6 +40,14 @@ pub struct Pane {
     pub height_frac: f32,
 }
 
+/// Bar-replay cursor state for a chart.
+#[derive(Clone, Copy, Debug)]
+pub struct ReplayState {
+    /// Index of the last visible bar.
+    pub cursor: usize,
+    pub playing: bool,
+}
+
 /// Top-level widget state.
 #[derive(Clone, Debug)]
 pub struct ChartState {
@@ -65,6 +73,8 @@ pub struct ChartState {
     /// Whether the last primary press happened with shift (rect-zoom arm).
     zoom_pending: bool,
     pub compare: Option<CompareSeries>,
+    /// Bar replay: hides bars after `cursor` and steps through history.
+    pub replay: Option<ReplayState>,
     symbol_drawings: BTreeMap<String, Vec<Drawing>>,
     crosshair_pos: Option<Pos2>,
     drag_pane: Option<usize>,
@@ -122,6 +132,7 @@ impl ChartState {
             zoom_sel: None,
             zoom_pending: false,
             compare: None,
+            replay: None,
             symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
             drag_pane: None,
@@ -317,6 +328,21 @@ const AXIS_W: f32 = 64.0;
 const AXIS_H: f32 = 22.0;
 const SEP_HIT: f32 = 6.0;
 
+/// Move a replay cursor by `delta`, clamped to the data range.
+#[must_use]
+pub fn replay_advance(cursor: usize, total: usize, delta: i64) -> usize {
+    if total == 0 {
+        return 0;
+    }
+    (cursor as i64 + delta).clamp(0, total as i64 - 1) as usize
+}
+
+/// Milliseconds per replay step for a playback speed multiplier.
+#[must_use]
+pub fn replay_delay_ms(speed: f64) -> u64 {
+    (1_000.0 / speed).floor().max(15.0) as u64
+}
+
 /// Draw the chart; returns requested app actions.
 pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     let mut ev = ChartEvent::default();
@@ -329,6 +355,9 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     let plot = Rect::from_min_size(full.min, Vec2::new(plot_w, plot_h));
     st.view.width = plot_w;
     st.view.count = cd.len();
+    if let Some(rp) = st.replay {
+        st.view.count = (rp.cursor + 1).min(cd.len());
+    }
 
     let font = FontId::proportional(11.0);
     let font_sm = FontId::proportional(10.0);
@@ -1667,5 +1696,22 @@ mod tests {
             vec![egui::Event::PointerMoved(Pos2::new(520.0, 180.0)), key],
         );
         assert!(st.price_zoom.is_none());
+    }
+
+    #[test]
+    fn replay_cursor_clamps_at_data_edges() {
+        assert_eq!(replay_advance(0, 100, 1), 1);
+        assert_eq!(replay_advance(99, 100, 1), 99);
+        assert_eq!(replay_advance(0, 100, -1), 0);
+        assert_eq!(replay_advance(50, 100, -1), 49);
+        assert_eq!(replay_advance(5, 0, 1), 0);
+    }
+
+    #[test]
+    fn replay_speed_maps_to_delay() {
+        assert_eq!(replay_delay_ms(1.0), 1_000);
+        assert_eq!(replay_delay_ms(8.0), 125);
+        assert_eq!(replay_delay_ms(64.0), 15);
+        assert_eq!(replay_delay_ms(500.0), 15);
     }
 }

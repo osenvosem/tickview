@@ -405,6 +405,10 @@ pub struct TickView {
     stream_shutdown: Arc<std::sync::atomic::AtomicBool>,
     stream_key: Option<(Symbol, Interval)>,
     pub stream_ok: bool,
+    pub replay_speed: f64,
+    pub replay_autoplay: bool,
+    replay_next: Instant,
+    pending_replay: bool,
     pending_phase4: bool,
     pending_zoomrect: bool,
     cfg: SavedConfig,
@@ -660,6 +664,10 @@ impl TickView {
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
             stream_ok: false,
+            replay_speed: 8.0,
+            replay_autoplay: false,
+            replay_next: Instant::now(),
+            pending_replay: false,
             cfg,
         };
 
@@ -721,6 +729,7 @@ impl TickView {
                 }
                 "phase4drawings" => me.pending_phase4 = true,
                 "zoomrect" => me.pending_zoomrect = true,
+                "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -1095,6 +1104,10 @@ impl TickView {
                                         Some((egui::pos2(220.0, 140.0), egui::pos2(560.0, 320.0)));
                                     self.pending_zoomrect = false;
                                 }
+                                if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
+                                    self.pending_replay = false;
+                                    self.enter_replay();
+                                }
                                 if follow {
                                     self.tabs[ti].chart.view.right_offset = 0.0;
                                 }
@@ -1167,6 +1180,9 @@ impl TickView {
                     self.refresh_search();
                 }
                 Msg::Stream { sym, iv, bar } => {
+                    if self.replaying() {
+                        continue;
+                    }
                     self.stream_ok = true;
                     if let Some(ti) = self
                         .tabs
@@ -1261,6 +1277,88 @@ impl TickView {
         });
     }
 
+    #[must_use]
+    pub fn replaying(&self) -> bool {
+        self.tabs.iter().any(|t| t.chart.replay.is_some())
+    }
+
+    pub fn enter_replay(&mut self) {
+        let ti = self.active;
+        let n = self.tabs[ti].candles.len();
+        if n < 2 {
+            self.toast("Load more bars before replaying");
+            return;
+        }
+        let cursor = (n as f64 * 0.7) as usize;
+        self.tabs[ti].chart.replay = Some(tickchart::ReplayState {
+            cursor,
+            playing: self.replay_autoplay,
+        });
+        self.tabs[ti].chart.view.right_offset = 0.0;
+        self.replay_next = Instant::now();
+        self.toast("Bar replay: Space plays, arrows step");
+    }
+
+    pub fn exit_replay(&mut self) {
+        let ti = self.active;
+        self.tabs[ti].chart.replay = None;
+        self.request_history(ti, None, 5);
+        self.toast("Live data resumed");
+    }
+
+    pub fn toggle_replay_play(&mut self) {
+        let ti = self.active;
+        if let Some(rp) = &mut self.tabs[ti].chart.replay {
+            rp.playing = !rp.playing;
+            self.replay_next = Instant::now();
+        }
+    }
+
+    pub fn step_replay(&mut self, dir: i64) {
+        let ti = self.active;
+        let n = self.tabs[ti].candles.len();
+        if let Some(rp) = &mut self.tabs[ti].chart.replay {
+            rp.cursor = tickchart::replay_advance(rp.cursor, n, dir);
+            rp.playing = false;
+            self.replay_next = Instant::now();
+        }
+    }
+
+    pub fn cycle_replay_speed(&mut self) {
+        self.replay_speed = if self.replay_speed < 2.0 {
+            8.0
+        } else if self.replay_speed < 16.0 {
+            64.0
+        } else {
+            1.0
+        };
+    }
+
+    /// Advance auto-playback; call once per frame.
+    fn replay_tick(&mut self) {
+        let ti = self.active;
+        let Some(rp) = self.tabs[ti].chart.replay else {
+            return;
+        };
+        if !rp.playing {
+            return;
+        }
+        let now = Instant::now();
+        if now < self.replay_next {
+            return;
+        }
+        let n = self.tabs[ti].candles.len();
+        let next = tickchart::replay_advance(rp.cursor, n, 1);
+        let rp = self.tabs[ti].chart.replay.as_mut().expect("replay present");
+        rp.cursor = next;
+        self.replay_next =
+            now + Duration::from_millis(tickchart::replay_delay_ms(self.replay_speed));
+        if next + 1 >= n {
+            rp.playing = false;
+            self.toast("Reached last bar");
+        }
+    }
+
     fn apply_pending(&mut self, ti: usize) {
         if self.tabs[ti].pending.is_empty() || self.tabs[ti].candles.is_empty() {
             return;
@@ -1325,7 +1423,7 @@ impl TickView {
         let now = Instant::now();
         if now >= self.next_poll {
             self.next_poll = now + self.poll_every;
-            if !self.stream_ok {
+            if !self.stream_ok && !self.replaying() {
                 self.request_history(self.active, None, 5);
             }
             for a in self.alerts.alerts.iter().filter(|a| a.active) {
@@ -1540,6 +1638,22 @@ impl TickView {
         if settings {
             self.settings_open = true;
         }
+        let (play, back, fwd) = ctx.input(|i| {
+            (
+                i.key_pressed(Key::Space),
+                i.key_pressed(Key::ArrowLeft),
+                i.key_pressed(Key::ArrowRight),
+            )
+        });
+        if play {
+            self.toggle_replay_play();
+        }
+        if back {
+            self.step_replay(-1);
+        }
+        if fwd {
+            self.step_replay(1);
+        }
     }
 
     pub(crate) fn open_search(&mut self) {
@@ -1555,6 +1669,7 @@ impl eframe::App for TickView {
         let ctx = ui.ctx().clone();
         self.drain(&ctx);
         self.poll();
+        self.replay_tick();
         self.handle_shortcuts(&ctx);
         self.frames += 1;
         if self.tabs[self.active].candles.is_empty() {
