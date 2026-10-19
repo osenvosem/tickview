@@ -2296,4 +2296,58 @@ mod tests {
         st2.click(anchor(0, 10.0));
         assert!(st2.click(anchor(60, 12.0)).is_some_and(|d| d.style.fill));
     }
+
+    #[test]
+    fn move_shifts_brush_extras_and_position_anchors() {
+        let cd = long_candles();
+        let mut b = Drawing::new(1, DrawingKind::Brush, anchor(0, 100.0), anchor(0, 100.0));
+        b.extra = vec![anchor(60, 102.0), anchor(120, 104.0)];
+        assert!(move_drawing(
+            &mut b,
+            anchor(0, 100.0),
+            anchor(60, 101.0),
+            &cd
+        ));
+        assert_eq!(b.extra[0].t, 120);
+        assert!((b.extra[0].price - 103.0).abs() < 1e-6);
+        assert!((b.extra[1].price - 105.0).abs() < 1e-6);
+        let mut pos = Drawing::with_c(
+            2,
+            DrawingKind::LongPosition,
+            anchor(0, 100.0),
+            anchor(180, 110.0),
+            anchor(240, 95.0),
+        );
+        assert!(move_drawing(
+            &mut pos,
+            anchor(0, 100.0),
+            anchor(60, 102.0),
+            &cd
+        ));
+        assert!((pos.b.price - 112.0).abs() < 1e-6);
+        let c = pos.c.unwrap();
+        assert!((c.price - 97.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn phase4_kinds_serde_roundtrip() {
+        let mut reg = Drawing::with_c(
+            7,
+            DrawingKind::RegTrend,
+            anchor(0, 10.0),
+            anchor(120, 12.0),
+            anchor(240, 14.0),
+        );
+        reg.reg_dev = 2.5;
+        let json = serde_json::to_string(&reg).unwrap();
+        let back: Drawing = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.reg_dev, 2.5);
+        assert_eq!(back.kind, DrawingKind::RegTrend);
+        let mut br = Drawing::new(8, DrawingKind::Brush, anchor(0, 10.0), anchor(0, 10.0));
+        br.extra = vec![anchor(60, 11.0)];
+        let json = serde_json::to_string(&br).unwrap();
+        let back: Drawing = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.extra.len(), 1);
+        assert_eq!(back.kind, DrawingKind::Brush);
+    }
 }
