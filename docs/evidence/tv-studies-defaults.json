@@ -1,0 +1,508 @@
+{
+ "Accelerator": {
+  "missing": true,
+  "name": "Accelerator Oscillator"
+ },
+ "AccumulationDistribution": {
+  "enum_inputs": {},
+  "inputs": {},
+  "name": "Accumulation/Distribution",
+  "wire_id": "ACCD@tv-basicstudies-280"
+ },
+ "Adx": {
+  "enum_inputs": {},
+  "inputs": {
+   "ADX smoothing": 14,
+   "DI Length": 14
+  },
+  "name": "Average Directional Index (ADX)",
+  "wire_id": "DM@tv-basicstudies-280"
+ },
+ "Alligator": {
+  "enum_inputs": {},
+  "inputs": {
+   "jaw length": 13,
+   "lips length": 5,
+   "teeth length": 8
+  },
+  "name": "Alligator",
+  "wire_id": "WilliamsAlligator@tv-basicstudies-280"
+ },
+ "Alma": {
+  "missing": true,
+  "name": "Arnaud Legoux Moving Average"
+ },
+ "AwesomeOscillator": {
+  "enum_inputs": {},
+  "inputs": {},
+  "name": "Awesome Oscillator",
+  "wire_id": "AwesomeOscillator@tv-basicstudies-280"
+ },
+ "Bias": {
+  "missing": true,
+  "name": "Bias"
+ },
+ "BollingerBands": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 20,
+   "stdDev": 2
+  },
+  "name": "Bollinger Bands",
+  "wire_id": "BB@tv-basicstudies-280"
+ },
+ "Cci": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 20
+  },
+  "name": "Commodity Channel Index (CCI)",
+  "wire_id": "CCI@tv-basicstudies-280"
+ },
+ "ChaikinMoneyFlow": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 20
+  },
+  "name": "Chaikin Money Flow",
+  "wire_id": "CMF@tv-basicstudies-280"
+ },
+ "ChaikinOscillator": {
+  "enum_inputs": {},
+  "inputs": {
+   "fast length": 3,
+   "slow length": 10
+  },
+  "name": "Chaikin Oscillator",
+  "wire_id": "ChaikinOscillator@tv-basicstudies-280"
+ },
+ "ChaikinVolatility": {
+  "missing": true,
+  "name": "Chaikin Volatility"
+ },
+ "Cmo": {
+  "enum_inputs": {
+   "src": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Chande Momentum Oscillator",
+  "wire_id": "chandeMO@tv-basicstudies-280"
+ },
+ "Dema": {
+  "enum_inputs": {},
+  "inputs": {
+   "Length": 9
+  },
+  "name": "Double EMA",
+  "wire_id": "DoubleEMA@tv-basicstudies-280"
+ },
+ "DonchianChannels": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 20
+  },
+  "name": "Donchian Channels",
+  "wire_id": "DONCH@tv-basicstudies-280"
+ },
+ "Dpo": {
+  "enum_inputs": {},
+  "inputs": {
+   "centered": false,
+   "period": 21
+  },
+  "name": "Detrended Price Oscillator",
+  "wire_id": "DetrendedPriceOscillator@tv-basicstudies-280"
+ },
+ "EaseOfMovement": {
+  "enum_inputs": {},
+  "inputs": {
+   "divisor": 10000,
+   "length": 14
+  },
+  "name": "Ease of Movement",
+  "wire_id": "EaseOfMovement@tv-basicstudies-280"
+ },
+ "ElderForce": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 13
+  },
+  "name": "Elder's Force Index",
+  "wire_id": "EFI@tv-basicstudies-280"
+ },
+ "ElderRay": {
+  "missing": true,
+  "name": "Elder-ray Index"
+ },
+ "Ema": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Exponential Moving Average",
+  "wire_id": "MAExp@tv-basicstudies-280"
+ },
+ "EmaRibbons": {
+  "missing": true,
+  "name": "EMA Ribbons"
+ },
+ "Envelope": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "exponential": false,
+   "length": 20,
+   "percent": 10
+  },
+  "name": "Envelope",
+  "wire_id": "ENV@tv-basicstudies-280"
+ },
+ "GarmanKlassVolatility": {
+  "missing": true,
+  "name": "Garman-Klass Volatility"
+ },
+ "HistoricalVolatility": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 10
+  },
+  "name": "Historical Volatility",
+  "wire_id": "HV@tv-basicstudies-280"
+ },
+ "Hma": {
+  "enum_inputs": {
+   "src": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Hull Moving Average",
+  "wire_id": "hullMA@tv-basicstudies-280"
+ },
+ "Ichimoku": {
+  "enum_inputs": {},
+  "inputs": {
+   "displacement": 26,
+   "leading span 2 periods": 52,
+   "standard line periods": 26,
+   "turning line periods": 9
+  },
+  "name": "Ichimoku Cloud",
+  "wire_id": "IchimokuCloud@tv-basicstudies-280"
+ },
+ "Kama": {
+  "missing": true,
+  "name": "Kaufman Adaptive Moving Average"
+ },
+ "KeltnerChannels": {
+  "enum_inputs": {
+   "bands style": "true range",
+   "source": "close"
+  },
+  "inputs": {
+   "exponential": true,
+   "length": 20,
+   "multiplier": 1
+  },
+  "name": "Keltner Channels",
+  "wire_id": "KLTNR@tv-basicstudies-280"
+ },
+ "Klinger": {
+  "missing": true,
+  "name": "Klinger Volume Oscillator"
+ },
+ "Kst": {
+  "enum_inputs": {},
+  "inputs": {
+   "ROCLen1": 10,
+   "ROCLen2": 15,
+   "ROCLen3": 20,
+   "ROCLen4": 30,
+   "SMALen1": 10,
+   "SMALen2": 10,
+   "SMALen3": 10,
+   "SMALen4": 15,
+   "SigLen": 9
+  },
+  "name": "KST Oscillator",
+  "wire_id": "KST@tv-basicstudies-280"
+ },
+ "LinReg": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "count": 100,
+   "lower diviation": -2,
+   "upper diviation": 2,
+   "use lower diviation": true,
+   "use upper diviation": true
+  },
+  "name": "Linear Regression",
+  "wire_id": "LinearRegression@tv-basicstudies-280"
+ },
+ "Lsma": {
+  "missing": true,
+  "name": "Least Squares Moving Average"
+ },
+ "Macd": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "fast length": 12,
+   "signal smoothing": 9,
+   "simple ma(oscillator)": false,
+   "simple ma(signal line)": false,
+   "slow length": 26
+  },
+  "name": "MACD",
+  "wire_id": "MACD@tv-basicstudies-280"
+ },
+ "MassIndex": {
+  "missing": true,
+  "name": "Mass Index"
+ },
+ "Momentum": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 10
+  },
+  "name": "Momentum",
+  "wire_id": "MOM@tv-basicstudies-280"
+ },
+ "MoneyFlowIndex": {
+  "missing": true,
+  "name": "Money Flow Index"
+ },
+ "Obv": {
+  "enum_inputs": {},
+  "inputs": {},
+  "name": "On Balance Volume (OBV)",
+  "wire_id": "OBV@tv-basicstudies-280"
+ },
+ "ParkinsonVolatility": {
+  "missing": true,
+  "name": "Parkinson Volatility"
+ },
+ "PercentB": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 20,
+   "stdDev": 2
+  },
+  "name": "%B",
+  "wire_id": "BollingerBandsR@tv-basicstudies-280"
+ },
+ "Pivots": {
+  "enum_inputs": {
+   "kind": "Traditional",
+   "pivTimeFrame": "Auto"
+  },
+  "inputs": {
+   "lookBack": 15,
+   "showHistoricalPivots": true
+  },
+  "name": "Pivot Points Standard",
+  "wire_id": "PivotPointsStandard@tv-basicstudies-280"
+ },
+ "Psar": {
+  "enum_inputs": {},
+  "inputs": {
+   "increment": 0.02,
+   "max value": 0.2,
+   "start": 0.02
+  },
+  "name": "Parabolic SAR",
+  "wire_id": "PSAR@tv-basicstudies-280"
+ },
+ "PviDvi": {
+  "missing": true,
+  "name": "PVI & DVI"
+ },
+ "RateOfChangeVol": {
+  "missing": true,
+  "name": "ROC Volume"
+ },
+ "Rma": {
+  "missing": true,
+  "name": "Smoothed Moving Average"
+ },
+ "Roc": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Rate of Change (ROC)",
+  "wire_id": "ROC@tv-basicstudies-280"
+ },
+ "RogersSatchellVolatility": {
+  "missing": true,
+  "name": "Rogers-Satchell Volatility"
+ },
+ "Rsi": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 14
+  },
+  "name": "Relative Strength Index (RSI)",
+  "wire_id": "RSI@tv-basicstudies-280"
+ },
+ "Rvi": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 10
+  },
+  "name": "Relative Vigor Index (RVI)",
+  "wire_id": "VigorIndex@tv-basicstudies-280"
+ },
+ "Sma": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Simple Moving Average",
+  "wire_id": "MASimple@tv-basicstudies-280"
+ },
+ "Stochastic": {
+  "enum_inputs": {},
+  "inputs": {
+   "D": 3,
+   "K": 14,
+   "smooth": 3
+  },
+  "name": "Stochastic",
+  "wire_id": "Stochastic@tv-basicstudies-280"
+ },
+ "StochasticRsi": {
+  "enum_inputs": {
+   "RSI Source": "close"
+  },
+  "inputs": {
+   "D": 3,
+   "K": 3,
+   "RSI Length": 14,
+   "Stochastic Length": 14
+  },
+  "name": "Stochastic RSI",
+  "wire_id": "StochasticRSI@tv-basicstudies-280"
+ },
+ "Supertrend": {
+  "missing": true,
+  "name": "Supertrend"
+ },
+ "Tema": {
+  "enum_inputs": {},
+  "inputs": {
+   "Length": 9
+  },
+  "name": "Triple EMA",
+  "wire_id": "TripleEMA@tv-basicstudies-280"
+ },
+ "Trix": {
+  "enum_inputs": {},
+  "inputs": {
+   "length": 18
+  },
+  "name": "TRIX",
+  "wire_id": "Trix@tv-basicstudies-280"
+ },
+ "Tsi": {
+  "missing": true,
+  "name": "True Strength Index (TSI)"
+ },
+ "UltimateOscillator": {
+  "enum_inputs": {},
+  "inputs": {
+   "length1": 7,
+   "length2": 14,
+   "length3": 28
+  },
+  "name": "Ultimate Oscillator",
+  "wire_id": "UltimateOsc@tv-basicstudies-280"
+ },
+ "VolumeOscillator": {
+  "missing": true,
+  "name": "Volume Oscillator"
+ },
+ "VolumePriceTrend": {
+  "enum_inputs": {},
+  "inputs": {},
+  "name": "Volume Price Trend",
+  "wire_id": "PriceVolumeTrend@tv-basicstudies-280"
+ },
+ "VolumeRatio": {
+  "missing": true,
+  "name": "Volume Ratio"
+ },
+ "Vortex": {
+  "missing": true,
+  "name": "Vortex"
+ },
+ "Vwap": {
+  "enum_inputs": {
+   "Anchor Period": "Session",
+   "source": "hlc3"
+  },
+  "inputs": {},
+  "name": "VWAP",
+  "wire_id": "VWAP@tv-basicstudies-280"
+ },
+ "Vwma": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 20
+  },
+  "name": "Volume Weighted Moving Average",
+  "wire_id": "MAVolumeWeighted@tv-basicstudies-280"
+ },
+ "WilliamsR": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 14
+  },
+  "name": "Williams %R",
+  "wire_id": "WilliamR@tv-basicstudies-280"
+ },
+ "Wma": {
+  "enum_inputs": {
+   "source": "close"
+  },
+  "inputs": {
+   "length": 9
+  },
+  "name": "Weighted Moving Average",
+  "wire_id": "MAWeighted@tv-basicstudies-280"
+ },
+ "ZScore": {
+  "missing": true,
+  "name": "Z-Score"
+ },
+ "Zlema": {
+  "missing": true,
+  "name": "Zero-Lag EMA"
+ }
+}
