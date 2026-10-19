@@ -367,6 +367,7 @@ pub struct TickView {
     search_purpose: SearchPurpose,
 
     pub study_q: String,
+    pub template_q: String,
     pub editor: Option<Editor>,
     pub indicators_open: bool,
     pub alerts_open: bool,
@@ -616,6 +617,7 @@ impl TickView {
             search_sel: 0,
             search_purpose: SearchPurpose::Symbol,
             study_q: String::new(),
+            template_q: String::new(),
             editor: None,
             indicators_open: false,
             alerts_open: false,
@@ -1303,6 +1305,62 @@ impl TickView {
         }
         self.persist();
     }
+    fn current_indicators(&self, ti: usize) -> Vec<store::SavedIndicator> {
+        self.tabs[ti]
+            .chart
+            .panes
+            .iter()
+            .flat_map(|pane| {
+                pane.layers
+                    .iter()
+                    .map(|l| store::SavedIndicator::from_parts(def(l.id).tv_name, &l.params))
+            })
+            .collect()
+    }
+
+    fn apply_template(&mut self, ti: usize, tpl: &store::StudyTemplate) {
+        let current: Vec<TvId> = self.tabs[ti]
+            .chart
+            .panes
+            .iter()
+            .flat_map(|p| p.layers.iter().map(|l| l.id))
+            .collect();
+        for id in current {
+            let _ = self.tabs[ti].chart.remove_indicator(id);
+        }
+        let mut applied = 0usize;
+        for ind in &tpl.indicators {
+            if let Some((id, params)) = ind.to_params() {
+                self.add_indicator(ti, id, params);
+                applied += 1;
+            }
+        }
+        self.recompute(ti);
+        self.persist();
+        self.toast(format!("{applied} studies applied from template"));
+    }
+
+    fn save_template(&mut self, name: &str) {
+        let name = name.trim();
+        if name.is_empty() {
+            self.toast("Template name required");
+            return;
+        }
+        let indicators = self.current_indicators(self.active);
+        self.cfg.study_templates.push(store::StudyTemplate {
+            name: name.to_owned(),
+            indicators,
+        });
+        self.persist();
+        self.toast(format!("Template \"{name}\" saved"));
+    }
+
+    fn delete_template(&mut self, idx: usize) {
+        if idx < self.cfg.study_templates.len() {
+            self.cfg.study_templates.remove(idx);
+            self.persist();
+        }
+    }
 
     fn request_capture(&mut self, path: PathBuf) {
         self.snap = Some(path.clone());
@@ -1886,6 +1944,10 @@ impl TickView {
                 })
                 .collect()
         };
+        let templates = self.cfg.study_templates.clone();
+        let mut apply_tpl: Option<usize> = None;
+        let mut del_tpl: Option<usize> = None;
+        let mut save_tpl = false;
 
         egui::Window::new("Indicators & strategies")
             .open(&mut open)
@@ -1942,6 +2004,52 @@ impl TickView {
                     });
                 }
                 widgets::hline(ui, p);
+                widgets::section_label(ui, p, "TEMPLATES");
+                if templates.is_empty() {
+                    ui.label(
+                        RichText::new("No templates saved")
+                            .font(font_regular(type_size::SMALL))
+                            .color(p.faint),
+                    );
+                }
+                for (i, tpl) in templates.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            RichText::new(&tpl.name)
+                                .font(font_regular(type_size::BODY))
+                                .color(p.text),
+                        );
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if widgets::icon_button(
+                                ui,
+                                p,
+                                Icon::Trash,
+                                vec2(24.0, 24.0),
+                                false,
+                                true,
+                                "Delete template",
+                            )
+                            .clicked()
+                            {
+                                del_tpl = Some(i);
+                            }
+                            if ui.button("Apply").clicked() {
+                                apply_tpl = Some(i);
+                            }
+                        });
+                    });
+                }
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.template_q)
+                            .hint_text("Template name")
+                            .desired_width(240.0)
+                            .font(font_regular(type_size::BODY)),
+                    );
+                    if ui.button("Save current").clicked() {
+                        save_tpl = true;
+                    }
+                });
                 ui.horizontal(|ui| {
                     ui.label(
                         RichText::new("ADD STUDY")
@@ -2008,6 +2116,17 @@ impl TickView {
         if let Some(id) = add {
             self.editor = Some(Editor::new(id, self.tabs[ti].id, None));
             self.indicators_open = false;
+        }
+        if save_tpl {
+            let name = std::mem::take(&mut self.template_q);
+            self.save_template(&name);
+        }
+        if let Some(i) = del_tpl {
+            self.delete_template(i);
+        }
+        if let Some(i) = apply_tpl {
+            let tpl = self.cfg.study_templates[i].clone();
+            self.apply_template(ti, &tpl);
         }
         if !open {
             self.indicators_open = false;
