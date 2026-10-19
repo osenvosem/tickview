@@ -778,8 +778,28 @@ impl TickView {
             a(ts(n - 1), lo + span * 0.62),
             a(ts(n - 1), lo + span * 0.22),
         );
+        let short = Drawing::with_c(
+            9005,
+            DrawingKind::ShortPosition,
+            a(ts(n / 2), lo + span * 0.66),
+            a(ts(n - 1), lo + span * 0.44),
+            a(ts(n - 1), lo + span * 0.84),
+        );
+        let start = n / 6;
+        let step = (n - 1 - start) / 8;
+        let pts: Vec<Anchor> = (0..9)
+            .map(|k| {
+                let frac = k as f64 / 8.0;
+                let wig = 0.05 * (k as f64 * 1.3).sin();
+                a(ts(start + step * k), lo + span * (0.06 + 0.20 * frac + wig))
+            })
+            .collect();
+        let mut brush = Drawing::new(9006, DrawingKind::Brush, pts[0], pts[0]);
+        brush.extra = pts[1..].to_vec();
         let tab = &mut self.tabs[ti];
-        tab.chart.drawings.extend([fork, schiff, reg, long]);
+        tab.chart
+            .drawings
+            .extend([fork, schiff, reg, long, short, brush]);
         tab.chart.tools.selected = Some(9003);
     }
 
