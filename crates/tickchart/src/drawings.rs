@@ -542,12 +542,47 @@ impl Drawing {
         let a = map(self.a);
         let b = map(self.b);
         match self.kind {
-            DrawingKind::Brush
-            | DrawingKind::Pitchfork
-            | DrawingKind::SchiffPitchfork
-            | DrawingKind::RegTrend
-            | DrawingKind::LongPosition
-            | DrawingKind::ShortPosition => false,
+            DrawingKind::Brush => {
+                let mut prev = a;
+                let mut found = false;
+                for anchor in &self.extra {
+                    let cur = map(*anchor);
+                    if distance_to_segment(p, prev, cur) <= TOL {
+                        found = true;
+                        break;
+                    }
+                    prev = cur;
+                }
+                found || (self.extra.is_empty() && distance_to_segment(p, a, b) <= TOL)
+            }
+            DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
+                let Some(pc) = self.c else {
+                    return false;
+                };
+                pitchfork_lines(
+                    a,
+                    b,
+                    map(pc),
+                    matches!(self.kind, DrawingKind::SchiffPitchfork),
+                    plot,
+                )
+                .is_some_and(|lines| {
+                    lines
+                        .iter()
+                        .any(|&(s, e)| distance_to_segment(p, s, e) <= TOL)
+                })
+            }
+            // Selection needs the fitted band; `chart.rs` uses reg_band_hit with reg_geometry.
+            DrawingKind::RegTrend => false,
+            DrawingKind::LongPosition | DrawingKind::ShortPosition => {
+                let Some(c) = self.c else {
+                    return false;
+                };
+                let pc = map(c);
+                let lo = b.y.min(pc.y);
+                let hi = b.y.max(pc.y);
+                p.x >= a.x - TOL && p.y >= lo - TOL && p.y <= hi + TOL
+            }
             DrawingKind::TrendLine => distance_to_segment(p, a, b) <= TOL,
             DrawingKind::Ray => self
                 .ray_geometry(map, plot)
@@ -675,6 +710,136 @@ impl Drawing {
         let (oa, ob) = clip_line(a + perp, b + perp, plot)?;
         Some((ba, bb, oa, ob))
     }
+
+    /// Least-squares line endpoints in screen space plus the band half-width
+    /// (`reg_dev` x residual sigma) for the regression trend drawing.
+    #[must_use]
+    pub fn reg_geometry(
+        &self,
+        cd: &Candles,
+        view: &View,
+        axis: &PriceAxis,
+        plot: Rect,
+    ) -> Option<(Pos2, Pos2, f32)> {
+        let mut i0 = nearest_index(cd, self.a.t)?;
+        let mut i1 = nearest_index(cd, self.b.t)?;
+        if i0 > i1 {
+            std::mem::swap(&mut i0, &mut i1);
+        }
+        let span = &cd.c[i0..=i1];
+        let (slope, intercept, sigma) = ols_fit(span)?;
+        let n = span.len() as f64;
+        let p0 = axis.y_of(intercept);
+        let p1 = axis.y_of(intercept + slope * (n - 1.0));
+        let mid = intercept + slope * (n - 1.0) * 0.5;
+        let dev = f64::from(self.reg_dev) * sigma;
+        let half = (axis.y_of(mid) - axis.y_of(mid + dev)).abs().max(0.5);
+        let (a, b) = clip_line(
+            Pos2::new(view.x_of(i0), p0),
+            Pos2::new(view.x_of(i1), p1),
+            plot,
+        )?;
+        Some((a, b, half))
+    }
+}
+
+/// Median plus two parallels for an Andrews (`schiff = false`) or Schiff
+/// pitchfork, all clipped to `plot`. Invariant: `b != c` and `d` non-degenerate.
+#[must_use]
+pub fn pitchfork_lines(
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    schiff: bool,
+    plot: Rect,
+) -> Option<[(Pos2, Pos2); 3]> {
+    let d = ((b - a) + (c - a)) * 0.5;
+    if d.length_sq() < 1e-9 || (b - c).length_sq() < 1e-9 {
+        return None;
+    }
+    let (h, s1, s2) = if schiff {
+        (a + d * 0.5, a + (b - a) * 0.5, a + (c - a) * 0.5)
+    } else {
+        (a, b, c)
+    };
+    let median = clip_line(h, h + d, plot)?;
+    let l1 = clip_line(s1, s1 + d, plot)?;
+    let l2 = clip_line(s2, s2 + d, plot)?;
+    Some([median, l1, l2])
+}
+
+/// Ordinary least squares over unit-spaced samples: `(slope, intercept,
+/// residual sigma)`. `None` when fewer than two samples.
+#[must_use]
+pub fn ols_fit(y: &[f64]) -> Option<(f64, f64, f64)> {
+    let n = y.len();
+    if n < 2 {
+        return None;
+    }
+    let nf = n as f64;
+    let mx = (n - 1) as f64 * 0.5;
+    let my = y.iter().sum::<f64>() / nf;
+    let mut sxy = 0.0;
+    let mut sxx = 0.0;
+    for (i, &v) in y.iter().enumerate() {
+        let dx = i as f64 - mx;
+        sxy += dx * (v - my);
+        sxx += dx * dx;
+    }
+    if sxx < 1e-12 {
+        return None;
+    }
+    let slope = sxy / sxx;
+    let intercept = my - slope * mx;
+    let sse: f64 = y
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| {
+            let r = v - (intercept + slope * i as f64);
+            r * r
+        })
+        .sum();
+    Some((slope, intercept, (sse / nf).sqrt()))
+}
+
+/// Reward-to-risk ratio of a position; `None` for zero risk or a negative
+/// ratio (long/short semantics resolved by the caller).
+#[must_use]
+pub fn position_rr(entry: f64, target: f64, stop: f64) -> Option<f64> {
+    let risk = entry - stop;
+    if risk.abs() < 1e-9 {
+        return None;
+    }
+    let rr = (target - entry) / risk;
+    (rr.is_finite() && rr > 0.0).then_some(rr)
+}
+
+/// Signed price and percent delta of `level` versus `entry`, TV label style.
+#[must_use]
+pub fn position_delta(entry: f64, level: f64) -> String {
+    let d = level - entry;
+    if entry.abs() < 1e-12 {
+        format!("{d:+.2}")
+    } else {
+        format!("{d:+.2} ({:+.2}%)", d / entry * 100.0)
+    }
+}
+
+/// Whether `p` lies within a regression band: x between the line endpoints and
+/// y within `half` px of the interpolated center line.
+#[must_use]
+pub fn reg_band_hit(a: Pos2, b: Pos2, half: f32, p: Pos2) -> bool {
+    let (x0, x1) = (a.x.min(b.x), a.x.max(b.x));
+    if p.x < x0 || p.x > x1 {
+        return false;
+    }
+    let t = if (b.x - a.x).abs() < 1e-6 {
+        0.0
+    } else {
+        (p.x - a.x) / (b.x - a.x)
+    };
+    let yc = a.y + (b.y - a.y) * t;
+    (p.y - yc).abs() <= half + 1.0
 }
 
 /// Clip an infinite line through `a`/`b` to `rect`.
@@ -1798,5 +1963,143 @@ mod tests {
         let out = serde_json::to_string(&d).unwrap();
         let back: Drawing = serde_json::from_str(&out).unwrap();
         assert_eq!(back, d);
+    }
+
+    #[test]
+    fn pitchfork_median_passes_through_p1_toward_mid() {
+        let p = plot();
+        let lines = pitchfork_lines(
+            Pos2::new(10.0, 80.0),
+            Pos2::new(30.0, 20.0),
+            Pos2::new(70.0, 40.0),
+            false,
+            p,
+        )
+        .unwrap();
+        let (m0, m1) = lines[0];
+        assert!((m1 - m0).length() > 1.0);
+        let dir = (m1 - m0).normalized();
+        let want = (Pos2::new(50.0, 30.0) - Pos2::new(10.0, 80.0)).normalized();
+        assert!((dir.x - want.x).abs() < 1e-3 && (dir.y - want.y).abs() < 1e-3);
+    }
+
+    #[test]
+    fn schiff_median_shifts_to_half_depth() {
+        let p = plot();
+        let a = Pos2::new(50.0, 300.0);
+        let b = Pos2::new(150.0, 100.0);
+        let c = Pos2::new(250.0, 140.0);
+        let std_ = pitchfork_lines(a, b, c, false, p).unwrap();
+        let sch = pitchfork_lines(a, b, c, true, p).unwrap();
+        let perp = |median: (Pos2, Pos2), side_pt: Pos2| {
+            let v = median.1 - median.0;
+            let t = side_pt - median.0;
+            (v.y * t.x - v.x * t.y).abs() / v.length()
+        };
+        let d_std = perp(std_[0], std_[1].0);
+        let d_sch = perp(sch[0], sch[1].0);
+        assert!((d_sch - d_std * 0.5).abs() < 1.0, "{d_sch} vs {d_std}");
+    }
+
+    #[test]
+    fn pitchfork_degenerate_handles_return_none() {
+        let p = plot();
+        assert!(
+            pitchfork_lines(
+                Pos2::new(10.0, 10.0),
+                Pos2::new(50.0, 50.0),
+                Pos2::new(50.0, 50.0),
+                false,
+                p
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn ols_fit_recovers_line_and_sigma() {
+        let (k, b0, sigma) = ols_fit(&[1.0, 3.0, 5.0, 7.0]).unwrap(); // y = 2x + 1
+        assert!((k - 2.0).abs() < 1e-9 && (b0 - 1.0).abs() < 1e-9 && sigma.abs() < 1e-9);
+        assert!(ols_fit(&[1.0]).is_none());
+        let (k2, b2, s2) = ols_fit(&[0.0, 2.0, 1.0]).unwrap(); // slope 0.5, intercept 0.5
+        assert!(
+            (k2 - 0.5).abs() < 1e-9 && (b2 - 0.5).abs() < 1e-9 && (s2 - 0.5f64.sqrt()).abs() < 1e-9
+        );
+    }
+
+    #[test]
+    fn position_rr_and_delta_format() {
+        assert_eq!(position_rr(100.0, 140.0, 80.0), Some(2.0));
+        assert_eq!(position_rr(100.0, 140.0, 100.0), None);
+        assert_eq!(position_delta(100.0, 104.67), "+4.67 (+4.67%)");
+        assert_eq!(position_delta(100.0, 97.5), "-2.50 (-2.50%)");
+    }
+
+    #[test]
+    fn brush_hit_follows_the_polyline() {
+        let p = plot();
+        let mut d = Drawing::new(1, DrawingKind::Brush, anchor(0, 100.0), anchor(0, 100.0));
+        d.extra = vec![anchor(60, 100.0), anchor(60, 200.0), anchor(120, 200.0)];
+        assert!(d.hit(Pos2::new(30.0, 100.0), map, p));
+        assert!(d.hit(Pos2::new(60.0, 150.0), map, p));
+        assert!(d.hit(Pos2::new(100.0, 200.0), map, p));
+        assert!(!d.hit(Pos2::new(30.0, 200.0), map, p));
+        assert!(!d.hit(Pos2::new(100.0, 100.0), map, p));
+    }
+
+    #[test]
+    fn pitchfork_hits_any_of_the_three_lines() {
+        let p = plot();
+        let d = Drawing::with_c(
+            2,
+            DrawingKind::Pitchfork,
+            anchor(50, 250.0),
+            anchor(120, 80.0),
+            anchor(240, 120.0),
+        );
+        assert!(d.hit(Pos2::new(115.0, 175.0), map, p)); // median
+        assert!(d.hit(Pos2::new(120.0, 80.0), map, p)); // side through p2
+        assert!(d.hit(Pos2::new(240.0, 120.0), map, p)); // side through p3
+        assert!(!d.hit(Pos2::new(290.0, 290.0), map, p));
+    }
+
+    #[test]
+    fn long_position_hit_is_the_stop_target_band_past_entry() {
+        let p = plot();
+        let d = Drawing::with_c(
+            3,
+            DrawingKind::LongPosition,
+            anchor(50, 100.0),
+            anchor(200, 150.0),
+            anchor(250, 60.0),
+        );
+        assert!(d.hit(Pos2::new(150.0, 120.0), map, p));
+        assert!(d.hit(Pos2::new(280.0, 90.0), map, p));
+        assert!(!d.hit(Pos2::new(150.0, 180.0), map, p));
+        assert!(!d.hit(Pos2::new(150.0, 40.0), map, p));
+        assert!(!d.hit(Pos2::new(20.0, 120.0), map, p));
+    }
+
+    #[test]
+    fn short_position_uses_the_same_band_semantics() {
+        let p = plot();
+        let d = Drawing::with_c(
+            4,
+            DrawingKind::ShortPosition,
+            anchor(50, 100.0),
+            anchor(200, 60.0),
+            anchor(250, 150.0),
+        );
+        assert!(d.hit(Pos2::new(150.0, 80.0), map, p));
+        assert!(!d.hit(Pos2::new(150.0, 200.0), map, p));
+    }
+
+    #[test]
+    fn reg_band_hit_uses_interpolated_center_line() {
+        let (a, b) = (Pos2::new(50.0, 200.0), Pos2::new(250.0, 100.0));
+        assert!(reg_band_hit(a, b, 12.0, Pos2::new(150.0, 155.0)));
+        assert!(reg_band_hit(a, b, 12.0, Pos2::new(150.0, 140.0)));
+        assert!(!reg_band_hit(a, b, 12.0, Pos2::new(150.0, 175.0)));
+        assert!(!reg_band_hit(a, b, 12.0, Pos2::new(30.0, 205.0))); // before start x
     }
 }
