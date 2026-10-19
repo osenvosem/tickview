@@ -15,22 +15,34 @@ use crate::priceaxis::PriceAxis;
 pub enum DrawingKind {
     TrendLine,
     Ray,
+    ExtLine,
+    HRay,
     HLine,
     VLine,
+    Channel,
     Rect,
     Ellipse,
     Fib,
+    FibExt,
+    Arrow,
+    Note,
 }
 
 impl DrawingKind {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 13] = [
         Self::TrendLine,
         Self::Ray,
+        Self::ExtLine,
+        Self::HRay,
         Self::HLine,
         Self::VLine,
+        Self::Channel,
         Self::Rect,
         Self::Ellipse,
         Self::Fib,
+        Self::FibExt,
+        Self::Arrow,
+        Self::Note,
     ];
 
     #[must_use]
@@ -38,18 +50,34 @@ impl DrawingKind {
         match self {
             Self::TrendLine => "Trend line",
             Self::Ray => "Ray",
+            Self::ExtLine => "Extended line",
+            Self::HRay => "Horizontal ray",
             Self::HLine => "Horizontal line",
             Self::VLine => "Vertical line",
+            Self::Channel => "Parallel channel",
             Self::Rect => "Rectangle",
             Self::Ellipse => "Ellipse",
             Self::Fib => "Fib retracement",
+            Self::FibExt => "Fib extension",
+            Self::Arrow => "Arrow",
+            Self::Note => "Note",
         }
     }
 
-    /// Whether creating this drawing takes two chart clicks instead of one.
+    /// How many chart clicks creating this drawing takes.
     #[must_use]
-    pub fn needs_two_points(self) -> bool {
-        !matches!(self, Self::HLine | Self::VLine)
+    pub fn points(self) -> u8 {
+        match self {
+            Self::HLine | Self::VLine | Self::HRay | Self::Note => 1,
+            Self::Channel | Self::FibExt => 3,
+            _ => 2,
+        }
+    }
+
+    /// Whether this kind paints a filled body.
+    #[must_use]
+    pub fn supports_fill(self) -> bool {
+        matches!(self, Self::Rect | Self::Channel)
     }
 }
 
@@ -61,24 +89,38 @@ pub enum DrawTool {
     Crosshair,
     TrendLine,
     Ray,
+    ExtLine,
+    HRay,
     HLine,
     VLine,
+    Channel,
     Rect,
     Ellipse,
     Fib,
+    FibExt,
+    Arrow,
+    Note,
+    Measure,
 }
 
 impl DrawTool {
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 16] = [
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
         Self::Ray,
+        Self::ExtLine,
+        Self::HRay,
         Self::HLine,
         Self::VLine,
+        Self::Channel,
         Self::Rect,
         Self::Ellipse,
         Self::Fib,
+        Self::FibExt,
+        Self::Arrow,
+        Self::Note,
+        Self::Measure,
     ];
 
     #[must_use]
@@ -88,35 +130,64 @@ impl DrawTool {
             Self::Crosshair => "Crosshair",
             Self::TrendLine => "Trend line",
             Self::Ray => "Ray",
+            Self::ExtLine => "Extended line",
+            Self::HRay => "Horizontal ray",
             Self::HLine => "Horizontal line",
             Self::VLine => "Vertical line",
+            Self::Channel => "Parallel channel",
             Self::Rect => "Rectangle",
             Self::Ellipse => "Ellipse",
             Self::Fib => "Fib retracement",
+            Self::FibExt => "Fib extension",
+            Self::Arrow => "Arrow",
+            Self::Note => "Note",
+            Self::Measure => "Measure",
         }
     }
 
     #[must_use]
     pub fn kind(self) -> Option<DrawingKind> {
         match self {
-            Self::Cursor | Self::Crosshair => None,
+            Self::Cursor | Self::Crosshair | Self::Measure => None,
             Self::TrendLine => Some(DrawingKind::TrendLine),
             Self::Ray => Some(DrawingKind::Ray),
+            Self::ExtLine => Some(DrawingKind::ExtLine),
+            Self::HRay => Some(DrawingKind::HRay),
             Self::HLine => Some(DrawingKind::HLine),
             Self::VLine => Some(DrawingKind::VLine),
+            Self::Channel => Some(DrawingKind::Channel),
             Self::Rect => Some(DrawingKind::Rect),
             Self::Ellipse => Some(DrawingKind::Ellipse),
             Self::Fib => Some(DrawingKind::Fib),
+            Self::FibExt => Some(DrawingKind::FibExt),
+            Self::Arrow => Some(DrawingKind::Arrow),
+            Self::Note => Some(DrawingKind::Note),
         }
+    }
+
+    /// Tools that place or measure something on the chart.
+    #[must_use]
+    pub fn is_tool(self) -> bool {
+        !matches!(self, Self::Cursor | Self::Crosshair)
     }
 }
 
-/// In-progress two-click drawing.
+/// In-progress one-to-three-click drawing.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Draft {
     pub kind: DrawingKind,
     pub a: Anchor,
     pub b: Anchor,
+    pub c: Option<Anchor>,
+    pub count: u8,
+}
+
+/// Transient two-click price/time measurement.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Measure {
+    pub a: Anchor,
+    pub b: Anchor,
+    pub done: bool,
 }
 
 /// Tool/draft/selection state. Geometry stays in `Drawing`.
@@ -124,6 +195,7 @@ pub struct Draft {
 pub struct DrawingToolState {
     pub tool: DrawTool,
     pub draft: Option<Draft>,
+    pub measure: Option<Measure>,
     pub selected: Option<u64>,
     next_id: u64,
 }
@@ -133,6 +205,7 @@ impl Default for DrawingToolState {
         Self {
             tool: DrawTool::Cursor,
             draft: None,
+            measure: None,
             selected: None,
             next_id: 1,
         }
@@ -152,6 +225,7 @@ impl DrawingToolState {
     pub fn set_tool(&mut self, tool: DrawTool) {
         if self.tool != tool {
             self.draft = None;
+            self.measure = None;
             self.tool = tool;
         }
     }
@@ -160,18 +234,27 @@ impl DrawingToolState {
     pub fn click(&mut self, anchor: Anchor) -> Option<Drawing> {
         let kind = self.tool.kind()?;
         if let Some(draft) = &mut self.draft {
-            draft.b = anchor;
-            return self.finish();
+            if draft.count >= 2 {
+                draft.c = Some(anchor);
+                draft.count = 3;
+            } else {
+                draft.b = anchor;
+                draft.count = 2;
+            }
+            let done = draft.count >= draft.kind.points();
+            return if done { self.finish() } else { None };
         }
         self.draft = Some(Draft {
             kind,
             a: anchor,
             b: anchor,
+            c: None,
+            count: 1,
         });
-        if kind.needs_two_points() {
-            None
-        } else {
+        if kind.points() == 1 {
             self.finish()
+        } else {
+            None
         }
     }
 
@@ -179,17 +262,49 @@ impl DrawingToolState {
         let draft = self.draft.take()?;
         let id = self.next_id;
         self.next_id += 1;
-        Some(Drawing::new(id, draft.kind, draft.a, draft.b))
+        Some(match draft.c {
+            Some(c) => Drawing::with_c(id, draft.kind, draft.a, draft.b, c),
+            None => Drawing::new(id, draft.kind, draft.a, draft.b),
+        })
     }
 
+    /// Move the anchor the next click would replace.
     pub fn update_draft(&mut self, anchor: Anchor) {
         if let Some(draft) = &mut self.draft {
-            draft.b = anchor;
+            if draft.count >= 2 {
+                draft.c = Some(anchor);
+            } else {
+                draft.b = anchor;
+            }
+        }
+        if let Some(measure) = &mut self.measure
+            && !measure.done
+        {
+            measure.b = anchor;
+        }
+    }
+
+    /// First click starts a measurement; a second click finalizes it.
+    pub fn measure_click(&mut self, anchor: Anchor) -> bool {
+        if self.measure.as_ref().is_none_or(|m| m.done) {
+            self.measure = Some(Measure {
+                a: anchor,
+                b: anchor,
+                done: false,
+            });
+            true
+        } else {
+            if let Some(measure) = &mut self.measure {
+                measure.b = anchor;
+                measure.done = true;
+            }
+            false
         }
     }
 
     pub fn cancel(&mut self) {
         self.draft = None;
+        self.measure = None;
         self.selected = None;
     }
 
@@ -342,6 +457,12 @@ impl Drawing {
                     .iter()
                     .any(|(_, y)| (p.y - *y).abs() <= TOL)
             }
+            DrawingKind::ExtLine
+            | DrawingKind::HRay
+            | DrawingKind::Channel
+            | DrawingKind::FibExt
+            | DrawingKind::Arrow
+            | DrawingKind::Note => false,
         }
     }
 
@@ -515,6 +636,12 @@ fn draw_one(
             }
             p.line_segment([pa, pb], Stroke::new(1.0, color.gamma_multiply(0.5)));
         }
+        DrawingKind::ExtLine
+        | DrawingKind::HRay
+        | DrawingKind::Channel
+        | DrawingKind::FibExt
+        | DrawingKind::Arrow
+        | DrawingKind::Note => {}
     }
 
     if selected || draft {
@@ -877,5 +1004,124 @@ mod tests {
         let stroke = s.stroke(&pal, false);
         assert_eq!(stroke.color, Color32::from_rgb(255, 0, 0));
         assert!(s.stroke(&pal, true).width > stroke.width);
+    }
+
+    fn tool_for(kind: DrawingKind) -> DrawTool {
+        match kind {
+            DrawingKind::TrendLine => DrawTool::TrendLine,
+            DrawingKind::Ray => DrawTool::Ray,
+            DrawingKind::ExtLine => DrawTool::ExtLine,
+            DrawingKind::HRay => DrawTool::HRay,
+            DrawingKind::HLine => DrawTool::HLine,
+            DrawingKind::VLine => DrawTool::VLine,
+            DrawingKind::Channel => DrawTool::Channel,
+            DrawingKind::Rect => DrawTool::Rect,
+            DrawingKind::Ellipse => DrawTool::Ellipse,
+            DrawingKind::Fib => DrawTool::Fib,
+            DrawingKind::FibExt => DrawTool::FibExt,
+            DrawingKind::Arrow => DrawTool::Arrow,
+            DrawingKind::Note => DrawTool::Note,
+        }
+    }
+
+    #[test]
+    fn one_point_tools_finish_on_first_click() {
+        for kind in [
+            DrawingKind::HLine,
+            DrawingKind::VLine,
+            DrawingKind::HRay,
+            DrawingKind::Note,
+        ] {
+            let mut st = DrawingToolState::default();
+            st.set_tool(tool_for(kind));
+            let d = st.click(Anchor { t: 0, price: 10.0 });
+            assert!(d.is_some(), "{kind:?}");
+            assert!(st.draft.is_none());
+        }
+    }
+
+    #[test]
+    fn two_point_tools_finish_on_second_click() {
+        for kind in [
+            DrawingKind::TrendLine,
+            DrawingKind::Ray,
+            DrawingKind::ExtLine,
+            DrawingKind::Arrow,
+            DrawingKind::Rect,
+            DrawingKind::Ellipse,
+            DrawingKind::Fib,
+        ] {
+            let mut st = DrawingToolState::default();
+            st.set_tool(tool_for(kind));
+            let a = Anchor { t: 0, price: 10.0 };
+            let b = Anchor { t: 60, price: 12.0 };
+            assert!(st.click(a).is_none(), "{kind:?}");
+            st.update_draft(b);
+            let d = st.click(b).expect("completes on second click");
+            assert_eq!(d.kind, kind);
+            assert_eq!(d.a, a);
+            assert_eq!(d.b, b);
+            assert!(d.c.is_none());
+            assert!(st.draft.is_none());
+        }
+    }
+
+    #[test]
+    fn three_point_tools_collect_three_clicks() {
+        for kind in [DrawingKind::Channel, DrawingKind::FibExt] {
+            let mut st = DrawingToolState::default();
+            st.set_tool(tool_for(kind));
+            assert!(st.click(Anchor { t: 0, price: 10.0 }).is_none());
+            st.update_draft(Anchor { t: 30, price: 11.0 });
+            assert!(st.click(Anchor { t: 30, price: 11.0 }).is_none());
+            st.update_draft(Anchor { t: 60, price: 14.0 });
+            let d = st.click(Anchor { t: 60, price: 14.0 }).unwrap();
+            assert_eq!(d.c, Some(Anchor { t: 60, price: 14.0 }), "{kind:?}");
+            assert!(st.draft.is_none());
+        }
+    }
+
+    #[test]
+    fn measure_clicks_start_then_finalize_and_escape_clears() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Measure);
+        assert!(st.measure_click(Anchor { t: 0, price: 10.0 }));
+        st.update_draft(Anchor { t: 60, price: 12.0 });
+        assert!(!st.measure_click(Anchor { t: 60, price: 12.0 }));
+        assert!(st.measure.as_ref().is_some_and(|m| m.done));
+        st.cancel();
+        assert!(st.measure.is_none() && st.draft.is_none());
+    }
+
+    #[test]
+    fn switching_tools_mid_draft_clears_draft_and_measure() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Channel);
+        assert!(st.click(Anchor { t: 0, price: 10.0 }).is_none());
+        st.set_tool(DrawTool::Measure);
+        assert!(st.draft.is_none());
+        st.measure_click(Anchor { t: 0, price: 10.0 });
+        st.set_tool(DrawTool::FibExt);
+        assert!(st.measure.is_none());
+    }
+
+    #[test]
+    fn every_tool_has_a_label_and_cursor_like_tools_have_no_draft_kind() {
+        for t in DrawTool::ALL {
+            assert!(!t.label().is_empty());
+            assert_eq!(
+                t.kind().is_none(),
+                matches!(
+                    t,
+                    DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure
+                ),
+                "{t:?}"
+            );
+            assert_eq!(
+                t.is_tool(),
+                !matches!(t, DrawTool::Cursor | DrawTool::Crosshair),
+                "{t:?}"
+            );
+        }
     }
 }
