@@ -464,6 +464,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         &st.drawings,
         st.tools.draft,
         st.tools.selected,
+        st.tools.measure,
         cd,
         &st.view,
         &price_axis,

@@ -2,7 +2,7 @@
 //! persistence-friendly geometry.
 
 use egui::epaint::PathShape;
-use egui::{Align2, Color32, FontId, Painter, Pos2, Rect, Stroke};
+use egui::{Align2, Color32, FontId, Painter, Pos2, Rect, Shape, Stroke, Vec2};
 use serde::{Deserialize, Serialize};
 use ta::Candles;
 
@@ -629,13 +629,14 @@ pub fn anchor_pos(a: Anchor, cd: &Candles, view: &View, axis: &PriceAxis) -> Opt
     Some(Pos2::new(view.x_of(i), axis.y_of(a.price)))
 }
 
-/// Paint completed drawings plus the live draft preview.
+/// Paint completed drawings plus the live draft preview and measure overlay.
 #[allow(clippy::too_many_arguments)]
 pub fn paint(
     painter: &Painter,
     drawings: &[Drawing],
     draft: Option<Draft>,
     selected: Option<u64>,
+    measure: Option<Measure>,
     cd: &Candles,
     view: &View,
     axis: &PriceAxis,
@@ -647,9 +648,7 @@ pub fn paint(
     for d in drawings {
         draw_one(
             &p,
-            d.kind,
-            d.a,
-            d.b,
+            d,
             selected == Some(d.id),
             false,
             cd,
@@ -660,19 +659,26 @@ pub fn paint(
             font.clone(),
         );
     }
-    if let Some(d) = draft {
-        draw_one(
-            &p, d.kind, d.a, d.b, true, true, cd, view, axis, plot, pal, font,
-        );
+    if let Some(draft) = draft {
+        let d = Drawing {
+            id: 0,
+            kind: draft.kind,
+            a: draft.a,
+            b: draft.b,
+            c: draft.c,
+            style: DrawingStyle::default(),
+        };
+        draw_one(&p, &d, true, true, cd, view, axis, plot, pal, font.clone());
+    }
+    if let Some(measure) = measure {
+        draw_measure(&p, measure, cd, view, axis, plot, pal, font);
     }
 }
 
 #[allow(clippy::too_many_arguments)]
 fn draw_one(
     p: &Painter,
-    kind: DrawingKind,
-    a: Anchor,
-    b: Anchor,
+    d: &Drawing,
     selected: bool,
     draft: bool,
     cd: &Candles,
@@ -683,48 +689,75 @@ fn draw_one(
     font: FontId,
 ) {
     let map_opt = |anchor: Anchor| anchor_pos(anchor, cd, view, axis);
-    let (Some(pa), Some(pb)) = (map_opt(a), map_opt(b)) else {
+    let (Some(pa), Some(pb)) = (map_opt(d.a), map_opt(d.b)) else {
         return;
     };
     let map = |anchor: Anchor| map_opt(anchor).unwrap_or(Pos2::ZERO);
-    let color = if selected { pal.text } else { pal.line };
-    let width = if selected { 2.0 } else { 1.4 };
-    let stroke = Stroke::new(width, if draft { pal.line } else { color });
+    let pc = d.c.and_then(map_opt);
+    let mut stroke = d.style.stroke(pal, selected);
+    if draft {
+        stroke.color = pal.line;
+    }
+    let color = stroke.color;
+    let width = stroke.width;
+    let dash = dash_spec(d.style.line);
+    let fill =
+        |opacity: u8| Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), opacity);
 
-    match kind {
-        DrawingKind::TrendLine => {
-            p.line_segment([pa, pb], stroke);
-        }
+    match d.kind {
+        DrawingKind::TrendLine => paint_line(p, pa, pb, stroke, dash),
         DrawingKind::Ray => {
-            if let Some((origin, end)) = Drawing::new(0, kind, a, b).ray_geometry(map, plot) {
-                p.line_segment([origin, end], stroke);
+            if let Some((origin, end)) = d.ray_geometry(map, plot) {
+                paint_line(p, origin, end, stroke, dash);
+            }
+        }
+        DrawingKind::ExtLine => {
+            if let Some((start, end)) = d.ext_geometry(map, plot) {
+                paint_line(p, start, end, stroke, dash);
+            }
+        }
+        DrawingKind::HRay => {
+            if let Some((start, end)) = d.hray_geometry(map, plot) {
+                paint_line(p, start, end, stroke, dash);
             }
         }
         DrawingKind::HLine => {
-            p.line_segment(
-                [Pos2::new(plot.min.x, pa.y), Pos2::new(plot.max.x, pa.y)],
+            paint_line(
+                p,
+                Pos2::new(plot.min.x, pa.y),
+                Pos2::new(plot.max.x, pa.y),
                 stroke,
+                dash,
             );
         }
         DrawingKind::VLine => {
-            p.line_segment(
-                [Pos2::new(pa.x, plot.min.y), Pos2::new(pa.x, plot.max.y)],
+            paint_line(
+                p,
+                Pos2::new(pa.x, plot.min.y),
+                Pos2::new(pa.x, plot.max.y),
                 stroke,
+                dash,
             );
+        }
+        DrawingKind::Channel => {
+            if let Some((ba, bb, oa, ob)) = d.channel_geometry(map, plot) {
+                if d.style.fill {
+                    p.add(Shape::convex_polygon(
+                        vec![ba, bb, ob, oa],
+                        fill(d.style.fill_opacity),
+                        Stroke::NONE,
+                    ));
+                }
+                paint_line(p, ba, bb, stroke, dash);
+                paint_line(p, oa, ob, stroke, dash);
+            }
         }
         DrawingKind::Rect => {
             let r = Rect::from_two_pos(pa, pb);
-            p.rect_filled(
-                r,
-                egui::CornerRadius::ZERO,
-                Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 18),
-            );
-            p.rect_stroke(
-                r,
-                egui::CornerRadius::ZERO,
-                stroke,
-                egui::StrokeKind::Inside,
-            );
+            if d.style.fill {
+                p.rect_filled(r, 0.0, fill(d.style.fill_opacity));
+            }
+            p.rect_stroke(r, 0.0, stroke, egui::StrokeKind::Inside);
         }
         DrawingKind::Ellipse => {
             let r = Rect::from_two_pos(pa, pb);
@@ -748,37 +781,141 @@ fn draw_one(
             let x0 = pa.x.min(pb.x);
             let x1 = pa.x.max(pb.x);
             for (ratio, y) in fib_levels(pa.y, pb.y) {
-                let stroke = if (ratio - 0.5).abs() < 1e-6 {
+                let level_stroke = if (ratio - 0.5).abs() < 1e-6 {
                     Stroke::new(width + 0.6, color)
                 } else {
                     stroke
                 };
-                p.line_segment([Pos2::new(x0, y), Pos2::new(x1, y)], stroke);
-                let label = format!("{:.1}%", ratio * 100.0);
+                paint_line(p, Pos2::new(x0, y), Pos2::new(x1, y), level_stroke, dash);
                 p.text(
                     Pos2::new(x1 + 4.0, y - 1.0),
                     Align2::LEFT_BOTTOM,
-                    label,
+                    format!("{:.1}%", ratio * 100.0),
                     font.clone(),
                     color,
                 );
             }
             p.line_segment([pa, pb], Stroke::new(1.0, color.gamma_multiply(0.5)));
         }
-        DrawingKind::ExtLine
-        | DrawingKind::HRay
-        | DrawingKind::Channel
-        | DrawingKind::FibExt
-        | DrawingKind::Arrow
-        | DrawingKind::Note => {}
+        DrawingKind::FibExt => {
+            let Some(pc) = pc else {
+                return;
+            };
+            let x0 = pa.x.min(pc.x);
+            let x1 = pa.x.max(pc.x);
+            p.line_segment([pa, pb], Stroke::new(1.0, color.gamma_multiply(0.4)));
+            p.line_segment([pb, pc], Stroke::new(1.0, color.gamma_multiply(0.4)));
+            for (ratio, y) in fib_ext_levels(f64::from(pa.y), f64::from(pb.y), f64::from(pc.y)) {
+                paint_line(p, Pos2::new(x0, y), Pos2::new(x1, y), stroke, dash);
+                let label = format!("{:.1}%", ratio * 100.0);
+                let (lx, align) = if x1 + 48.0 <= plot.max.x {
+                    (x1 + 4.0, Align2::LEFT_BOTTOM)
+                } else {
+                    (x1 - 4.0, Align2::RIGHT_BOTTOM)
+                };
+                p.text(Pos2::new(lx, y - 1.0), align, label, font.clone(), color);
+            }
+        }
+        DrawingKind::Arrow => {
+            paint_line(p, pa, pb, stroke, dash);
+            let head = arrow_head(pb, pa);
+            p.add(Shape::convex_polygon(
+                head.to_vec(),
+                color,
+                Stroke::new(0.5, color),
+            ));
+        }
+        DrawingKind::Note => {
+            let rect = note_rect(pa, &d.style.text);
+            p.rect_filled(rect, 4.0, pal.bg);
+            p.rect_stroke(rect, 4.0, stroke, egui::StrokeKind::Inside);
+            if !d.style.text.is_empty() {
+                p.text(
+                    Pos2::new(rect.min.x + 8.0, rect.center().y),
+                    Align2::LEFT_CENTER,
+                    &d.style.text,
+                    FontId::proportional(11.0),
+                    color,
+                );
+            }
+        }
     }
 
     if selected || draft {
-        for anchor in [pa, pb] {
+        for anchor in [Some(pa), Some(pb), pc].into_iter().flatten() {
             p.circle_filled(anchor, 3.5, pal.text);
             p.circle_stroke(anchor, 3.5, Stroke::new(1.0, pal.line));
         }
     }
+}
+
+fn paint_line(p: &Painter, a: Pos2, b: Pos2, stroke: Stroke, dash: Option<(f32, f32)>) {
+    if let Some((dash_length, gap_length)) = dash {
+        p.extend(Shape::dashed_line(&[a, b], stroke, dash_length, gap_length));
+    } else {
+        p.line_segment([a, b], stroke);
+    }
+}
+
+#[must_use]
+fn dash_spec(style: LineStyle) -> Option<(f32, f32)> {
+    match style {
+        LineStyle::Solid => None,
+        LineStyle::Dashed => Some((6.0, 4.0)),
+        LineStyle::Dotted => Some((1.0, 3.0)),
+    }
+}
+
+#[must_use]
+fn arrow_head(tip: Pos2, from: Pos2) -> [Pos2; 3] {
+    let d = tip - from;
+    let dir = if d.length_sq() < 1e-9 {
+        Vec2::X
+    } else {
+        d.normalized()
+    };
+    let base = tip - dir * 10.0;
+    let perp = Vec2::new(-dir.y, dir.x);
+    [base + perp * 3.5, base - perp * 3.5, tip]
+}
+
+#[allow(clippy::too_many_arguments)]
+fn draw_measure(
+    p: &Painter,
+    measure: Measure,
+    cd: &Candles,
+    view: &View,
+    axis: &PriceAxis,
+    _plot: Rect,
+    pal: &Palette,
+    font: FontId,
+) {
+    let (Some(a), Some(b)) = (
+        anchor_pos(measure.a, cd, view, axis),
+        anchor_pos(measure.b, cd, view, axis),
+    ) else {
+        return;
+    };
+    let fill = Color32::from_rgba_unmultiplied(
+        pal.crosshair.r(),
+        pal.crosshair.g(),
+        pal.crosshair.b(),
+        10,
+    );
+    p.rect_filled(Rect::from_two_pos(a, b), 0.0, fill);
+    p.line_segment([a, b], Stroke::new(1.0, pal.crosshair));
+
+    let text = measure_summary(measure.a, measure.b, cd);
+    let width = 6.4 * text.chars().count() as f32 + 12.0;
+    let label = Rect::from_center_size(a.lerp(b, 0.5), Vec2::new(width, 20.0));
+    p.rect_filled(label, 3.0, pal.bg);
+    p.rect_stroke(
+        label,
+        3.0,
+        Stroke::new(1.0, pal.grid),
+        egui::StrokeKind::Inside,
+    );
+    p.text(label.center(), Align2::CENTER_CENTER, text, font, pal.text);
 }
 
 /// Chart-space anchor at a pointer position; magnet snaps to the nearest OHLC
@@ -1137,8 +1274,10 @@ mod tests {
     fn style_stroke_uses_palette_default_then_explicit_color() {
         let pal = Palette::dark();
         assert_eq!(DrawingStyle::default().color_or(&pal), pal.text);
-        let mut s = DrawingStyle::default();
-        s.color = Some([255, 0, 0, 255]);
+        let s = DrawingStyle {
+            color: Some([255, 0, 0, 255]),
+            ..DrawingStyle::default()
+        };
         assert_eq!(s.color_or(&pal), Color32::from_rgb(255, 0, 0));
         let stroke = s.stroke(&pal, false);
         assert_eq!(stroke.color, Color32::from_rgb(255, 0, 0));
@@ -1425,5 +1564,30 @@ mod tests {
         );
         assert!(move_drawing(&mut d, anchor(0, 10.0), anchor(60, 13.0), &cd));
         assert_eq!(d.c, Some(anchor(180, 15.0)));
+    }
+
+    #[test]
+    fn dash_spec_matches_the_line_style() {
+        assert_eq!(dash_spec(LineStyle::Solid), None);
+        assert_eq!(dash_spec(LineStyle::Dashed), Some((6.0, 4.0)));
+        assert_eq!(dash_spec(LineStyle::Dotted), Some((1.0, 3.0)));
+    }
+
+    #[test]
+    fn arrow_head_points_back_along_the_line() {
+        let [l, r, tip] = arrow_head(Pos2::new(100.0, 50.0), Pos2::new(0.0, 50.0));
+        assert_eq!(tip, Pos2::new(100.0, 50.0));
+        assert!(l.x < 100.0 && r.x < 100.0);
+        assert!((l.y - r.y).abs() > 4.0);
+    }
+
+    #[test]
+    fn note_rect_never_degenerates_and_grows_with_text() {
+        let empty = note_rect(Pos2::new(10.0, 100.0), "");
+        assert!(empty.width() >= 48.0);
+        assert_eq!(empty.height(), 20.0);
+        let long = note_rect(Pos2::new(10.0, 100.0), &"x".repeat(40));
+        assert!(long.width() > empty.width());
+        assert_eq!(long.max.y, 100.0);
     }
 }
