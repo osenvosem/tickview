@@ -341,52 +341,64 @@ impl Tool {
             Self::LongPosition => Icon::LongPosition,
             Self::ShortPosition => Icon::ShortPosition,
             Self::Eraser => Icon::Eraser,
-            Self::InfoLine => Icon::HLine,
-            Self::TrendAngle => Icon::TrendLine,
-            Self::CrossLine => Icon::Crosshair,
-            Self::FlatChannel | Self::DisjointChannel => Icon::Channel,
-            Self::ModifiedSchiff | Self::InsidePitchfork => Icon::Schiff,
-            Self::FibChannel
-            | Self::FibTimeZone
-            | Self::FibSpeedFan
-            | Self::FibTime
-            | Self::FibCircles
-            | Self::FibSpiral
-            | Self::FibArcs
-            | Self::FibWedge
-            | Self::Pitchfan
-            | Self::GannBox
-            | Self::GannSquareFixed
-            | Self::GannSquare
-            | Self::GannFan => Icon::Fib,
-            Self::Xabcd
-            | Self::Cypher
-            | Self::HeadShoulders
-            | Self::Abcd
-            | Self::TrianglePattern
-            | Self::ThreeDrives
-            | Self::ElliottImpulse
-            | Self::ElliottCorrection
-            | Self::ElliottTriangle
-            | Self::ElliottDoubleCombo
-            | Self::ElliottTripleCombo
-            | Self::CyclicLines
-            | Self::TimeCycles
-            | Self::SineLine => Icon::Pattern,
-            Self::PositionForecast => Icon::LongPosition,
+            Self::InfoLine => Icon::InfoLine,
+            Self::TrendAngle => Icon::TrendAngle,
+            Self::CrossLine => Icon::CrossLine,
+            Self::FlatChannel => Icon::FlatChannel,
+            Self::DisjointChannel => Icon::DisjointChannel,
+            Self::ModifiedSchiff => Icon::ModifiedSchiff,
+            Self::InsidePitchfork => Icon::InsidePitchfork,
+            Self::FibChannel => Icon::FibChannel,
+            Self::FibTimeZone => Icon::FibTimeZone,
+            Self::FibSpeedFan => Icon::FibSpeedFan,
+            Self::FibTime => Icon::FibTime,
+            Self::FibCircles => Icon::FibCircles,
+            Self::FibSpiral => Icon::FibSpiral,
+            Self::FibArcs => Icon::FibArcs,
+            Self::FibWedge => Icon::FibWedge,
+            Self::Pitchfan => Icon::Pitchfan,
+            Self::GannBox => Icon::GannBox,
+            Self::GannSquareFixed => Icon::GannSquareFixed,
+            Self::GannSquare => Icon::GannSquare,
+            Self::GannFan => Icon::GannFan,
+            Self::Xabcd => Icon::Xabcd,
+            Self::Cypher => Icon::Cypher,
+            Self::HeadShoulders => Icon::HeadShoulders,
+            Self::Abcd => Icon::Abcd,
+            Self::TrianglePattern => Icon::TrianglePattern,
+            Self::ThreeDrives => Icon::ThreeDrives,
+            Self::ElliottImpulse => Icon::ElliottImpulse,
+            Self::ElliottCorrection => Icon::ElliottCorrection,
+            Self::ElliottTriangle => Icon::ElliottTriangle,
+            Self::ElliottDoubleCombo => Icon::ElliottDoubleCombo,
+            Self::ElliottTripleCombo => Icon::ElliottTripleCombo,
+            Self::CyclicLines => Icon::CyclicLines,
+            Self::TimeCycles => Icon::TimeCycles,
+            Self::SineLine => Icon::SineLine,
+            Self::PositionForecast => Icon::PositionForecast,
             Self::Sector => Icon::Sector,
-            Self::PriceRange | Self::DateRange | Self::DatePriceRange | Self::RotatedRect => {
-                Icon::Rect
-            }
-            Self::Path | Self::Polyline => Icon::Curve,
-            Self::Highlighter => Icon::Brush,
-            Self::ArrowMarker | Self::ArrowMarkUp | Self::ArrowMarkDown => Icon::Arrow,
-            Self::Circle => Icon::Ellipse,
-            Self::TriangleShape => Icon::Triangle,
-            Self::Arc | Self::Curve | Self::DoubleCurve => Icon::Curve,
-            Self::PriceNote | Self::Callout | Self::Comment | Self::PriceLabel => Icon::Text,
+            Self::PriceRange => Icon::PriceRange,
+            Self::DateRange => Icon::DateRange,
+            Self::DatePriceRange => Icon::DatePriceRange,
+            Self::Path => Icon::Path,
+            Self::Polyline => Icon::Polyline,
+            Self::Highlighter => Icon::Highlighter,
+            Self::ArrowMarker => Icon::ArrowMarker,
+            Self::ArrowMarkUp => Icon::ArrowMarkUp,
+            Self::ArrowMarkDown => Icon::ArrowMarkDown,
+            Self::Circle => Icon::Circle,
+            Self::RotatedRect => Icon::RotatedRect,
+            Self::TriangleShape => Icon::TriangleShape,
+            Self::Arc => Icon::Arc,
+            Self::Curve => Icon::Curve,
+            Self::DoubleCurve => Icon::DoubleCurve,
+            Self::PriceNote => Icon::PriceNote,
             Self::Pin => Icon::Pin,
-            Self::Signpost | Self::FlagMark => Icon::Flag,
+            Self::Callout => Icon::Callout,
+            Self::Comment => Icon::Comment,
+            Self::PriceLabel => Icon::PriceLabel,
+            Self::Signpost => Icon::Signpost,
+            Self::FlagMark => Icon::FlagMark,
         }
     }
 
@@ -3291,6 +3303,26 @@ mod tests {
         assert_eq!(Tool::from_shortcut_key(egui::Key::F), Some(Tool::Fib));
         assert_eq!(Tool::from_shortcut_key(egui::Key::X), None);
         assert_eq!(Tool::Rect.shortcut(), Some("⇧⌥R"));
+    }
+
+    #[test]
+    fn every_drawing_tool_has_a_unique_icon() {
+        let mut seen = std::collections::HashMap::new();
+        for tool in Tool::ALL {
+            let icon = tool.icon();
+            assert!(
+                Icon::ALL.contains(&icon),
+                "{tool:?} maps to unlisted icon {}",
+                icon.name()
+            );
+            let previous = seen.insert(icon, *tool);
+            assert!(
+                previous.is_none(),
+                "{tool:?} and {previous:?} share {}",
+                icon.name()
+            );
+        }
+        assert_eq!(seen.len(), Tool::ALL.len());
     }
 
     #[test]

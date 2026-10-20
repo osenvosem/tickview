@@ -29,6 +29,61 @@ pub enum Icon {
     Regression,
     LongPosition,
     ShortPosition,
+    InfoLine,
+    TrendAngle,
+    CrossLine,
+    FlatChannel,
+    DisjointChannel,
+    ModifiedSchiff,
+    InsidePitchfork,
+    FibChannel,
+    FibTimeZone,
+    FibSpeedFan,
+    FibTime,
+    FibCircles,
+    FibSpiral,
+    FibArcs,
+    FibWedge,
+    Pitchfan,
+    GannBox,
+    GannSquareFixed,
+    GannSquare,
+    GannFan,
+    Xabcd,
+    Cypher,
+    HeadShoulders,
+    Abcd,
+    TrianglePattern,
+    ThreeDrives,
+    ElliottImpulse,
+    ElliottCorrection,
+    ElliottTriangle,
+    ElliottDoubleCombo,
+    ElliottTripleCombo,
+    CyclicLines,
+    TimeCycles,
+    SineLine,
+    PositionForecast,
+    PriceRange,
+    DateRange,
+    DatePriceRange,
+    Path,
+    Polyline,
+    Highlighter,
+    ArrowMarker,
+    ArrowMarkUp,
+    ArrowMarkDown,
+    Circle,
+    RotatedRect,
+    TriangleShape,
+    Arc,
+    DoubleCurve,
+    PriceNote,
+    Callout,
+    Comment,
+    PriceLabel,
+    Signpost,
+    FlagMark,
     Magnet,
     Search,
     Bell,
@@ -117,6 +172,61 @@ impl Icon {
         Self::Regression,
         Self::LongPosition,
         Self::ShortPosition,
+        Self::InfoLine,
+        Self::TrendAngle,
+        Self::CrossLine,
+        Self::FlatChannel,
+        Self::DisjointChannel,
+        Self::ModifiedSchiff,
+        Self::InsidePitchfork,
+        Self::FibChannel,
+        Self::FibTimeZone,
+        Self::FibSpeedFan,
+        Self::FibTime,
+        Self::FibCircles,
+        Self::FibSpiral,
+        Self::FibArcs,
+        Self::FibWedge,
+        Self::Pitchfan,
+        Self::GannBox,
+        Self::GannSquareFixed,
+        Self::GannSquare,
+        Self::GannFan,
+        Self::Xabcd,
+        Self::Cypher,
+        Self::HeadShoulders,
+        Self::Abcd,
+        Self::TrianglePattern,
+        Self::ThreeDrives,
+        Self::ElliottImpulse,
+        Self::ElliottCorrection,
+        Self::ElliottTriangle,
+        Self::ElliottDoubleCombo,
+        Self::ElliottTripleCombo,
+        Self::CyclicLines,
+        Self::TimeCycles,
+        Self::SineLine,
+        Self::PositionForecast,
+        Self::PriceRange,
+        Self::DateRange,
+        Self::DatePriceRange,
+        Self::Path,
+        Self::Polyline,
+        Self::Highlighter,
+        Self::ArrowMarker,
+        Self::ArrowMarkUp,
+        Self::ArrowMarkDown,
+        Self::Circle,
+        Self::RotatedRect,
+        Self::TriangleShape,
+        Self::Arc,
+        Self::DoubleCurve,
+        Self::PriceNote,
+        Self::Callout,
+        Self::Comment,
+        Self::PriceLabel,
+        Self::Signpost,
+        Self::FlagMark,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -205,6 +315,61 @@ impl Icon {
             Self::Regression => "regression-trend",
             Self::LongPosition => "long-position",
             Self::ShortPosition => "short-position",
+            Self::InfoLine => "info-line",
+            Self::TrendAngle => "trend-angle",
+            Self::CrossLine => "cross-line",
+            Self::FlatChannel => "flat-channel",
+            Self::DisjointChannel => "disjoint-channel",
+            Self::ModifiedSchiff => "modified-schiff",
+            Self::InsidePitchfork => "inside-pitchfork",
+            Self::FibChannel => "fib-channel",
+            Self::FibTimeZone => "fib-time-zone",
+            Self::FibSpeedFan => "fib-speed-fan",
+            Self::FibTime => "fib-time",
+            Self::FibCircles => "fib-circles",
+            Self::FibSpiral => "fib-spiral",
+            Self::FibArcs => "fib-arcs",
+            Self::FibWedge => "fib-wedge",
+            Self::Pitchfan => "pitchfan",
+            Self::GannBox => "gann-box",
+            Self::GannSquareFixed => "gann-square-fixed",
+            Self::GannSquare => "gann-square",
+            Self::GannFan => "gann-fan",
+            Self::Xabcd => "xabcd",
+            Self::Cypher => "cypher",
+            Self::HeadShoulders => "head-shoulders",
+            Self::Abcd => "abcd",
+            Self::TrianglePattern => "triangle-pattern",
+            Self::ThreeDrives => "three-drives",
+            Self::ElliottImpulse => "elliott-impulse",
+            Self::ElliottCorrection => "elliott-correction",
+            Self::ElliottTriangle => "elliott-triangle",
+            Self::ElliottDoubleCombo => "elliott-double-combo",
+            Self::ElliottTripleCombo => "elliott-triple-combo",
+            Self::CyclicLines => "cyclic-lines",
+            Self::TimeCycles => "time-cycles",
+            Self::SineLine => "sine-line",
+            Self::PositionForecast => "position-forecast",
+            Self::PriceRange => "price-range",
+            Self::DateRange => "date-range",
+            Self::DatePriceRange => "date-price-range",
+            Self::Path => "path",
+            Self::Polyline => "polyline",
+            Self::Highlighter => "highlighter",
+            Self::ArrowMarker => "arrow-marker",
+            Self::ArrowMarkUp => "arrow-mark-up",
+            Self::ArrowMarkDown => "arrow-mark-down",
+            Self::Circle => "circle-shape",
+            Self::RotatedRect => "rotated-rect",
+            Self::TriangleShape => "triangle-shape",
+            Self::Arc => "arc-shape",
+            Self::DoubleCurve => "double-curve",
+            Self::PriceNote => "price-note",
+            Self::Callout => "callout",
+            Self::Comment => "comment",
+            Self::PriceLabel => "price-label",
+            Self::Signpost => "signpost",
+            Self::FlagMark => "flag-mark",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -240,7 +405,7 @@ impl Icon {
             Self::Check => "check",
             Self::Pattern => "pattern",
             Self::Triangle => "triangle",
-            Self::Curve => "curve",
+            Self::Curve => "curve-shape",
             Self::Pin => "pin",
             Self::Flag => "flag",
             Self::Sector => "sector",
@@ -416,7 +581,7 @@ impl Icon {
                 line(5.0, 18.0, 19.0, 6.0);
                 line(3.0, 12.0, 13.0, 2.0);
                 line(11.0, 22.0, 21.0, 12.0);
-                dot(5.0, 18.0, 1.6);
+                dot(11.0, 12.0, 1.6);
             }
             Self::Regression => {
                 line(3.0, 18.0, 21.0, 8.0);
@@ -432,6 +597,400 @@ impl Icon {
                 fill_path(&[(4.0, 12.0), (20.0, 12.0), (20.0, 19.0), (4.0, 19.0)]);
                 line(4.0, 12.0, 20.0, 12.0);
                 round_rect(4.0, 5.0, 20.0, 12.0, 1.0);
+            }
+            Self::InfoLine => {
+                line(3.0, 4.0, 11.5, 12.5);
+                round_rect(10.0, 12.0, 21.0, 20.0, 2.0);
+                line(13.0, 16.0, 18.0, 16.0);
+            }
+            Self::TrendAngle => {
+                line(4.0, 20.0, 20.0, 7.0);
+                line(4.0, 20.0, 20.0, 20.0);
+                arc(4.0, 20.0, 6.0, -0.694, 0.0);
+                dot(4.0, 20.0, 1.8);
+            }
+            Self::CrossLine => {
+                line(12.0, 3.0, 12.0, 21.0);
+                line(3.0, 12.0, 21.0, 12.0);
+                dot(12.0, 12.0, 1.8);
+            }
+            Self::FlatChannel => {
+                line(3.0, 8.0, 21.0, 8.0);
+                line(3.0, 16.0, 21.0, 16.0);
+                line(7.0, 16.0, 14.0, 8.0);
+                dot(7.0, 16.0, 1.5);
+                dot(14.0, 8.0, 1.5);
+            }
+            Self::DisjointChannel => {
+                line(3.0, 14.0, 11.0, 4.0);
+                dot(3.0, 14.0, 1.5);
+                dot(11.0, 4.0, 1.5);
+                line(13.0, 20.0, 21.0, 10.0);
+                dot(13.0, 20.0, 1.5);
+                dot(21.0, 10.0, 1.5);
+            }
+            Self::ModifiedSchiff => {
+                path(&[(5.0, 17.0), (12.0, 20.0), (19.0, 17.0)]);
+                line(5.0, 17.0, 5.0, 5.0);
+                line(19.0, 17.0, 19.0, 5.0);
+                line(12.0, 20.0, 12.0, 7.0);
+                dot(12.0, 20.0, 1.5);
+            }
+            Self::InsidePitchfork => {
+                path(&[(5.0, 17.0), (12.0, 20.0), (19.0, 17.0)]);
+                line(5.0, 17.0, 5.0, 5.0);
+                line(19.0, 17.0, 19.0, 5.0);
+                line(12.0, 13.0, 12.0, 3.0);
+                dot(12.0, 13.0, 1.5);
+            }
+            Self::FibChannel => {
+                line(3.0, 13.0, 13.0, 3.0);
+                line(3.0, 19.0, 19.0, 3.0);
+                line(9.0, 21.0, 21.0, 9.0);
+                line(6.6, 12.6, 9.4, 15.4);
+                line(12.6, 6.6, 15.4, 9.4);
+            }
+            Self::FibTimeZone => {
+                line(4.0, 20.0, 4.0, 6.0);
+                line(8.0, 20.0, 8.0, 9.0);
+                line(14.0, 20.0, 14.0, 12.0);
+                line(21.0, 20.0, 21.0, 15.0);
+                dot(4.0, 20.0, 1.5);
+            }
+            Self::FibSpeedFan => {
+                dot(4.0, 20.0, 1.8);
+                line(4.0, 20.0, 21.0, 5.0);
+                line(4.0, 20.0, 21.0, 12.0);
+                line(4.0, 20.0, 11.0, 3.0);
+                arc(4.0, 20.0, 6.0, -1.18, -0.46);
+            }
+            Self::FibTime => {
+                line(3.0, 20.0, 21.0, 20.0);
+                line(5.0, 20.0, 5.0, 4.0);
+                line(12.0, 20.0, 12.0, 6.0);
+                line(19.0, 20.0, 19.0, 8.0);
+                line(3.0, 4.0, 7.0, 4.0);
+                line(10.0, 6.0, 14.0, 6.0);
+                line(17.0, 8.0, 21.0, 8.0);
+            }
+            Self::FibCircles => {
+                circle(12.0, 12.0, 3.0);
+                circle(12.0, 12.0, 6.0);
+                circle(12.0, 12.0, 9.0);
+                dot(12.0, 12.0, 1.4);
+                line(12.0, 12.0, 19.0, 5.0);
+            }
+            Self::FibSpiral => {
+                let mut pts = Vec::with_capacity(49);
+                for i in 0..=48 {
+                    let t = i as f32 / 48.0;
+                    let a = -std::f32::consts::FRAC_PI_2 - t * std::f32::consts::PI * 2.0;
+                    let radius = 1.0 + t * 8.5;
+                    pts.push(px(12.0 + a.cos() * radius, 12.0 + a.sin() * radius));
+                }
+                painter.add(Shape::line(pts, s));
+            }
+            Self::FibArcs => {
+                arc(4.0, 20.0, 5.0, -std::f32::consts::FRAC_PI_2, 0.0);
+                arc(4.0, 20.0, 9.0, -std::f32::consts::FRAC_PI_2, 0.0);
+                arc(4.0, 20.0, 13.0, -std::f32::consts::FRAC_PI_2, 0.0);
+                dot(4.0, 20.0, 1.5);
+            }
+            Self::FibWedge => {
+                line(3.0, 12.0, 21.0, 4.0);
+                line(3.0, 12.0, 21.0, 12.0);
+                line(3.0, 12.0, 21.0, 20.0);
+                line(11.0, 8.0, 11.0, 16.0);
+                line(16.0, 6.0, 16.0, 18.0);
+            }
+            Self::Pitchfan => {
+                dot(4.0, 20.0, 1.6);
+                line(4.0, 20.0, 20.0, 4.0);
+                line(4.0, 20.0, 20.0, 11.0);
+                line(4.0, 20.0, 12.0, 3.0);
+                line(20.0, 4.0, 20.0, 11.0);
+            }
+            Self::GannBox => {
+                round_rect(4.0, 4.0, 20.0, 20.0, 0.0);
+                line(4.0, 20.0, 20.0, 4.0);
+                line(4.0, 12.0, 20.0, 12.0);
+                line(12.0, 4.0, 12.0, 20.0);
+            }
+            Self::GannSquareFixed => {
+                round_rect(4.0, 4.0, 20.0, 20.0, 0.0);
+                line(4.0, 20.0, 20.0, 4.0);
+                circle(12.0, 12.0, 6.5);
+            }
+            Self::GannSquare => {
+                round_rect(4.0, 4.0, 20.0, 20.0, 0.0);
+                line(4.0, 20.0, 20.0, 4.0);
+                line(4.0, 20.0, 20.0, 12.0);
+                line(4.0, 20.0, 12.0, 4.0);
+            }
+            Self::GannFan => {
+                dot(3.0, 20.0, 1.8);
+                line(3.0, 20.0, 21.0, 4.0);
+                line(3.0, 20.0, 21.0, 9.0);
+                line(3.0, 20.0, 21.0, 14.0);
+                line(3.0, 20.0, 14.0, 3.0);
+                line(3.0, 20.0, 8.0, 3.0);
+                arc(3.0, 20.0, 6.5, -1.1, -0.15);
+            }
+            Self::Xabcd => {
+                path(&[
+                    (3.0, 15.0),
+                    (8.0, 5.0),
+                    (13.0, 16.0),
+                    (17.0, 8.0),
+                    (21.0, 18.0),
+                ]);
+                for (x, y) in [
+                    (3.0, 15.0),
+                    (8.0, 5.0),
+                    (13.0, 16.0),
+                    (17.0, 8.0),
+                    (21.0, 18.0),
+                ] {
+                    dot(x, y, 1.4);
+                }
+            }
+            Self::Cypher => {
+                path(&[
+                    (3.0, 18.0),
+                    (7.0, 8.0),
+                    (12.0, 16.0),
+                    (16.0, 5.0),
+                    (21.0, 13.0),
+                ]);
+                circle(12.0, 16.0, 2.0);
+            }
+            Self::HeadShoulders => {
+                path(&[
+                    (3.0, 13.0),
+                    (7.0, 8.0),
+                    (10.0, 13.0),
+                    (12.0, 4.0),
+                    (15.0, 13.0),
+                    (18.0, 8.0),
+                    (21.0, 13.0),
+                ]);
+                line(3.0, 16.0, 21.0, 16.0);
+            }
+            Self::Abcd => {
+                path(&[(4.0, 6.0), (9.0, 18.0), (14.0, 11.0), (20.0, 4.0)]);
+                for (x, y) in [(4.0, 6.0), (9.0, 18.0), (14.0, 11.0), (20.0, 4.0)] {
+                    dot(x, y, 1.3);
+                }
+            }
+            Self::TrianglePattern => {
+                line(4.0, 5.0, 20.0, 12.0);
+                line(4.0, 19.0, 20.0, 12.0);
+                dot(4.0, 5.0, 1.5);
+                dot(4.0, 19.0, 1.5);
+                dot(20.0, 12.0, 1.5);
+            }
+            Self::ThreeDrives => {
+                path(&[
+                    (3.0, 20.0),
+                    (8.0, 20.0),
+                    (8.0, 14.0),
+                    (13.0, 14.0),
+                    (13.0, 8.0),
+                    (18.0, 8.0),
+                ]);
+                line(18.0, 8.0, 21.0, 5.0);
+                fill_path(&[(21.5, 3.5), (17.6, 5.4), (20.6, 8.4)]);
+            }
+            Self::ElliottImpulse => {
+                path(&[
+                    (2.0, 20.0),
+                    (6.0, 10.0),
+                    (9.0, 15.0),
+                    (13.0, 6.0),
+                    (16.0, 11.0),
+                    (21.0, 3.0),
+                ]);
+            }
+            Self::ElliottCorrection => {
+                path(&[(3.0, 19.0), (9.0, 9.0), (13.0, 14.0), (21.0, 3.0)]);
+            }
+            Self::ElliottTriangle => {
+                path(&[
+                    (2.0, 12.0),
+                    (6.0, 4.0),
+                    (10.0, 18.0),
+                    (14.0, 7.0),
+                    (18.0, 15.0),
+                    (21.0, 11.0),
+                ]);
+            }
+            Self::ElliottDoubleCombo => {
+                path(&[
+                    (3.0, 17.0),
+                    (6.0, 8.0),
+                    (9.0, 17.0),
+                    (12.0, 17.0),
+                    (15.0, 8.0),
+                    (18.0, 17.0),
+                ]);
+            }
+            Self::ElliottTripleCombo => {
+                path(&[
+                    (2.0, 17.0),
+                    (4.5, 9.0),
+                    (7.0, 17.0),
+                    (9.5, 17.0),
+                    (12.0, 9.0),
+                    (14.5, 17.0),
+                    (17.0, 17.0),
+                    (19.5, 9.0),
+                    (22.0, 17.0),
+                ]);
+            }
+            Self::CyclicLines => {
+                for x in [5.0, 12.0, 19.0] {
+                    line(x, 4.0, x, 20.0);
+                    dot(x, 4.0, 1.5);
+                }
+            }
+            Self::TimeCycles => {
+                circle(7.0, 12.0, 4.0);
+                circle(12.0, 12.0, 5.5);
+                circle(17.0, 12.0, 7.0);
+                line(2.0, 20.0, 22.0, 20.0);
+            }
+            Self::SineLine => {
+                line(2.0, 12.0, 22.0, 12.0);
+                let mut pts = Vec::with_capacity(33);
+                for i in 0..=32 {
+                    let t = i as f32 / 32.0;
+                    pts.push(px(
+                        2.0 + 20.0 * t,
+                        12.0 - 6.5 * (t * std::f32::consts::TAU).sin(),
+                    ));
+                }
+                painter.add(Shape::line(pts, s));
+            }
+            Self::PositionForecast => {
+                line(3.0, 12.0, 12.0, 6.0);
+                line(3.0, 12.0, 12.0, 18.0);
+                for (x1, y1, x2, y2) in [(12.0, 6.0, 21.0, 3.0), (12.0, 18.0, 21.0, 21.0)] {
+                    let a = px(x1, y1);
+                    let b = px(x2, y2);
+                    let d = b - a;
+                    for i in 0..4 {
+                        let t0 = i as f32 / 4.0;
+                        let t1 = t0 + 0.5 / 4.0;
+                        painter.line_segment([a + d * t0, a + d * t1], s);
+                    }
+                }
+                dot(3.0, 12.0, 1.5);
+            }
+            Self::PriceRange => {
+                line(12.0, 6.0, 12.0, 18.0);
+                fill_path(&[(12.0, 3.0), (9.0, 7.0), (15.0, 7.0)]);
+                fill_path(&[(12.0, 21.0), (9.0, 17.0), (15.0, 17.0)]);
+            }
+            Self::DateRange => {
+                line(6.0, 12.0, 18.0, 12.0);
+                fill_path(&[(3.0, 12.0), (7.0, 9.0), (7.0, 15.0)]);
+                fill_path(&[(21.0, 12.0), (17.0, 9.0), (17.0, 15.0)]);
+            }
+            Self::DatePriceRange => {
+                round_rect(5.0, 5.0, 17.0, 17.0, 1.0);
+                line(20.0, 5.0, 20.0, 17.0);
+                line(18.5, 5.0, 21.5, 5.0);
+                line(18.5, 17.0, 21.5, 17.0);
+                line(5.0, 20.0, 17.0, 20.0);
+                line(5.0, 18.5, 5.0, 21.5);
+                line(17.0, 18.5, 17.0, 21.5);
+            }
+            Self::Path => {
+                path(&[(3.0, 19.0), (8.0, 10.0), (13.0, 14.0), (21.0, 6.0)]);
+                for (x, y) in [(3.0, 19.0), (8.0, 10.0), (13.0, 14.0), (21.0, 6.0)] {
+                    dot(x, y, 1.4);
+                }
+            }
+            Self::Polyline => {
+                path(&[
+                    (2.0, 20.0),
+                    (7.0, 12.0),
+                    (12.0, 16.0),
+                    (17.0, 8.0),
+                    (22.0, 4.0),
+                ]);
+            }
+            Self::Highlighter => {
+                painter.line_segment(
+                    [px(4.0, 19.5), px(20.0, 19.5)],
+                    Stroke::new(width * 3.0, color.gamma_multiply(0.45)),
+                );
+                path(&[(9.0, 16.0), (12.0, 4.0), (15.0, 16.0)]);
+                line(9.0, 16.0, 15.0, 16.0);
+            }
+            Self::ArrowMarker => fill_path(&[(12.0, 4.0), (20.0, 17.0), (4.0, 17.0)]),
+            Self::ArrowMarkUp => {
+                line(12.0, 20.0, 12.0, 11.0);
+                fill_path(&[(12.0, 4.0), (7.0, 12.0), (17.0, 12.0)]);
+            }
+            Self::ArrowMarkDown => {
+                line(12.0, 4.0, 12.0, 13.0);
+                fill_path(&[(12.0, 20.0), (7.0, 12.0), (17.0, 12.0)]);
+            }
+            Self::Circle => circle(12.0, 12.0, 8.0),
+            Self::RotatedRect => {
+                let angle = 20.0f32.to_radians();
+                let (ca, sa) = (angle.cos(), angle.sin());
+                let pts: Vec<Pos2> = [(-7.0f32, -5.0f32), (7.0, -5.0), (7.0, 5.0), (-7.0, 5.0)]
+                    .iter()
+                    .map(|&(x, y)| px(12.0 + x * ca - y * sa, 12.0 + x * sa + y * ca))
+                    .collect();
+                painter.add(Shape::closed_line(pts, s));
+            }
+            Self::TriangleShape => {
+                path(&[(12.0, 4.0), (20.0, 19.0), (4.0, 19.0), (12.0, 4.0)]);
+            }
+            Self::Arc => {
+                arc(12.0, 17.0, 8.0, -2.67, -0.47);
+                dot(4.9, 14.1, 1.4);
+                dot(19.1, 13.4, 1.4);
+            }
+            Self::DoubleCurve => {
+                arc(
+                    7.5,
+                    12.0,
+                    4.2,
+                    -std::f32::consts::FRAC_PI_2,
+                    std::f32::consts::FRAC_PI_2,
+                );
+                arc(16.5, 12.0, 4.2, std::f32::consts::FRAC_PI_2, 4.712);
+            }
+            Self::PriceNote => {
+                line(2.0, 17.0, 22.0, 17.0);
+                round_rect(13.0, 4.0, 22.0, 13.0, 2.0);
+                line(15.0, 8.5, 20.0, 8.5);
+            }
+            Self::Callout => {
+                round_rect(3.0, 4.0, 21.0, 16.0, 3.0);
+                path(&[(8.0, 16.0), (7.0, 21.0), (12.0, 16.0)]);
+            }
+            Self::Comment => {
+                round_rect(3.0, 5.0, 21.0, 17.0, 3.0);
+                line(7.0, 10.0, 17.0, 10.0);
+                line(7.0, 13.5, 14.0, 13.5);
+            }
+            Self::PriceLabel => {
+                round_rect(5.0, 8.0, 19.0, 16.0, 3.0);
+                line(8.0, 12.0, 16.0, 12.0);
+            }
+            Self::Signpost => {
+                line(8.0, 3.0, 8.0, 21.0);
+                round_rect(8.0, 5.0, 19.0, 9.0, 1.0);
+                round_rect(8.0, 11.0, 17.0, 15.0, 1.0);
+            }
+            Self::FlagMark => {
+                line(6.0, 21.0, 6.0, 3.0);
+                path(&[(6.0, 4.0), (18.0, 7.0), (6.0, 10.0)]);
             }
             Self::Magnet => {
                 path(&[
@@ -721,9 +1280,10 @@ impl Icon {
                 dot(21.0, 7.0, 1.3);
             }
             Self::Pin => {
-                path(&[(12.0, 22.0), (6.0, 12.0)]);
-                circle(12.0, 8.5, 4.5);
-                dot(12.0, 8.5, 1.4);
+                circle(12.0, 9.0, 4.5);
+                line(8.6, 12.4, 12.0, 21.0);
+                line(15.4, 12.4, 12.0, 21.0);
+                dot(12.0, 9.0, 1.4);
             }
             Self::Flag => {
                 line(6.0, 21.0, 6.0, 3.0);
@@ -951,7 +1511,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert!(Icon::ALL.len() >= 66);
+        assert_eq!(Icon::ALL.len(), 138);
     }
 
     #[test]
