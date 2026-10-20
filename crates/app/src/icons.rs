@@ -50,6 +50,8 @@ pub enum Icon {
     Compare,
     Candles,
     Watchlist,
+    Star,
+    StarFilled,
     Eye,
     EyeOff,
     More,
@@ -57,6 +59,15 @@ pub enum Icon {
     Eraser,
     Undo,
     Redo,
+    Zoom,
+    KeepDrawing,
+    Check,
+    Pattern,
+    Triangle,
+    Curve,
+    Pin,
+    Flag,
+    Sector,
     Lock,
     Unlock,
     Fullscreen,
@@ -116,6 +127,8 @@ impl Icon {
         Self::Compare,
         Self::Candles,
         Self::Watchlist,
+        Self::Star,
+        Self::StarFilled,
         Self::Eye,
         Self::EyeOff,
         Self::More,
@@ -123,6 +136,15 @@ impl Icon {
         Self::Eraser,
         Self::Undo,
         Self::Redo,
+        Self::Zoom,
+        Self::KeepDrawing,
+        Self::Check,
+        Self::Pattern,
+        Self::Triangle,
+        Self::Curve,
+        Self::Pin,
+        Self::Flag,
+        Self::Sector,
         Self::Lock,
         Self::Unlock,
         Self::Fullscreen,
@@ -176,6 +198,8 @@ impl Icon {
             Self::Compare => "compare",
             Self::Candles => "candles",
             Self::Watchlist => "watchlist",
+            Self::Star => "favorite",
+            Self::StarFilled => "favorite-filled",
             Self::Eye => "visible",
             Self::EyeOff => "hidden",
             Self::More => "more",
@@ -183,6 +207,15 @@ impl Icon {
             Self::Eraser => "erase",
             Self::Undo => "undo",
             Self::Redo => "redo",
+            Self::Zoom => "zoom-in",
+            Self::KeepDrawing => "keep-drawing",
+            Self::Check => "check",
+            Self::Pattern => "pattern",
+            Self::Triangle => "triangle",
+            Self::Curve => "curve",
+            Self::Pin => "pin",
+            Self::Flag => "flag",
+            Self::Sector => "sector",
             Self::Lock => "lock",
             Self::Unlock => "unlock",
             Self::Fullscreen => "fullscreen",
@@ -514,6 +547,27 @@ impl Icon {
                     line(9.0, y, 20.0, y);
                 }
             }
+            Self::Star | Self::StarFilled => {
+                let mut points = Vec::with_capacity(10);
+                for i in 0..10 {
+                    let angle =
+                        -std::f32::consts::FRAC_PI_2 + i as f32 * std::f32::consts::PI / 5.0;
+                    let radius = if i % 2 == 0 { 9.0 } else { 3.9 };
+                    points.push(px(12.0 + radius * angle.cos(), 12.0 + radius * angle.sin()));
+                }
+                if self == Self::StarFilled {
+                    let center = px(12.0, 12.0);
+                    for i in 0..points.len() {
+                        painter.add(Shape::convex_polygon(
+                            vec![center, points[i], points[(i + 1) % points.len()]],
+                            fill,
+                            Stroke::NONE,
+                        ));
+                    }
+                } else {
+                    painter.add(Shape::closed_line(points, s));
+                }
+            }
             Self::Eye => {
                 path(&[
                     (3.0, 12.0),
@@ -591,6 +645,54 @@ impl Icon {
             Self::Redo => {
                 path(&[(16.0, 7.0), (20.0, 12.0), (16.0, 17.0)]);
                 path(&[(20.0, 12.0), (9.0, 12.0), (6.0, 13.5), (5.0, 17.0)]);
+            }
+            Self::Zoom => {
+                circle(10.5, 10.5, 6.0);
+                line(15.0, 15.0, 21.0, 21.0);
+                line(10.5, 7.5, 10.5, 13.5);
+                line(7.5, 10.5, 13.5, 10.5);
+            }
+            Self::KeepDrawing => {
+                path(&[
+                    (4.0, 20.0),
+                    (5.0, 15.5),
+                    (15.5, 5.0),
+                    (19.0, 8.5),
+                    (8.5, 19.0),
+                    (4.0, 20.0),
+                ]);
+                line(13.5, 7.0, 17.0, 10.5);
+                line(4.0, 22.0, 20.0, 22.0);
+            }
+            Self::Check => {
+                path(&[(4.0, 12.5), (9.5, 18.0), (20.0, 6.0)]);
+            }
+            Self::Pattern => {
+                path(&[(3.0, 17.0), (8.0, 8.0), (13.0, 15.0), (19.0, 5.0)]);
+                for (x, y) in [(3.0, 17.0), (8.0, 8.0), (13.0, 15.0), (19.0, 5.0)] {
+                    dot(x, y, 1.4);
+                }
+            }
+            Self::Triangle => {
+                path(&[(12.0, 4.0), (21.0, 20.0), (3.0, 20.0), (12.0, 4.0)]);
+            }
+            Self::Curve => {
+                path(&[(4.0, 18.0), (8.0, 5.0), (17.0, 19.0), (21.0, 7.0)]);
+                dot(4.0, 18.0, 1.3);
+                dot(21.0, 7.0, 1.3);
+            }
+            Self::Pin => {
+                path(&[(12.0, 22.0), (6.0, 12.0)]);
+                circle(12.0, 8.5, 4.5);
+                dot(12.0, 8.5, 1.4);
+            }
+            Self::Flag => {
+                line(6.0, 21.0, 6.0, 3.0);
+                path(&[(6.0, 4.0), (20.0, 7.0), (6.0, 12.0)]);
+            }
+            Self::Sector => {
+                path(&[(4.0, 20.0), (4.0, 4.0), (20.0, 20.0), (4.0, 20.0)]);
+                arc(4.0, 20.0, 13.0, -std::f32::consts::FRAC_PI_2, 0.0);
             }
             Self::Lock => {
                 round_rect(5.0, 10.0, 19.0, 21.0, 2.0);
@@ -702,7 +804,15 @@ mod tests {
     }
 
     #[test]
+    fn star_icon_is_part_of_the_set() {
+        assert!(Icon::ALL.contains(&Icon::Star));
+        assert!(Icon::ALL.contains(&Icon::StarFilled));
+        assert_eq!(Icon::Star.name(), "favorite");
+        assert_eq!(Icon::StarFilled.name(), "favorite-filled");
+    }
+
+    #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 55);
+        assert_eq!(Icon::ALL.len(), 66);
     }
 }

@@ -8,6 +8,7 @@ mod chrome;
 mod icons;
 mod store;
 mod theme;
+mod toolpanel;
 mod watchlist;
 mod widgets;
 

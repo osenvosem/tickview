@@ -81,6 +81,26 @@ pub struct Palette {
     pub warning: Color32,
     pub info: Color32,
     pub selection: Color32,
+    /// Rail background (TradingView uses a neutral pane color).
+    pub rail_bg: Color32,
+    /// Inverted fill for the selected rail tool in the grouped tool panel.
+    pub rail_active: Color32,
+    /// Glyph color on top of [`Self::rail_active`].
+    pub rail_active_fg: Color32,
+    /// Neutral fill for the active row in a tool flyout.
+    pub row_active: Color32,
+    /// Floating tool-menu background.
+    pub menu_bg: Color32,
+    /// Floating tool-menu hover fill.
+    pub menu_hover: Color32,
+    /// Floating tool-menu selected fill.
+    pub menu_active: Color32,
+    /// Primary text in a floating tool menu.
+    pub menu_text: Color32,
+    /// Section headers, shortcuts and inactive icons in a tool menu.
+    pub menu_secondary: Color32,
+    /// Dividers between tool-menu sections.
+    pub menu_divider: Color32,
     pub shadow: Color32,
 }
 
@@ -106,6 +126,16 @@ impl Palette {
             warning: rgb(0xE8A33D),
             info: rgb(0x55B7E6),
             selection: rgb(0x1C2C4D),
+            rail_bg: rgb(0x0F0F0F),
+            rail_active: rgb(0x2E2E2E),
+            rail_active_fg: rgb(0xE7EBF2),
+            row_active: rgb(0x3D3D3D),
+            menu_bg: rgb(0x1F1F1F),
+            menu_hover: rgb(0x2E2E2E),
+            menu_active: rgb(0x3D3D3D),
+            menu_text: rgb(0xDBDBDB),
+            menu_secondary: rgb(0x8C8C8C),
+            menu_divider: rgb(0x4A4A4A),
             shadow: Color32::from_black_alpha(110),
         }
     }
@@ -131,6 +161,16 @@ impl Palette {
             warning: rgb(0xB7791F),
             info: rgb(0x1570A6),
             selection: rgb(0xE8EFFF),
+            rail_bg: rgb(0xF7F9FC),
+            rail_active: rgb(0xE0E3EB),
+            rail_active_fg: rgb(0x131722),
+            row_active: rgb(0xE0E3EB),
+            menu_bg: rgb(0xFFFFFF),
+            menu_hover: rgb(0xF0F3FA),
+            menu_active: rgb(0xE0E3EB),
+            menu_text: rgb(0x131722),
+            menu_secondary: rgb(0x787B86),
+            menu_divider: rgb(0xE0E3EB),
             shadow: Color32::from_black_alpha(38),
         }
     }

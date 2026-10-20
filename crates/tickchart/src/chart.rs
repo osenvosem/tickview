@@ -63,7 +63,9 @@ pub struct ChartState {
     pub drawings: Vec<Drawing>,
     pub tools: DrawingToolState,
     pub magnet: bool,
+    pub magnet_strong: bool,
     pub locked: bool,
+    pub drawings_hidden: bool,
     /// Last screen rect of the floating drawing toolbar; clicks there are not chart clicks.
     pub popup_rect: Option<Rect>,
     /// Price range override from rectangle zoom (price space).
@@ -94,6 +96,8 @@ pub struct ChartEvent {
     pub load_more: bool,
     /// Drawings were created, moved, or deleted; app should persist.
     pub changed: bool,
+    /// A drawing was completed; the app may reset to the cursor tool.
+    pub drawing_completed: bool,
     /// The compare legend was clicked; app should clear its compare symbol.
     pub compare_removed: bool,
     /// Screen anchor for the floating drawing settings toolbar.
@@ -126,7 +130,9 @@ impl ChartState {
             drawings: Vec::new(),
             tools: DrawingToolState::default(),
             magnet: false,
+            magnet_strong: false,
             locked: false,
+            drawings_hidden: false,
             popup_rect: None,
             price_zoom: None,
             zoom_sel: None,
@@ -510,12 +516,29 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         );
     }
 
+    let drawings: &[Drawing] = if st.drawings_hidden {
+        &[]
+    } else {
+        &st.drawings
+    };
     drawings::paint(
         &p,
-        &st.drawings,
-        st.tools.draft.clone(),
-        st.tools.selected,
-        st.tools.measure,
+        drawings,
+        if st.drawings_hidden {
+            None
+        } else {
+            st.tools.draft.clone()
+        },
+        if st.drawings_hidden {
+            None
+        } else {
+            st.tools.selected
+        },
+        if st.drawings_hidden {
+            None
+        } else {
+            st.tools.measure
+        },
         cd,
         &st.view,
         &price_axis,
@@ -535,9 +558,9 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         );
     }
 
-    ev.drawing_toolbar_pos = st
-        .tools
-        .selected
+    ev.drawing_toolbar_pos = (!st.drawings_hidden)
+        .then_some(st.tools.selected)
+        .flatten()
         .and_then(|id| st.drawings.iter().find(|d| d.id == id))
         .and_then(|d| drawings::anchor_pos(d.last_anchor(), cd, &st.view, &price_axis))
         .map(|pos| {
@@ -794,7 +817,14 @@ fn handle_input(
         && (st.tools.draft.is_some() || st.tools.measure.is_some())
         && let Some(pos) = pointer
         && in_price
-        && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
+        && let Some(anchor) = drawings::anchor_at_with_tolerance(
+            cd,
+            &st.view,
+            ax,
+            pos,
+            st.magnet,
+            if st.magnet_strong { 24.0 } else { 8.0 },
+        )
     {
         st.tools.update_draft(anchor);
     }
@@ -830,10 +860,12 @@ fn handle_input(
         {
             if shift_press && !drawing_tool {
                 st.zoom_sel = Some((pos, pos));
-            } else if drawing_tool && st.tools.tool == crate::drawings::DrawTool::Brush {
-                if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false) {
-                    st.tools.begin_brush(anchor);
-                }
+            } else if drawing_tool
+                && let Some(kind) = st.tools.tool.kind()
+                && kind.is_drag()
+                && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
+            {
+                st.tools.begin_freehand(kind, anchor);
             }
         }
         if !over_popup
@@ -860,7 +892,14 @@ fn handle_input(
                 && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
             {
                 st.tools.selected = Some(id);
-                if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
+                if let Some(anchor) = drawings::anchor_at_with_tolerance(
+                    cd,
+                    &st.view,
+                    ax,
+                    pos,
+                    st.magnet,
+                    if st.magnet_strong { 24.0 } else { 8.0 },
+                ) {
                     st.drag_drawing = Some(DrawingDrag { id, last: anchor });
                 }
             }
@@ -878,7 +917,14 @@ fn handle_input(
         } else if let Some(drag) = &mut st.drag_drawing {
             if let Some(pos) = pointer
                 && price_rect.contains(pos)
-                && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet)
+                && let Some(anchor) = drawings::anchor_at_with_tolerance(
+                    cd,
+                    &st.view,
+                    ax,
+                    pos,
+                    st.magnet,
+                    if st.magnet_strong { 24.0 } else { 8.0 },
+                )
             {
                 let last = drag.last;
                 if let Some(d) = st.drawings.iter_mut().find(|d| d.id == drag.id)
@@ -889,7 +935,7 @@ fn handle_input(
                 }
             }
         } else if drawing_tool
-            && st.tools.tool == crate::drawings::DrawTool::Brush
+            && st.tools.tool.kind().is_some_and(|kind| kind.is_drag())
             && st.tools.draft.is_some()
             && let Some(pos) = pointer
             && price_rect.contains(pos)
@@ -927,11 +973,12 @@ fn handle_input(
                 }
             }
         }
-        if st.tools.tool == crate::drawings::DrawTool::Brush && st.tools.draft.is_some() {
+        if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) && st.tools.draft.is_some() {
             if let Some(drawing) = st.tools.finish_brush() {
                 st.tools.selected = Some(drawing.id);
                 st.drawings.push(drawing);
                 ev.changed = true;
+                ev.drawing_completed = true;
             }
         }
     }
@@ -944,15 +991,31 @@ fn handle_input(
         && pos.y > price_rect.min.y + 26.0
     {
         if drawing_tool {
-            if st.tools.tool == crate::drawings::DrawTool::Brush {
+            if st.tools.tool == crate::drawings::DrawTool::Eraser {
+                if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
+                    st.drawings.retain(|drawing| drawing.id != id);
+                    if st.tools.selected == Some(id) {
+                        st.tools.selected = None;
+                    }
+                    ev.changed = true;
+                }
+            } else if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) {
                 st.tools.cancel();
-            } else if let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, st.magnet) {
+            } else if let Some(anchor) = drawings::anchor_at_with_tolerance(
+                cd,
+                &st.view,
+                ax,
+                pos,
+                st.magnet,
+                if st.magnet_strong { 24.0 } else { 8.0 },
+            ) {
                 if st.tools.tool == crate::drawings::DrawTool::Measure {
                     st.tools.measure_click(anchor);
                 } else if let Some(drawing) = st.tools.click(anchor) {
                     st.tools.selected = Some(drawing.id);
                     st.drawings.push(drawing);
                     ev.changed = true;
+                    ev.drawing_completed = true;
                 }
             }
         } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
@@ -962,10 +1025,25 @@ fn handle_input(
         }
     }
 
-    if resp.double_clicked() && !drawing_tool {
-        st.view.right_offset = 0.0;
-        st.view.spacing = 8.0;
-        st.price_zoom = None;
+    if resp.double_clicked() {
+        if drawing_tool
+            && st
+                .tools
+                .draft
+                .as_ref()
+                .is_some_and(|draft| draft.kind.is_open_path())
+        {
+            if let Some(drawing) = st.tools.finish_open_path() {
+                st.tools.selected = Some(drawing.id);
+                st.drawings.push(drawing);
+                ev.changed = true;
+                ev.drawing_completed = true;
+            }
+        } else if !drawing_tool {
+            st.view.right_offset = 0.0;
+            st.view.spacing = 8.0;
+            st.price_zoom = None;
+        }
     }
 
     // Wheel: plain/ctrl zoom time, shift pans.

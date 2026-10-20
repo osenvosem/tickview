@@ -33,10 +33,74 @@ pub enum DrawingKind {
     RegTrend,
     LongPosition,
     ShortPosition,
+    // Trend additions.
+    InfoLine,
+    TrendAngle,
+    CrossLine,
+    FlatChannel,
+    DisjointChannel,
+    ModifiedSchiffPitchfork,
+    InsidePitchfork,
+    // Gann and Fibonacci additions.
+    FibChannel,
+    FibTimeZone,
+    FibSpeedFan,
+    FibTime,
+    FibCircles,
+    FibSpiral,
+    FibArcs,
+    FibWedge,
+    Pitchfan,
+    GannBox,
+    GannSquareFixed,
+    GannSquare,
+    GannFan,
+    // Chart patterns and Elliott waves.
+    Xabcd,
+    Cypher,
+    HeadShoulders,
+    Abcd,
+    TrianglePattern,
+    ThreeDrives,
+    ElliottImpulse,
+    ElliottCorrection,
+    ElliottTriangle,
+    ElliottDoubleCombo,
+    ElliottTripleCombo,
+    CyclicLines,
+    TimeCycles,
+    SineLine,
+    // Forecasting and measurement.
+    PositionForecast,
+    Sector,
+    PriceRange,
+    DateRange,
+    DatePriceRange,
+    // Geometric shapes.
+    Path,
+    Polyline,
+    Highlighter,
+    ArrowMarker,
+    ArrowMarkUp,
+    ArrowMarkDown,
+    Circle,
+    RotatedRect,
+    TriangleShape,
+    Arc,
+    Curve,
+    DoubleCurve,
+    // Annotation additions.
+    PriceNote,
+    Pin,
+    Callout,
+    Comment,
+    PriceLabel,
+    Signpost,
+    FlagMark,
 }
 
 impl DrawingKind {
-    pub const ALL: [Self; 19] = [
+    pub const ALL: &'static [Self] = &[
         Self::TrendLine,
         Self::Ray,
         Self::ExtLine,
@@ -56,6 +120,64 @@ impl DrawingKind {
         Self::RegTrend,
         Self::LongPosition,
         Self::ShortPosition,
+        Self::InfoLine,
+        Self::TrendAngle,
+        Self::CrossLine,
+        Self::FlatChannel,
+        Self::DisjointChannel,
+        Self::ModifiedSchiffPitchfork,
+        Self::InsidePitchfork,
+        Self::FibChannel,
+        Self::FibTimeZone,
+        Self::FibSpeedFan,
+        Self::FibTime,
+        Self::FibCircles,
+        Self::FibSpiral,
+        Self::FibArcs,
+        Self::FibWedge,
+        Self::Pitchfan,
+        Self::GannBox,
+        Self::GannSquareFixed,
+        Self::GannSquare,
+        Self::GannFan,
+        Self::Xabcd,
+        Self::Cypher,
+        Self::HeadShoulders,
+        Self::Abcd,
+        Self::TrianglePattern,
+        Self::ThreeDrives,
+        Self::ElliottImpulse,
+        Self::ElliottCorrection,
+        Self::ElliottTriangle,
+        Self::ElliottDoubleCombo,
+        Self::ElliottTripleCombo,
+        Self::CyclicLines,
+        Self::TimeCycles,
+        Self::SineLine,
+        Self::PositionForecast,
+        Self::Sector,
+        Self::PriceRange,
+        Self::DateRange,
+        Self::DatePriceRange,
+        Self::Path,
+        Self::Polyline,
+        Self::Highlighter,
+        Self::ArrowMarker,
+        Self::ArrowMarkUp,
+        Self::ArrowMarkDown,
+        Self::Circle,
+        Self::RotatedRect,
+        Self::TriangleShape,
+        Self::Arc,
+        Self::Curve,
+        Self::DoubleCurve,
+        Self::PriceNote,
+        Self::Pin,
+        Self::Callout,
+        Self::Comment,
+        Self::PriceLabel,
+        Self::Signpost,
+        Self::FlagMark,
     ];
 
     #[must_use]
@@ -80,6 +202,64 @@ impl DrawingKind {
             Self::RegTrend => "Regression trend",
             Self::LongPosition => "Long position",
             Self::ShortPosition => "Short position",
+            Self::InfoLine => "Info line",
+            Self::TrendAngle => "Trend angle",
+            Self::CrossLine => "Crossline",
+            Self::FlatChannel => "Flat top/bottom",
+            Self::DisjointChannel => "Disjoint channel",
+            Self::ModifiedSchiffPitchfork => "Modified Schiff pitchfork",
+            Self::InsidePitchfork => "Inside pitchfork",
+            Self::FibChannel => "Fib channel",
+            Self::FibTimeZone => "Fib time zone",
+            Self::FibSpeedFan => "Fib speed resistance fan",
+            Self::FibTime => "Trend-based fib time",
+            Self::FibCircles => "Fib circles",
+            Self::FibSpiral => "Fib spiral",
+            Self::FibArcs => "Fib speed resistance arcs",
+            Self::FibWedge => "Fib wedge",
+            Self::Pitchfan => "Pitchfan",
+            Self::GannBox => "Gann box",
+            Self::GannSquareFixed => "Gann square fixed",
+            Self::GannSquare => "Gann square",
+            Self::GannFan => "Gann fan",
+            Self::Xabcd => "XABCD pattern",
+            Self::Cypher => "Cypher pattern",
+            Self::HeadShoulders => "Head and shoulders",
+            Self::Abcd => "ABCD pattern",
+            Self::TrianglePattern => "Triangle pattern",
+            Self::ThreeDrives => "Three drives pattern",
+            Self::ElliottImpulse => "Elliott impulse wave (1·2·3·4·5)",
+            Self::ElliottCorrection => "Elliott correction wave (A·B·C)",
+            Self::ElliottTriangle => "Elliott triangle wave (A·B·C·D·E)",
+            Self::ElliottDoubleCombo => "Elliott double combo wave (W·X·Y)",
+            Self::ElliottTripleCombo => "Elliott triple combo wave (W·X·Y·X·Z)",
+            Self::CyclicLines => "Cyclic lines",
+            Self::TimeCycles => "Time cycles",
+            Self::SineLine => "Sine line",
+            Self::PositionForecast => "Position forecast",
+            Self::Sector => "Sector",
+            Self::PriceRange => "Price range",
+            Self::DateRange => "Date range",
+            Self::DatePriceRange => "Date and price range",
+            Self::Path => "Path",
+            Self::Polyline => "Polyline",
+            Self::Highlighter => "Highlighter",
+            Self::ArrowMarker => "Arrow marker",
+            Self::ArrowMarkUp => "Arrow mark up",
+            Self::ArrowMarkDown => "Arrow mark down",
+            Self::Circle => "Circle",
+            Self::RotatedRect => "Rotated rectangle",
+            Self::TriangleShape => "Triangle",
+            Self::Arc => "Arc",
+            Self::Curve => "Curve",
+            Self::DoubleCurve => "Double curve",
+            Self::PriceNote => "Price note",
+            Self::Pin => "Pin",
+            Self::Callout => "Callout",
+            Self::Comment => "Comment",
+            Self::PriceLabel => "Price label",
+            Self::Signpost => "Signpost",
+            Self::FlagMark => "Flag mark",
         }
     }
 
@@ -87,27 +267,137 @@ impl DrawingKind {
     #[must_use]
     pub fn points(self) -> u8 {
         match self {
-            Self::HLine | Self::VLine | Self::HRay | Self::Note | Self::Brush => 1,
+            Self::HLine
+            | Self::VLine
+            | Self::HRay
+            | Self::Note
+            | Self::Brush
+            | Self::CrossLine
+            | Self::Highlighter
+            | Self::ArrowMarker
+            | Self::ArrowMarkUp
+            | Self::ArrowMarkDown
+            | Self::PriceNote
+            | Self::Pin
+            | Self::Callout
+            | Self::Comment
+            | Self::PriceLabel
+            | Self::Signpost
+            | Self::FlagMark => 1,
             Self::Channel
             | Self::FibExt
             | Self::Pitchfork
             | Self::SchiffPitchfork
             | Self::LongPosition
-            | Self::ShortPosition => 3,
+            | Self::ShortPosition
+            | Self::FlatChannel
+            | Self::DisjointChannel
+            | Self::ModifiedSchiffPitchfork
+            | Self::InsidePitchfork
+            | Self::FibChannel
+            | Self::FibSpeedFan
+            | Self::FibTime
+            | Self::FibCircles
+            | Self::FibArcs
+            | Self::FibWedge
+            | Self::Pitchfan
+            | Self::PositionForecast
+            | Self::Sector
+            | Self::RotatedRect
+            | Self::TriangleShape
+            | Self::Arc
+            | Self::Curve
+            | Self::CyclicLines
+            | Self::SineLine => 3,
+            Self::Abcd | Self::ElliottCorrection | Self::ElliottDoubleCombo | Self::DoubleCurve => {
+                4
+            }
+            Self::Xabcd
+            | Self::Cypher
+            | Self::HeadShoulders
+            | Self::TrianglePattern
+            | Self::ThreeDrives => 5,
+            Self::ElliottImpulse | Self::ElliottTriangle | Self::ElliottTripleCombo => 6,
             _ => 2,
         }
+    }
+
+    /// Pivot labels used by chart patterns and Elliott waves.
+    #[must_use]
+    pub fn pattern_labels(self) -> Option<&'static [&'static str]> {
+        match self {
+            Self::Xabcd | Self::Cypher => Some(&["X", "A", "B", "C", "D"]),
+            Self::HeadShoulders => Some(&["LS", "H", "RS", "N", "N"]),
+            Self::Abcd => Some(&["A", "B", "C", "D"]),
+            Self::TrianglePattern => Some(&["A", "B", "C", "D", "E"]),
+            Self::ThreeDrives => Some(&["1", "2", "3", "4", "5"]),
+            Self::ElliottImpulse => Some(&["0", "1", "2", "3", "4", "5"]),
+            Self::ElliottCorrection => Some(&["0", "A", "B", "C"]),
+            Self::ElliottTriangle => Some(&["0", "A", "B", "C", "D", "E"]),
+            Self::ElliottDoubleCombo => Some(&["0", "W", "X", "Y"]),
+            Self::ElliottTripleCombo => Some(&["0", "W", "X", "Y", "X", "Z"]),
+            _ => None,
+        }
+    }
+
+    /// Chart patterns and wave counts share the connected-pivot renderer.
+    #[must_use]
+    pub fn is_pattern(self) -> bool {
+        self.pattern_labels().is_some()
+    }
+
+    /// Path/polyline drafts end on double-click instead of a fixed pivot count.
+    #[must_use]
+    pub fn is_open_path(self) -> bool {
+        matches!(self, Self::Path | Self::Polyline)
+    }
+
+    /// One-anchor text/note tools.
+    #[must_use]
+    pub fn is_annotation(self) -> bool {
+        matches!(
+            self,
+            Self::Note
+                | Self::PriceNote
+                | Self::Pin
+                | Self::Callout
+                | Self::Comment
+                | Self::PriceLabel
+                | Self::Signpost
+                | Self::FlagMark
+        )
     }
 
     /// Whether this kind paints a filled body.
     #[must_use]
     pub fn supports_fill(self) -> bool {
-        matches!(self, Self::Rect | Self::Channel | Self::RegTrend)
+        matches!(
+            self,
+            Self::Rect
+                | Self::Channel
+                | Self::RegTrend
+                | Self::FlatChannel
+                | Self::DisjointChannel
+                | Self::FibChannel
+                | Self::FibWedge
+                | Self::GannBox
+                | Self::GannSquareFixed
+                | Self::GannSquare
+                | Self::TriangleShape
+                | Self::RotatedRect
+                | Self::Sector
+                | Self::PriceRange
+                | Self::DateRange
+                | Self::DatePriceRange
+                | Self::PositionForecast
+                | Self::Circle
+        )
     }
 
     /// Whether creation is a drag-capture gesture instead of discrete clicks.
     #[must_use]
     pub fn is_drag(self) -> bool {
-        matches!(self, Self::Brush)
+        matches!(self, Self::Brush | Self::Highlighter)
     }
 }
 
@@ -137,10 +427,69 @@ pub enum DrawTool {
     LongPos,
     ShortPos,
     Measure,
+    Eraser,
+    InfoLine,
+    TrendAngle,
+    CrossLine,
+    FlatChannel,
+    DisjointChannel,
+    ModifiedSchiffPitchfork,
+    InsidePitchfork,
+    FibChannel,
+    FibTimeZone,
+    FibSpeedFan,
+    FibTime,
+    FibCircles,
+    FibSpiral,
+    FibArcs,
+    FibWedge,
+    Pitchfan,
+    GannBox,
+    GannSquareFixed,
+    GannSquare,
+    GannFan,
+    Xabcd,
+    Cypher,
+    HeadShoulders,
+    Abcd,
+    TrianglePattern,
+    ThreeDrives,
+    ElliottImpulse,
+    ElliottCorrection,
+    ElliottTriangle,
+    ElliottDoubleCombo,
+    ElliottTripleCombo,
+    CyclicLines,
+    TimeCycles,
+    SineLine,
+    PositionForecast,
+    Sector,
+    PriceRange,
+    DateRange,
+    DatePriceRange,
+    Path,
+    Polyline,
+    Highlighter,
+    ArrowMarker,
+    ArrowMarkUp,
+    ArrowMarkDown,
+    Circle,
+    RotatedRect,
+    TriangleShape,
+    Arc,
+    Curve,
+    DoubleCurve,
+    PriceNote,
+    Pin,
+    Callout,
+    Comment,
+    PriceLabel,
+    Signpost,
+    FlagMark,
 }
 
 impl DrawTool {
-    pub const ALL: [Self; 22] = [
+    pub const ALL: &'static [Self] = &[
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
@@ -163,6 +512,65 @@ impl DrawTool {
         Self::RegTrend,
         Self::LongPos,
         Self::ShortPos,
+        Self::Eraser,
+        Self::InfoLine,
+        Self::TrendAngle,
+        Self::CrossLine,
+        Self::FlatChannel,
+        Self::DisjointChannel,
+        Self::ModifiedSchiffPitchfork,
+        Self::InsidePitchfork,
+        Self::FibChannel,
+        Self::FibTimeZone,
+        Self::FibSpeedFan,
+        Self::FibTime,
+        Self::FibCircles,
+        Self::FibSpiral,
+        Self::FibArcs,
+        Self::FibWedge,
+        Self::Pitchfan,
+        Self::GannBox,
+        Self::GannSquareFixed,
+        Self::GannSquare,
+        Self::GannFan,
+        Self::Xabcd,
+        Self::Cypher,
+        Self::HeadShoulders,
+        Self::Abcd,
+        Self::TrianglePattern,
+        Self::ThreeDrives,
+        Self::ElliottImpulse,
+        Self::ElliottCorrection,
+        Self::ElliottTriangle,
+        Self::ElliottDoubleCombo,
+        Self::ElliottTripleCombo,
+        Self::CyclicLines,
+        Self::TimeCycles,
+        Self::SineLine,
+        Self::PositionForecast,
+        Self::Sector,
+        Self::PriceRange,
+        Self::DateRange,
+        Self::DatePriceRange,
+        Self::Path,
+        Self::Polyline,
+        Self::Highlighter,
+        Self::ArrowMarker,
+        Self::ArrowMarkUp,
+        Self::ArrowMarkDown,
+        Self::Circle,
+        Self::RotatedRect,
+        Self::TriangleShape,
+        Self::Arc,
+        Self::Curve,
+        Self::DoubleCurve,
+        Self::PriceNote,
+        Self::Pin,
+        Self::Callout,
+        Self::Comment,
+        Self::PriceLabel,
+        Self::Signpost,
+        Self::FlagMark,
     ];
 
     #[must_use]
@@ -190,13 +598,72 @@ impl DrawTool {
             Self::LongPos => "Long position",
             Self::ShortPos => "Short position",
             Self::Measure => "Measure",
+            Self::Eraser => "Eraser",
+            Self::InfoLine => "Info line",
+            Self::TrendAngle => "Trend angle",
+            Self::CrossLine => "Crossline",
+            Self::FlatChannel => "Flat top/bottom",
+            Self::DisjointChannel => "Disjoint channel",
+            Self::ModifiedSchiffPitchfork => "Modified Schiff pitchfork",
+            Self::InsidePitchfork => "Inside pitchfork",
+            Self::FibChannel => "Fib channel",
+            Self::FibTimeZone => "Fib time zone",
+            Self::FibSpeedFan => "Fib speed resistance fan",
+            Self::FibTime => "Trend-based fib time",
+            Self::FibCircles => "Fib circles",
+            Self::FibSpiral => "Fib spiral",
+            Self::FibArcs => "Fib speed resistance arcs",
+            Self::FibWedge => "Fib wedge",
+            Self::Pitchfan => "Pitchfan",
+            Self::GannBox => "Gann box",
+            Self::GannSquareFixed => "Gann square fixed",
+            Self::GannSquare => "Gann square",
+            Self::GannFan => "Gann fan",
+            Self::Xabcd => "XABCD pattern",
+            Self::Cypher => "Cypher pattern",
+            Self::HeadShoulders => "Head and shoulders",
+            Self::Abcd => "ABCD pattern",
+            Self::TrianglePattern => "Triangle pattern",
+            Self::ThreeDrives => "Three drives pattern",
+            Self::ElliottImpulse => "Elliott impulse wave (1·2·3·4·5)",
+            Self::ElliottCorrection => "Elliott correction wave (A·B·C)",
+            Self::ElliottTriangle => "Elliott triangle wave (A·B·C·D·E)",
+            Self::ElliottDoubleCombo => "Elliott double combo wave (W·X·Y)",
+            Self::ElliottTripleCombo => "Elliott triple combo wave (W·X·Y·X·Z)",
+            Self::CyclicLines => "Cyclic lines",
+            Self::TimeCycles => "Time cycles",
+            Self::SineLine => "Sine line",
+            Self::PositionForecast => "Position forecast",
+            Self::Sector => "Sector",
+            Self::PriceRange => "Price range",
+            Self::DateRange => "Date range",
+            Self::DatePriceRange => "Date and price range",
+            Self::Path => "Path",
+            Self::Polyline => "Polyline",
+            Self::Highlighter => "Highlighter",
+            Self::ArrowMarker => "Arrow marker",
+            Self::ArrowMarkUp => "Arrow mark up",
+            Self::ArrowMarkDown => "Arrow mark down",
+            Self::Circle => "Circle",
+            Self::RotatedRect => "Rotated rectangle",
+            Self::TriangleShape => "Triangle",
+            Self::Arc => "Arc",
+            Self::Curve => "Curve",
+            Self::DoubleCurve => "Double curve",
+            Self::PriceNote => "Price note",
+            Self::Pin => "Pin",
+            Self::Callout => "Callout",
+            Self::Comment => "Comment",
+            Self::PriceLabel => "Price label",
+            Self::Signpost => "Signpost",
+            Self::FlagMark => "Flag mark",
         }
     }
 
     #[must_use]
     pub fn kind(self) -> Option<DrawingKind> {
         match self {
-            Self::Cursor | Self::Crosshair | Self::Measure => None,
+            Self::Cursor | Self::Crosshair | Self::Measure | Self::Eraser => None,
             Self::TrendLine => Some(DrawingKind::TrendLine),
             Self::Ray => Some(DrawingKind::Ray),
             Self::ExtLine => Some(DrawingKind::ExtLine),
@@ -216,6 +683,64 @@ impl DrawTool {
             Self::RegTrend => Some(DrawingKind::RegTrend),
             Self::LongPos => Some(DrawingKind::LongPosition),
             Self::ShortPos => Some(DrawingKind::ShortPosition),
+            Self::InfoLine => Some(DrawingKind::InfoLine),
+            Self::TrendAngle => Some(DrawingKind::TrendAngle),
+            Self::CrossLine => Some(DrawingKind::CrossLine),
+            Self::FlatChannel => Some(DrawingKind::FlatChannel),
+            Self::DisjointChannel => Some(DrawingKind::DisjointChannel),
+            Self::ModifiedSchiffPitchfork => Some(DrawingKind::ModifiedSchiffPitchfork),
+            Self::InsidePitchfork => Some(DrawingKind::InsidePitchfork),
+            Self::FibChannel => Some(DrawingKind::FibChannel),
+            Self::FibTimeZone => Some(DrawingKind::FibTimeZone),
+            Self::FibSpeedFan => Some(DrawingKind::FibSpeedFan),
+            Self::FibTime => Some(DrawingKind::FibTime),
+            Self::FibCircles => Some(DrawingKind::FibCircles),
+            Self::FibSpiral => Some(DrawingKind::FibSpiral),
+            Self::FibArcs => Some(DrawingKind::FibArcs),
+            Self::FibWedge => Some(DrawingKind::FibWedge),
+            Self::Pitchfan => Some(DrawingKind::Pitchfan),
+            Self::GannBox => Some(DrawingKind::GannBox),
+            Self::GannSquareFixed => Some(DrawingKind::GannSquareFixed),
+            Self::GannSquare => Some(DrawingKind::GannSquare),
+            Self::GannFan => Some(DrawingKind::GannFan),
+            Self::Xabcd => Some(DrawingKind::Xabcd),
+            Self::Cypher => Some(DrawingKind::Cypher),
+            Self::HeadShoulders => Some(DrawingKind::HeadShoulders),
+            Self::Abcd => Some(DrawingKind::Abcd),
+            Self::TrianglePattern => Some(DrawingKind::TrianglePattern),
+            Self::ThreeDrives => Some(DrawingKind::ThreeDrives),
+            Self::ElliottImpulse => Some(DrawingKind::ElliottImpulse),
+            Self::ElliottCorrection => Some(DrawingKind::ElliottCorrection),
+            Self::ElliottTriangle => Some(DrawingKind::ElliottTriangle),
+            Self::ElliottDoubleCombo => Some(DrawingKind::ElliottDoubleCombo),
+            Self::ElliottTripleCombo => Some(DrawingKind::ElliottTripleCombo),
+            Self::CyclicLines => Some(DrawingKind::CyclicLines),
+            Self::TimeCycles => Some(DrawingKind::TimeCycles),
+            Self::SineLine => Some(DrawingKind::SineLine),
+            Self::PositionForecast => Some(DrawingKind::PositionForecast),
+            Self::Sector => Some(DrawingKind::Sector),
+            Self::PriceRange => Some(DrawingKind::PriceRange),
+            Self::DateRange => Some(DrawingKind::DateRange),
+            Self::DatePriceRange => Some(DrawingKind::DatePriceRange),
+            Self::Path => Some(DrawingKind::Path),
+            Self::Polyline => Some(DrawingKind::Polyline),
+            Self::Highlighter => Some(DrawingKind::Highlighter),
+            Self::ArrowMarker => Some(DrawingKind::ArrowMarker),
+            Self::ArrowMarkUp => Some(DrawingKind::ArrowMarkUp),
+            Self::ArrowMarkDown => Some(DrawingKind::ArrowMarkDown),
+            Self::Circle => Some(DrawingKind::Circle),
+            Self::RotatedRect => Some(DrawingKind::RotatedRect),
+            Self::TriangleShape => Some(DrawingKind::TriangleShape),
+            Self::Arc => Some(DrawingKind::Arc),
+            Self::Curve => Some(DrawingKind::Curve),
+            Self::DoubleCurve => Some(DrawingKind::DoubleCurve),
+            Self::PriceNote => Some(DrawingKind::PriceNote),
+            Self::Pin => Some(DrawingKind::Pin),
+            Self::Callout => Some(DrawingKind::Callout),
+            Self::Comment => Some(DrawingKind::Comment),
+            Self::PriceLabel => Some(DrawingKind::PriceLabel),
+            Self::Signpost => Some(DrawingKind::Signpost),
+            Self::FlagMark => Some(DrawingKind::FlagMark),
         }
     }
 
@@ -235,6 +760,8 @@ pub struct Draft {
     pub c: Option<Anchor>,
     pub count: u8,
     pub extra: Vec<Anchor>,
+    /// Cursor preview for multi-point drafts beyond the third anchor.
+    pub preview: Option<Anchor>,
 }
 
 /// Transient two-click price/time measurement.
@@ -289,14 +816,22 @@ impl DrawingToolState {
     pub fn click(&mut self, anchor: Anchor) -> Option<Drawing> {
         let kind = self.tool.kind()?;
         if let Some(draft) = &mut self.draft {
-            if draft.count >= 2 {
-                draft.c = Some(anchor);
-                draft.count = 3;
-            } else {
-                draft.b = anchor;
-                draft.count = 2;
+            match draft.count {
+                0 | 1 => {
+                    draft.b = anchor;
+                    draft.count = 2;
+                }
+                2 => {
+                    draft.c = Some(anchor);
+                    draft.count = 3;
+                }
+                _ => {
+                    draft.extra.push(anchor);
+                    draft.count = draft.count.saturating_add(1);
+                }
             }
-            let done = draft.count >= draft.kind.points();
+            draft.preview = None;
+            let done = !draft.kind.is_open_path() && draft.count >= draft.kind.points();
             return if done { self.finish() } else { None };
         }
         self.draft = Some(Draft {
@@ -306,6 +841,7 @@ impl DrawingToolState {
             c: None,
             count: 1,
             extra: Vec::new(),
+            preview: None,
         });
         if kind.points() == 1 {
             self.finish()
@@ -330,7 +866,9 @@ impl DrawingToolState {
     /// Move the anchor the next click would replace.
     pub fn update_draft(&mut self, anchor: Anchor) {
         if let Some(draft) = &mut self.draft {
-            if draft.count >= 2 {
+            if draft.count >= 3 {
+                draft.preview = Some(anchor);
+            } else if draft.count == 2 {
                 draft.c = Some(anchor);
             } else {
                 draft.b = anchor;
@@ -343,35 +881,61 @@ impl DrawingToolState {
         }
     }
 
-    /// Start capturing freehand points (brush drag press).
-    pub fn begin_brush(&mut self, anchor: Anchor) {
+    /// Start capturing freehand points (brush/highlighter drag press).
+    pub fn begin_freehand(&mut self, kind: DrawingKind, anchor: Anchor) {
         self.draft = Some(Draft {
-            kind: DrawingKind::Brush,
+            kind,
             a: anchor,
             b: anchor,
             c: None,
             count: 1,
             extra: Vec::new(),
+            preview: None,
         });
     }
 
-    /// Append one captured point to the brush draft.
+    /// Backwards-compatible brush entry point.
+    pub fn begin_brush(&mut self, anchor: Anchor) {
+        self.begin_freehand(DrawingKind::Brush, anchor);
+    }
+
+    /// Append one captured point to the freehand draft.
     pub fn push_brush(&mut self, anchor: Anchor) {
         if let Some(draft) = &mut self.draft
-            && draft.kind == DrawingKind::Brush
+            && draft.kind.is_drag()
         {
             draft.b = anchor;
             draft.extra.push(anchor);
         }
     }
 
-    /// Finish the brush draft; requires at least two captured points.
+    /// Finish a freehand draft; requires at least two captured points.
     pub fn finish_brush(&mut self) -> Option<Drawing> {
         let draft = self.draft.as_ref()?;
-        if draft.kind != DrawingKind::Brush || draft.extra.len() < 2 {
+        if !draft.kind.is_drag() || draft.extra.len() < 2 {
             return None;
         }
         self.finish()
+    }
+
+    /// Finish an open Path/Polyline draft (double-click or Enter).
+    pub fn finish_open_path(&mut self) -> Option<Drawing> {
+        let draft = self.draft.as_ref()?;
+        if !draft.kind.is_open_path() || draft.count < 2 {
+            return None;
+        }
+        let mut drawing = self.finish()?;
+        // The double-click that finishes a path also lands as one or two
+        // clicks. Collapse repeated anchors and the duplicate segment start.
+        drawing.extra.dedup();
+        if drawing.c == Some(drawing.b) {
+            drawing.c = None;
+        }
+        let anchor = drawing.c.unwrap_or(drawing.b);
+        while drawing.extra.first().is_some_and(|point| *point == anchor) {
+            drawing.extra.remove(0);
+        }
+        Some(drawing)
     }
 
     /// First click starts a measurement; a second click finalizes it.
@@ -533,12 +1097,21 @@ fn default_reg_dev() -> f32 {
 #[must_use]
 pub fn kind_defaults(kind: DrawingKind) -> DrawingStyle {
     match kind {
-        DrawingKind::Brush | DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
-            DrawingStyle {
-                fill: false,
-                ..DrawingStyle::default()
-            }
-        }
+        DrawingKind::Brush
+        | DrawingKind::Highlighter
+        | DrawingKind::Pitchfork
+        | DrawingKind::SchiffPitchfork
+        | DrawingKind::ModifiedSchiffPitchfork
+        | DrawingKind::InsidePitchfork
+        | DrawingKind::Pitchfan => DrawingStyle {
+            fill: false,
+            width: if kind == DrawingKind::Highlighter {
+                6
+            } else {
+                1
+            },
+            ..DrawingStyle::default()
+        },
         _ => DrawingStyle::default(),
     }
 }
@@ -587,12 +1160,21 @@ impl Drawing {
 
     #[must_use]
     pub fn last_anchor(&self) -> Anchor {
-        if self.kind == DrawingKind::Brush {
-            if let Some(&last) = self.extra.last() {
-                return last;
-            }
+        if let Some(&last) = self.extra.last() {
+            return last;
         }
         self.c.unwrap_or(self.b)
+    }
+
+    /// All mapped anchors, in creation order.
+    #[must_use]
+    pub fn screen_points<F: Fn(Anchor) -> Pos2>(&self, map: &F) -> Vec<Pos2> {
+        let mut points = vec![map(self.a), map(self.b)];
+        if let Some(c) = self.c {
+            points.push(map(c));
+        }
+        points.extend(self.extra.iter().map(|anchor| map(*anchor)));
+        points
     }
 
     /// Hit test against a mapped drawing in screen space.
@@ -602,10 +1184,70 @@ impl Drawing {
             return false;
         }
         const TOL: f32 = 6.0;
+        if self.kind.is_pattern()
+            || matches!(
+                self.kind,
+                DrawingKind::InfoLine
+                    | DrawingKind::TrendAngle
+                    | DrawingKind::FlatChannel
+                    | DrawingKind::DisjointChannel
+                    | DrawingKind::FibChannel
+                    | DrawingKind::FibWedge
+                    | DrawingKind::FibTimeZone
+                    | DrawingKind::FibTime
+                    | DrawingKind::FibCircles
+                    | DrawingKind::FibSpiral
+                    | DrawingKind::FibArcs
+                    | DrawingKind::GannBox
+                    | DrawingKind::GannSquareFixed
+                    | DrawingKind::GannSquare
+                    | DrawingKind::GannFan
+                    | DrawingKind::Pitchfan
+                    | DrawingKind::CyclicLines
+                    | DrawingKind::TimeCycles
+                    | DrawingKind::PositionForecast
+                    | DrawingKind::Sector
+                    | DrawingKind::RotatedRect
+                    | DrawingKind::TriangleShape
+                    | DrawingKind::Arc
+                    | DrawingKind::Curve
+                    | DrawingKind::DoubleCurve
+                    | DrawingKind::SineLine
+                    | DrawingKind::Path
+                    | DrawingKind::Polyline
+                    | DrawingKind::ArrowMarker
+                    | DrawingKind::ArrowMarkUp
+                    | DrawingKind::ArrowMarkDown
+            )
+        {
+            let points = self.screen_points(&map);
+            return points
+                .windows(2)
+                .any(|pair| distance_to_segment(p, pair[0], pair[1]) <= TOL);
+        }
         let a = map(self.a);
         let b = map(self.b);
+        if self.kind.is_annotation() {
+            let text = if self.style.text.is_empty() {
+                self.kind.label()
+            } else {
+                &self.style.text
+            };
+            return note_rect(a, text).contains(p);
+        }
+        if matches!(
+            self.kind,
+            DrawingKind::PriceRange | DrawingKind::DateRange | DrawingKind::DatePriceRange
+        ) {
+            return Rect::from_two_pos(a, b).contains(p);
+        }
+        if self.kind == DrawingKind::Circle {
+            let r = Rect::from_two_pos(a, b);
+            let radius = r.width().min(r.height()) * 0.5;
+            return (p.distance(r.center()) - radius).abs() <= TOL;
+        }
         match self.kind {
-            DrawingKind::Brush => {
+            DrawingKind::Brush | DrawingKind::Highlighter => {
                 let mut prev = a;
                 let mut found = false;
                 for anchor in &self.extra {
@@ -637,7 +1279,9 @@ impl Drawing {
             }
             // Selection needs the fitted band; `chart.rs` uses reg_band_hit with reg_geometry.
             DrawingKind::RegTrend => false,
-            DrawingKind::LongPosition | DrawingKind::ShortPosition => {
+            DrawingKind::LongPosition
+            | DrawingKind::ShortPosition
+            | DrawingKind::PositionForecast => {
                 let Some(c) = self.c else {
                     return false;
                 };
@@ -706,6 +1350,7 @@ impl Drawing {
             }
             DrawingKind::Arrow => distance_to_segment(p, a, b) <= TOL || p.distance(b) <= 10.0,
             DrawingKind::Note => note_rect(a, &self.style.text).contains(p),
+            _ => false,
         }
     }
 
@@ -1008,14 +1653,18 @@ pub fn paint(
         );
     }
     if let Some(draft) = draft {
+        let mut extra = draft.extra.clone();
+        if let Some(preview) = draft.preview {
+            extra.push(preview);
+        }
         let d = Drawing {
             id: 0,
             kind: draft.kind,
             a: draft.a,
             b: draft.b,
             c: draft.c,
-            style: DrawingStyle::default(),
-            extra: draft.extra.clone(),
+            style: kind_defaults(draft.kind),
+            extra,
             reg_dev: default_reg_dev(),
         };
         draw_one(&p, &d, true, true, cd, view, axis, plot, pal, font.clone());
@@ -1175,7 +1824,7 @@ fn draw_one(
                 Stroke::new(0.5, color),
             ));
         }
-        DrawingKind::Brush => {
+        DrawingKind::Brush | DrawingKind::Highlighter => {
             let mut pts = vec![pa];
             for anchor in &d.extra {
                 match map_opt(*anchor) {
@@ -1184,31 +1833,36 @@ fn draw_one(
                 }
             }
             if pts.len() >= 2 {
+                let mut freehand = stroke;
+                if d.kind == DrawingKind::Highlighter {
+                    freehand.color = freehand.color.gamma_multiply(0.35);
+                    freehand.width = freehand.width.max(7.0);
+                }
                 p.add(PathShape {
                     points: pts,
                     closed: false,
                     fill: Color32::TRANSPARENT,
-                    stroke: stroke.into(),
+                    stroke: freehand.into(),
                 });
             }
         }
-        DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
+        DrawingKind::Pitchfork
+        | DrawingKind::SchiffPitchfork
+        | DrawingKind::ModifiedSchiffPitchfork
+        | DrawingKind::InsidePitchfork => {
             let Some(pc) = pc else { return };
-            let schiff = matches!(d.kind, DrawingKind::SchiffPitchfork);
-            let Some([med, s1, s2]) = pitchfork_lines(pa, pb, pc, schiff, plot) else {
-                return;
-            };
-            if d.style.fill {
-                p.add(Shape::convex_polygon(
-                    vec![med.0, s1.1, s2.1],
-                    fill(d.style.fill_opacity),
-                    Stroke::NONE,
-                ));
-            }
-            paint_line(p, med.0, med.1, stroke, dash);
-            let side_dash = dash_spec(LineStyle::Dashed);
-            paint_line(p, s1.0, s1.1, stroke, side_dash);
-            paint_line(p, s2.0, s2.1, stroke, side_dash);
+            paint_pitchfork_variant(
+                p,
+                pa,
+                pb,
+                pc,
+                d.kind,
+                stroke,
+                dash,
+                d.style.fill,
+                fill(d.style.fill_opacity),
+                plot,
+            );
         }
         DrawingKind::RegTrend => {
             let Some((la, lb, half)) = d.reg_geometry(cd, view, axis, plot) else {
@@ -1230,7 +1884,7 @@ fn draw_one(
             paint_line(p, ua, ub, stroke, band_dash);
             paint_line(p, la, lb, stroke, dash);
         }
-        DrawingKind::LongPosition | DrawingKind::ShortPosition => {
+        DrawingKind::LongPosition | DrawingKind::ShortPosition | DrawingKind::PositionForecast => {
             let Some(pc) = pc else { return };
             let x0 = pa.x.max(plot.min.x);
             let x1 = plot.max.x;
@@ -1289,6 +1943,336 @@ fn draw_one(
                 pal.text,
             );
         }
+        DrawingKind::InfoLine => {
+            paint_line(p, pa, pb, stroke, dash);
+            let label = measure_summary(d.a, d.b, cd);
+            paint_chip(
+                p,
+                Pos2::new((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5 - 12.0),
+                &label,
+                color,
+                pal.bg,
+                font.clone(),
+            );
+        }
+        DrawingKind::TrendAngle => {
+            paint_line(p, pa, pb, stroke, dash);
+            let degrees = (pb.y - pa.y).atan2(pb.x - pa.x).to_degrees();
+            paint_chip(
+                p,
+                Pos2::new((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5 - 12.0),
+                &format!("{degrees:.1}°"),
+                color,
+                pal.bg,
+                font.clone(),
+            );
+        }
+        DrawingKind::CrossLine => {
+            paint_line(
+                p,
+                Pos2::new(plot.min.x, pa.y),
+                Pos2::new(plot.max.x, pa.y),
+                stroke,
+                dash,
+            );
+            paint_line(
+                p,
+                Pos2::new(pa.x, plot.min.y),
+                Pos2::new(pa.x, plot.max.y),
+                stroke,
+                dash,
+            );
+        }
+        DrawingKind::FlatChannel => {
+            let Some(pc) = pc else { return };
+            let y = pc.y;
+            let quad = vec![
+                Pos2::new(pa.x, pa.y),
+                Pos2::new(pb.x, pb.y),
+                Pos2::new(pb.x, y),
+                Pos2::new(pa.x, y),
+            ];
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    quad,
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            paint_line(p, pa, pb, stroke, dash);
+            paint_line(
+                p,
+                Pos2::new(plot.min.x, y),
+                Pos2::new(plot.max.x, y),
+                stroke,
+                dash_spec(LineStyle::Dashed),
+            );
+        }
+        DrawingKind::DisjointChannel => {
+            if let Some((ba, bb, oa, ob)) = d.channel_geometry(map, plot) {
+                if d.style.fill {
+                    p.add(Shape::convex_polygon(
+                        vec![ba, bb, ob, oa],
+                        fill(d.style.fill_opacity),
+                        Stroke::NONE,
+                    ));
+                }
+                paint_line(p, ba, bb, stroke, dash);
+                paint_line(p, oa, ob, stroke, dash);
+            }
+        }
+        DrawingKind::FibChannel => {
+            let Some(pc) = pc else { return };
+            paint_fib_channel(
+                p,
+                pa,
+                pb,
+                pc,
+                stroke,
+                dash,
+                d.style.fill,
+                fill(d.style.fill_opacity),
+                font.clone(),
+                color,
+            );
+        }
+        DrawingKind::FibTimeZone | DrawingKind::FibTime => {
+            paint_fib_time(p, pa, pb, stroke, dash, font.clone(), color, plot);
+        }
+        DrawingKind::FibSpeedFan | DrawingKind::Pitchfan => {
+            let Some(pc) = pc else { return };
+            paint_fib_fan(p, pa, pb, pc, stroke, dash, plot, font.clone(), color);
+        }
+        DrawingKind::FibCircles => {
+            paint_fib_circles(p, pa, pb, pc, stroke, font.clone(), color);
+        }
+        DrawingKind::FibSpiral => {
+            paint_fib_spiral(p, pa, pb, stroke, font.clone(), color);
+        }
+        DrawingKind::FibArcs => {
+            let Some(pc) = pc else { return };
+            paint_fib_arcs(p, pa, pb, pc, stroke, font.clone(), color);
+        }
+        DrawingKind::FibWedge => {
+            let Some(pc) = pc else { return };
+            paint_fib_wedge(
+                p,
+                pa,
+                pb,
+                pc,
+                stroke,
+                dash,
+                d.style.fill,
+                fill(d.style.fill_opacity),
+            );
+        }
+        DrawingKind::GannBox | DrawingKind::GannSquare => {
+            paint_gann_grid(
+                p,
+                Rect::from_two_pos(pa, pb),
+                stroke,
+                d.style.fill,
+                fill(d.style.fill_opacity),
+            );
+        }
+        DrawingKind::GannSquareFixed => {
+            let side = (pb.x - pa.x).abs().max((pb.y - pa.y).abs());
+            let sx = if pb.x >= pa.x { 1.0 } else { -1.0 };
+            let sy = if pb.y >= pa.y { 1.0 } else { -1.0 };
+            paint_gann_grid(
+                p,
+                Rect::from_two_pos(pa, pa + Vec2::new(side * sx, side * sy)),
+                stroke,
+                d.style.fill,
+                fill(d.style.fill_opacity),
+            );
+        }
+        DrawingKind::GannFan => {
+            paint_gann_fan(p, pa, pb, stroke, dash, plot);
+        }
+        DrawingKind::Xabcd
+        | DrawingKind::Cypher
+        | DrawingKind::HeadShoulders
+        | DrawingKind::Abcd
+        | DrawingKind::TrianglePattern
+        | DrawingKind::ThreeDrives
+        | DrawingKind::ElliottImpulse
+        | DrawingKind::ElliottCorrection
+        | DrawingKind::ElliottTriangle
+        | DrawingKind::ElliottDoubleCombo
+        | DrawingKind::ElliottTripleCombo => {
+            let points = d.screen_points(&map);
+            let labels = d.kind.pattern_labels().unwrap_or(&[]);
+            paint_pattern(p, &points, labels, stroke, dash, font.clone(), color);
+        }
+        DrawingKind::CyclicLines => {
+            let Some(pc) = pc else { return };
+            if let Some((center, radius)) = circle_through_three(pa, pb, pc) {
+                p.circle_stroke(center, radius, stroke);
+                for point in [pa, pb, pc] {
+                    paint_line(p, center, point, stroke, dash_spec(LineStyle::Dotted));
+                    p.circle_filled(point, 3.0, color);
+                }
+                p.circle_filled(center, 3.0, color);
+            }
+        }
+        DrawingKind::TimeCycles => {
+            let step = (pb.x - pa.x).abs().max(12.0);
+            let mut x = pa.x;
+            let mut n = 0;
+            while x <= plot.max.x && n < 32 {
+                if x >= plot.min.x {
+                    paint_line(
+                        p,
+                        Pos2::new(x, plot.min.y),
+                        Pos2::new(x, plot.max.y),
+                        stroke,
+                        dash,
+                    );
+                    p.text(
+                        Pos2::new(x + 3.0, plot.min.y + 4.0),
+                        Align2::LEFT_TOP,
+                        n.to_string(),
+                        font.clone(),
+                        color,
+                    );
+                }
+                x += step;
+                n += 1;
+            }
+        }
+        DrawingKind::SineLine => {
+            let Some(pc) = pc else { return };
+            let mid_y = (pa.y + pb.y) * 0.5;
+            let amplitude = (pc.y - mid_y).abs().max(6.0);
+            let points: Vec<Pos2> = (0..=96)
+                .map(|i| {
+                    let t = i as f32 / 96.0;
+                    let x = pa.x + (pb.x - pa.x) * t;
+                    let y = mid_y - amplitude * (t * std::f32::consts::TAU * 2.0).sin();
+                    Pos2::new(x, y)
+                })
+                .collect();
+            paint_polyline(p, &points, stroke, dash);
+            paint_line(
+                p,
+                pa,
+                pb,
+                Stroke::new(1.0, color.gamma_multiply(0.35)),
+                None,
+            );
+        }
+        DrawingKind::Sector => {
+            let Some(pc) = pc else { return };
+            let points = vec![pa, pb, pc];
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    points.clone(),
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            paint_polyline(p, &points, stroke, dash);
+            paint_line(p, pa, pb, stroke, dash);
+            paint_line(p, pa, pc, stroke, dash);
+        }
+        DrawingKind::PriceRange | DrawingKind::DateRange | DrawingKind::DatePriceRange => {
+            let rect = Rect::from_two_pos(pa, pb);
+            if d.style.fill {
+                p.rect_filled(rect, 0.0, fill(d.style.fill_opacity));
+            }
+            p.rect_stroke(rect, 0.0, stroke, egui::StrokeKind::Inside);
+            let label = match d.kind {
+                DrawingKind::PriceRange => {
+                    format!("{} → {}", fmt_price(d.a.price), fmt_price(d.b.price))
+                }
+                DrawingKind::DateRange => "Date range".to_owned(),
+                _ => format!("{} · Date", fmt_price(d.a.price)),
+            };
+            paint_chip(p, rect.center(), &label, color, pal.bg, font.clone());
+        }
+        DrawingKind::ArrowMarker | DrawingKind::ArrowMarkUp | DrawingKind::ArrowMarkDown => {
+            let up = d.kind != DrawingKind::ArrowMarkDown;
+            let direction = if d.kind == DrawingKind::ArrowMarker && pb != pa {
+                (pb - pa).normalized()
+            } else if up {
+                Vec2::new(0.0, -1.0)
+            } else {
+                Vec2::new(0.0, 1.0)
+            };
+            let tip = pa + direction * 14.0;
+            let tail = pa - direction * 12.0;
+            paint_line(p, tail, tip, stroke, None);
+            let head = arrow_head(tip, tail);
+            p.add(Shape::convex_polygon(head.to_vec(), color, Stroke::NONE));
+        }
+        DrawingKind::Circle => {
+            let rect = Rect::from_two_pos(pa, pb);
+            let center = rect.center();
+            let radius = rect.width().min(rect.height()) * 0.5;
+            if d.style.fill {
+                p.circle_filled(center, radius, fill(d.style.fill_opacity));
+            }
+            p.circle_stroke(center, radius, stroke);
+        }
+        DrawingKind::RotatedRect => {
+            let Some(pc) = pc else { return };
+            let base = pb - pa;
+            let normal = Vec2::new(-base.y, base.x).normalized();
+            let offset = (pc - pa).dot(normal);
+            let shift = normal * offset;
+            let points = vec![pa, pb, pb + shift, pa + shift];
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    points.clone(),
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            paint_polyline(p, &points, stroke, dash);
+            p.add(Shape::closed_line(points, stroke));
+        }
+        DrawingKind::TriangleShape => {
+            let Some(pc) = pc else { return };
+            let points = vec![pa, pb, pc];
+            if d.style.fill {
+                p.add(Shape::convex_polygon(
+                    points.clone(),
+                    fill(d.style.fill_opacity),
+                    Stroke::NONE,
+                ));
+            }
+            p.add(Shape::closed_line(points, stroke));
+        }
+        DrawingKind::Arc => {
+            let Some(pc) = pc else { return };
+            let points = arc_points(pa, pb, pc);
+            paint_polyline(p, &points, stroke, dash);
+        }
+        DrawingKind::Curve => {
+            let Some(pc) = pc else { return };
+            let points = quadratic_points(pa, pc, pb, 48);
+            paint_polyline(p, &points, stroke, dash);
+        }
+        DrawingKind::DoubleCurve => {
+            let Some(pc) = pc else { return };
+            let end = d.extra.first().and_then(|a| map_opt(*a)).unwrap_or(pb);
+            let points = cubic_points(pa, pb, pc, end, 64);
+            paint_polyline(p, &points, stroke, dash);
+        }
+        DrawingKind::Path | DrawingKind::Polyline => {
+            let points = d.screen_points(&map);
+            paint_polyline(p, &points, stroke, dash);
+        }
+        DrawingKind::PriceNote
+        | DrawingKind::Pin
+        | DrawingKind::Callout
+        | DrawingKind::Comment
+        | DrawingKind::PriceLabel
+        | DrawingKind::Signpost
+        | DrawingKind::FlagMark => {
+            paint_annotation(p, d, pa, stroke, color, pal, font.clone());
+        }
         DrawingKind::Note => {
             let rect = note_rect(pa, &d.style.text);
             p.rect_filled(rect, 4.0, pal.bg);
@@ -1306,7 +2290,18 @@ fn draw_one(
     }
 
     if selected || draft {
-        for anchor in [Some(pa), Some(pb), pc].into_iter().flatten() {
+        let mut handles = vec![pa, pb];
+        if let Some(pc) = pc {
+            handles.push(pc);
+        }
+        if d.kind.points() > 3 || d.kind.is_open_path() {
+            for anchor in &d.extra {
+                if let Some(point) = map_opt(*anchor) {
+                    handles.push(point);
+                }
+            }
+        }
+        for anchor in handles {
             p.circle_filled(anchor, 3.5, pal.text);
             p.circle_stroke(anchor, 3.5, Stroke::new(1.0, pal.line));
         }
@@ -1318,6 +2313,518 @@ fn paint_line(p: &Painter, a: Pos2, b: Pos2, stroke: Stroke, dash: Option<(f32, 
         p.extend(Shape::dashed_line(&[a, b], stroke, dash_length, gap_length));
     } else {
         p.line_segment([a, b], stroke);
+    }
+}
+
+fn paint_polyline(p: &Painter, points: &[Pos2], stroke: Stroke, dash: Option<(f32, f32)>) {
+    if points.len() < 2 {
+        return;
+    }
+    if let Some((dash_length, gap_length)) = dash {
+        p.extend(Shape::dashed_line(points, stroke, dash_length, gap_length));
+    } else {
+        p.add(Shape::line(points.to_vec(), stroke));
+    }
+}
+
+fn paint_chip(p: &Painter, center: Pos2, text: &str, tint: Color32, bg: Color32, font: FontId) {
+    let width = 6.4 * text.chars().count() as f32 + 12.0;
+    let rect = Rect::from_center_size(center, Vec2::new(width, 18.0));
+    p.rect_filled(rect, 3.0, bg);
+    p.rect_stroke(
+        rect,
+        3.0,
+        Stroke::new(1.0, tint.gamma_multiply(0.55)),
+        egui::StrokeKind::Inside,
+    );
+    p.text(rect.center(), Align2::CENTER_CENTER, text, font, tint);
+}
+
+fn paint_pattern(
+    p: &Painter,
+    points: &[Pos2],
+    labels: &[&str],
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    font: FontId,
+    color: Color32,
+) {
+    paint_polyline(p, points, stroke, dash);
+    for (i, point) in points.iter().enumerate() {
+        p.circle_filled(*point, 3.2, color);
+        if let Some(label) = labels.get(i) {
+            p.text(
+                *point + Vec2::new(4.0, -4.0),
+                Align2::LEFT_BOTTOM,
+                *label,
+                font.clone(),
+                color,
+            );
+        }
+    }
+}
+
+fn quadratic_points(a: Pos2, control: Pos2, b: Pos2, steps: usize) -> Vec<Pos2> {
+    (0..=steps)
+        .map(|i| {
+            let t = i as f32 / steps.max(1) as f32;
+            let u = 1.0 - t;
+            (a.to_vec2() * (u * u) + control.to_vec2() * (2.0 * u * t) + b.to_vec2() * (t * t))
+                .to_pos2()
+        })
+        .collect()
+}
+
+fn cubic_points(a: Pos2, c1: Pos2, c2: Pos2, b: Pos2, steps: usize) -> Vec<Pos2> {
+    (0..=steps)
+        .map(|i| {
+            let t = i as f32 / steps.max(1) as f32;
+            let u = 1.0 - t;
+            (a.to_vec2() * (u * u * u)
+                + c1.to_vec2() * (3.0 * u * u * t)
+                + c2.to_vec2() * (3.0 * u * t * t)
+                + b.to_vec2() * (t * t * t))
+                .to_pos2()
+        })
+        .collect()
+}
+
+fn circle_through_three(a: Pos2, b: Pos2, c: Pos2) -> Option<(Pos2, f32)> {
+    let d = 2.0 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+    if d.abs() < 1e-4 {
+        return None;
+    }
+    let a2 = a.x * a.x + a.y * a.y;
+    let b2 = b.x * b.x + b.y * b.y;
+    let c2 = c.x * c.x + c.y * c.y;
+    let ux = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d;
+    let uy = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d;
+    let center = Pos2::new(ux, uy);
+    Some((center, center.distance(a)))
+}
+
+fn arc_points(a: Pos2, b: Pos2, through: Pos2) -> Vec<Pos2> {
+    let Some((center, radius)) = circle_through_three(a, b, through) else {
+        return vec![a, through, b];
+    };
+    let angle = |p: Pos2| (p - center).y.atan2((p - center).x);
+    let start = angle(a);
+    let end = angle(b);
+    let mid = angle(through);
+    let two_pi = std::f32::consts::TAU;
+    let norm = |mut x: f32| {
+        while x < 0.0 {
+            x += two_pi;
+        }
+        while x >= two_pi {
+            x -= two_pi;
+        }
+        x
+    };
+    let start = norm(start);
+    let end = norm(end);
+    let mid = norm(mid);
+    let ccw_end = if end <= start { end + two_pi } else { end };
+    let ccw_mid = if mid < start { mid + two_pi } else { mid };
+    let (from, to) = if ccw_mid <= ccw_end {
+        (start, ccw_end)
+    } else {
+        (end, start + two_pi)
+    };
+    (0..=48)
+        .map(|i| {
+            let t = from + (to - from) * i as f32 / 48.0;
+            center + Vec2::new(t.cos(), t.sin()) * radius
+        })
+        .collect()
+}
+
+fn fib_ratios() -> [f32; 7] {
+    [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
+}
+
+#[allow(clippy::too_many_arguments)]
+fn paint_pitchfork_variant(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    kind: DrawingKind,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    fill: bool,
+    fill_color: Color32,
+    plot: Rect,
+) {
+    let lines = match kind {
+        DrawingKind::Pitchfork => pitchfork_lines(a, b, c, false, plot),
+        DrawingKind::SchiffPitchfork => pitchfork_lines(a, b, c, true, plot),
+        DrawingKind::ModifiedSchiffPitchfork => {
+            let origin = a + (b - a) * 0.5;
+            pitchfork_lines(origin, b, c, false, plot)
+        }
+        DrawingKind::InsidePitchfork => {
+            let origin = a + (b - a) * 0.5;
+            let left = a + (b - a) * 0.5;
+            let right = a + (c - a) * 0.5;
+            pitchfork_lines(origin, left, right, false, plot)
+        }
+        _ => None,
+    };
+    let Some([median, first, second]) = lines else {
+        return;
+    };
+    if fill {
+        p.add(Shape::convex_polygon(
+            vec![median.0, first.1, second.1],
+            fill_color,
+            Stroke::NONE,
+        ));
+    }
+    paint_line(p, median.0, median.1, stroke, dash);
+    let side_dash = dash_spec(LineStyle::Dashed);
+    paint_line(p, first.0, first.1, stroke, side_dash);
+    paint_line(p, second.0, second.1, stroke, side_dash);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn paint_fib_channel(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    fill: bool,
+    fill_color: Color32,
+    font: FontId,
+    color: Color32,
+) {
+    let offset = c - a;
+    if fill {
+        p.add(Shape::convex_polygon(
+            vec![a, b, b + offset, a + offset],
+            fill_color,
+            Stroke::NONE,
+        ));
+    }
+    paint_line(p, a, b, stroke, dash);
+    for ratio in fib_ratios() {
+        let shift = offset * ratio;
+        paint_line(p, a + shift, b + shift, stroke, dash);
+        p.text(
+            b + shift + Vec2::new(4.0, -1.0),
+            Align2::LEFT_BOTTOM,
+            format!("{:.1}%", ratio * 100.0),
+            font.clone(),
+            color,
+        );
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn paint_fib_time(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    font: FontId,
+    color: Color32,
+    plot: Rect,
+) {
+    let width = b.x - a.x;
+    for ratio in [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618, 2.618] {
+        let x = a.x + width * ratio;
+        if x < plot.min.x || x > plot.max.x {
+            continue;
+        }
+        paint_line(
+            p,
+            Pos2::new(x, plot.min.y),
+            Pos2::new(x, plot.max.y),
+            stroke,
+            dash,
+        );
+        p.text(
+            Pos2::new(x + 3.0, plot.min.y + 4.0),
+            Align2::LEFT_TOP,
+            format!("{:.1}", ratio),
+            font.clone(),
+            color,
+        );
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn paint_fib_fan(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    plot: Rect,
+    font: FontId,
+    color: Color32,
+) {
+    paint_line(p, b, c, stroke, dash_spec(LineStyle::Dotted));
+    for ratio in [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0] {
+        let target = b + (c - b) * ratio;
+        if let Some((start, end)) = clip_line(a, target, plot) {
+            paint_line(p, start, end, stroke, dash);
+            p.text(
+                end + Vec2::new(3.0, -3.0),
+                Align2::LEFT_BOTTOM,
+                format!("{:.1}%", ratio * 100.0),
+                font.clone(),
+                color,
+            );
+        }
+    }
+}
+
+fn paint_fib_circles(
+    p: &Painter,
+    center: Pos2,
+    edge: Pos2,
+    outer: Option<Pos2>,
+    stroke: Stroke,
+    font: FontId,
+    color: Color32,
+) {
+    let base = center.distance(edge);
+    let outer_radius = outer.map_or(base, |point| center.distance(point));
+    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618] {
+        let radius = base + (outer_radius - base) * ratio;
+        if radius.is_finite() && radius > 0.5 {
+            p.circle_stroke(center, radius, stroke);
+            p.text(
+                center + Vec2::new(radius + 3.0, 0.0),
+                Align2::LEFT_CENTER,
+                format!("{:.1}%", ratio * 100.0),
+                font.clone(),
+                color,
+            );
+        }
+    }
+}
+
+fn paint_fib_spiral(
+    p: &Painter,
+    center: Pos2,
+    edge: Pos2,
+    stroke: Stroke,
+    font: FontId,
+    color: Color32,
+) {
+    let radius = center.distance(edge);
+    let turns = 3.0;
+    let points: Vec<Pos2> = (0..=160)
+        .map(|i| {
+            let t = i as f32 / 160.0;
+            let angle = t * turns * std::f32::consts::TAU;
+            let r = radius * t;
+            center + Vec2::new(angle.cos(), angle.sin()) * r
+        })
+        .collect();
+    paint_polyline(p, &points, stroke, None);
+    p.text(
+        center + Vec2::new(radius + 4.0, 0.0),
+        Align2::LEFT_CENTER,
+        "Fib spiral",
+        font,
+        color,
+    );
+}
+
+fn paint_fib_arcs(
+    p: &Painter,
+    center: Pos2,
+    start_point: Pos2,
+    end_point: Pos2,
+    stroke: Stroke,
+    font: FontId,
+    color: Color32,
+) {
+    let start = (start_point - center).angle();
+    let end = (end_point - center).angle();
+    let base = center.distance(start_point);
+    let outer = center.distance(end_point);
+    let (from, to) = if end >= start {
+        (start, end)
+    } else {
+        (end, start)
+    };
+    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786, 1.0] {
+        let radius = base + (outer - base) * ratio;
+        let points: Vec<Pos2> = (0..=36)
+            .map(|i| {
+                let angle = from + (to - from) * i as f32 / 36.0;
+                center + Vec2::new(angle.cos(), angle.sin()) * radius
+            })
+            .collect();
+        paint_polyline(p, &points, stroke, None);
+        p.text(
+            center + Vec2::new(radius + 3.0, 0.0),
+            Align2::LEFT_CENTER,
+            format!("{:.1}%", ratio * 100.0),
+            font.clone(),
+            color,
+        );
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn paint_fib_wedge(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    fill: bool,
+    fill_color: Color32,
+) {
+    if fill {
+        p.add(Shape::convex_polygon(
+            vec![a, b, c],
+            fill_color,
+            Stroke::NONE,
+        ));
+    }
+    paint_line(p, a, b, stroke, dash);
+    paint_line(p, a, c, stroke, dash);
+    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786] {
+        paint_line(p, a + (b - a) * ratio, a + (c - a) * ratio, stroke, dash);
+    }
+}
+
+fn paint_gann_grid(p: &Painter, rect: Rect, stroke: Stroke, fill: bool, fill_color: Color32) {
+    if fill {
+        p.rect_filled(rect, 0.0, fill_color);
+    }
+    p.rect_stroke(rect, 0.0, stroke, egui::StrokeKind::Inside);
+    for ratio in [0.25, 0.5, 0.75] {
+        let x = rect.min.x + rect.width() * ratio;
+        let y = rect.min.y + rect.height() * ratio;
+        paint_line(
+            p,
+            Pos2::new(x, rect.min.y),
+            Pos2::new(x, rect.max.y),
+            stroke,
+            None,
+        );
+        paint_line(
+            p,
+            Pos2::new(rect.min.x, y),
+            Pos2::new(rect.max.x, y),
+            stroke,
+            None,
+        );
+    }
+    paint_line(p, rect.left_top(), rect.right_bottom(), stroke, None);
+    paint_line(p, rect.right_top(), rect.left_bottom(), stroke, None);
+}
+
+fn paint_gann_fan(
+    p: &Painter,
+    origin: Pos2,
+    edge: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    plot: Rect,
+) {
+    let direction = edge - origin;
+    let length = direction.length().max(12.0) * 1.8;
+    let base = direction.angle();
+    for degrees in [-63.4f32, -45.0, -26.6, 0.0, 26.6, 45.0, 63.4] {
+        let angle = base + degrees.to_radians();
+        let end = origin + Vec2::new(angle.cos(), angle.sin()) * length;
+        if let Some((start, clipped_end)) = clip_line(origin, end, plot) {
+            paint_line(p, start, clipped_end, stroke, dash);
+        }
+    }
+}
+
+fn paint_annotation(
+    p: &Painter,
+    d: &Drawing,
+    anchor: Pos2,
+    stroke: Stroke,
+    color: Color32,
+    pal: &Palette,
+    font: FontId,
+) {
+    let text = if d.style.text.is_empty() {
+        d.kind.label()
+    } else {
+        &d.style.text
+    };
+    match d.kind {
+        DrawingKind::Pin => {
+            let tip = anchor + Vec2::new(0.0, 14.0);
+            paint_line(p, anchor, tip, stroke, None);
+            p.circle_filled(anchor, 7.0, color);
+            p.circle_filled(anchor, 3.0, pal.bg);
+            p.text(
+                anchor + Vec2::new(10.0, -6.0),
+                Align2::LEFT_BOTTOM,
+                text,
+                font,
+                color,
+            );
+        }
+        DrawingKind::Signpost => {
+            let bottom = anchor + Vec2::new(0.0, 28.0);
+            paint_line(p, anchor, bottom, stroke, None);
+            let rect = note_rect(anchor, text);
+            p.rect_filled(rect, 3.0, pal.bg);
+            p.rect_stroke(rect, 3.0, stroke, egui::StrokeKind::Inside);
+            p.text(rect.center(), Align2::CENTER_CENTER, text, font, color);
+        }
+        DrawingKind::FlagMark => {
+            let top = anchor + Vec2::new(0.0, -24.0);
+            paint_line(p, anchor, top, stroke, None);
+            p.add(Shape::convex_polygon(
+                vec![top, top + Vec2::new(18.0, 5.0), top + Vec2::new(0.0, 10.0)],
+                color,
+                Stroke::NONE,
+            ));
+        }
+        DrawingKind::PriceLabel => {
+            let text = fmt_price(d.a.price);
+            paint_chip(p, anchor, &text, color, pal.bg, font);
+        }
+        DrawingKind::PriceNote => {
+            let rect = note_rect(anchor, text);
+            p.rect_filled(rect, 4.0, pal.bg);
+            p.rect_stroke(rect, 4.0, stroke, egui::StrokeKind::Inside);
+            p.text(
+                rect.center(),
+                Align2::CENTER_CENTER,
+                text,
+                font.clone(),
+                color,
+            );
+            paint_chip(
+                p,
+                Pos2::new(rect.max.x + 30.0, anchor.y),
+                &fmt_price(d.a.price),
+                color,
+                pal.bg,
+                font,
+            );
+        }
+        _ => {
+            let rect = note_rect(anchor, text);
+            p.rect_filled(rect, 4.0, pal.bg);
+            p.rect_stroke(rect, 4.0, stroke, egui::StrokeKind::Inside);
+            p.text(rect.center(), Align2::CENTER_CENTER, text, font, color);
+            if d.kind == DrawingKind::Callout {
+                paint_line(p, anchor, anchor + Vec2::new(12.0, 18.0), stroke, None);
+            }
+        }
     }
 }
 
@@ -1392,12 +2899,30 @@ pub fn anchor_at(
     pos: Pos2,
     magnet: bool,
 ) -> Option<Anchor> {
+    anchor_at_with_tolerance(cd, view, axis, pos, magnet, 8.0)
+}
+
+/// Like [`anchor_at`], but with an explicit snap radius for weak/strong magnet
+/// modes.
+#[must_use]
+pub fn anchor_at_with_tolerance(
+    cd: &Candles,
+    view: &View,
+    axis: &PriceAxis,
+    pos: Pos2,
+    magnet: bool,
+    tolerance: f32,
+) -> Option<Anchor> {
     let i = view.index_at(pos.x)?;
     let price = axis.price_of(pos.y);
     let price = if magnet {
-        snap_price(price, [cd.o[i], cd.h[i], cd.l[i], cd.c[i]], pos.y, |p| {
-            axis.y_of(p)
-        })
+        snap_price_with_tolerance(
+            price,
+            [cd.o[i], cd.h[i], cd.l[i], cd.c[i]],
+            pos.y,
+            tolerance,
+            |p| axis.y_of(p),
+        )
     } else {
         price
     };
@@ -1407,8 +2932,20 @@ pub fn anchor_at(
 /// Snap to the closest OHLC value when its screen y is within 8 px.
 #[must_use]
 pub fn snap_price(price: f64, ohlc: [f64; 4], pointer_y: f32, y_of: impl Fn(f64) -> f32) -> f64 {
+    snap_price_with_tolerance(price, ohlc, pointer_y, 8.0, y_of)
+}
+
+/// Snap to the closest OHLC value within `tolerance` screen pixels.
+#[must_use]
+pub fn snap_price_with_tolerance(
+    price: f64,
+    ohlc: [f64; 4],
+    pointer_y: f32,
+    tolerance: f32,
+    y_of: impl Fn(f64) -> f32,
+) -> f64 {
     let mut best = price;
-    let mut best_d = 8.0f32;
+    let mut best_d = tolerance.max(0.0);
     for candidate in ohlc {
         if !candidate.is_finite() {
             continue;
@@ -1754,27 +3291,11 @@ mod tests {
     }
 
     fn tool_for(kind: DrawingKind) -> DrawTool {
-        match kind {
-            DrawingKind::TrendLine => DrawTool::TrendLine,
-            DrawingKind::Ray => DrawTool::Ray,
-            DrawingKind::ExtLine => DrawTool::ExtLine,
-            DrawingKind::HRay => DrawTool::HRay,
-            DrawingKind::HLine => DrawTool::HLine,
-            DrawingKind::VLine => DrawTool::VLine,
-            DrawingKind::Channel => DrawTool::Channel,
-            DrawingKind::Rect => DrawTool::Rect,
-            DrawingKind::Ellipse => DrawTool::Ellipse,
-            DrawingKind::Fib => DrawTool::Fib,
-            DrawingKind::FibExt => DrawTool::FibExt,
-            DrawingKind::Arrow => DrawTool::Arrow,
-            DrawingKind::Note => DrawTool::Note,
-            DrawingKind::Brush => DrawTool::Brush,
-            DrawingKind::Pitchfork => DrawTool::Pitchfork,
-            DrawingKind::SchiffPitchfork => DrawTool::SchiffPitchfork,
-            DrawingKind::RegTrend => DrawTool::RegTrend,
-            DrawingKind::LongPosition => DrawTool::LongPos,
-            DrawingKind::ShortPosition => DrawTool::ShortPos,
-        }
+        DrawTool::ALL
+            .iter()
+            .copied()
+            .find(|tool| tool.kind() == Some(kind))
+            .unwrap_or_else(|| panic!("no DrawTool maps to {kind:?}"))
     }
 
     #[test]
@@ -1866,7 +3387,7 @@ mod tests {
                 t.kind().is_none(),
                 matches!(
                     t,
-                    DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure
+                    DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure | DrawTool::Eraser
                 ),
                 "{t:?}"
             );
@@ -2110,19 +3631,121 @@ mod tests {
     }
 
     #[test]
-    fn every_new_tool_maps_to_a_kind() {
-        for tool in [
-            DrawTool::Brush,
-            DrawTool::Pitchfork,
-            DrawTool::SchiffPitchfork,
-            DrawTool::RegTrend,
-            DrawTool::LongPos,
-            DrawTool::ShortPos,
-        ] {
-            assert!(tool.kind().is_some(), "{tool:?} unwired");
+    fn five_point_pattern_records_all_pivots_and_finishes() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Xabcd);
+        for i in 0..4 {
+            assert!(
+                st.click(Anchor {
+                    t: i,
+                    price: 10.0 + i as f64,
+                })
+                .is_none()
+            );
         }
-        assert_eq!(DrawTool::ALL.len(), 22);
-        assert_eq!(DrawingKind::ALL.len(), 19);
+        let drawing = st
+            .click(Anchor { t: 4, price: 15.0 })
+            .expect("fifth click completes XABCD");
+        assert_eq!(drawing.kind, DrawingKind::Xabcd);
+        assert!(drawing.c.is_some());
+        assert_eq!(drawing.extra.len(), 2);
+        assert!(st.draft.is_none());
+    }
+
+    #[test]
+    fn highlighter_is_a_freehand_drag_with_the_same_capture_path_as_brush() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Highlighter);
+        let a = Anchor { t: 0, price: 10.0 };
+        st.begin_freehand(DrawingKind::Highlighter, a);
+        st.push_brush(Anchor { t: 1, price: 11.0 });
+        st.push_brush(Anchor { t: 2, price: 12.0 });
+        let drawing = st.finish_brush().expect("freehand drawing");
+        assert_eq!(drawing.kind, DrawingKind::Highlighter);
+        assert_eq!(drawing.extra.len(), 2);
+    }
+
+    #[test]
+    fn strong_magnet_uses_a_wider_snap_radius_than_weak_magnet() {
+        let ohlc = [10.0, 11.0, 12.0, 13.0];
+        let pointer = 40.0;
+        let y_of = |price: f64| ((price - 10.0) * 10.0) as f32;
+        let weak = snap_price_with_tolerance(20.0, ohlc, pointer, 8.0, y_of);
+        let strong = snap_price_with_tolerance(20.0, ohlc, pointer, 24.0, y_of);
+        assert_eq!(weak, 20.0);
+        assert_eq!(strong, 13.0);
+    }
+
+    #[test]
+    fn open_paths_keep_accepting_anchors_until_explicitly_finished() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Path);
+        let a = Anchor { t: 0, price: 10.0 };
+        let b = Anchor { t: 1, price: 12.0 };
+        let c = Anchor { t: 2, price: 11.0 };
+        let d = Anchor { t: 3, price: 14.0 };
+        assert!(st.click(a).is_none());
+        assert!(st.click(b).is_none());
+        assert!(st.click(c).is_none());
+        assert!(st.click(d).is_none(), "paths do not auto-finish on a click");
+        let drawing = st.finish_open_path().expect("explicit finish");
+        assert_eq!(drawing.kind, DrawingKind::Path);
+        assert_eq!(drawing.c, Some(c));
+        assert_eq!(drawing.extra, vec![d]);
+        assert!(st.draft.is_none());
+    }
+
+    #[test]
+    fn finishing_a_path_drops_the_double_clicks_duplicate_anchor() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Polyline);
+        let a = Anchor { t: 0, price: 10.0 };
+        let b = Anchor { t: 1, price: 12.0 };
+        let c = Anchor { t: 2, price: 11.0 };
+        st.click(a);
+        st.click(b);
+        st.click(c);
+        st.click(c);
+        let drawing = st.finish_open_path().expect("explicit finish");
+        assert_eq!(drawing.kind, DrawingKind::Polyline);
+        assert!(drawing.extra.is_empty());
+    }
+
+    #[test]
+    fn finishing_a_path_dedupes_repeated_double_click_endpoints() {
+        let mut st = DrawingToolState::default();
+        st.set_tool(DrawTool::Path);
+        let a = Anchor { t: 0, price: 10.0 };
+        let b = Anchor { t: 1, price: 12.0 };
+        let c = Anchor { t: 2, price: 11.0 };
+        let d = Anchor { t: 3, price: 14.0 };
+        st.click(a);
+        st.click(b);
+        st.click(c);
+        st.click(d);
+        st.click(d);
+        let drawing = st.finish_open_path().expect("explicit finish");
+        assert_eq!(drawing.extra, vec![d]);
+    }
+
+    #[test]
+    fn every_new_tool_maps_to_a_kind() {
+        for kind in DrawingKind::ALL {
+            let tool = tool_for(*kind);
+            assert_eq!(tool.kind(), Some(*kind));
+        }
+        for tool in DrawTool::ALL {
+            if matches!(
+                tool,
+                DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure | DrawTool::Eraser
+            ) {
+                assert!(tool.kind().is_none(), "{tool:?} should not place a drawing");
+            } else {
+                assert!(tool.kind().is_some(), "{tool:?} unwired");
+            }
+        }
+        assert!(DrawTool::ALL.len() >= 75);
+        assert!(DrawingKind::ALL.len() >= 70);
     }
 
     #[test]

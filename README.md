@@ -9,7 +9,7 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 203 unit/golden tests
+cargo test --workspace               # 238 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -26,14 +26,33 @@ curated offline symbol index so search works before the network responds.
   styles (candles, hollow candles, bars, columns, line, area, baseline, Heikin
   Ashi), log scale, and a status bar with provider state, bar count, UTC clock
   and active tool.
-- Drawing tools: trend line, ray, extended line, horizontal ray, horizontal/
-  vertical line, parallel channel, rectangle, ellipse, Fibonacci retracement and
-  extension, arrow, note and price/time measure. Click to place (two- and
-  three-point tools finish on the final click), select, drag to move, and
-  Delete/Backspace to remove; a floating toolbar edits the selected drawing's
-  color, line width and style, fill opacity and note text, and a lock button
-  freezes all drawing editing. Magnet snaps anchors to OHLC values. Drawings are
-  stored by timestamp and persisted per symbol.
+- Drawing tools: 81 rail tools across TradingView's seven drawing groups.
+  Cursors include Cross and Eraser; trend tools cover lines, channels and four
+  pitchfork variants; Gann/Fibonacci includes channel, time, fan, circle,
+  spiral, arc, wedge, pitchfan, Gann box/square/fan; Patterns includes XABCD,
+  Cypher, head and shoulders, ABCD, triangle, three drives, five Elliott wave
+  tools and cycles; forecasting includes long/short/position forecast, sector
+  and price/date ranges; geometric includes brush, highlighter, rectangles,
+  circle, triangle, path/polyline, arc and curve; annotations include notes,
+  callouts, comments, pins, signposts and flags. Click to place (multi-point
+  tools finish on the final click, Path/Polyline on double-click), select, drag
+  to move, and Delete/Backspace to remove. A floating toolbar edits color, line
+  width/style, fill opacity and annotation text. Lock, hide, remove-all, keep
+  drawing, weak/strong magnet and zoom are functional. Drawings are stored by
+  timestamp and persisted per symbol. Data-bound/media TV tools (volume
+  profiles, anchored VWAP, bars pattern, ghost feed, tables, images, posts,
+  ideas) and the emoji Icons group remain out of scope.
+- TradingView-style grouped tool rail: one button per tool family with a
+  two-target hit area. A first click selects the group's remembered tool after
+  the 175 ms double-click window; a second click, double-click, arrow click or
+  300 ms long press opens the selector. Flyouts are content-sized
+  (193-360 px), viewport-clamped popups with 40 px rows, 24 px headers, 13 px
+  section dividers and 6 px radius. Favorite stars are global and persisted in
+  config v2. `⌥T`/`⌥H`/`⌥J`/`⌥V`/`⌥C`/`⌥F`/`⇧⌥R` select trendline, horizontal line,
+  horizontal ray, vertical line, crossline, Fibonacci retracement and rectangle.
+  Escape
+  closes dialogs first, then the flyout or utility menu. Only tools the engine
+  implements are listed.
 - Compare overlay: search from the command bar, normalized close line with a
   percentage legend, and click the legend to remove it. Stored per tab and
   restored on boot.
@@ -53,10 +72,13 @@ curated offline symbol index so search works before the network responds.
 - Study templates: save the current chart's indicator set under a name and
   re-apply it later from the indicators window.
 - Screenshot capture, toast feedback, keyboard shortcuts (`⌘K`, `⌘T`, `⌘W`,
-  `⌘,`, `Esc`, Space/arrows in replay).
+  `⌘,`, `Esc`, `⌥T`/`⌥H`/`⌥J`/`⌥V`/`⌥C`/`⌥F`/`⇧⌥R` drawing tools, Space/arrows in
+  replay).
 - Config v2 stores theme, watchlist, tabs, active tab, chart type, log scale,
   alerts, indicator parameters, per-symbol drawings, compare symbol, study
-  templates and the streaming preference; v1 configs migrate transparently.
+  templates, global drawing-tool favorites, keep-drawing and magnet-strength
+  modes, per-tab hidden drawings and the streaming preference; v1 configs
+  migrate transparently.
 
 ## Debug hooks
 
@@ -64,7 +86,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|phase4drawings\|zoomrect\|replay` | open a dialog or preset chart state for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay` | open a dialog or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
@@ -73,12 +95,12 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `ta` | indicator engine: 66 TV-named studies, TV default params, golden-value tests |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine, Binance kline websocket (`KlineStream`) |
-| `tickchart` | chart engine: axes, geometry, eight series styles, drawings with styles/lock/measure/pitchforks/regression/positions, compare overlay, panes, crosshair, legend, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, compare overlay, panes, crosshair, legend, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
 
-`cargo test --workspace` passes 211 tests (6 ignored live-network smokes) and
+`cargo test --workspace` passes 238 tests (6 ignored live-network smokes) and
 `cargo clippy --workspace --all-targets` is clean. Dark and light builds were
 captured at 1440×900 and visually checked for the shell, tab strip, command
 bar, watchlist, status bar, RSI separate pane, indicator editor, settings,
@@ -93,6 +115,10 @@ plus shift-rectangle zoom, all verified in dark/light screenshots
 added Binance kline websocket streaming (protocol-level smoke: three closed 1m
 BTCUSDT bars over `stream.binance.com`), bar replay with transport controls
 and Space/arrow keys, and study templates, verified via
-`docs/screenshots/phase5-*.png`.
+`docs/screenshots/phase5-*.png`. Phase 6 added the TradingView-style grouped
+drawing tool panel with seven groups, all engine-supported TV tools, global
+favorites, long-press/double-click selector behavior, content-sized clamped
+flyouts and a functional utility rail; verified in dark/light via
+`TICKVIEW_SCENE=toolpanel` (`docs/screenshots/phase6-*.png`).
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

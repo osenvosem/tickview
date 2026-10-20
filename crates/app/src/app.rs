@@ -23,6 +23,7 @@ use crate::store::{self, SavedConfig};
 use crate::theme::{
     self, Palette, ThemeMode, font_medium, font_mono, font_regular, font_semibold, type_size,
 };
+use crate::toolpanel::{self, PanelState};
 use crate::widgets;
 
 type Hub = Arc<DataHub<Router>>;
@@ -135,6 +136,8 @@ pub struct Tab {
     pub compare_symbol: Option<Symbol>,
     /// Drawings are locked against mouse editing.
     pub locked: bool,
+    /// Drawings are hidden on this tab.
+    pub drawings_hidden: bool,
 }
 
 impl Tab {
@@ -162,6 +165,7 @@ impl Tab {
             pending,
             compare_symbol: None,
             locked: false,
+            drawings_hidden: false,
         }
     }
 
@@ -171,7 +175,8 @@ impl Tab {
 }
 
 /// Active drawing tool (drawing engine lands in Phase 2).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Tool {
     Cursor,
     Crosshair,
@@ -195,10 +200,69 @@ pub enum Tool {
     Regression,
     LongPosition,
     ShortPosition,
+    Eraser,
+    InfoLine,
+    TrendAngle,
+    CrossLine,
+    FlatChannel,
+    DisjointChannel,
+    ModifiedSchiff,
+    InsidePitchfork,
+    FibChannel,
+    FibTimeZone,
+    FibSpeedFan,
+    FibTime,
+    FibCircles,
+    FibSpiral,
+    FibArcs,
+    FibWedge,
+    Pitchfan,
+    GannBox,
+    GannSquareFixed,
+    GannSquare,
+    GannFan,
+    Xabcd,
+    Cypher,
+    HeadShoulders,
+    Abcd,
+    TrianglePattern,
+    ThreeDrives,
+    ElliottImpulse,
+    ElliottCorrection,
+    ElliottTriangle,
+    ElliottDoubleCombo,
+    ElliottTripleCombo,
+    CyclicLines,
+    TimeCycles,
+    SineLine,
+    PositionForecast,
+    Sector,
+    PriceRange,
+    DateRange,
+    DatePriceRange,
+    Path,
+    Polyline,
+    Highlighter,
+    ArrowMarker,
+    ArrowMarkUp,
+    ArrowMarkDown,
+    Circle,
+    RotatedRect,
+    TriangleShape,
+    Arc,
+    Curve,
+    DoubleCurve,
+    PriceNote,
+    Pin,
+    Callout,
+    Comment,
+    PriceLabel,
+    Signpost,
+    FlagMark,
 }
 
 impl Tool {
-    pub const ALL: [Self; 22] = [
+    pub const ALL: &'static [Self] = &[
         Self::Cursor,
         Self::Crosshair,
         Self::TrendLine,
@@ -221,6 +285,65 @@ impl Tool {
         Self::Regression,
         Self::LongPosition,
         Self::ShortPosition,
+        Self::Eraser,
+        Self::InfoLine,
+        Self::TrendAngle,
+        Self::CrossLine,
+        Self::FlatChannel,
+        Self::DisjointChannel,
+        Self::ModifiedSchiff,
+        Self::InsidePitchfork,
+        Self::FibChannel,
+        Self::FibTimeZone,
+        Self::FibSpeedFan,
+        Self::FibTime,
+        Self::FibCircles,
+        Self::FibSpiral,
+        Self::FibArcs,
+        Self::FibWedge,
+        Self::Pitchfan,
+        Self::GannBox,
+        Self::GannSquareFixed,
+        Self::GannSquare,
+        Self::GannFan,
+        Self::Xabcd,
+        Self::Cypher,
+        Self::HeadShoulders,
+        Self::Abcd,
+        Self::TrianglePattern,
+        Self::ThreeDrives,
+        Self::ElliottImpulse,
+        Self::ElliottCorrection,
+        Self::ElliottTriangle,
+        Self::ElliottDoubleCombo,
+        Self::ElliottTripleCombo,
+        Self::CyclicLines,
+        Self::TimeCycles,
+        Self::SineLine,
+        Self::PositionForecast,
+        Self::Sector,
+        Self::PriceRange,
+        Self::DateRange,
+        Self::DatePriceRange,
+        Self::Path,
+        Self::Polyline,
+        Self::Highlighter,
+        Self::ArrowMarker,
+        Self::ArrowMarkUp,
+        Self::ArrowMarkDown,
+        Self::Circle,
+        Self::RotatedRect,
+        Self::TriangleShape,
+        Self::Arc,
+        Self::Curve,
+        Self::DoubleCurve,
+        Self::PriceNote,
+        Self::Pin,
+        Self::Callout,
+        Self::Comment,
+        Self::PriceLabel,
+        Self::Signpost,
+        Self::FlagMark,
     ];
 
     #[must_use]
@@ -248,15 +371,62 @@ impl Tool {
             Self::Regression => Icon::Regression,
             Self::LongPosition => Icon::LongPosition,
             Self::ShortPosition => Icon::ShortPosition,
+            Self::Eraser => Icon::Eraser,
+            Self::InfoLine => Icon::HLine,
+            Self::TrendAngle => Icon::TrendLine,
+            Self::CrossLine => Icon::Crosshair,
+            Self::FlatChannel | Self::DisjointChannel => Icon::Channel,
+            Self::ModifiedSchiff | Self::InsidePitchfork => Icon::Schiff,
+            Self::FibChannel
+            | Self::FibTimeZone
+            | Self::FibSpeedFan
+            | Self::FibTime
+            | Self::FibCircles
+            | Self::FibSpiral
+            | Self::FibArcs
+            | Self::FibWedge
+            | Self::Pitchfan
+            | Self::GannBox
+            | Self::GannSquareFixed
+            | Self::GannSquare
+            | Self::GannFan => Icon::Fib,
+            Self::Xabcd
+            | Self::Cypher
+            | Self::HeadShoulders
+            | Self::Abcd
+            | Self::TrianglePattern
+            | Self::ThreeDrives
+            | Self::ElliottImpulse
+            | Self::ElliottCorrection
+            | Self::ElliottTriangle
+            | Self::ElliottDoubleCombo
+            | Self::ElliottTripleCombo
+            | Self::CyclicLines
+            | Self::TimeCycles
+            | Self::SineLine => Icon::Pattern,
+            Self::PositionForecast => Icon::LongPosition,
+            Self::Sector => Icon::Sector,
+            Self::PriceRange | Self::DateRange | Self::DatePriceRange | Self::RotatedRect => {
+                Icon::Rect
+            }
+            Self::Path | Self::Polyline => Icon::Curve,
+            Self::Highlighter => Icon::Brush,
+            Self::ArrowMarker | Self::ArrowMarkUp | Self::ArrowMarkDown => Icon::Arrow,
+            Self::Circle => Icon::Ellipse,
+            Self::TriangleShape => Icon::Triangle,
+            Self::Arc | Self::Curve | Self::DoubleCurve => Icon::Curve,
+            Self::PriceNote | Self::Callout | Self::Comment | Self::PriceLabel => Icon::Text,
+            Self::Pin => Icon::Pin,
+            Self::Signpost | Self::FlagMark => Icon::Flag,
         }
     }
 
     #[must_use]
     pub fn label(self) -> &'static str {
         match self {
-            Self::Cursor => "Cursor",
-            Self::Crosshair => "Crosshair",
-            Self::TrendLine => "Trend line",
+            Self::Cursor => "Arrow",
+            Self::Crosshair => "Cross",
+            Self::TrendLine => "Trendline",
             Self::Ray => "Ray",
             Self::ExtLine => "Extended line",
             Self::HRay => "Horizontal ray",
@@ -266,7 +436,7 @@ impl Tool {
             Self::Rect => "Rectangle",
             Self::Ellipse => "Ellipse",
             Self::Fib => "Fib retracement",
-            Self::FibExt => "Fib extension",
+            Self::FibExt => "Trend-based fib extension",
             Self::Arrow => "Arrow",
             Self::Text => "Note",
             Self::Measure => "Measure",
@@ -276,11 +446,109 @@ impl Tool {
             Self::Regression => "Regression trend",
             Self::LongPosition => "Long position",
             Self::ShortPosition => "Short position",
+            Self::Eraser => "Eraser",
+            Self::InfoLine => "Info line",
+            Self::TrendAngle => "Trend angle",
+            Self::CrossLine => "Crossline",
+            Self::FlatChannel => "Flat top/bottom",
+            Self::DisjointChannel => "Disjoint channel",
+            Self::ModifiedSchiff => "Modified Schiff pitchfork",
+            Self::InsidePitchfork => "Inside pitchfork",
+            Self::FibChannel => "Fib channel",
+            Self::FibTimeZone => "Fib time zone",
+            Self::FibSpeedFan => "Fib speed resistance fan",
+            Self::FibTime => "Trend-based fib time",
+            Self::FibCircles => "Fib circles",
+            Self::FibSpiral => "Fib spiral",
+            Self::FibArcs => "Fib speed resistance arcs",
+            Self::FibWedge => "Fib wedge",
+            Self::Pitchfan => "Pitchfan",
+            Self::GannBox => "Gann box",
+            Self::GannSquareFixed => "Gann square fixed",
+            Self::GannSquare => "Gann square",
+            Self::GannFan => "Gann fan",
+            Self::Xabcd => "XABCD pattern",
+            Self::Cypher => "Cypher pattern",
+            Self::HeadShoulders => "Head and shoulders",
+            Self::Abcd => "ABCD pattern",
+            Self::TrianglePattern => "Triangle pattern",
+            Self::ThreeDrives => "Three drives pattern",
+            Self::ElliottImpulse => "Elliott impulse wave (1·2·3·4·5)",
+            Self::ElliottCorrection => "Elliott correction wave (A·B·C)",
+            Self::ElliottTriangle => "Elliott triangle wave (A·B·C·D·E)",
+            Self::ElliottDoubleCombo => "Elliott double combo wave (W·X·Y)",
+            Self::ElliottTripleCombo => "Elliott triple combo wave (W·X·Y·X·Z)",
+            Self::CyclicLines => "Cyclic lines",
+            Self::TimeCycles => "Time cycles",
+            Self::SineLine => "Sine line",
+            Self::PositionForecast => "Position forecast",
+            Self::Sector => "Sector",
+            Self::PriceRange => "Price range",
+            Self::DateRange => "Date range",
+            Self::DatePriceRange => "Date and price range",
+            Self::Path => "Path",
+            Self::Polyline => "Polyline",
+            Self::Highlighter => "Highlighter",
+            Self::ArrowMarker => "Arrow marker",
+            Self::ArrowMarkUp => "Arrow mark up",
+            Self::ArrowMarkDown => "Arrow mark down",
+            Self::Circle => "Circle",
+            Self::RotatedRect => "Rotated rectangle",
+            Self::TriangleShape => "Triangle",
+            Self::Arc => "Arc",
+            Self::Curve => "Curve",
+            Self::DoubleCurve => "Double curve",
+            Self::PriceNote => "Price note",
+            Self::Pin => "Pin",
+            Self::Callout => "Callout",
+            Self::Comment => "Comment",
+            Self::PriceLabel => "Price label",
+            Self::Signpost => "Signpost",
+            Self::FlagMark => "Flag mark",
+        }
+    }
+
+    /// TradingView's optional keyboard shortcut for this tool, when it has one
+    /// and we implement the tool. The hint is drawn in the tool flyout.
+    #[must_use]
+    pub fn shortcut(self) -> Option<&'static str> {
+        if self == Self::Rect {
+            return Some("⇧⌥R");
+        }
+        match self.shortcut_key()? {
+            egui::Key::T => Some("⌥T"),
+            egui::Key::H => Some("⌥H"),
+            egui::Key::J => Some("⌥J"),
+            egui::Key::V => Some("⌥V"),
+            egui::Key::C => Some("⌥C"),
+            egui::Key::F => Some("⌥F"),
+            _ => None,
+        }
+    }
+
+    /// Map an Option-key chord to a tool. Called only when Alt is down.
+    #[must_use]
+    pub fn from_shortcut_key(key: egui::Key) -> Option<Self> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|tool| tool.shortcut_key() == Some(key))
+    }
+
+    fn shortcut_key(self) -> Option<egui::Key> {
+        match self {
+            Self::TrendLine => Some(egui::Key::T),
+            Self::Fib => Some(egui::Key::F),
+            Self::HLine => Some(egui::Key::H),
+            Self::HRay => Some(egui::Key::J),
+            Self::VLine => Some(egui::Key::V),
+            Self::CrossLine => Some(egui::Key::C),
+            _ => None,
         }
     }
 }
 
-/// Map the shell tool rail to the chart's drawing tool.
+/// Map the app's selected drawing tool to the chart engine's tool.
 fn draw_tool(tool: Tool) -> DrawTool {
     match tool {
         Tool::Cursor => DrawTool::Cursor,
@@ -305,6 +573,65 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Regression => DrawTool::RegTrend,
         Tool::LongPosition => DrawTool::LongPos,
         Tool::ShortPosition => DrawTool::ShortPos,
+        Tool::Eraser => DrawTool::Eraser,
+        Tool::InfoLine => DrawTool::InfoLine,
+        Tool::TrendAngle => DrawTool::TrendAngle,
+        Tool::CrossLine => DrawTool::CrossLine,
+        Tool::FlatChannel => DrawTool::FlatChannel,
+        Tool::DisjointChannel => DrawTool::DisjointChannel,
+        Tool::ModifiedSchiff => DrawTool::ModifiedSchiffPitchfork,
+        Tool::InsidePitchfork => DrawTool::InsidePitchfork,
+        Tool::FibChannel => DrawTool::FibChannel,
+        Tool::FibTimeZone => DrawTool::FibTimeZone,
+        Tool::FibSpeedFan => DrawTool::FibSpeedFan,
+        Tool::FibTime => DrawTool::FibTime,
+        Tool::FibCircles => DrawTool::FibCircles,
+        Tool::FibSpiral => DrawTool::FibSpiral,
+        Tool::FibArcs => DrawTool::FibArcs,
+        Tool::FibWedge => DrawTool::FibWedge,
+        Tool::Pitchfan => DrawTool::Pitchfan,
+        Tool::GannBox => DrawTool::GannBox,
+        Tool::GannSquareFixed => DrawTool::GannSquareFixed,
+        Tool::GannSquare => DrawTool::GannSquare,
+        Tool::GannFan => DrawTool::GannFan,
+        Tool::Xabcd => DrawTool::Xabcd,
+        Tool::Cypher => DrawTool::Cypher,
+        Tool::HeadShoulders => DrawTool::HeadShoulders,
+        Tool::Abcd => DrawTool::Abcd,
+        Tool::TrianglePattern => DrawTool::TrianglePattern,
+        Tool::ThreeDrives => DrawTool::ThreeDrives,
+        Tool::ElliottImpulse => DrawTool::ElliottImpulse,
+        Tool::ElliottCorrection => DrawTool::ElliottCorrection,
+        Tool::ElliottTriangle => DrawTool::ElliottTriangle,
+        Tool::ElliottDoubleCombo => DrawTool::ElliottDoubleCombo,
+        Tool::ElliottTripleCombo => DrawTool::ElliottTripleCombo,
+        Tool::CyclicLines => DrawTool::CyclicLines,
+        Tool::TimeCycles => DrawTool::TimeCycles,
+        Tool::SineLine => DrawTool::SineLine,
+        Tool::PositionForecast => DrawTool::PositionForecast,
+        Tool::Sector => DrawTool::Sector,
+        Tool::PriceRange => DrawTool::PriceRange,
+        Tool::DateRange => DrawTool::DateRange,
+        Tool::DatePriceRange => DrawTool::DatePriceRange,
+        Tool::Path => DrawTool::Path,
+        Tool::Polyline => DrawTool::Polyline,
+        Tool::Highlighter => DrawTool::Highlighter,
+        Tool::ArrowMarker => DrawTool::ArrowMarker,
+        Tool::ArrowMarkUp => DrawTool::ArrowMarkUp,
+        Tool::ArrowMarkDown => DrawTool::ArrowMarkDown,
+        Tool::Circle => DrawTool::Circle,
+        Tool::RotatedRect => DrawTool::RotatedRect,
+        Tool::TriangleShape => DrawTool::TriangleShape,
+        Tool::Arc => DrawTool::Arc,
+        Tool::Curve => DrawTool::Curve,
+        Tool::DoubleCurve => DrawTool::DoubleCurve,
+        Tool::PriceNote => DrawTool::PriceNote,
+        Tool::Pin => DrawTool::Pin,
+        Tool::Callout => DrawTool::Callout,
+        Tool::Comment => DrawTool::Comment,
+        Tool::PriceLabel => DrawTool::PriceLabel,
+        Tool::Signpost => DrawTool::Signpost,
+        Tool::FlagMark => DrawTool::FlagMark,
     }
 }
 
@@ -387,7 +714,10 @@ pub struct TickView {
     pub theme: ThemeMode,
     pub palette: Palette,
     pub tool: Tool,
+    pub(crate) tool_panel: PanelState,
     pub magnet: bool,
+    pub magnet_strong: bool,
+    pub keep_drawing: bool,
     pub show_watchlist: bool,
 
     snap: Option<PathBuf>,
@@ -601,6 +931,8 @@ impl TickView {
                     .restore_drawings(saved.symbol.ticker.clone(), saved.drawings.clone());
                 tab.locked = saved.drawings_locked;
                 tab.chart.locked = tab.locked;
+                tab.drawings_hidden = saved.drawings_hidden;
+                tab.chart.drawings_hidden = tab.drawings_hidden;
                 tab.compare_symbol = saved.compare.clone();
                 tabs.push(tab);
                 next_tab_id += 1;
@@ -652,7 +984,10 @@ impl TickView {
             theme: cfg.theme,
             palette,
             tool: Tool::Cursor,
+            tool_panel: PanelState::with_favorites(cfg.drawing_favorites.clone()),
             magnet: cfg.magnet,
+            magnet_strong: cfg.magnet_strong,
+            keep_drawing: cfg.keep_drawing,
             show_watchlist: cfg.show_watchlist,
             snap,
             snap_after_data,
@@ -719,6 +1054,13 @@ impl TickView {
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
                 "compare" => me.open_compare_search(),
+                "toolpanel" => {
+                    me.tool = Tool::HLine;
+                    me.tool_panel = PanelState::with_favorites(vec![Tool::Ray]);
+                    me.tool_panel.activate(Tool::HLine);
+                    me.tool_panel
+                        .set_flyout(toolpanel::group_of(Tool::TrendLine));
+                }
                 "measure" => {
                     me.tool = Tool::Measure;
                     let tab = &mut me.tabs[me.active];
@@ -1469,6 +1811,9 @@ impl TickView {
         self.cfg.alerts = self.alerts.alerts.clone();
         self.cfg.show_watchlist = self.show_watchlist;
         self.cfg.magnet = self.magnet;
+        self.cfg.magnet_strong = self.magnet_strong;
+        self.cfg.keep_drawing = self.keep_drawing;
+        self.cfg.drawing_favorites = self.tool_panel.favorites().to_vec();
         self.cfg.tabs = self
             .tabs
             .iter()
@@ -1492,6 +1837,7 @@ impl TickView {
                     indicators,
                     drawings: tab.chart.drawings_by_symbol(),
                     drawings_locked: tab.locked,
+                    drawings_hidden: tab.drawings_hidden,
                     compare: tab.compare_symbol.clone(),
                 }
             })
@@ -1619,14 +1965,48 @@ impl TickView {
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
         let esc = ctx.input(|i| i.key_pressed(Key::Escape));
         if esc {
-            self.search_open = false;
-            self.indicators_open = false;
-            self.alerts_open = false;
-            self.settings_open = false;
-            self.editor = None;
+            let dialog_open = self.search_open
+                || self.indicators_open
+                || self.alerts_open
+                || self.settings_open
+                || self.editor.is_some();
+            if dialog_open {
+                self.search_open = false;
+                self.indicators_open = false;
+                self.alerts_open = false;
+                self.settings_open = false;
+                self.editor = None;
+                return;
+            }
+            if self.tool_panel.flyout().is_some() || self.tool_panel.utility().is_some() {
+                self.tool_panel.close_overlays();
+                ctx.input_mut(|i| {
+                    i.consume_key(egui::Modifiers::NONE, Key::Escape);
+                });
+            }
             return;
         }
         if ctx.egui_wants_keyboard_input() {
+            return;
+        }
+        let rectangle = ctx.input(|i| {
+            i.modifiers.alt && i.modifiers.shift && !i.modifiers.command && i.key_pressed(Key::R)
+        });
+        if rectangle {
+            self.select_tool(Tool::Rect);
+            return;
+        }
+        let alt_tool = ctx.input(|i| {
+            if !i.modifiers.alt || i.modifiers.command {
+                return None;
+            }
+            [Key::T, Key::H, Key::J, Key::V, Key::C, Key::F]
+                .into_iter()
+                .find(|key| i.key_pressed(*key))
+                .and_then(Tool::from_shortcut_key)
+        });
+        if let Some(tool) = alt_tool {
+            self.select_tool(tool);
             return;
         }
         let (search, new_tab, close_tab, settings) = ctx.input(|i| {
@@ -1674,6 +2054,70 @@ impl TickView {
         self.search_focus = true;
         self.search_sel = 0;
     }
+
+    /// Select a drawing tool and remember it as its group's last-used tool.
+    pub(crate) fn select_tool(&mut self, tool: Tool) {
+        self.tool = tool;
+        self.tool_panel.activate(tool);
+        self.tool_panel.close_overlays();
+    }
+
+    pub(crate) fn toggle_magnet(&mut self) {
+        self.magnet = !self.magnet;
+        if !self.magnet {
+            self.magnet_strong = false;
+        }
+        self.persist();
+    }
+
+    pub(crate) fn set_magnet_strength(&mut self, strong: bool) {
+        self.magnet = true;
+        self.magnet_strong = strong;
+        self.persist();
+    }
+
+    pub(crate) fn toggle_keep_drawing(&mut self) {
+        self.keep_drawing = !self.keep_drawing;
+        self.persist();
+    }
+
+    pub(crate) fn set_drawings_locked(&mut self, locked: bool) {
+        let tab = &mut self.tabs[self.active];
+        tab.locked = locked;
+        tab.chart.locked = locked;
+        if locked {
+            tab.chart.tools.cancel();
+        }
+        self.persist();
+    }
+
+    pub(crate) fn set_drawings_hidden(&mut self, hidden: bool) {
+        let tab = &mut self.tabs[self.active];
+        tab.drawings_hidden = hidden;
+        tab.chart.drawings_hidden = hidden;
+        if hidden {
+            tab.chart.tools.cancel();
+        }
+        self.persist();
+    }
+
+    pub(crate) fn remove_all_drawings(&mut self) {
+        let tab = &mut self.tabs[self.active];
+        tab.chart.drawings.clear();
+        tab.chart.tools.cancel();
+        self.dirty_drawings = true;
+        self.save_at = Instant::now() + Duration::from_millis(350);
+        self.persist();
+        self.toast("All drawings removed");
+    }
+
+    pub(crate) fn zoom_in(&mut self) {
+        let tab = &mut self.tabs[self.active];
+        let focus = tab.chart.view.width * 0.5;
+        tab.chart.view.zoom_at(focus, 1.25);
+        tab.chart.view = tab.chart.view.clamped();
+        self.persist();
+    }
 }
 
 impl eframe::App for TickView {
@@ -1706,7 +2150,7 @@ impl eframe::App for TickView {
         let p = self.palette;
         crate::chrome::tab_strip(ui, self, &p);
         crate::chrome::command_bar(ui, self, &p);
-        crate::chrome::tool_rail(ui, self, &p);
+        crate::toolpanel::tool_panel(ui, self, &p);
         if self.show_watchlist {
             crate::watchlist::panel(ui, self, &p);
         }
@@ -1730,6 +2174,7 @@ impl eframe::App for TickView {
 
 impl TickView {
     fn chart_panel(&mut self, ui: &mut egui::Ui, p: &Palette) {
+        let mut reset_tool = false;
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
@@ -1740,11 +2185,16 @@ impl TickView {
                 let ti = self.active;
                 let tool = draw_tool(self.tool);
                 let magnet = self.magnet;
+                let magnet_strong = self.magnet_strong;
+                let keep_drawing = self.keep_drawing;
                 let tab = &mut self.tabs[ti];
                 tab.chart.tools.set_tool(tool);
                 tab.chart.magnet = magnet;
+                tab.chart.magnet_strong = magnet_strong;
                 tab.chart.locked = tab.locked;
+                tab.chart.drawings_hidden = tab.drawings_hidden;
                 let ev: ChartEvent = tickchart::chart_ui(ui, &mut tab.chart, &tab.candles);
+                reset_tool = ev.drawing_completed && !keep_drawing;
                 if ev.changed {
                     self.dirty_drawings = true;
                     self.save_at = Instant::now() + Duration::from_millis(350);
@@ -1801,6 +2251,9 @@ impl TickView {
                 self.tabs[ti].chart.popup_rect = None;
                 self.drawing_toolbar(ui, ev, p);
             });
+        if reset_tool {
+            self.select_tool(Tool::Cursor);
+        }
     }
 
     fn mark_drawings_dirty(&mut self, ctx: &egui::Context) {
@@ -1827,7 +2280,7 @@ impl TickView {
         let style = drawing.style.clone();
         let reg_dev = drawing.reg_dev;
         let fills = kind.supports_fill();
-        let has_text = kind == DrawingKind::Note;
+        let has_text = kind.is_annotation();
         let deviations = kind == DrawingKind::RegTrend;
         let mut approx_h = if has_text {
             176.0
@@ -2881,11 +3334,21 @@ mod tests {
     }
 
     #[test]
+    fn tradingview_alt_shortcuts_resolve_to_the_rail_tools() {
+        assert_eq!(Tool::from_shortcut_key(egui::Key::T), Some(Tool::TrendLine));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::H), Some(Tool::HLine));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::J), Some(Tool::HRay));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::V), Some(Tool::VLine));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::C), Some(Tool::CrossLine));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::F), Some(Tool::Fib));
+        assert_eq!(Tool::from_shortcut_key(egui::Key::X), None);
+        assert_eq!(Tool::Rect.shortcut(), Some("⇧⌥R"));
+    }
+
+    #[test]
     fn every_rail_tool_maps_to_a_chart_tool() {
-        let mut icons = std::collections::HashSet::new();
-        for tool in Tool::ALL {
+        for &tool in Tool::ALL {
             assert!(!tool.label().is_empty());
-            assert!(icons.insert(tool.icon()), "duplicate icon for {tool:?}");
             let mapped = draw_tool(tool);
             if tool == Tool::Cursor {
                 assert_eq!(mapped, DrawTool::Cursor);

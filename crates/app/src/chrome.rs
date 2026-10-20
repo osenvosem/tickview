@@ -2,7 +2,7 @@
 
 use eframe::egui::{self, Align2, CornerRadius, Layout, Margin, Sense, Stroke, vec2};
 
-use crate::app::{INTERVALS, TickView, Tool};
+use crate::app::{INTERVALS, TickView};
 use crate::icons::Icon;
 use crate::theme::{
     Palette, font_medium, font_mono, font_regular, font_semibold, space, type_size,
@@ -438,82 +438,6 @@ fn symbol_button(ui: &mut egui::Ui, p: &Palette, symbol: &marketdata::Symbol) ->
     resp.clicked()
 }
 
-pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
-    egui::Panel::left("tickview-tools")
-        .exact_size(space::RAIL_W)
-        .resizable(false)
-        .show_separator_line(false)
-        .frame(
-            egui::Frame::new()
-                .fill(p.panel)
-                .inner_margin(Margin::symmetric(8, 6)),
-        )
-        .show(ui, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.spacing_mut().item_spacing.y = 0.0;
-                for (i, tool) in Tool::ALL.iter().enumerate() {
-                    if matches!(i, 2 | 6 | 9) {
-                        ui.add_space(3.0);
-                        widgets::hline(ui, p);
-                        ui.add_space(2.0);
-                    }
-                    let active = app.tool == *tool;
-                    let resp = widgets::icon_button(
-                        ui,
-                        p,
-                        tool.icon(),
-                        vec2(34.0, 34.0),
-                        active,
-                        true,
-                        tool.label(),
-                    );
-                    if resp.clicked() {
-                        app.tool = *tool;
-                    }
-                }
-
-                let remaining = ui.available_height() - 78.0;
-                if remaining > 0.0 {
-                    ui.add_space(remaining);
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::Magnet,
-                    vec2(34.0, 34.0),
-                    app.magnet,
-                    true,
-                    "Magnet mode",
-                )
-                .clicked()
-                {
-                    app.magnet = !app.magnet;
-                    app.persist();
-                }
-                let locked = app.tabs[app.active].locked;
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    if locked { Icon::Unlock } else { Icon::Lock },
-                    vec2(34.0, 34.0),
-                    locked,
-                    true,
-                    "Lock drawings",
-                )
-                .clicked()
-                {
-                    let tab = &mut app.tabs[app.active];
-                    tab.locked = !locked;
-                    tab.chart.locked = tab.locked;
-                    if tab.locked {
-                        tab.chart.tools.cancel();
-                    }
-                    app.persist();
-                }
-            });
-        });
-}
-
 pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     egui::Panel::bottom("tickview-status")
         .exact_size(space::STATUS_H)
@@ -673,36 +597,9 @@ pub fn status_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                             .color(p.faint),
                     );
                     ui.label(
-                        egui::RichText::new(match app.tool {
-                            Tool::Cursor => "CURSOR",
-                            Tool::Crosshair => "CROSSHAIR",
-                            Tool::TrendLine => "TREND",
-                            Tool::Ray => "RAY",
-                            Tool::ExtLine => "EXT LINE",
-                            Tool::HRay => "H RAY",
-                            Tool::HLine => "H-LINE",
-                            Tool::VLine => "V-LINE",
-                            Tool::Channel => "CHANNEL",
-                            Tool::Rect => "RECT",
-                            Tool::Ellipse => "ELLIPSE",
-                            Tool::Fib => "FIB",
-                            Tool::FibExt => "FIB EXT",
-                            Tool::Arrow => "ARROW",
-                            Tool::Text => "NOTE",
-                            Tool::Measure => "MEASURE",
-                            Tool::Brush => "BRUSH",
-                            Tool::Pitchfork => "PITCHFORK",
-                            Tool::Schiff => "SCHIFF",
-                            Tool::Regression => "REGRESSION",
-                            Tool::LongPosition => "LONG",
-                            Tool::ShortPosition => "SHORT",
-                        })
-                        .font(font_mono(type_size::TINY))
-                        .color(if app.magnet {
-                            p.accent
-                        } else {
-                            p.faint
-                        }),
+                        egui::RichText::new(app.tool.label().to_uppercase())
+                            .font(font_mono(type_size::TINY))
+                            .color(if app.magnet { p.accent } else { p.faint }),
                     );
                 });
             });

@@ -8,6 +8,7 @@ use marketdata::{Alert, Symbol};
 use serde::{Deserialize, Serialize};
 use ta::registry::{PVal, Params, defs};
 
+use crate::app::Tool;
 use crate::theme::ThemeMode;
 
 pub const VERSION: u32 = 2;
@@ -131,6 +132,9 @@ pub struct SavedTab {
     /// Drawings are locked against mouse editing.
     #[serde(default)]
     pub drawings_locked: bool,
+    /// Drawings are hidden on the chart.
+    #[serde(default)]
+    pub drawings_hidden: bool,
     /// Optional compare overlay symbol.
     #[serde(default)]
     pub compare: Option<Symbol>,
@@ -166,12 +170,21 @@ pub struct SavedConfig {
     pub show_watchlist: bool,
     #[serde(default = "default_true")]
     pub magnet: bool,
+    /// Strong magnet mode uses a wider OHLC snap radius.
+    #[serde(default)]
+    pub magnet_strong: bool,
+    /// Keep the drawing tool selected after completing an object.
+    #[serde(default)]
+    pub keep_drawing: bool,
     /// Named reusable indicator sets.
     #[serde(default)]
     pub study_templates: Vec<StudyTemplate>,
     /// Crypto live streaming toggle; absent means enabled.
     #[serde(default)]
     pub stream: Option<bool>,
+    /// Drawing tools starred in the grouped tool panel.
+    #[serde(default)]
+    pub drawing_favorites: Vec<Tool>,
 
     // ---- v1 compatibility ----
     #[serde(default)]
@@ -195,8 +208,11 @@ impl Default for SavedConfig {
             alerts: Vec::new(),
             show_watchlist: true,
             magnet: true,
+            magnet_strong: false,
+            keep_drawing: false,
             study_templates: Vec::new(),
             stream: None,
+            drawing_favorites: Vec::new(),
             symbol: None,
             interval: String::new(),
             chart_type: 0,
@@ -236,6 +252,7 @@ impl SavedConfig {
                     right_offset: 0.0,
                     spacing: 8.0,
                     drawings_locked: false,
+                    drawings_hidden: false,
                     drawings: BTreeMap::new(),
                     indicators: Vec::new(),
                     compare: None,
@@ -343,6 +360,7 @@ mod tests {
             right_offset: 0.0,
             spacing: 8.0,
             drawings_locked: false,
+            drawings_hidden: false,
             drawings: BTreeMap::new(),
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
@@ -386,6 +404,7 @@ mod tests {
                 right_offset: 0.0,
                 spacing: 8.0,
                 drawings_locked: false,
+                drawings_hidden: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -424,6 +443,7 @@ mod tests {
                 right_offset: 0.0,
                 spacing: 8.0,
                 drawings_locked: true,
+                drawings_hidden: true,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -433,6 +453,7 @@ mod tests {
         let json = serde_json::to_string(&cfg).unwrap();
         let back: SavedConfig = serde_json::from_str(&json).unwrap();
         assert!(back.tabs[0].drawings_locked);
+        assert!(back.tabs[0].drawings_hidden);
         assert_eq!(back.tabs[0].drawings["AAPL"], vec![drawing]);
     }
 
@@ -447,6 +468,7 @@ mod tests {
                 right_offset: 0.0,
                 spacing: 8.0,
                 drawings_locked: false,
+                drawings_hidden: false,
                 drawings: BTreeMap::new(),
                 indicators: Vec::new(),
                 compare: Some(Symbol::new(
@@ -484,6 +506,7 @@ mod tests {
             right_offset: 0.0,
             spacing: 8.0,
             drawings_locked: false,
+            drawings_hidden: false,
             drawings: BTreeMap::new(),
             indicators: Vec::new(),
             compare: None,
@@ -547,5 +570,38 @@ mod tests {
         let json = r#"{"version":2,"tabs":[],"stream":false}"#;
         let cfg: SavedConfig = serde_json::from_str(json).unwrap();
         assert!(!cfg.stream_enabled());
+    }
+
+    #[test]
+    fn drawing_mode_defaults_and_round_trip() {
+        let json = r#"{"version":2,"tabs":[]}"#;
+        let cfg: SavedConfig = serde_json::from_str(json).unwrap();
+        assert!(!cfg.keep_drawing);
+        assert!(!cfg.magnet_strong);
+
+        let cfg = SavedConfig {
+            keep_drawing: true,
+            magnet_strong: true,
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert!(back.keep_drawing);
+        assert!(back.magnet_strong);
+    }
+
+    #[test]
+    fn drawing_favorites_default_empty_and_round_trip() {
+        let json = r#"{"version":2,"tabs":[]}"#;
+        let cfg: SavedConfig = serde_json::from_str(json).unwrap();
+        assert!(cfg.drawing_favorites.is_empty());
+
+        let cfg = SavedConfig {
+            drawing_favorites: vec![Tool::Fib, Tool::Rect],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.drawing_favorites, vec![Tool::Fib, Tool::Rect]);
     }
 }
