@@ -34,7 +34,7 @@ pub fn icon_button(
     } else {
         p.faint
     };
-    icon.paint(ui.painter(), rect.shrink(7.0), color, 1.45);
+    icon.paint(ui.painter(), rect.shrink(7.0), color, 1.55);
     if active {
         let bar = egui::Rect::from_min_size(
             egui::pos2(rect.left() + 4.0, rect.bottom() - 2.0),
@@ -65,8 +65,8 @@ pub fn command_button(
         .layout_no_wrap(label.to_owned(), font_medium(type_size::BODY), p.text)
         .rect
         .width();
-    let w = text_w + if icon.is_some() { 30.0 } else { 20.0 };
-    let (rect, resp) = ui.allocate_exact_size(vec2(w, 28.0), Sense::click());
+    let w = text_w + if icon.is_some() { 34.0 } else { 20.0 };
+    let (rect, resp) = ui.allocate_exact_size(vec2(w, 32.0), Sense::click());
     let hovered = enabled && resp.hovered();
     if active || hovered {
         let bg = if active { p.selection } else { p.hover };
@@ -83,11 +83,11 @@ pub fn command_button(
     let mut x = rect.left() + 8.0;
     if let Some(icon) = icon {
         let ir = egui::Rect::from_min_size(
-            egui::pos2(x - 2.0, rect.center().y - 8.0),
-            Vec2::splat(16.0),
+            egui::pos2(x - 2.0, rect.center().y - 10.0),
+            Vec2::splat(20.0),
         );
-        icon.paint(ui.painter(), ir, color, 1.4);
-        x += 20.0;
+        icon.paint(ui.painter(), ir, color, 1.5);
+        x += 24.0;
     }
     ui.painter().text(
         egui::pos2(x, rect.center().y),

@@ -167,7 +167,9 @@ pub mod space {
     pub const TAB_H: f32 = 34.0;
     pub const COMMAND_H: f32 = 46.0;
     pub const STATUS_H: f32 = 24.0;
-    pub const RAIL_W: f32 = 46.0;
+    /// Square chrome icon buttons (left rail + top-right cluster).
+    pub const ICON_BTN: f32 = 36.0;
+    pub const RAIL_W: f32 = 52.0;
     pub const WATCH_W: f32 = 286.0;
     pub const ROW_H: f32 = 38.0;
     pub const RADIUS: f32 = 3.0;

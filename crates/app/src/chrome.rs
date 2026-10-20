@@ -267,7 +267,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     Icon::Settings,
-                    vec2(30.0, 30.0),
+                    vec2(space::ICON_BTN, space::ICON_BTN),
                     app.settings_open,
                     true,
                     "Settings (⌘,)",
@@ -286,7 +286,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     theme_icon,
-                    vec2(30.0, 30.0),
+                    vec2(space::ICON_BTN, space::ICON_BTN),
                     false,
                     true,
                     &format!("Theme: {} (click to switch)", app.theme.label()),
@@ -300,7 +300,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     Icon::Camera,
-                    vec2(30.0, 30.0),
+                    vec2(space::ICON_BTN, space::ICON_BTN),
                     false,
                     true,
                     "Save screenshot",
@@ -315,7 +315,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     Icon::Bell,
-                    vec2(30.0, 30.0),
+                    vec2(space::ICON_BTN, space::ICON_BTN),
                     app.alerts_open,
                     true,
                     "Alerts",
@@ -335,7 +335,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     Icon::Watchlist,
-                    vec2(30.0, 30.0),
+                    vec2(space::ICON_BTN, space::ICON_BTN),
                     app.show_watchlist,
                     true,
                     "Watchlist",
@@ -350,7 +350,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                         ui,
                         p,
                         Icon::Layout,
-                        vec2(30.0, 30.0),
+                        vec2(space::ICON_BTN, space::ICON_BTN),
                         false,
                         true,
                         "Layout",
@@ -363,7 +363,7 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                         ui,
                         p,
                         Icon::Table,
-                        vec2(30.0, 30.0),
+                        vec2(space::ICON_BTN, space::ICON_BTN),
                         false,
                         true,
                         "Data window",
@@ -450,19 +450,19 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
         )
         .show(ui, |ui| {
             ui.vertical_centered(|ui| {
-                ui.spacing_mut().item_spacing.y = 3.0;
+                ui.spacing_mut().item_spacing.y = 0.0;
                 for (i, tool) in Tool::ALL.iter().enumerate() {
                     if matches!(i, 2 | 6 | 9) {
-                        ui.add_space(5.0);
-                        widgets::hline(ui, p);
                         ui.add_space(3.0);
+                        widgets::hline(ui, p);
+                        ui.add_space(2.0);
                     }
                     let active = app.tool == *tool;
                     let resp = widgets::icon_button(
                         ui,
                         p,
                         tool.icon(),
-                        vec2(30.0, 30.0),
+                        vec2(34.0, 34.0),
                         active,
                         true,
                         tool.label(),
@@ -480,7 +480,7 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     Icon::Magnet,
-                    vec2(30.0, 30.0),
+                    vec2(34.0, 34.0),
                     app.magnet,
                     true,
                     "Magnet mode",
@@ -495,7 +495,7 @@ pub fn tool_rail(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     ui,
                     p,
                     if locked { Icon::Unlock } else { Icon::Lock },
-                    vec2(30.0, 30.0),
+                    vec2(34.0, 34.0),
                     locked,
                     true,
                     "Lock drawings",
