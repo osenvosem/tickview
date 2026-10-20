@@ -9,7 +9,7 @@
 use std::time::{Duration, Instant};
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, Margin, Pos2, Rect, Sense, Stroke, Vec2, vec2,
+    self, Align2, Color32, CornerRadius, CursorIcon, Margin, Pos2, Rect, Sense, Stroke, Vec2, vec2,
 };
 
 use crate::app::{TickView, Tool};
@@ -725,8 +725,12 @@ fn rail_group(
     let double_clicked = main.double_clicked();
     let arrow_clicked = arrow.clicked();
     let main_down = main.is_pointer_button_down_on();
-    main.on_hover_text(name);
-    arrow.on_hover_text(format!("Open {name}"));
+    let _ = main
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(name);
+    let _ = arrow
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(format!("Open {name}"));
     RailHit {
         rect,
         main_clicked,
@@ -765,7 +769,9 @@ fn rail_single(ui: &mut egui::Ui, p: &Palette, icon: Icon, active: bool, tip: &s
         1.45,
     );
     let clicked = resp.clicked();
-    resp.on_hover_text(tip);
+    let _ = resp
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(tip);
     clicked
 }
 
@@ -839,8 +845,12 @@ fn rail_utility(
     let double_clicked = main.double_clicked();
     let arrow_clicked = arrow.clicked();
     let main_down = main.is_pointer_button_down_on();
-    main.on_hover_text(tip);
-    arrow.on_hover_text(format!("{tip} options"));
+    let _ = main
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(tip);
+    let _ = arrow
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(format!("{tip} options"));
     RailHit {
         rect,
         main_clicked,
@@ -1103,13 +1113,17 @@ fn flyout_row(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, tool: Tool, ro
     }
 
     if let Some(star) = star {
-        star.on_hover_text(if is_favorite {
-            "Remove from favorites"
-        } else {
-            "Add to favorites"
-        });
+        let _ = star
+            .on_hover_cursor(CursorIcon::PointingHand)
+            .on_hover_text(if is_favorite {
+                "Remove from favorites"
+            } else {
+                "Add to favorites"
+            });
     }
-    resp.on_hover_text(tool.label());
+    let _ = resp
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(tool.label());
 }
 
 fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<(&'static str, bool)> {
@@ -1164,7 +1178,10 @@ fn draw_utility_menu(
                             vec2(ui.available_width(), UTILITY_ROW_H),
                             Sense::click(),
                         );
-                        if resp.hovered() || *selected {
+                        let hovered = resp.hovered();
+                        let clicked = resp.clicked();
+                        let _ = resp.on_hover_cursor(CursorIcon::PointingHand);
+                        if hovered || *selected {
                             ui.painter().rect_filled(row, 4.0, p.menu_hover);
                         }
                         if *selected {
@@ -1185,7 +1202,7 @@ fn draw_utility_menu(
                             font_regular(13.0),
                             p.menu_text,
                         );
-                        if resp.clicked() {
+                        if clicked {
                             match (menu, i) {
                                 (UtilityMenu::Magnet, 0) => app.set_magnet_strength(false),
                                 (UtilityMenu::Magnet, 1) => app.set_magnet_strength(true),

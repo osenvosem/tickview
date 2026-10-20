@@ -1,11 +1,28 @@
 //! Small custom widgets used by the TickView chrome.
 
-use egui::{Align2, Color32, CornerRadius, Response, Sense, Stroke, StrokeKind, Ui, Vec2, vec2};
+use egui::{
+    Align2, Color32, CornerRadius, CursorIcon, Response, Sense, Stroke, StrokeKind, Ui, Vec2, vec2,
+};
 
 use crate::icons::Icon;
 use crate::theme::{
     Palette, font_medium, font_mono, font_regular, font_semibold, space, type_size,
 };
+
+fn hover_feedback(resp: Response, enabled: bool, tip: &str) -> Response {
+    if enabled {
+        let resp = resp.on_hover_cursor(CursorIcon::PointingHand);
+        if tip.is_empty() {
+            resp
+        } else {
+            resp.on_hover_text(tip)
+        }
+    } else if tip.is_empty() {
+        resp
+    } else {
+        resp.on_hover_text(tip)
+    }
+}
 
 #[must_use]
 pub fn icon_button(
@@ -42,11 +59,7 @@ pub fn icon_button(
         );
         ui.painter().rect_filled(bar, 1.0, p.accent);
     }
-    if tip.is_empty() {
-        resp
-    } else {
-        resp.on_hover_text(tip)
-    }
+    hover_feedback(resp, enabled, tip)
 }
 
 /// A button with an icon and text (used in the command bar).
@@ -96,11 +109,7 @@ pub fn command_button(
         font_medium(type_size::BODY),
         color,
     );
-    if tip.is_empty() {
-        resp
-    } else {
-        resp.on_hover_text(tip)
-    }
+    hover_feedback(resp, enabled, tip)
 }
 
 /// Paint an opaque dialog body so platform/theme transitions can never let the

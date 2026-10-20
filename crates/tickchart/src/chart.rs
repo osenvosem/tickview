@@ -1103,6 +1103,20 @@ fn handle_input(
             st.view.pan(-step);
         }
     }
+
+    if resp.hovered()
+        && !over_popup
+        && !drawing_tool
+        && !st.locked
+        && let Some(pos) = pointer
+        && price_rect.contains(pos)
+    {
+        if st.drag_drawing.is_some() {
+            ctx.set_cursor_icon(egui::CursorIcon::Grabbing);
+        } else if hit_drawing(st, cd, ax, pos, price_rect).is_some() {
+            ctx.set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+    }
 }
 
 fn apply_price_zoom(ax: PriceAxis, zoom: Option<(f64, f64)>) -> PriceAxis {
@@ -1375,6 +1389,54 @@ mod tests {
         ev
     }
 
+    fn ten_candles() -> Candles {
+        let bars: Vec<_> = (0..10usize)
+            .map(|i| ta::Bar {
+                t: i as i64 * 60,
+                o: 100.0 + i as f64,
+                h: 101.0 + i as f64,
+                l: 99.0 + i as f64,
+                c: 100.5 + i as f64,
+                v: 1.0,
+            })
+            .collect();
+        Candles::from_bars(&bars)
+    }
+
+    fn run_raw_move(
+        ctx: &egui::Context,
+        st: &mut ChartState,
+        cd: &Candles,
+        events: Vec<egui::Event>,
+        pointer_pos: Pos2,
+    ) -> egui::FullOutput {
+        let raw = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0, 700.0))),
+            events: {
+                let mut events = events;
+                events.insert(0, egui::Event::PointerMoved(pointer_pos));
+                events
+            },
+            ..Default::default()
+        };
+        let mut output = ctx.run_ui(raw, |ui| {
+            egui::CentralPanel::default().show(ui, |ui| {
+                let _ = crate::chart::ui(ui, st, cd);
+            });
+        });
+        output.textures_delta.clear();
+        output
+    }
+
+    fn run_pointer_move(
+        ctx: &egui::Context,
+        st: &mut ChartState,
+        cd: &Candles,
+        pos: Pos2,
+    ) -> egui::FullOutput {
+        run_raw_move(ctx, st, cd, vec![egui::Event::PointerMoved(pos)], pos)
+    }
+
     fn click(ctx: &egui::Context, st: &mut ChartState, cd: &Candles, pos: Pos2) -> ChartEvent {
         let modifiers = egui::Modifiers::default();
         frame(ctx, st, cd, vec![egui::Event::PointerMoved(pos)]);
@@ -1400,6 +1462,102 @@ mod tests {
                 modifiers,
             }],
         )
+    }
+
+    #[test]
+    fn hovering_a_drawing_sets_pointer_cursor() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.drawings.push(Drawing::new(
+            1,
+            crate::drawings::DrawingKind::TrendLine,
+            Anchor {
+                t: cd.t[3],
+                price: 100.0,
+            },
+            Anchor {
+                t: cd.t[8],
+                price: 120.0,
+            },
+        ));
+        let x = {
+            let _ = frame(&ctx, &mut st, &cd, Vec::new());
+            st.view.x_of(5)
+        };
+
+        let mut found = None;
+        for y in (0..=700).map(|y| y as f32) {
+            let output = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(x, y));
+            if output.platform_output.cursor_icon == egui::CursorIcon::PointingHand {
+                found = Some(y);
+                break;
+            }
+        }
+        assert!(found.is_some(), "no pointer cursor along the trend line");
+    }
+
+    #[test]
+    fn dragging_a_drawing_sets_grabbing_cursor() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.drawings.push(Drawing::new(
+            1,
+            crate::drawings::DrawingKind::TrendLine,
+            Anchor {
+                t: cd.t[3],
+                price: 100.0,
+            },
+            Anchor {
+                t: cd.t[8],
+                price: 120.0,
+            },
+        ));
+        let x = {
+            let _ = frame(&ctx, &mut st, &cd, Vec::new());
+            st.view.x_of(5)
+        };
+
+        let mut hover_y = None;
+        for y in (0..=700).map(|y| y as f32) {
+            let output = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(x, y));
+            if output.platform_output.cursor_icon == egui::CursorIcon::PointingHand {
+                hover_y = Some(y);
+                break;
+            }
+        }
+        let pos = Pos2::new(x, hover_y.expect("pointer cursor over the trend line"));
+
+        let modifiers = egui::Modifiers::default();
+        let press = |pos: Pos2, pressed: bool| egui::Event::PointerButton {
+            pos,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers,
+        };
+        let _ = run_raw_move(&ctx, &mut st, &cd, vec![press(pos, true)], pos);
+        let output = run_raw_move(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(pos + Vec2::new(8.0, 8.0))],
+            pos + Vec2::new(8.0, 8.0),
+        );
+        assert_eq!(
+            output.platform_output.cursor_icon,
+            egui::CursorIcon::Grabbing
+        );
+
+        let _ = run_raw_move(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![press(pos + Vec2::new(8.0, 8.0), false)],
+            pos + Vec2::new(8.0, 8.0),
+        );
     }
 
     #[test]
