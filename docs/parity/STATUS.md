@@ -2,30 +2,30 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 1 verified, 83 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 18 verified, 66 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
 
 | Name | TradingView id | TickView id | Icon | Status |
 |---|---|---|---|---|
-| Trendline | `LineToolTrendLine` | `TrendLine` | `trend-line` | in-progress |
-| Ray | `LineToolRay` | `Ray` | `ray` | in-progress |
-| Info line | `LineToolInfoLine` | `InfoLine` | `info-line` | in-progress |
-| Extended line | `LineToolExtended` | `ExtLine` | `extended-line` | in-progress |
-| Trend angle | `LineToolTrendAngle` | `TrendAngle` | `trend-angle` | in-progress |
-| Horizontal line | `LineToolHorzLine` | `HLine` | `horizontal-line` | in-progress |
-| Horizontal ray | `LineToolHorzRay` | `HRay` | `horizontal-ray` | in-progress |
-| Vertical line | `LineToolVertLine` | `VLine` | `vertical-line` | in-progress |
-| Crossline | `LineToolCrossLine` | `CrossLine` | `cross-line` | in-progress |
-| Parallel channel | `LineToolParallelChannel` | `Channel` | `channel` | in-progress |
-| Regression trend | `LineToolRegressionTrend` | `RegTrend` | `regression-trend` | in-progress |
-| Flat top/bottom | `LineToolFlatBottom` | `FlatChannel` | `flat-channel` | in-progress |
-| Disjoint channel | `LineToolDisjointAngle` | `DisjointChannel` | `disjoint-channel` | in-progress |
-| Pitchfork | `LineToolPitchfork` | `Pitchfork` | `pitchfork` | in-progress |
-| Schiff pitchfork | `LineToolSchiffPitchfork2` | `SchiffPitchfork` | `schiff-pitchfork` | in-progress |
-| Modified Schiff pitchfork | `LineToolSchiffPitchfork` | `ModifiedSchiffPitchfork` | `modified-schiff` | in-progress |
-| Inside pitchfork | `LineToolInsidePitchfork` | `InsidePitchfork` | `inside-pitchfork` | in-progress |
+| Trendline | `LineToolTrendLine` | `TrendLine` | `trend-line` | verified |
+| Ray | `LineToolRay` | `Ray` | `ray` | verified |
+| Info line | `LineToolInfoLine` | `InfoLine` | `info-line` | verified |
+| Extended line | `LineToolExtended` | `ExtLine` | `extended-line` | verified |
+| Trend angle | `LineToolTrendAngle` | `TrendAngle` | `trend-angle` | verified |
+| Horizontal line | `LineToolHorzLine` | `HLine` | `horizontal-line` | verified |
+| Horizontal ray | `LineToolHorzRay` | `HRay` | `horizontal-ray` | verified |
+| Vertical line | `LineToolVertLine` | `VLine` | `vertical-line` | verified |
+| Crossline | `LineToolCrossLine` | `CrossLine` | `cross-line` | verified |
+| Parallel channel | `LineToolParallelChannel` | `Channel` | `channel` | verified |
+| Regression trend | `LineToolRegressionTrend` | `RegTrend` | `regression-trend` | verified |
+| Flat top/bottom | `LineToolFlatBottom` | `FlatChannel` | `flat-channel` | verified |
+| Disjoint channel | `LineToolDisjointAngle` | `DisjointChannel` | `disjoint-channel` | verified |
+| Pitchfork | `LineToolPitchfork` | `Pitchfork` | `pitchfork` | verified |
+| Schiff pitchfork | `LineToolSchiffPitchfork2` | `SchiffPitchfork` | `schiff-pitchfork` | verified |
+| Modified Schiff pitchfork | `LineToolSchiffPitchfork` | `ModifiedSchiffPitchfork` | `modified-schiff` | verified |
+| Inside pitchfork | `LineToolInsidePitchfork` | `InsidePitchfork` | `inside-pitchfork` | verified |
 | Fib retracement | `LineToolFibRetracement` | `Fib` | `fibonacci` | in-progress |
 | Trend-based fib extension | `LineToolTrendBasedFibExtension` | `FibExt` | `fibonacci-extension` | in-progress |
 | Fib channel | `LineToolFibChannel` | `FibChannel` | `fib-channel` | in-progress |

@@ -1378,8 +1378,6 @@ impl Drawing {
                 self.kind,
                 DrawingKind::InfoLine
                     | DrawingKind::TrendAngle
-                    | DrawingKind::FlatChannel
-                    | DrawingKind::DisjointChannel
                     | DrawingKind::FibChannel
                     | DrawingKind::FibWedge
                     | DrawingKind::FibTimeZone
@@ -1448,18 +1446,31 @@ impl Drawing {
                 }
                 found || (self.extra.is_empty() && distance_to_segment(p, a, b) <= TOL)
             }
-            DrawingKind::Pitchfork | DrawingKind::SchiffPitchfork => {
+            DrawingKind::CrossLine => (p.y - a.y).abs() <= TOL || (p.x - a.x).abs() <= TOL,
+            DrawingKind::FlatChannel => {
                 let Some(pc) = self.c else {
                     return false;
                 };
-                pitchfork_lines(
-                    a,
-                    b,
-                    map(pc),
-                    matches!(self.kind, DrawingKind::SchiffPitchfork),
-                    plot,
-                )
-                .is_some_and(|lines| {
+                distance_to_segment(p, a, b) <= TOL || (p.y - map(pc).y).abs() <= TOL
+            }
+            DrawingKind::DisjointChannel => {
+                if self.c.is_none() {
+                    return false;
+                }
+                self.channel_geometry(map, plot)
+                    .is_some_and(|(ba, bb, oa, ob)| {
+                        distance_to_segment(p, ba, bb) <= TOL
+                            || distance_to_segment(p, oa, ob) <= TOL
+                    })
+            }
+            DrawingKind::Pitchfork
+            | DrawingKind::SchiffPitchfork
+            | DrawingKind::ModifiedSchiffPitchfork
+            | DrawingKind::InsidePitchfork => {
+                let Some(pc) = self.c else {
+                    return false;
+                };
+                pitchfork_variant_lines(a, b, map(pc), self.kind, plot).is_some_and(|lines| {
                     lines
                         .iter()
                         .any(|&(s, e)| distance_to_segment(p, s, e) <= TOL)
@@ -1662,6 +1673,35 @@ pub fn pitchfork_lines(
     let l1 = clip_line(s1, s1 + d, plot)?;
     let l2 = clip_line(s2, s2 + d, plot)?;
     Some([median, l1, l2])
+}
+
+/// Median plus two parallels for any pitchfork variant, clipped to `plot`.
+/// Origins per TV definitions: Schiff anchors at half the median vector,
+/// Modified Schiff at the midpoint of the first two pivots, Inside at that
+/// midpoint with the second rail pulled to the midpoint of the first and
+/// third pivots.
+#[must_use]
+pub fn pitchfork_variant_lines(
+    a: Pos2,
+    b: Pos2,
+    c: Pos2,
+    kind: DrawingKind,
+    plot: Rect,
+) -> Option<[(Pos2, Pos2); 3]> {
+    match kind {
+        DrawingKind::Pitchfork => pitchfork_lines(a, b, c, false, plot),
+        DrawingKind::SchiffPitchfork => pitchfork_lines(a, b, c, true, plot),
+        DrawingKind::ModifiedSchiffPitchfork => {
+            let origin = a + (b - a) * 0.5;
+            pitchfork_lines(origin, b, c, false, plot)
+        }
+        DrawingKind::InsidePitchfork => {
+            let origin = a + (b - a) * 0.5;
+            let right = a + (c - a) * 0.5;
+            pitchfork_lines(origin, origin, right, false, plot)
+        }
+        _ => None,
+    }
 }
 
 /// Ordinary least squares over unit-spaced samples: `(slope, intercept,
@@ -2691,21 +2731,7 @@ fn paint_pitchfork_variant(
     fill_color: Color32,
     plot: Rect,
 ) {
-    let lines = match kind {
-        DrawingKind::Pitchfork => pitchfork_lines(a, b, c, false, plot),
-        DrawingKind::SchiffPitchfork => pitchfork_lines(a, b, c, true, plot),
-        DrawingKind::ModifiedSchiffPitchfork => {
-            let origin = a + (b - a) * 0.5;
-            pitchfork_lines(origin, b, c, false, plot)
-        }
-        DrawingKind::InsidePitchfork => {
-            let origin = a + (b - a) * 0.5;
-            let left = a + (b - a) * 0.5;
-            let right = a + (c - a) * 0.5;
-            pitchfork_lines(origin, left, right, false, plot)
-        }
-        _ => None,
-    };
+    let lines = pitchfork_variant_lines(a, b, c, kind, plot);
     let Some([median, first, second]) = lines else {
         return;
     };

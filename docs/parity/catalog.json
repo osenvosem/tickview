@@ -14,10 +14,18 @@
       "icon": "trend-line",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -28,10 +36,18 @@
       "icon": "ray",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -42,10 +58,18 @@
       "icon": "info-line",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -56,10 +80,18 @@
       "icon": "extended-line",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -70,10 +102,18 @@
       "icon": "trend-angle",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -84,10 +124,18 @@
       "icon": "horizontal-line",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -98,10 +146,18 @@
       "icon": "horizontal-ray",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -112,10 +168,18 @@
       "icon": "vertical-line",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -126,10 +190,18 @@
       "icon": "cross-line",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -140,10 +212,18 @@
       "icon": "channel",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -154,10 +234,19 @@
       "icon": "regression-trend",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis",
+        "tickchart/tests/drawing_goldens.rs::regtrend_band_hit_matches_geometry"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -168,10 +257,18 @@
       "icon": "flat-channel",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -182,10 +279,18 @@
       "icon": "disjoint-channel",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -196,10 +301,18 @@
       "icon": "pitchfork",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -210,10 +323,18 @@
       "icon": "schiff-pitchfork",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -224,10 +345,18 @@
       "icon": "modified-schiff",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",
@@ -238,10 +367,18 @@
       "icon": "inside-pitchfork",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-trend.md",
+        "docs/screenshots/parity/trend-dark.png",
+        "docs/screenshots/parity/trend-light.png"
+      ],
+      "notes": "TV geometry contract + hit fixes; see evidence doc."
     },
     {
       "kind": "drawing",

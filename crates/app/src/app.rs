@@ -724,6 +724,7 @@ pub struct TickView {
     pending_zoomrect: bool,
     pending_gannf: bool,
     pending_toolbar: bool,
+    pending_trend: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1031,6 +1032,7 @@ impl TickView {
             pending_zoomrect: false,
             pending_gannf: false,
             pending_toolbar: false,
+            pending_trend: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1118,6 +1120,7 @@ impl TickView {
                 "zoomrect" => me.pending_zoomrect = true,
                 "gannf" => me.pending_gannf = true,
                 "toolbar" => me.pending_toolbar = true,
+                "trend" => me.pending_trend = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1238,6 +1241,123 @@ impl TickView {
         let tab = &mut self.tabs[ti];
         tab.chart.drawings.push(fan);
         tab.chart.selection.select(9201);
+    }
+
+    /// `TICKVIEW_SCENE=trend`: one representative of each trend-family kind
+    /// for geometry review against TV reference crops.
+    fn seed_trend(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 16).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(60);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 60..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 60)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        type SeedSpec = (
+            u64,
+            DrawingKind,
+            (usize, f64),
+            (usize, f64),
+            Option<(usize, f64)>,
+        );
+        let specs: [SeedSpec; 10] = [
+            (
+                9301,
+                DrawingKind::TrendLine,
+                (n - 60, p(0.30)),
+                (n - 25, p(0.55)),
+                None,
+            ),
+            (
+                9302,
+                DrawingKind::Channel,
+                (n - 60, p(0.26)),
+                (n - 28, p(0.38)),
+                Some((n - 44, p(0.52))),
+            ),
+            (
+                9303,
+                DrawingKind::FlatChannel,
+                (n - 60, p(0.18)),
+                (n - 26, p(0.28)),
+                Some((n - 43, p(0.42))),
+            ),
+            (
+                9304,
+                DrawingKind::Pitchfork,
+                (n - 60, p(0.55)),
+                (n - 45, p(0.82)),
+                Some((n - 20, p(0.74))),
+            ),
+            (
+                9305,
+                DrawingKind::ModifiedSchiffPitchfork,
+                (n - 58, p(0.86)),
+                (n - 40, p(0.98)),
+                Some((n - 15, p(0.94))),
+            ),
+            (
+                9306,
+                DrawingKind::InsidePitchfork,
+                (n - 55, p(0.06)),
+                (n - 40, p(0.28)),
+                Some((n - 18, p(0.20))),
+            ),
+            (
+                9307,
+                DrawingKind::CrossLine,
+                (n - 35, p(0.62)),
+                (n - 35, p(0.62)),
+                None,
+            ),
+            (
+                9308,
+                DrawingKind::Ray,
+                (n - 50, p(0.12)),
+                (n - 44, p(0.20)),
+                None,
+            ),
+            (
+                9309,
+                DrawingKind::HLine,
+                (n - 30, p(0.68)),
+                (n - 30, p(0.68)),
+                None,
+            ),
+            (
+                9310,
+                DrawingKind::RegTrend,
+                (n - 58, p(0.34)),
+                (n - 10, p(0.48)),
+                None,
+            ),
+        ];
+        for (id, kind, a0, b0, c0) in specs {
+            let mut d = match c0 {
+                Some((ct, cp)) => Drawing::with_c(
+                    id,
+                    kind,
+                    a(ts(a0.0), a0.1),
+                    a(ts(b0.0), b0.1),
+                    a(ts(ct), cp),
+                ),
+                None => Drawing::new(id, kind, a(ts(a0.0), a0.1), a(ts(b0.0), b0.1)),
+            };
+            d.style = tickchart::kind_defaults(kind);
+            self.tabs[ti].chart.drawings.push(d);
+        }
     }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
@@ -1558,6 +1678,9 @@ impl TickView {
                                 if self.pending_toolbar && self.tabs[ti].candles.t.len() >= 10 {
                                     self.seed_toolbar(ti);
                                     self.pending_toolbar = false;
+                                }
+                                if self.pending_trend && self.tabs[ti].candles.t.len() >= 60 {
+                                    self.seed_trend(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2047,7 +2170,8 @@ impl TickView {
         let seeding = self.pending_phase4
             || self.pending_zoomrect
             || self.pending_gannf
-            || self.pending_toolbar;
+            || self.pending_toolbar
+            || self.pending_trend;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
