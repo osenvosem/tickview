@@ -21,7 +21,7 @@ struct Catalog {
 
 /// Provenance of the reference capture the manifest was seeded from.
 #[derive(serde::Deserialize)]
-struct Source {
+pub struct Source {
     #[allow(dead_code)]
     app_version: String,
     #[allow(dead_code)]
@@ -63,6 +63,68 @@ struct Entry {
 }
 
 const VALID_STATUS: [&str; 4] = ["missing", "in-progress", "verified", "excluded"];
+
+/// Repository root, resolved at compile time so tests work from any CWD.
+#[must_use]
+#[allow(dead_code)] // consumed by validate_full/run in Task 2-3
+pub fn workspace_root() -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .to_path_buf()
+}
+
+/// Anchor count for a TV tool: a fixed count, or a variable mode name
+/// (`freehand`, `open-path`).
+#[derive(serde::Deserialize, Clone, Debug)]
+#[serde(untagged)]
+#[allow(dead_code)] // consumed by validate_full in Task 2
+pub enum Anchors {
+    Count(u8),
+    Mode(String),
+}
+
+/// One row of the extracted TradingView drawing catalog.
+#[derive(serde::Deserialize)]
+#[allow(dead_code)] // fields consumed by validate_full in Task 2-3
+pub struct TvTool {
+    pub tv_id: String,
+    #[allow(dead_code)]
+    pub label: String,
+    #[allow(dead_code)]
+    pub group: String,
+    #[allow(dead_code)]
+    pub section: String,
+    #[allow(dead_code)]
+    pub shortcut: Option<String>,
+    #[allow(dead_code)]
+    pub anchors: Anchors,
+    #[allow(dead_code)]
+    pub interaction: String,
+    pub scope: String,
+    pub exclusion_reason: Option<String>,
+}
+
+/// The extracted TV drawing catalog (`docs/evidence/tv/drawings-catalog.json`).
+#[derive(serde::Deserialize)]
+#[allow(dead_code)] // consumed by validate_full in Task 2
+pub struct TvCatalog {
+    #[allow(dead_code)]
+    pub schema_version: u32,
+    #[allow(dead_code)]
+    pub source: Source,
+    pub tools: Vec<TvTool>,
+}
+
+/// Parse the extracted TV drawing catalog JSON.
+///
+/// # Errors
+///
+/// Returns a message when the JSON does not match the catalog shape.
+#[allow(dead_code)] // consumed by run() wiring in Task 2
+pub fn parse_tv_catalog(json: &str) -> Result<TvCatalog, String> {
+    serde_json::from_str(json).map_err(|error| format!("invalid TV catalog JSON: {error}"))
+}
 
 /// Validate a manifest string. `evidence_exists` decides whether an evidence
 /// path resolves (the real command checks the filesystem; tests fake it).
@@ -244,7 +306,7 @@ pub fn run(args: &[String]) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use super::validate_str;
+    use super::{TvTool, parse_tv_catalog, validate_str, workspace_root};
 
     /// Only the Gann evidence path "exists" in tests.
     fn evidence(path: &str) -> bool {
@@ -363,5 +425,41 @@ mod tests {
             errors.iter().any(|e| e.contains("need a reason")),
             "{errors:?}"
         );
+    }
+
+    #[test]
+    fn tv_catalog_has_87_ids_and_three_excluded() {
+        let path = workspace_root().join("docs/evidence/tv/drawings-catalog.json");
+        let json = std::fs::read_to_string(path).expect("TV drawing catalog exists");
+        let catalog = parse_tv_catalog(&json).expect("TV catalog parses");
+        // TV annotation group is 13 rows (11 text/notes incl. Image + 2 content): total 87.
+        assert_eq!(catalog.tools.len(), 87);
+        let excluded: Vec<&TvTool> = catalog
+            .tools
+            .iter()
+            .filter(|tool| tool.scope == "excluded")
+            .collect();
+        let excluded_ids: Vec<&str> = excluded.iter().map(|tool| tool.tv_id.as_str()).collect();
+        assert_eq!(
+            excluded_ids,
+            ["LineToolImage", "LineToolTweet", "LineToolIdea"]
+        );
+        assert!(
+            excluded.iter().all(|tool| !tool
+                .exclusion_reason
+                .as_deref()
+                .unwrap_or_default()
+                .is_empty()),
+            "excluded rows need reasons"
+        );
+        let mut ids: Vec<&str> = catalog
+            .tools
+            .iter()
+            .map(|tool| tool.tv_id.as_str())
+            .collect();
+        ids.sort_unstable();
+        let total = ids.len();
+        ids.dedup();
+        assert_eq!(ids.len(), total, "duplicate tv_id in TV catalog");
     }
 }
