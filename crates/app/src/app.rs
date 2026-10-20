@@ -4082,6 +4082,53 @@ mod tests {
     }
 
     #[test]
+    fn every_tool_is_wired_and_in_catalog() {
+        use crate::toolpanel::{GROUPS, SINGLES};
+        let mut menu: Vec<Tool> = Vec::new();
+        for group in GROUPS {
+            for (_, tools) in group.sections {
+                for tool in *tools {
+                    assert!(!menu.contains(tool), "{tool:?} listed twice in the rail");
+                    menu.push(*tool);
+                }
+            }
+        }
+        for tool in SINGLES {
+            assert!(!menu.contains(tool), "{tool:?} listed twice in the rail");
+            menu.push(*tool);
+        }
+        for tool in Tool::ALL {
+            assert!(menu.contains(tool), "{tool:?} has no rail slot");
+        }
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../docs/parity/catalog.json"
+        );
+        let text = std::fs::read_to_string(path).expect("catalog.json");
+        let doc: serde_json::Value = serde_json::from_str(&text).expect("catalog json");
+        let verified: std::collections::HashSet<String> = doc["drawings"]
+            .as_array()
+            .expect("drawings array")
+            .iter()
+            .filter(|e| e["status"].as_str() == Some("verified"))
+            .filter_map(|e| e["tickview_id"].as_str().map(str::to_owned))
+            .collect();
+        let cursor_modes = [Tool::Cursor, Tool::Crosshair, Tool::Eraser, Tool::Measure];
+        for tool in Tool::ALL {
+            match draw_tool(*tool).kind() {
+                Some(kind) => assert!(
+                    verified.contains(&format!("{kind:?}")),
+                    "{tool:?}: kind {kind:?} is not a verified catalog entry"
+                ),
+                None => assert!(
+                    cursor_modes.contains(tool),
+                    "{tool:?} places no drawing but is not a cursor mode"
+                ),
+            }
+        }
+    }
+
+    #[test]
     fn clone_selected_creates_new_ids_and_offsets() {
         let source = Drawing::new(
             1,

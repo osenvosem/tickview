@@ -1759,3 +1759,192 @@ fn table_case_hits_rect_and_misses_outside() {
     let outside = Pos2::new(rb.x + 15.0, ra.y);
     assert!(!d.hit(outside, map, PLOT), "15px right of table hits");
 }
+
+/// Kinds whose selection lives in chart-level helpers, not `Drawing::hit`.
+const CHART_LEVEL: &[DrawingKind] = &[
+    DrawingKind::GannFan,
+    DrawingKind::AnchoredVwap,
+    DrawingKind::FixedRangeVolumeProfile,
+    DrawingKind::AnchoredVolumeProfile,
+    DrawingKind::RegTrend,
+];
+
+#[test]
+fn every_kind_has_geometry_and_hit_case() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    for (n, kind) in DrawingKind::ALL.iter().copied().enumerate() {
+        let i = 40 + n % 100;
+        let a = an(&sc, i, 100.0);
+        let b = if kind.points() >= 2 {
+            an(&sc, i + 20, 104.0)
+        } else {
+            a
+        };
+        let mut d = Drawing::new(500 + n as u64, kind, a, b);
+        if kind == DrawingKind::Table {
+            d.grid = Some([3, 3]);
+            d.cells = vec!["x".to_owned(); 9];
+        }
+        if kind.points() >= 3 {
+            d.c = Some(an(&sc, i + 10, 102.0));
+        }
+        if kind == DrawingKind::BarsPattern || kind == DrawingKind::GhostFeed {
+            d.extra.push(Anchor { t: 10, price: 1.0 });
+        }
+        let pa = map(a);
+        let pb = map(b);
+        let hits = if CHART_LEVEL.contains(&kind) {
+            if kind == DrawingKind::GannFan {
+                (1..=9).any(|t| {
+                    let p = Pos2::new(
+                        pa.x + (pb.x - pa.x) * t as f32 / 10.0,
+                        pa.y + (pb.y - pa.y) * t as f32 / 10.0,
+                    );
+                    tickchart::drawings::gann_fan_hit(&d, p, map, &sc.view, &sc.axis, PLOT)
+                })
+            } else if kind == DrawingKind::RegTrend {
+                d.reg_geometry(&sc.cd, &sc.view, &sc.axis, PLOT)
+                    .is_some_and(|(la, lb, half)| {
+                        tickchart::drawings::reg_band_hit(la, lb, half, la)
+                    })
+            } else if kind == DrawingKind::AnchoredVwap {
+                let series = tickchart::datatools::anchored_vwap(&sc.cd, i);
+                series.get(series.len() / 2).is_some_and(|(mi, mv)| {
+                    tickchart::datatools::vwap_hit(
+                        &sc.cd,
+                        &sc.view,
+                        &sc.axis,
+                        &d,
+                        pt(&sc, *mi, *mv),
+                        PLOT,
+                    )
+                })
+            } else {
+                let to = if kind == DrawingKind::FixedRangeVolumeProfile {
+                    i + 20
+                } else {
+                    sc.cd.c.len() - 1
+                };
+                let prof = tickchart::datatools::volume_profile(
+                    &sc.cd,
+                    i,
+                    to,
+                    tickchart::datatools::DEFAULT_ROWS,
+                )
+                .expect("profile");
+                let row = prof.rows[prof.poc];
+                let w = (row.volume / prof.max_volume) as f32 * (PLOT.width() * 0.22);
+                let right = if kind == DrawingKind::FixedRangeVolumeProfile {
+                    sc.view.x_of(to)
+                } else {
+                    PLOT.max.x - 6.0
+                };
+                tickchart::datatools::profile_hit(
+                    &sc.cd,
+                    &sc.view,
+                    &sc.axis,
+                    &d,
+                    Pos2::new(
+                        right - w * 0.5,
+                        sc.axis.y_of((row.price_lo + row.price_hi) * 0.5),
+                    ),
+                    PLOT,
+                )
+            }
+        } else {
+            // TV: every drawing is selectable at an anchor or along its body.
+            let mut candidates = vec![pa, pb, Pos2::new((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5)];
+            if let Some(c) = d.c {
+                let pc = map(c);
+                let mx = (pa.x + pc.x) * 0.5;
+                candidates.extend([
+                    pc,
+                    Pos2::new((pa.x + pc.x) * 0.5, (pa.y + pc.y) * 0.5),
+                    Pos2::new((pb.x + pc.x) * 0.5, (pb.y + pc.y) * 0.5),
+                ]);
+                // Level-based tools (e.g. Fib extension) draw horizontals.
+                for (_, y) in
+                    tickchart::drawings::fib_ext_levels(pa.y as f64, pb.y as f64, pc.y as f64)
+                {
+                    candidates.push(Pos2::new(mx, y));
+                }
+            }
+            candidates.iter().any(|p| d.hit(*p, map, PLOT))
+        };
+        assert!(hits, "{kind:?}: not selectable anywhere sensible");
+        let far = Pos2::new(pa.x - 400.0, pa.y - 400.0);
+        assert!(!d.hit(far, map, PLOT), "{kind:?}: hits 400px away");
+    }
+}
+
+#[test]
+fn every_kind_anchor_count_matches_tv_catalog() {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../docs/parity/catalog.json"
+    );
+    let text = std::fs::read_to_string(path).expect("catalog.json");
+    let doc: serde_json::Value = serde_json::from_str(&text).expect("catalog json");
+    let entries = doc["drawings"].as_array().expect("drawings array");
+    let mut checked = 0usize;
+    for e in entries {
+        let Some(tv_id) = e["tickview_id"].as_str() else {
+            continue;
+        };
+        if e["status"].as_str() == Some("excluded") {
+            continue;
+        }
+        let anchors = e["anchors"].as_u64().expect("anchors");
+        let kind = DrawingKind::ALL
+            .iter()
+            .find(|k| format!("{:?}", k) == tv_id)
+            .unwrap_or_else(|| panic!("catalog tv_id {tv_id} has no TickView kind"));
+        // TV counts freehand/open-path tools as 0 anchors; TickView keeps a
+        // structural start anchor (sometimes two) for those kinds.
+        if anchors == 0 {
+            assert!(
+                kind.points() >= 1,
+                "{tv_id}: freehand kind lacks a structural anchor"
+            );
+        } else {
+            assert_eq!(
+                u64::from(kind.points()),
+                anchors,
+                "{tv_id}: anchor-count drift vs TV catalog"
+            );
+        }
+        checked += 1;
+    }
+    assert_eq!(checked, DrawingKind::ALL.len(), "catalog kind coverage");
+}
+
+#[test]
+fn every_kind_serde_round_trips() {
+    for (n, kind) in DrawingKind::ALL.iter().copied().enumerate() {
+        let a = Anchor {
+            t: 1_700_000_000 + n as i64 * 60,
+            price: 100.0 + n as f64,
+        };
+        let b = Anchor {
+            t: a.t + 3_600,
+            price: a.price + 1.5,
+        };
+        let mut d = Drawing::new(700 + n as u64, kind, a, b);
+        if kind == DrawingKind::Table {
+            d.grid = Some([2, 4]);
+            d.cells = vec!["a".to_owned(); 8];
+        }
+        if kind == DrawingKind::BarsPattern {
+            d.extra.push(Anchor { t: 7, price: 2.0 });
+        }
+        let json = serde_json::to_string(&d).unwrap();
+        let back: Drawing = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, d.id, "{kind:?}: id drift");
+        assert_eq!(back.kind, d.kind, "{kind:?}: kind drift");
+        assert_eq!(back.a, d.a, "{kind:?}: anchor a drift");
+        assert_eq!(back.grid, d.grid, "{kind:?}: grid drift");
+        assert_eq!(back.cells, d.cells, "{kind:?}: cells drift");
+    }
+}

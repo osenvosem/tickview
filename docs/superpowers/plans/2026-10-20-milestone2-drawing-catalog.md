@@ -61,9 +61,9 @@
 **Interfaces:**
 - Produces: `docs/evidence/tv/drawings-catalog.json` — `{"schema_version": 1, "source": {...}, "tools": [{"tv_id", "label", "group", "section", "shortcut": string|null, "anchors": number|"freehand"|"open-path", "scope": "in-scope"|"excluded", "exclusion_reason": string|null}]}` with exactly 87 tools. `xtask::parity::parse_tv_catalog(json: &str) -> Result<TvCatalog, String>` (serde structs, `#[allow(dead_code)]` on unused fields).
 
-- [ ] **Step 1: Write the failing test** — in `xtask/src/parity.rs` tests: `tv_catalog_has_87_ids_and_three_excluded` parses the real file (via `workspace_root()`, add that helper: `Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap()`), asserts `tools.len() == 87`, exactly 3 `excluded` (`LineToolImage`, `LineToolTweet`, `LineToolIdea`), every `excluded` row has a reason, no duplicate `tv_id`.
-- [ ] **Step 2: Run to fail** — `cargo test -p xtask tv_catalog` → compile/fail expected.
-- [ ] **Step 3: Create the JSON** — transcribe every row from `research/tradingview-left-toolbar.md` §Full catalog (Trend 17, Gann/Fib 15, Patterns 14, Forecasting 12, Geometric 16, Annotation 13). `group` = arrow label ("Trend tools", "Gann and Fibonacci tools", "Patterns", "Forecasting and measurement tools", "Geometric shapes", "Annotation tools"); `section` = table Section column; `shortcut` = `Alt+T` etc or null. Anchors + interaction below (verbatim, `interaction` derived: 1→"click", 2→"two-point", 3→"three-point", 4/5/6→"multi-point", freehand/open-path keep their name):
+- [x] **Step 1: Write the failing test** — in `xtask/src/parity.rs` tests: `tv_catalog_has_87_ids_and_three_excluded` parses the real file (via `workspace_root()`, add that helper: `Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap()`), asserts `tools.len() == 87`, exactly 3 `excluded` (`LineToolImage`, `LineToolTweet`, `LineToolIdea`), every `excluded` row has a reason, no duplicate `tv_id`.
+- [x] **Step 2: Run to fail** — `cargo test -p xtask tv_catalog` → compile/fail expected.
+- [x] **Step 3: Create the JSON** — transcribe every row from `research/tradingview-left-toolbar.md` §Full catalog (Trend 17, Gann/Fib 15, Patterns 14, Forecasting 12, Geometric 16, Annotation 13). `group` = arrow label ("Trend tools", "Gann and Fibonacci tools", "Patterns", "Forecasting and measurement tools", "Geometric shapes", "Annotation tools"); `section` = table Section column; `shortcut` = `Alt+T` etc or null. Anchors + interaction below (verbatim, `interaction` derived: 1→"click", 2→"two-point", 3→"three-point", 4/5/6→"multi-point", freehand/open-path keep their name):
   - Trend: `LineToolTrendLine` 2, `LineToolRay` 2, `LineToolInfoLine` 2, `LineToolExtended` 2, `LineToolTrendAngle` 2, `LineToolHorzLine` 1, `LineToolHorzRay` 1, `LineToolVertLine` 1, `LineToolCrossLine` 1, `LineToolParallelChannel` 3, `LineToolRegressionTrend` 2, `LineToolFlatBottom` 3, `LineToolDisjointAngle` 3, `LineToolPitchfork` 3, `LineToolSchiffPitchfork2` 3, `LineToolSchiffPitchfork` 3, `LineToolInsidePitchfork` 3.
   - Gann/Fib: `LineToolFibRetracement` 2, `LineToolTrendBasedFibExtension` 3, `LineToolFibChannel` 3, `LineToolFibTimeZone` 2, `LineToolFibSpeedResistanceFan` 2, `LineToolTrendBasedFibTime` 3, `LineToolFibCircles` 3, `LineToolFibSpiral` 3, `LineToolFibSpeedResistanceArcs` 3, `LineToolFibWedge` 3, `LineToolPitchfan` 3, `LineToolGannSquare` 2, `LineToolGannFixed` 2, `LineToolGannComplex` 2, `LineToolGannFan` 2.
   - Patterns: `LineTool5PointsPattern` 5, `LineToolCypherPattern` 5, `LineToolHeadAndShoulders` 5, `LineToolABCD` 4, `LineToolTrianglePattern` 5, `LineToolThreeDrivers` 5, `LineToolElliottImpulse` 6, `LineToolElliottCorrection` 4, `LineToolElliottTriangle` 6, `LineToolElliottDoubleCombo` 4, `LineToolElliottTripleCombo` 6, `LineToolCircleLines` 3, `LineToolTimeCycles` 2, `LineToolSineLine` 3.
@@ -71,9 +71,9 @@
   - Shapes: `LineToolBrush` freehand, `LineToolHighlighter` freehand, `LineToolArrowMarker` 1, `LineToolArrow` 2, `LineToolArrowMarkUp` 1, `LineToolArrowMarkDown` 1, `LineToolRectangle` 2, `LineToolRotatedRectangle` 3, `LineToolPath` open-path, `LineToolCircle` 2, `LineToolEllipse` 2, `LineToolPolyline` open-path, `LineToolTriangle` 3, `LineToolArc` 3, `LineToolBezierQuadro` 3, `LineToolBezierCubic` 4.
   - Annotation: `LineToolText` 1, `LineToolTextNote` 1, `LineToolPriceNote` 1, `LineToolNote` 1, `LineToolTable` 2, `LineToolCallout` 1, `LineToolComment` 1, `LineToolPriceLabel` 1, `LineToolSignpost` 1, `LineToolFlagMark` 1, `LineToolImage` 2 excluded ("media object: out of scope per spec §4"), `LineToolTweet` 1 excluded ("social content object: out of scope per spec §4"), `LineToolIdea` 1 excluded ("social idea object: out of scope per spec §4").
   - Cursor-mode ids (`cursor`, `dot`, `arrow`, `demonstration`, `performance`, `eraser`) are interaction modes, not `LineTool*` drawings — record this scope decision in `drawings-catalog-notes.md`; they are not tools rows.
-- [ ] **Step 4: Write `drawings-catalog-notes.md`** — method, source capture reference, cursor-mode scope decision, known anchor uncertainties (`LineToolHeadAndShoulders`, `LineToolTrianglePattern`, `LineToolProjection`, `LineToolFibSpeedResistanceFan`, `LineToolPrediction` — to be re-checked against live TV during their family audits).
-- [ ] **Step 5: Run to pass** — `cargo test -p xtask` → PASS.
-- [ ] **Step 6: Commit** — `git add docs/evidence/tv/drawings-catalog.json docs/evidence/tv/drawings-catalog-notes.md xtask/src/parity.rs && git commit -m "docs: extract full TV drawing catalog with anchor facts"`
+- [x] **Step 4: Write `drawings-catalog-notes.md`** — method, source capture reference, cursor-mode scope decision, known anchor uncertainties (`LineToolHeadAndShoulders`, `LineToolTrianglePattern`, `LineToolProjection`, `LineToolFibSpeedResistanceFan`, `LineToolPrediction` — to be re-checked against live TV during their family audits).
+- [x] **Step 5: Run to pass** — `cargo test -p xtask` → PASS.
+- [x] **Step 6: Commit** — `git add docs/evidence/tv/drawings-catalog.json docs/evidence/tv/drawings-catalog-notes.md xtask/src/parity.rs && git commit -m "docs: extract full TV drawing catalog with anchor facts"`
 
 ### Task 2: Manifest validation upgrade
 
@@ -84,11 +84,11 @@
 - Consumes: `docs/evidence/tv/drawings-catalog.json` (Task 1).
 - Produces: `pub fn parse_kind_variants(src: &str) -> Vec<String>` — `DrawingKind` variant names between `pub enum DrawingKind {` and `}`; `pub fn validate_full(catalog_json: &str, tv_json: &str, kinds: &[String], evidence_exists: &impl Fn(&str) -> bool) -> Vec<String>` — all `validate_catalog` rules plus: every implemented kind has a drawing entry (match on `tickview_id`), every in-scope tv id has an entry, every excluded tv id is an `excluded` entry, no manifest drawing tv_id outside the TV catalog, `verified` drawing entries need ≥3 `tests` and ≥2 `evidence` paths with at least one ending `.png`.
 
-- [ ] **Step 1: Write failing tests** — `parse_kind_variants_finds_gann_fan` (feed a truncated enum snippet, expect `GannFan`); `implemented_kind_without_entry_is_error` (kinds `["TrendLine"]`, empty drawings → error mentions `TrendLine`); `in_scope_tv_id_without_entry_is_error`; `excluded_tv_id_must_be_excluded_status`; `verified_drawing_needs_coverage` (tests len 2 → error; tests len 3 + evidence `["a.md","b.png"]` → clean).
-- [ ] **Step 2: Run to fail** — `cargo test -p xtask` → new tests fail.
-- [ ] **Step 3: Implement** in `parity.rs` — the rules above; `run()` also loads the TV catalog file and `crates/tickchart/src/drawings.rs` kinds (via `workspace_root()`) and feeds `validate_full`; keep `validate_str` for synthetic-input tests.
-- [ ] **Step 4: Run to pass** — `cargo test -p xtask` → PASS (real-file `parity` command may report the un-expanded manifest; that is expected until Task 3 — do not wire the real-file catalog test yet).
-- [ ] **Step 5: Commit** — `git add xtask/src/parity.rs && git commit -m "feat: validate manifest against TV catalog and kind coverage"`
+- [x] **Step 1: Write failing tests** — `parse_kind_variants_finds_gann_fan` (feed a truncated enum snippet, expect `GannFan`); `implemented_kind_without_entry_is_error` (kinds `["TrendLine"]`, empty drawings → error mentions `TrendLine`); `in_scope_tv_id_without_entry_is_error`; `excluded_tv_id_must_be_excluded_status`; `verified_drawing_needs_coverage` (tests len 2 → error; tests len 3 + evidence `["a.md","b.png"]` → clean).
+- [x] **Step 2: Run to fail** — `cargo test -p xtask` → new tests fail.
+- [x] **Step 3: Implement** in `parity.rs` — the rules above; `run()` also loads the TV catalog file and `crates/tickchart/src/drawings.rs` kinds (via `workspace_root()`) and feeds `validate_full`; keep `validate_str` for synthetic-input tests.
+- [x] **Step 4: Run to pass** — `cargo test -p xtask` → PASS (real-file `parity` command may report the un-expanded manifest; that is expected until Task 3 — do not wire the real-file catalog test yet).
+- [x] **Step 5: Commit** — `git add xtask/src/parity.rs && git commit -m "feat: validate manifest against TV catalog and kind coverage"`
 
 ### Task 3: Expand the manifest to the full drawing catalog
 
@@ -102,12 +102,12 @@
 - Produces: 87-entry `docs/parity/catalog.json`. `tickview_id` = the existing `DrawingKind` variant name, or the reserved future variant (`Text`, `AnchoredVwap`, `FixedRangeVolumeProfile`, `AnchoredVolumeProfile`, `BarsPattern`, `GhostFeed`, `Table`). `icon` = kebab `Icon::name()` id: existing tools keep theirs; new ids `note`, `anchored-vwap`, `volume-profile-fixed`, `volume-profile-anchored`, `bars-pattern`, `ghost-feed`, `table` (the existing `text` icon stays on `Tool::Text`). `anchors`/`interaction` copied from the TV catalog. Statuses: every entry `in-progress` except `LineToolGannFan`, which stays `verified` (its harness/persistence test ids are appended in Task 4).
 - Test: `xtask/src/parity.rs` — `real_manifest_covers_every_kind_and_tv_id`: reads `docs/parity/catalog.json`, TV catalog, and `drawings.rs` from `workspace_root()`, runs `validate_full` with a filesystem `evidence_exists` closure, asserts no errors.
 
-- [ ] **Step 1: Write the failing test** — `real_manifest_covers_every_kind_and_tv_id` as above; expect failure (77 kinds lack entries).
-- [ ] **Step 2: Run to fail** — `cargo test -p xtask real_manifest` → FAIL listing missing ids.
-- [ ] **Step 3: Expand `catalog.json`** — one entry per TV tool row; `group`/`name` from the TV catalog label; `notes` empty or short; 3 media ids `excluded` with their reasons; existing kinds `in-progress`; the 7 future kinds `in-progress`.
-- [ ] **Step 4: Run to pass** — `cargo test -p xtask` → PASS. Regenerate: `cargo run -p xtask -- parity --write`; commit `docs/parity/STATUS.md`.
-- [ ] **Step 5: Verify report** — `docs/parity/STATUS.md` shows 87 drawings: 1 verified, 83 in-progress, 3 excluded; studies unchanged.
-- [ ] **Step 6: Commit** — `git add docs/parity/catalog.json docs/parity/STATUS.md xtask/src/parity.rs && git commit -m "feat: expand drawing manifest to full TV catalog"`
+- [x] **Step 1: Write the failing test** — `real_manifest_covers_every_kind_and_tv_id` as above; expect failure (77 kinds lack entries).
+- [x] **Step 2: Run to fail** — `cargo test -p xtask real_manifest` → FAIL listing missing ids.
+- [x] **Step 3: Expand `catalog.json`** — one entry per TV tool row; `group`/`name` from the TV catalog label; `notes` empty or short; 3 media ids `excluded` with their reasons; existing kinds `in-progress`; the 7 future kinds `in-progress`.
+- [x] **Step 4: Run to pass** — `cargo test -p xtask` → PASS. Regenerate: `cargo run -p xtask -- parity --write`; commit `docs/parity/STATUS.md`.
+- [x] **Step 5: Verify report** — `docs/parity/STATUS.md` shows 87 drawings: 1 verified, 83 in-progress, 3 excluded; studies unchanged.
+- [x] **Step 6: Commit** — `git add docs/parity/catalog.json docs/parity/STATUS.md xtask/src/parity.rs && git commit -m "feat: expand drawing manifest to full TV catalog"`
 
 ### Task 4: Golden harness + trend-family audit
 
@@ -296,12 +296,12 @@ Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-co
 - Consumes: `StyleEdit`/`ToolbarAction` existing variants; extends `StyleEdit` with `Grid([u8;2])` and `Cell(usize, String)` (additive enum variants; toolbar popover handles them; `StyleEdit` application in app.rs writes `d.grid`/`d.cells`).
 - Produces: cell index = `row * cols + col`; empty cells render empty.
 
-- [ ] **Step 1: Failing persistence tests** — `v2_payload_without_table_fields_loads` (`{"version":2,"tabs":[]}` + one drawing json without `grid`/`cells` → defaults `None`/empty) and `table_cells_round_trip`; run to fail.
-- [ ] **Step 2: Implement fields + kind**, run store tests to pass.
-- [ ] **Step 3: Failing `table_case`** — hits at rect center + corners inset 2 px, miss outside; grid paint via existing painter path (no pixel assert).
-- [ ] **Step 4: Wire tool/icon/flyout/settings popover**; `TICKVIEW_SCENE=table TICKVIEW_THEME=dark` → `table-dark.png`.
-- [ ] **Step 5: Evidence** — `drawings-table.md`: TV table is an editable cell grid; rows/cols steppers match TV settings structure; record what was inferred (default 3×3, cell edit UX) as an open question validated against live TV.
-- [ ] **Step 6: Manifest flip + gates + commit** — `git add crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs crates/app/src/drawing_toolbar.rs crates/app/src/store.rs docs/evidence/tv/drawings-table.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: table drawing with editable cell grid"`
+- [x] **Step 1: Failing persistence tests** — `v2_payload_without_table_fields_loads` (`{"version":2,"tabs":[]}` + one drawing json without `grid`/`cells` → defaults `None`/empty) and `table_cells_round_trip`; run to fail.
+- [x] **Step 2: Implement fields + kind**, run store tests to pass.
+- [x] **Step 3: Failing `table_case`** — hits at rect center + corners inset 2 px, miss outside; grid paint via existing painter path (no pixel assert).
+- [x] **Step 4: Wire tool/icon/flyout/settings popover**; `TICKVIEW_SCENE=table TICKVIEW_THEME=dark` → `table-dark.png`.
+- [x] **Step 5: Evidence** — `drawings-table.md`: TV table is an editable cell grid; rows/cols steppers match TV settings structure; record what was inferred (default 3×3, cell edit UX) as an open question validated against live TV.
+- [x] **Step 6: Manifest flip + gates + commit** — `git add crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs crates/app/src/drawing_toolbar.rs crates/app/src/store.rs docs/evidence/tv/drawings-table.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: table drawing with editable cell grid"`
 
 ### Task 14: Whole-enum sweeps, manifest completion, reports, visual QA
 
@@ -315,13 +315,13 @@ Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-co
 **Interfaces:**
 - Consumes: all prior tasks. `every_kind_has_geometry_and_hit_case` iterates `DrawingKind::ALL` against a `kinds_covered()` list assembled from the family case fns; fails naming any uncovered kind.
 
-- [ ] **Step 1: Write the sweep tests** — the five sweeps above; expect green only when every kind/tool is done (add any straggler cases found).
-- [ ] **Step 2: Run** — `cargo test --workspace` → PASS (≥ 270 + new tests; previously `in-progress` entries all flipped).
-- [ ] **Step 3: Flip remaining manifest entries** to `verified`; `cargo run -p xtask -- parity --write`.
-- [ ] **Step 4: Visual QA** — dark+light captures at 1440×900 for scenes `trend gannfib patterns forecast shapes annot vwap vprofile barghost table iconsheet`; save `docs/screenshots/parity/<scene>-{dark,light}.png`; review icon legibility at 20/24/28 px on the icon sheet; close every launched process.
-- [ ] **Step 5: Update README + PARITY.md** — drawing manifest counts (84 verified, 3 excluded), milestone 2 complete wording, scene list, new test totals; regenerate `STATUS.md`.
-- [ ] **Step 6: Final gate** — `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` all clean.
-- [ ] **Step 7: Commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs README.md PARITY.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: complete milestone 2 drawing catalog parity"`
+- [x] **Step 1: Write the sweep tests** — the five sweeps above; expect green only when every kind/tool is done (add any straggler cases found).
+- [x] **Step 2: Run** — `cargo test --workspace` → PASS (≥ 270 + new tests; previously `in-progress` entries all flipped).
+- [x] **Step 3: Flip remaining manifest entries** to `verified`; `cargo run -p xtask -- parity --write`.
+- [x] **Step 4: Visual QA** — dark+light captures at 1440×900 for scenes `trend gannfib patterns forecast shapes annot vwap vprofile barghost table iconsheet`; save `docs/screenshots/parity/<scene>-{dark,light}.png`; review icon legibility at 20/24/28 px on the icon sheet; close every launched process.
+- [x] **Step 5: Update README + PARITY.md** — drawing manifest counts (84 verified, 3 excluded), milestone 2 complete wording, scene list, new test totals; regenerate `STATUS.md`.
+- [x] **Step 6: Final gate** — `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` all clean.
+- [x] **Step 7: Commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs README.md PARITY.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: complete milestone 2 drawing catalog parity"`
 
 ---
 

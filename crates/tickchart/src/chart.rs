@@ -1238,6 +1238,9 @@ fn hit_drawing(
                 || d.kind == crate::drawings::DrawingKind::AnchoredVolumeProfile
             {
                 crate::datatools::profile_hit(cd, &st.view, ax, d, pos, price_rect)
+            } else if d.kind == crate::drawings::DrawingKind::RegTrend {
+                d.reg_geometry(cd, &st.view, ax, price_rect)
+                    .is_some_and(|(la, lb, half)| drawings::reg_band_hit(la, lb, half, pos))
             } else {
                 d.hit(pos, map, price_rect)
             }
