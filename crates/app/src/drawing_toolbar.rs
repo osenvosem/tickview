@@ -4,8 +4,8 @@
 //! matching TradingView's selected-object actions.
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Pos2, Rect, RichText,
-    Sense, Stroke, Ui, Vec2, vec2,
+    self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Rect, RichText, Sense,
+    Stroke, Ui, Vec2, vec2,
 };
 use tickchart::{Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup};
 
@@ -271,127 +271,129 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
             .inner_margin(Margin::symmetric(8, 8))
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.x = 4.0;
-                if let Some(delta) = drag_handle(ui, p) {
-                    actions.push(ToolbarAction::Nudge(delta));
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::SelectMultiple,
-                    vec2(28.0, 28.0),
-                    model.selection.multi(),
-                    true,
-                    "Select multiple",
-                )
-                .clicked()
-                {
-                    actions.push(ToolbarAction::ToggleMulti);
-                }
-                ui.add_sized(
-                    [label_width, 28.0],
-                    egui::Label::new(
-                        RichText::new(&label)
-                            .font(font_semibold(type_size::TINY))
-                            .color(p.text),
-                    )
-                    .truncate(),
-                );
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::Style,
-                    vec2(28.0, 28.0),
-                    state.popup == Popup::Style,
-                    true,
-                    "Style",
-                )
-                .clicked()
-                {
-                    state.toggle(Popup::Style);
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::LineWidth,
-                    vec2(28.0, 28.0),
-                    state.popup == Popup::Width,
-                    true,
-                    "Width",
-                )
-                .clicked()
-                {
-                    state.toggle(Popup::Width);
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::Color,
-                    vec2(28.0, 28.0),
-                    state.popup == Popup::Color,
-                    true,
-                    "Color",
-                )
-                .clicked()
-                {
-                    state.toggle(Popup::Color);
-                }
-                if settings_visible
-                    && widgets::icon_button(
+                ui.horizontal(|ui| {
+                    if let Some(delta) = drag_handle(ui, p) {
+                        actions.push(ToolbarAction::Nudge(delta));
+                    }
+                    if widgets::icon_button(
                         ui,
                         p,
-                        Icon::Settings,
+                        Icon::SelectMultiple,
                         vec2(28.0, 28.0),
-                        state.popup == Popup::Settings,
+                        model.selection.multi(),
                         true,
-                        "Settings",
+                        "Select multiple",
                     )
                     .clicked()
-                {
-                    state.toggle(Popup::Settings);
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    if locked_all { Icon::Unlock } else { Icon::Lock },
-                    vec2(28.0, 28.0),
-                    locked_all,
-                    true,
-                    if locked_all {
-                        "Unlock selection"
-                    } else {
-                        "Lock selection"
-                    },
-                )
-                .clicked()
-                {
-                    actions.push(ToolbarAction::SetLocked(!locked_all));
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::Trash,
-                    vec2(28.0, 28.0),
-                    false,
-                    true,
-                    "Delete selection",
-                )
-                .clicked()
-                {
-                    actions.push(ToolbarAction::Delete);
-                }
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    Icon::More,
-                    vec2(28.0, 28.0),
-                    matches!(state.popup, Popup::Overflow | Popup::Intervals),
-                    true,
-                    "More",
-                )
-                .clicked()
-                {
-                    state.toggle(Popup::Overflow);
-                }
+                    {
+                        actions.push(ToolbarAction::ToggleMulti);
+                    }
+                    ui.add_sized(
+                        [label_width, 28.0],
+                        egui::Label::new(
+                            RichText::new(&label)
+                                .font(font_semibold(type_size::TINY))
+                                .color(p.text),
+                        )
+                        .truncate(),
+                    );
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::Style,
+                        vec2(28.0, 28.0),
+                        state.popup == Popup::Style,
+                        true,
+                        "Style",
+                    )
+                    .clicked()
+                    {
+                        state.toggle(Popup::Style);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::LineWidth,
+                        vec2(28.0, 28.0),
+                        state.popup == Popup::Width,
+                        true,
+                        "Width",
+                    )
+                    .clicked()
+                    {
+                        state.toggle(Popup::Width);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::Color,
+                        vec2(28.0, 28.0),
+                        state.popup == Popup::Color,
+                        true,
+                        "Color",
+                    )
+                    .clicked()
+                    {
+                        state.toggle(Popup::Color);
+                    }
+                    if settings_visible
+                        && widgets::icon_button(
+                            ui,
+                            p,
+                            Icon::Settings,
+                            vec2(28.0, 28.0),
+                            state.popup == Popup::Settings,
+                            true,
+                            "Settings",
+                        )
+                        .clicked()
+                    {
+                        state.toggle(Popup::Settings);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        if locked_all { Icon::Unlock } else { Icon::Lock },
+                        vec2(28.0, 28.0),
+                        locked_all,
+                        true,
+                        if locked_all {
+                            "Unlock selection"
+                        } else {
+                            "Lock selection"
+                        },
+                    )
+                    .clicked()
+                    {
+                        actions.push(ToolbarAction::SetLocked(!locked_all));
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::Trash,
+                        vec2(28.0, 28.0),
+                        false,
+                        true,
+                        "Delete selection",
+                    )
+                    .clicked()
+                    {
+                        actions.push(ToolbarAction::Delete);
+                    }
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        Icon::More,
+                        vec2(28.0, 28.0),
+                        matches!(state.popup, Popup::Overflow | Popup::Intervals),
+                        true,
+                        "More",
+                    )
+                    .clicked()
+                    {
+                        state.toggle(Popup::Overflow);
+                    }
+                });
             });
     });
     exclusion = union_rect(exclusion, area.response.rect);
@@ -488,6 +490,7 @@ struct PopupOutput {
     rect: Rect,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn popup_rect_and_actions(
     ui: &Ui,
     p: &Palette,
@@ -763,6 +766,7 @@ fn union_rect(left: Rect, right: Rect) -> Rect {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use egui::Pos2;
 
     #[test]
     fn bar_sits_top_right_with_16px_inset() {

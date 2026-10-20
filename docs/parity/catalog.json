@@ -11,10 +11,19 @@
       "icon": "gann-fan",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": ["docs/evidence/tv/gann-fan.md"],
-      "notes": "Seed entry for Milestone 1; catalog expansion is M2."
+      "status": "verified",
+      "tests": [
+        "tickchart::drawings::tests::gann_price_uses_tv_ratios",
+        "tickchart::drawings::tests::gann_fan_has_nine_tv_rays_and_labels",
+        "tickchart::chart::tests::gann_fan_hit_tests_follow_ratio_rays",
+        "tickview::app::tests::every_drawing_tool_has_a_unique_icon",
+        "tickview::drawing_toolbar::tests::bar_sits_top_right_with_16px_inset"
+      ],
+      "evidence": [
+        "docs/evidence/tv/gann-fan.md",
+        "docs/screenshots/parity/gann-fan-dark.png"
+      ],
+      "notes": "Milestone 1 slice: TV ratio geometry, labels, hit-testing, selection toolbar. Catalog expansion is M2."
     }
   ],
   "studies": []

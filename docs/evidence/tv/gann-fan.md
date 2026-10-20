@@ -10,8 +10,10 @@
 - Computed prices are mapped through `PriceAxis`, including log scale.
 - Official help reference:
   <https://www.tradingview.com/support/solutions/43000518151-gann-fan-drawing-tool/>
-- Live-TV screenshot: `docs/screenshots/tv/gann-fan.png` (capture during the
-  Milestone 1 visual QA pass).
+- Live-TV screenshot: `docs/screenshots/tv/gann-fan.png` — still pending; it
+  requires a manual capture from the TradingView desktop app. The in-app proof
+  for this slice is `docs/screenshots/parity/gann-fan-dark.png`
+  (`TICKVIEW_SCENE=gannf TICKVIEW_THEME=dark`).
 - Regression tests:
   - `drawings::tests::gann_price_uses_tv_ratios`
   - `drawings::tests::gann_fan_has_nine_tv_rays_and_labels`

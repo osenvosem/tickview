@@ -722,6 +722,8 @@ pub struct TickView {
     pending_replay: bool,
     pending_phase4: bool,
     pending_zoomrect: bool,
+    pending_gannf: bool,
+    pending_toolbar: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1027,6 +1029,8 @@ impl TickView {
             save_at: Instant::now(),
             pending_phase4: false,
             pending_zoomrect: false,
+            pending_gannf: false,
+            pending_toolbar: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1112,6 +1116,8 @@ impl TickView {
                 }
                 "phase4drawings" => me.pending_phase4 = true,
                 "zoomrect" => me.pending_zoomrect = true,
+                "gannf" => me.pending_gannf = true,
+                "toolbar" => me.pending_toolbar = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1212,6 +1218,64 @@ impl TickView {
             .drawings
             .extend([fork, schiff, reg, long, short, brush]);
         tab.chart.selection.select(9003);
+    }
+
+    /// `TICKVIEW_SCENE=gannf`: one selected Gann fan dragged up-right from 20%
+    /// to 60% of the visible range, for ray/label review.
+    fn seed_gannf(&mut self, ti: usize) {
+        let (lo, hi) = self.price_span(ti);
+        let span = hi - lo;
+        let n = self.tabs[ti].candles.t.len();
+        let ts = |k: usize| self.tabs[ti].candles.t[k];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let mut fan = Drawing::new(
+            9201,
+            DrawingKind::GannFan,
+            a(ts(n - 120), lo + span * 0.25),
+            a(ts(n - 50), lo + span * 0.75),
+        );
+        fan.style = tickchart::kind_defaults(DrawingKind::GannFan);
+        let tab = &mut self.tabs[ti];
+        tab.chart.drawings.push(fan);
+        tab.chart.selection.select(9201);
+    }
+
+    /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
+    /// multi mode, for top-right toolbar review.
+    fn seed_toolbar(&mut self, ti: usize) {
+        let (lo, hi) = self.price_span(ti);
+        let span = hi - lo;
+        let n = self.tabs[ti].candles.t.len();
+        let ts = |k: usize| self.tabs[ti].candles.t[k];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let mut line = Drawing::new(
+            9101,
+            DrawingKind::TrendLine,
+            a(ts(n - 120), lo + span * 0.42),
+            a(ts(n - 60), lo + span * 0.62),
+        );
+        line.style = tickchart::kind_defaults(DrawingKind::TrendLine);
+        line.style.width = 3;
+        line.style.color = Some([0xF0, 0x4E, 0x5E, 255]);
+        let rect = Drawing::new(
+            9102,
+            DrawingKind::Rect,
+            a(ts(n - 100), lo + span * 0.30),
+            a(ts(n - 40), lo + span * 0.80),
+        );
+        let mut slope = Drawing::new(
+            9103,
+            DrawingKind::TrendLine,
+            a(ts(n - 60), lo + span * 0.58),
+            a(ts(n - 5), lo + span * 0.36),
+        );
+        slope.style.width = 3;
+        slope.style.color = Some([0x29, 0x62, 0xF9, 255]);
+        let tab = &mut self.tabs[ti];
+        tab.chart.drawings.extend([line, rect, slope]);
+        tab.chart.selection.select(9101);
+        tab.chart.selection.add(9102);
+        tab.chart.selection.set_multi(true);
     }
 
     fn apply_chart_palettes(&mut self) {
@@ -1486,6 +1550,14 @@ impl TickView {
                                     self.tabs[ti].chart.zoom_sel =
                                         Some((egui::pos2(220.0, 140.0), egui::pos2(560.0, 320.0)));
                                     self.pending_zoomrect = false;
+                                }
+                                if self.pending_gannf && self.tabs[ti].candles.t.len() >= 10 {
+                                    self.seed_gannf(ti);
+                                    self.pending_gannf = false;
+                                }
+                                if self.pending_toolbar && self.tabs[ti].candles.t.len() >= 10 {
+                                    self.seed_toolbar(ti);
+                                    self.pending_toolbar = false;
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -1971,8 +2043,12 @@ impl TickView {
 
     fn maybe_capture(&mut self, ctx: &egui::Context) {
         let scene_open = std::env::var_os("TICKVIEW_SCENE").is_some();
-        let timeout_frames = if scene_open { 6 } else { 30 };
-        let ready = self.data_frames >= self.snap_after_data
+        let timeout_frames = if scene_open { 300 } else { 30 };
+        let seeding = self.pending_phase4
+            || self.pending_zoomrect
+            || self.pending_gannf
+            || self.pending_toolbar;
+        let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
             return;

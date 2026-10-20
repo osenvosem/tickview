@@ -3061,6 +3061,7 @@ pub fn gann_fan_hit(
         })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn paint_gann_fan(
     p: &Painter,
     d: &Drawing,
