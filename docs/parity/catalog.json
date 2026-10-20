@@ -1002,10 +1002,17 @@
       "icon": "long-position",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Box-select inside profit/loss band to right edge; R/R chips."
     },
     {
       "kind": "drawing",
@@ -1016,10 +1023,17 @@
       "icon": "short-position",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Box-select inside profit/loss band to right edge; R/R chips."
     },
     {
       "kind": "drawing",
@@ -1030,10 +1044,17 @@
       "icon": "position-forecast",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Hit fix: box-select band (was anchor-polyline only)."
     },
     {
       "kind": "drawing",
@@ -1072,10 +1093,17 @@
       "icon": "sector",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "3 anchors confirmed; hit fix: filled wedge interior selects."
     },
     {
       "kind": "drawing",
@@ -1128,10 +1156,17 @@
       "icon": "price-range",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Label now p1 -> p2 (+x.xx%) per TV."
     },
     {
       "kind": "drawing",
@@ -1142,10 +1177,17 @@
       "icon": "date-range",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Label now N bars per TV (was static text)."
     },
     {
       "kind": "drawing",
@@ -1156,10 +1198,17 @@
       "icon": "date-price-range",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-forecast.md",
+        "docs/screenshots/parity/forecast-dark.png"
+      ],
+      "notes": "Label now p · N bars per TV."
     },
     {
       "kind": "drawing",

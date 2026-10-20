@@ -1378,7 +1378,6 @@ impl Drawing {
                 self.kind,
                 DrawingKind::InfoLine
                     | DrawingKind::TrendAngle
-                    | DrawingKind::PositionForecast
                     | DrawingKind::Sector
                     | DrawingKind::RotatedRect
                     | DrawingKind::TriangleShape
@@ -1393,9 +1392,14 @@ impl Drawing {
             )
         {
             let points = self.screen_points(&map);
-            return points
+            let stroke_hit = points
                 .windows(2)
                 .any(|pair| distance_to_segment(p, pair[0], pair[1]) <= TOL);
+            // TV selects the filled Sector wedge anywhere inside, not just edges.
+            let interior = self.kind == DrawingKind::Sector
+                && points.len() >= 3
+                && point_in_triangle(p, points[0], points[1], points[2]);
+            return stroke_hit || interior;
         }
         let a = map(self.a);
         let b = map(self.b);
@@ -2508,12 +2512,29 @@ fn draw_one(
                 p.rect_filled(rect, 0.0, fill(d.style.fill_opacity));
             }
             p.rect_stroke(rect, 0.0, stroke, egui::StrokeKind::Inside);
+            let bars = match (nearest_index(cd, d.a.t), nearest_index(cd, d.b.t)) {
+                (Some(ia), Some(ib)) => Some(ia.abs_diff(ib)),
+                _ => None,
+            };
+            let suffix = if bars == Some(1) { "bar" } else { "bars" };
             let label = match d.kind {
                 DrawingKind::PriceRange => {
-                    format!("{} → {}", fmt_price(d.a.price), fmt_price(d.b.price))
+                    let pct = if d.a.price != 0.0 {
+                        format!(" ({:+.2}%)", (d.b.price - d.a.price) / d.a.price * 100.0)
+                    } else {
+                        String::new()
+                    };
+                    format!("{} → {}{pct}", fmt_price(d.a.price), fmt_price(d.b.price))
                 }
-                DrawingKind::DateRange => "Date range".to_owned(),
-                _ => format!("{} · Date", fmt_price(d.a.price)),
+                // TV date ranges report the bar count; combined kinds both.
+                DrawingKind::DateRange => match bars {
+                    Some(n) => format!("{n} {suffix}"),
+                    None => "Date range".to_owned(),
+                },
+                _ => match bars {
+                    Some(n) => format!("{} · {n} {suffix}", fmt_price(d.a.price)),
+                    None => format!("{} · Date", fmt_price(d.a.price)),
+                },
             };
             paint_chip(p, rect.center(), &label, color, pal.bg, font.clone());
         }
@@ -3725,6 +3746,14 @@ fn distance_to_segment(p: Pos2, a: Pos2, b: Pos2) -> f32 {
     }
     let t = ((p - a).dot(ab) / len2).clamp(0.0, 1.0);
     p.distance(a + ab * t)
+}
+
+/// Half-plane sign test; true when `p` lies inside triangle `a b c`.
+#[must_use]
+fn point_in_triangle(p: Pos2, a: Pos2, b: Pos2, c: Pos2) -> bool {
+    let side = |u: Pos2, v: Pos2| (v.x - u.x) * (p.y - u.y) - (v.y - u.y) * (p.x - u.x);
+    let (s1, s2, s3) = (side(a, b), side(b, c), side(c, a));
+    (s1 >= 0.0 && s2 >= 0.0 && s3 >= 0.0) || (s1 <= 0.0 && s2 <= 0.0 && s3 <= 0.0)
 }
 
 #[must_use]

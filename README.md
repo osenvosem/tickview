@@ -145,12 +145,13 @@ full TradingView drawing catalog — 87 entries (84 in-scope, 3 excluded) — an
 the complete trend family (17 tools incl. all four pitchfork variants), the
 Gann/Fibonacci family (15 tools: retracement, trend-based extension,
 channel, time zones/time, arcs, spiral, wedge, pitchfan, speed-resistance
-fan, Gann box, both Gann squares, Gann fan) and the patterns/Elliott/cycles
+fan, Gann box, both Gann squares, Gann fan), the patterns/Elliott/cycles
 family (14 tools: XABCD, Cypher, head-and-shoulders, ABCD, triangle, three
-drives, five Elliott wave counts, cyclic lines, time cycles, sine line) are
-`verified` via the golden geometry harness
-(`crates/tickchart/tests/drawing_goldens.rs`, linear + log axes) and
-`TICKVIEW_SCENE=trend|gannfib|patterns` screenshots. Milestone 3 covers the
-study catalog.
+drives, five Elliott wave counts, cyclic lines, time cycles, sine line) and
+the forecasting/measurement family (7 tools: long/short position, position
+forecast, sector projection, price/date/date-price ranges) are `verified` via
+the golden geometry harness (`crates/tickchart/tests/drawing_goldens.rs`,
+linear + log axes) and `TICKVIEW_SCENE=trend|gannfib|patterns|forecast`
+screenshots. Milestone 3 covers the study catalog.
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

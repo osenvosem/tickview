@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 46 verified, 38 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 53 verified, 31 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -55,18 +55,18 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Cyclic lines | `LineToolCircleLines` | `CyclicLines` | `cyclic-lines` | verified |
 | Time cycles | `LineToolTimeCycles` | `TimeCycles` | `time-cycles` | verified |
 | Sine line | `LineToolSineLine` | `SineLine` | `sine-line` | verified |
-| Long position | `LineToolRiskRewardLong` | `LongPosition` | `long-position` | in-progress |
-| Short position | `LineToolRiskRewardShort` | `ShortPosition` | `short-position` | in-progress |
-| Position forecast | `LineToolPrediction` | `PositionForecast` | `position-forecast` | in-progress |
+| Long position | `LineToolRiskRewardLong` | `LongPosition` | `long-position` | verified |
+| Short position | `LineToolRiskRewardShort` | `ShortPosition` | `short-position` | verified |
+| Position forecast | `LineToolPrediction` | `PositionForecast` | `position-forecast` | verified |
 | Bars pattern | `LineToolBarsPattern` | `BarsPattern` | `bars-pattern` | in-progress |
 | Ghost feed | `LineToolGhostFeed` | `GhostFeed` | `ghost-feed` | in-progress |
-| Sector | `LineToolProjection` | `Sector` | `sector` | in-progress |
+| Sector | `LineToolProjection` | `Sector` | `sector` | verified |
 | Anchored VWAP | `LineToolAnchoredVWAP` | `AnchoredVwap` | `anchored-vwap` | in-progress |
 | Fixed range volume profile | `LineToolFixedRangeVolumeProfile` | `FixedRangeVolumeProfile` | `volume-profile-fixed` | in-progress |
 | Anchored volume profile | `LineToolAnchoredVolumeProfile` | `AnchoredVolumeProfile` | `volume-profile-anchored` | in-progress |
-| Price range | `LineToolPriceRange` | `PriceRange` | `price-range` | in-progress |
-| Date range | `LineToolDateRange` | `DateRange` | `date-range` | in-progress |
-| Date and price range | `LineToolDateAndPriceRange` | `DatePriceRange` | `date-price-range` | in-progress |
+| Price range | `LineToolPriceRange` | `PriceRange` | `price-range` | verified |
+| Date range | `LineToolDateRange` | `DateRange` | `date-range` | verified |
+| Date and price range | `LineToolDateAndPriceRange` | `DatePriceRange` | `date-price-range` | verified |
 | Brush | `LineToolBrush` | `Brush` | `brush` | in-progress |
 | Highlighter | `LineToolHighlighter` | `Highlighter` | `highlighter` | in-progress |
 | Arrow marker | `LineToolArrowMarker` | `ArrowMarker` | `arrow-marker` | in-progress |

@@ -727,6 +727,7 @@ pub struct TickView {
     pending_trend: bool,
     pending_gannfib: bool,
     pending_patterns: bool,
+    pending_forecast: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1037,6 +1038,7 @@ impl TickView {
             pending_trend: false,
             pending_gannfib: false,
             pending_patterns: false,
+            pending_forecast: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1127,6 +1129,7 @@ impl TickView {
                 "trend" => me.pending_trend = true,
                 "gannfib" => me.pending_gannfib = true,
                 "patterns" => me.pending_patterns = true,
+                "forecast" => me.pending_forecast = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1501,6 +1504,61 @@ impl TickView {
         ]);
         self.tabs[ti].chart.selection.select(9501);
     }
+    /// `TICKVIEW_SCENE=forecast`: long position, sector wedge and both range
+    /// measurers over the recent visible window, for family review.
+    fn seed_forecast(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 120).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(120);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 120..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 120)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        let mut long = Drawing::new(
+            9601,
+            DrawingKind::LongPosition,
+            a(ts(n - 100), p(0.30)),
+            a(ts(n - 60), p(0.55)),
+        );
+        long.c = Some(a(ts(n - 60), p(0.15)));
+        long.style = tickchart::kind_defaults(DrawingKind::LongPosition);
+        let mut sector = Drawing::new(
+            9602,
+            DrawingKind::Sector,
+            a(ts(n - 90), p(0.62)),
+            a(ts(n - 30), p(0.74)),
+        );
+        sector.c = Some(a(ts(n - 30), p(0.54)));
+        sector.style = tickchart::kind_defaults(DrawingKind::Sector);
+        let mut pr = Drawing::new(
+            9603,
+            DrawingKind::PriceRange,
+            a(ts(n - 80), p(0.86)),
+            a(ts(n - 45), p(0.96)),
+        );
+        pr.style = tickchart::kind_defaults(DrawingKind::PriceRange);
+        let mut dr = Drawing::new(
+            9604,
+            DrawingKind::DatePriceRange,
+            a(ts(n - 70), p(0.05)),
+            a(ts(n - 35), p(0.12)),
+        );
+        dr.style = tickchart::kind_defaults(DrawingKind::DatePriceRange);
+        self.tabs[ti].chart.drawings.extend([long, sector, pr, dr]);
+        self.tabs[ti].chart.selection.select(9601);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -1829,6 +1887,9 @@ impl TickView {
                                 }
                                 if self.pending_patterns && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_patterns(ti);
+                                }
+                                if self.pending_forecast && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_forecast(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2321,7 +2382,8 @@ impl TickView {
             || self.pending_toolbar
             || self.pending_trend
             || self.pending_gannfib
-            || self.pending_patterns;
+            || self.pending_patterns
+            || self.pending_forecast;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {

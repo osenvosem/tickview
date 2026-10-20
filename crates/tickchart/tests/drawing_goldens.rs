@@ -9,7 +9,7 @@
 use egui::{Pos2, Rect, Vec2};
 use ta::Candles;
 use tickchart::bars::View;
-use tickchart::drawings::{anchor_pos, gann_fan_hit, reg_band_hit};
+use tickchart::drawings::{anchor_pos, gann_fan_hit, measure_summary, reg_band_hit};
 use tickchart::priceaxis::PriceAxis;
 use tickchart::{Anchor, Drawing, DrawingKind};
 
@@ -1089,4 +1089,136 @@ fn gannfib_family_geometry_hits_and_misses() {
 #[test]
 fn gannfib_family_geometry_holds_on_log_axis() {
     run_gannfib_family(&scene(true));
+}
+
+/// TV selects risk/forecast boxes and range boxes anywhere inside the fill;
+/// Sector is a filled wedge whose interior selects too.
+fn run_forecast_family(sc: &Scene) -> Vec<String> {
+    let mut errs = Vec::new();
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    // Long: entry 100 at bar 40, target 112, stop 94 -> boxes right of entry.
+    let long = |kind| {
+        let mut d = Drawing::new(1, kind, an(sc, 40, 100.0), an(sc, 100, 112.0));
+        d.c = Some(an(sc, 100, 94.0));
+        d
+    };
+    for kind in [
+        DrawingKind::LongPosition,
+        DrawingKind::ShortPosition,
+        DrawingKind::PositionForecast,
+    ] {
+        let d = long(kind);
+        for q in [
+            pt(sc, 70, 106.0),  // inside profit box
+            pt(sc, 70, 97.0),   // inside loss box
+            pt(sc, 140, 110.0), // box extends to right edge
+            pt(sc, 40, 100.0),  // entry corner
+        ] {
+            if !d.hit(q, map, PLOT) {
+                errs.push(format!("{kind:?}: inside point misses"));
+            }
+        }
+        for q in [
+            pt(sc, 30, 100.0), // left of entry
+            pt(sc, 70, 118.0), // above target band
+            pt(sc, 70, 88.0),  // below stop band
+        ] {
+            if d.hit(q, map, PLOT) {
+                errs.push(format!("{kind:?}: outside point hits"));
+            }
+        }
+    }
+    // Sector wedge: interior centroid + edge midpoints hit, exterior misses.
+    let sa = an(sc, 40, 100.0);
+    let sb = an(sc, 110, 112.0);
+    let s3 = an(sc, 110, 92.0);
+    let mut sector = Drawing::new(1, DrawingKind::Sector, sa, sb);
+    sector.c = Some(s3);
+    let (va, vb, vc) = (map(sector.a), map(sector.b), map(sector.c.unwrap()));
+    let centroid = Pos2::new((va.x + vb.x + vc.x) / 3.0, (va.y + vb.y + vc.y) / 3.0);
+    if !sector.hit(centroid, map, PLOT) {
+        errs.push("Sector: interior centroid misses".to_owned());
+    }
+    for (u, v) in [(va, vb), (va, vc)] {
+        let m = u.lerp(v, 0.5);
+        if !sector.hit(m, map, PLOT) {
+            errs.push("Sector: edge midpoint misses".to_owned());
+        }
+    }
+    let outside = Pos2::new(vb.x + 10.0, vb.y - 24.0);
+    if sector.hit(outside, map, PLOT) {
+        errs.push("Sector: point above wedge hits".to_owned());
+    }
+    // Range kinds: rect interior + inset corners hit, exterior misses.
+    for kind in [
+        DrawingKind::PriceRange,
+        DrawingKind::DateRange,
+        DrawingKind::DatePriceRange,
+    ] {
+        let d = Drawing::new(1, kind, an(sc, 45, 98.0), an(sc, 105, 110.0));
+        let ra = map(d.a);
+        let rb = map(d.b);
+        let rect = Rect::from_two_pos(ra, rb);
+        for q in [
+            rect.center(),
+            rect.min + Vec2::splat(2.0),
+            rect.max - Vec2::splat(2.0),
+        ] {
+            if !d.hit(q, map, PLOT) {
+                errs.push(format!("{kind:?}: interior misses"));
+            }
+        }
+        if d.hit(rect.max + Vec2::splat(8.0), map, PLOT) {
+            errs.push(format!("{kind:?}: 8px outside hits"));
+        }
+    }
+    errs
+}
+
+#[test]
+fn forecast_anchor_counts_match_tv() {
+    let expected: [(DrawingKind, u8); 7] = [
+        (DrawingKind::LongPosition, 3),
+        (DrawingKind::ShortPosition, 3),
+        (DrawingKind::PositionForecast, 3),
+        (DrawingKind::Sector, 3),
+        (DrawingKind::PriceRange, 2),
+        (DrawingKind::DateRange, 2),
+        (DrawingKind::DatePriceRange, 2),
+    ];
+    for (k, want) in expected {
+        assert_eq!(k.points(), want, "{k:?} anchors");
+    }
+}
+
+#[test]
+fn measure_summary_matches_hand_computation() {
+    let sc = scene(false);
+    let a = an(&sc, 40, 100.0);
+    let b = an(&sc, 100, 110.0);
+    let got = measure_summary(a, b, &sc.cd);
+    assert_eq!(got, "+10.00 (+10.00%) · 60 bars");
+}
+
+#[test]
+fn forecast_family_geometry_hits_and_misses() {
+    let errs = run_forecast_family(&scene(false));
+    assert!(
+        errs.is_empty(),
+        "{} forecast failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+#[test]
+fn forecast_family_geometry_holds_on_log_axis() {
+    let errs = run_forecast_family(&scene(true));
+    assert!(
+        errs.is_empty(),
+        "{} forecast failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
 }
