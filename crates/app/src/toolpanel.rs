@@ -150,6 +150,7 @@ pub const GROUPS: &[ToolGroup] = &[
                 "MEASURERS",
                 &[Tool::PriceRange, Tool::DateRange, Tool::DatePriceRange],
             ),
+            ("VOLUME-BASED", &[Tool::AnchoredVwap]),
         ],
     },
     ToolGroup {
@@ -190,6 +191,7 @@ pub const GROUPS: &[ToolGroup] = &[
             "TEXT AND NOTES",
             &[
                 Tool::Text,
+                Tool::Note,
                 Tool::PriceNote,
                 Tool::Pin,
                 Tool::Callout,
@@ -1274,7 +1276,7 @@ mod tests {
         assert_eq!(headers(1), ["LINES", "CHANNELS", "PITCHFORKS"]);
         assert_eq!(headers(2), ["FIBONACCI", "GANN"]);
         assert_eq!(headers(3), ["CHART PATTERNS", "ELLIOTT WAVES", "CYCLES"]);
-        assert_eq!(headers(4), ["FORECASTING", "MEASURERS"]);
+        assert_eq!(headers(4), ["FORECASTING", "MEASURERS", "VOLUME-BASED"]);
         assert_eq!(headers(5), ["BRUSHES", "ARROWS", "SHAPES"]);
         assert_eq!(headers(6), ["TEXT AND NOTES"]);
         assert_eq!(

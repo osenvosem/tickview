@@ -22,6 +22,7 @@ pub enum Icon {
     FibExt,
     Arrow,
     Text,
+    Note,
     Measure,
     Brush,
     Pitchfork,
@@ -84,6 +85,7 @@ pub enum Icon {
     PriceLabel,
     Signpost,
     FlagMark,
+    AnchoredVwap,
     Magnet,
     Search,
     Bell,
@@ -165,6 +167,7 @@ impl Icon {
         Self::FibExt,
         Self::Arrow,
         Self::Text,
+        Self::Note,
         Self::Measure,
         Self::Brush,
         Self::Pitchfork,
@@ -227,6 +230,7 @@ impl Icon {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::AnchoredVwap,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -308,6 +312,7 @@ impl Icon {
             Self::FibExt => "fibonacci-extension",
             Self::Arrow => "arrow",
             Self::Text => "text",
+            Self::Note => "note",
             Self::Measure => "measure",
             Self::Brush => "brush",
             Self::Pitchfork => "pitchfork",
@@ -370,6 +375,7 @@ impl Icon {
             Self::PriceLabel => "price-label",
             Self::Signpost => "signpost",
             Self::FlagMark => "flag-mark",
+            Self::AnchoredVwap => "anchored-vwap",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -556,6 +562,12 @@ impl Icon {
                 line(5.0, 5.0, 19.0, 5.0);
                 line(12.0, 5.0, 12.0, 20.0);
                 line(9.0, 20.0, 15.0, 20.0);
+            }
+            Self::Note => {
+                round_rect(3.0, 4.0, 21.0, 16.0, 3.0);
+                path(&[(8.0, 16.0), (7.0, 21.0), (12.0, 16.0)]);
+                line(7.0, 8.5, 17.0, 8.5);
+                line(7.0, 12.0, 14.0, 12.0);
             }
             Self::Measure => {
                 line(3.0, 18.0, 21.0, 6.0);
@@ -991,6 +1003,10 @@ impl Icon {
             Self::FlagMark => {
                 line(6.0, 21.0, 6.0, 3.0);
                 path(&[(6.0, 4.0), (18.0, 7.0), (6.0, 10.0)]);
+            }
+            Self::AnchoredVwap => {
+                dot(4.0, 18.0, 1.8);
+                path(&[(4.0, 18.0), (10.0, 12.0), (15.0, 9.0), (21.0, 7.0)]);
             }
             Self::Magnet => {
                 path(&[
@@ -1511,7 +1527,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 138);
+        assert_eq!(Icon::ALL.len(), 140);
     }
 
     #[test]

@@ -111,7 +111,7 @@ curated offline symbol index so search works before the network responds.
 
 ## Verification
 
-`cargo test --workspace` passes 281 tests (6 ignored live-network smokes) and
+`cargo test --workspace` passes 303 tests (6 ignored live-network smokes) and
 `cargo clippy --workspace --all-targets` is clean. Dark and light builds were
 captured at 1440×900 and visually checked for the shell, tab strip, command
 bar, watchlist, status bar, RSI separate pane, indicator editor, settings,
@@ -149,12 +149,17 @@ fan, Gann box, both Gann squares, Gann fan), the patterns/Elliott/cycles
 family (14 tools: XABCD, Cypher, head-and-shoulders, ABCD, triangle, three
 drives, five Elliott wave counts, cyclic lines, time cycles, sine line) and
 the forecasting/measurement family (7 tools: long/short position, position
-forecast, sector projection, price/date/date-price ranges) and the geometric
+forecast, sector projection, price/date/date-price ranges), the geometric
 shapes family (16 tools: brush, highlighter, four arrows/marker, rectangle,
 rotated rectangle, circle, ellipse, triangle, path, polyline, arc, quadratic
-and cubic curves) are `verified` via the golden geometry harness
-(`crates/tickchart/tests/drawing_goldens.rs`, linear + log axes) and
-`TICKVIEW_SCENE=trend|gannfib|patterns|forecast|shapes` screenshots.
-Milestone 3 covers the study catalog.
+and cubic curves) and the annotation family (9 tools: plain text — a new
+`Text` kind split from the bubble `Note` — note, price note, pin, callout,
+comment, price label, signpost, flag mark) are `verified` via the golden
+geometry harness (`crates/tickchart/tests/drawing_goldens.rs`, linear + log
+axes) and `TICKVIEW_SCENE=trend|gannfib|patterns|forecast|shapes|annot`
+screenshots. Anchored VWAP is `verified` as the first data-derived tool
+(ΣTP·V/ΣV computed live from chart bars, nothing persisted). The five
+remaining data-derived tools (both volume profiles, bars pattern, ghost feed,
+table) are next; Milestone 3 covers the study catalog.
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

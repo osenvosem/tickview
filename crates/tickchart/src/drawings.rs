@@ -29,6 +29,7 @@ pub enum DrawingKind {
     FibExt,
     Arrow,
     Note,
+    Text,
     Brush,
     Pitchfork,
     SchiffPitchfork,
@@ -99,6 +100,7 @@ pub enum DrawingKind {
     PriceLabel,
     Signpost,
     FlagMark,
+    AnchoredVwap,
 }
 
 impl DrawingKind {
@@ -116,6 +118,7 @@ impl DrawingKind {
         Self::FibExt,
         Self::Arrow,
         Self::Note,
+        Self::Text,
         Self::Brush,
         Self::Pitchfork,
         Self::SchiffPitchfork,
@@ -180,6 +183,7 @@ impl DrawingKind {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::AnchoredVwap,
     ];
 
     #[must_use]
@@ -198,6 +202,7 @@ impl DrawingKind {
             Self::FibExt => "Fib extension",
             Self::Arrow => "Arrow",
             Self::Note => "Note",
+            Self::Text => "Text",
             Self::Brush => "Brush",
             Self::Pitchfork => "Pitchfork",
             Self::SchiffPitchfork => "Schiff Pitchfork",
@@ -262,6 +267,7 @@ impl DrawingKind {
             Self::PriceLabel => "Price label",
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
+            Self::AnchoredVwap => "Anchored VWAP",
         }
     }
 
@@ -273,6 +279,7 @@ impl DrawingKind {
             | Self::VLine
             | Self::HRay
             | Self::Note
+            | Self::Text
             | Self::Brush
             | Self::CrossLine
             | Self::Highlighter
@@ -285,7 +292,8 @@ impl DrawingKind {
             | Self::Comment
             | Self::PriceLabel
             | Self::Signpost
-            | Self::FlagMark => 1,
+            | Self::FlagMark
+            | Self::AnchoredVwap => 1,
             Self::Channel
             | Self::FibExt
             | Self::Pitchfork
@@ -360,6 +368,7 @@ impl DrawingKind {
         matches!(
             self,
             Self::Note
+                | Self::Text
                 | Self::PriceNote
                 | Self::Pin
                 | Self::Callout
@@ -422,6 +431,7 @@ pub enum DrawTool {
     FibExt,
     Arrow,
     Note,
+    Text,
     Brush,
     Pitchfork,
     SchiffPitchfork,
@@ -488,6 +498,7 @@ pub enum DrawTool {
     PriceLabel,
     Signpost,
     FlagMark,
+    AnchoredVwap,
 }
 
 impl DrawTool {
@@ -507,6 +518,7 @@ impl DrawTool {
         Self::FibExt,
         Self::Arrow,
         Self::Note,
+        Self::Text,
         Self::Measure,
         Self::Brush,
         Self::Pitchfork,
@@ -573,6 +585,7 @@ impl DrawTool {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::AnchoredVwap,
     ];
 
     #[must_use]
@@ -593,6 +606,7 @@ impl DrawTool {
             Self::FibExt => "Fib extension",
             Self::Arrow => "Arrow",
             Self::Note => "Note",
+            Self::Text => "Text",
             Self::Brush => "Brush",
             Self::Pitchfork => "Pitchfork",
             Self::SchiffPitchfork => "Schiff Pitchfork",
@@ -659,6 +673,7 @@ impl DrawTool {
             Self::PriceLabel => "Price label",
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
+            Self::AnchoredVwap => "Anchored VWAP",
         }
     }
 
@@ -679,6 +694,7 @@ impl DrawTool {
             Self::FibExt => Some(DrawingKind::FibExt),
             Self::Arrow => Some(DrawingKind::Arrow),
             Self::Note => Some(DrawingKind::Note),
+            Self::Text => Some(DrawingKind::Text),
             Self::Brush => Some(DrawingKind::Brush),
             Self::Pitchfork => Some(DrawingKind::Pitchfork),
             Self::SchiffPitchfork => Some(DrawingKind::SchiffPitchfork),
@@ -743,6 +759,7 @@ impl DrawTool {
             Self::PriceLabel => Some(DrawingKind::PriceLabel),
             Self::Signpost => Some(DrawingKind::Signpost),
             Self::FlagMark => Some(DrawingKind::FlagMark),
+            Self::AnchoredVwap => Some(DrawingKind::AnchoredVwap),
         }
     }
 
@@ -2653,6 +2670,38 @@ fn draw_one(
         | DrawingKind::FlagMark => {
             paint_annotation(p, d, pa, stroke, color, pal, font.clone());
         }
+        DrawingKind::AnchoredVwap => {
+            let Some(i0) = nearest_index(cd, d.a.t) else {
+                return;
+            };
+            let series = crate::datatools::anchored_vwap(cd, i0);
+            let pts: Vec<Pos2> = series
+                .iter()
+                .map(|&(i, v)| Pos2::new(view.x_of(i), axis.y_of(v)))
+                .collect();
+            if pts.len() >= 2 {
+                paint_polyline(p, &pts, stroke, dash);
+                let last_v = series.last().map_or(0.0, |s| s.1);
+                paint_chip(
+                    p,
+                    Pos2::new(plot.max.x - 48.0, pts[pts.len() - 1].y),
+                    &format!("VWAP {}", fmt_price(last_v)),
+                    color,
+                    pal.bg,
+                    font.clone(),
+                );
+            }
+        }
+        // TV plain text: glyph run at the anchor, no bubble.
+        DrawingKind::Text => {
+            let text = if d.style.text.is_empty() {
+                "Text"
+            } else {
+                &d.style.text
+            };
+            let r = note_rect(pa, text);
+            p.text(r.center(), Align2::CENTER_CENTER, text, font.clone(), color);
+        }
         DrawingKind::Note => {
             let rect = note_rect(pa, &d.style.text);
             p.rect_filled(rect, 4.0, pal.bg);
@@ -3771,7 +3820,7 @@ pub fn fib_levels(a: f32, b: f32) -> [(f32, f32); 7] {
 }
 
 #[must_use]
-fn distance_to_segment(p: Pos2, a: Pos2, b: Pos2) -> f32 {
+pub(crate) fn distance_to_segment(p: Pos2, a: Pos2, b: Pos2) -> f32 {
     let ab = b - a;
     let len2 = ab.length_sq();
     if len2 <= 1e-9 {

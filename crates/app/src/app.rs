@@ -162,6 +162,7 @@ pub enum Tool {
     FibExt,
     Arrow,
     Text,
+    Note,
     Measure,
     Brush,
     Pitchfork,
@@ -228,6 +229,7 @@ pub enum Tool {
     PriceLabel,
     Signpost,
     FlagMark,
+    AnchoredVwap,
 }
 
 impl Tool {
@@ -247,6 +249,7 @@ impl Tool {
         Self::FibExt,
         Self::Arrow,
         Self::Text,
+        Self::Note,
         Self::Measure,
         Self::Brush,
         Self::Pitchfork,
@@ -313,6 +316,7 @@ impl Tool {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::AnchoredVwap,
     ];
 
     #[must_use]
@@ -333,6 +337,7 @@ impl Tool {
             Self::FibExt => Icon::FibExt,
             Self::Arrow => Icon::Arrow,
             Self::Text => Icon::Text,
+            Self::Note => Icon::Note,
             Self::Measure => Icon::Measure,
             Self::Brush => Icon::Brush,
             Self::Pitchfork => Icon::Pitchfork,
@@ -399,6 +404,7 @@ impl Tool {
             Self::PriceLabel => Icon::PriceLabel,
             Self::Signpost => Icon::Signpost,
             Self::FlagMark => Icon::FlagMark,
+            Self::AnchoredVwap => Icon::AnchoredVwap,
         }
     }
 
@@ -419,7 +425,8 @@ impl Tool {
             Self::Fib => "Fib retracement",
             Self::FibExt => "Trend-based fib extension",
             Self::Arrow => "Arrow",
-            Self::Text => "Note",
+            Self::Text => "Text",
+            Self::Note => "Note",
             Self::Measure => "Measure",
             Self::Brush => "Brush",
             Self::Pitchfork => "Pitchfork",
@@ -486,6 +493,7 @@ impl Tool {
             Self::PriceLabel => "Price label",
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
+            Self::AnchoredVwap => "Anchored VWAP",
         }
     }
 
@@ -546,7 +554,8 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Fib => DrawTool::Fib,
         Tool::FibExt => DrawTool::FibExt,
         Tool::Arrow => DrawTool::Arrow,
-        Tool::Text => DrawTool::Note,
+        Tool::Text => DrawTool::Text,
+        Tool::Note => DrawTool::Note,
         Tool::Measure => DrawTool::Measure,
         Tool::Brush => DrawTool::Brush,
         Tool::Pitchfork => DrawTool::Pitchfork,
@@ -613,6 +622,7 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::PriceLabel => DrawTool::PriceLabel,
         Tool::Signpost => DrawTool::Signpost,
         Tool::FlagMark => DrawTool::FlagMark,
+        Tool::AnchoredVwap => DrawTool::AnchoredVwap,
     }
 }
 
@@ -729,6 +739,8 @@ pub struct TickView {
     pending_patterns: bool,
     pending_forecast: bool,
     pending_shapes: bool,
+    pending_annot: bool,
+    pending_vwap: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1041,6 +1053,8 @@ impl TickView {
             pending_patterns: false,
             pending_forecast: false,
             pending_shapes: false,
+            pending_annot: false,
+            pending_vwap: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1133,6 +1147,8 @@ impl TickView {
                 "patterns" => me.pending_patterns = true,
                 "forecast" => me.pending_forecast = true,
                 "shapes" => me.pending_shapes = true,
+                "annot" => me.pending_annot = true,
+                "vwap" => me.pending_vwap = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1648,6 +1664,65 @@ impl TickView {
         ]);
         self.tabs[ti].chart.selection.select(9701);
     }
+    /// `TICKVIEW_SCENE=annot`: plain text, note bubble, price note and pin over
+    /// the recent visible window, for annotation-family review.
+    fn seed_annot(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let lo = cd.l[vs..ve].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[vs..ve]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let p = |f: f64| lo + span * f;
+        let mk = |id: u64, kind: DrawingKind, fx: f64, f: f64, text: &str| -> Drawing {
+            let i = (vs as f64 + w as f64 * fx).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+            let a = Anchor {
+                t: tv[i - vs],
+                price: p(f),
+            };
+            let mut d = Drawing::new(id, kind, a, a);
+            d.style = tickchart::kind_defaults(kind);
+            d.style.text = text.to_owned();
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9801, DrawingKind::Text, 0.12, 0.92, "breakout watch"),
+            mk(
+                9802,
+                DrawingKind::Note,
+                0.38,
+                0.72,
+                "volume spike; expect retest",
+            ),
+            mk(9803, DrawingKind::PriceNote, 0.58, 0.55, "key level"),
+            mk(9804, DrawingKind::Pin, 0.74, 0.30, ""),
+        ]);
+        self.tabs[ti].chart.selection.select(9802);
+    }
+    /// `TICKVIEW_SCENE=vwap`: anchored VWAP from the left of the visible
+    /// window, for data-derived-tool review.
+    fn seed_vwap(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, _) = self.tabs[ti].chart.view.visible();
+        let i = vs + 2;
+        let price = self.tabs[ti].candles.c[i];
+        let a = Anchor {
+            t: self.tabs[ti].candles.t[i],
+            price,
+        };
+        let mut d = Drawing::new(9901, DrawingKind::AnchoredVwap, a, a);
+        d.style = tickchart::kind_defaults(DrawingKind::AnchoredVwap);
+        self.tabs[ti].chart.drawings.push(d);
+        self.tabs[ti].chart.selection.select(9901);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -1982,6 +2057,12 @@ impl TickView {
                                 }
                                 if self.pending_shapes && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_shapes(ti);
+                                }
+                                if self.pending_annot && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_annot(ti);
+                                }
+                                if self.pending_vwap && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_vwap(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2476,7 +2557,9 @@ impl TickView {
             || self.pending_gannfib
             || self.pending_patterns
             || self.pending_forecast
-            || self.pending_shapes;
+            || self.pending_shapes
+            || self.pending_annot
+            || self.pending_vwap;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
@@ -3841,7 +3924,8 @@ mod tests {
                 assert_ne!(mapped, DrawTool::Cursor, "{tool:?} is not wired");
             }
         }
-        assert_eq!(draw_tool(Tool::Text), DrawTool::Note);
+        assert_eq!(draw_tool(Tool::Text), DrawTool::Text);
+        assert_eq!(draw_tool(Tool::Note), DrawTool::Note);
         assert_eq!(draw_tool(Tool::Measure), DrawTool::Measure);
     }
 

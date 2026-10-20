@@ -9,7 +9,7 @@
 use egui::{Pos2, Rect, Vec2};
 use ta::Candles;
 use tickchart::bars::View;
-use tickchart::drawings::{anchor_pos, gann_fan_hit, measure_summary, reg_band_hit};
+use tickchart::drawings::{anchor_pos, gann_fan_hit, measure_summary, note_rect, reg_band_hit};
 use tickchart::priceaxis::PriceAxis;
 use tickchart::{Anchor, Drawing, DrawingKind};
 
@@ -1495,4 +1495,137 @@ fn shapes_family_geometry_holds_on_log_axis() {
         errs.len(),
         errs.join("\n")
     );
+}
+
+#[test]
+fn text_kind_is_plain_and_note_kind_bubbles() {
+    assert_eq!(DrawingKind::Text.points(), 1);
+    assert_eq!(DrawingKind::Note.points(), 1);
+    assert!(DrawingKind::Text.is_annotation());
+    assert!(DrawingKind::Note.is_annotation());
+    assert_eq!(DrawingKind::Text.label(), "Text");
+    assert_eq!(DrawingKind::Note.label(), "Note");
+}
+
+/// TV annotations select on their rendered bounds: the text/bubble rect for
+/// notes and labels, the glyph footprint for pins/marks.
+fn run_annotation_family(sc: &Scene) -> Vec<String> {
+    let mut errs = Vec::new();
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let text_kinds = [
+        DrawingKind::Text,
+        DrawingKind::Note,
+        DrawingKind::PriceNote,
+        DrawingKind::Callout,
+        DrawingKind::Comment,
+        DrawingKind::PriceLabel,
+    ];
+    for kind in text_kinds {
+        let mut d = Drawing::new(1, kind, an(sc, 50, 105.0), an(sc, 50, 105.0));
+        d.style.text = "trend text".to_owned();
+        let r = note_rect(map(d.a), &d.style.text);
+        for q in [
+            r.center(),
+            r.min + Vec2::splat(1.0),
+            r.max - Vec2::splat(1.0),
+        ] {
+            if !d.hit(q, map, PLOT) {
+                errs.push(format!("{kind:?}: text-bounds point misses"));
+            }
+        }
+        if d.hit(r.center() + Vec2::new(0.0, 24.0), map, PLOT) {
+            errs.push(format!("{kind:?}: 24px below bounds hits"));
+        }
+    }
+    // Glyph annotations (pin/signpost/flag) select on their small footprint.
+    for kind in [
+        DrawingKind::Pin,
+        DrawingKind::Signpost,
+        DrawingKind::FlagMark,
+    ] {
+        let d = Drawing::new(1, kind, an(sc, 60, 100.0), an(sc, 60, 100.0));
+        let r = note_rect(map(d.a), "");
+        if !d.hit(r.center(), map, PLOT) {
+            errs.push(format!("{kind:?}: glyph center misses"));
+        }
+        if d.hit(r.center() + Vec2::new(0.0, 22.0), map, PLOT) {
+            errs.push(format!("{kind:?}: 22px below glyph hits"));
+        }
+    }
+    errs
+}
+
+#[test]
+fn annotation_family_geometry_hits_and_misses() {
+    let errs = run_annotation_family(&scene(false));
+    assert!(
+        errs.is_empty(),
+        "{} annotation failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+#[test]
+fn annotation_family_geometry_holds_on_log_axis() {
+    let errs = run_annotation_family(&scene(true));
+    assert!(
+        errs.is_empty(),
+        "{} annotation failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+/// TV anchored VWAP: polyline from anchor bar to the right edge; the curve
+/// selects, 15 px away does not.
+#[test]
+fn vwap_case_hits_curve_and_misses_off() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let d = Drawing::new(
+        1,
+        DrawingKind::AnchoredVwap,
+        an(&sc, 40, 100.0),
+        an(&sc, 40, 100.0),
+    );
+    let series = tickchart::datatools::anchored_vwap(&sc.cd, 40);
+    assert!(series.len() > 20, "fixture must produce a vwap series");
+    let (mi, mv) = series[series.len() / 2];
+    if !tickchart::datatools::vwap_hit(&sc.cd, &sc.view, &sc.axis, &d, pt(&sc, mi, mv), PLOT) {
+        panic!("VWAP: point on the curve misses");
+    }
+    let off = pt(&sc, mi, mv) + Vec2::new(0.0, 15.0);
+    if tickchart::datatools::vwap_hit(&sc.cd, &sc.view, &sc.axis, &d, off, PLOT) {
+        panic!("VWAP: 15px off the curve hits");
+    }
+    let _ = map(d.a);
+}
+
+#[test]
+fn data_tools_survive_short_history() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    // Anchor past the last bar: no series, no hit, no panic.
+    let far = sc.cd.t[sc.cd.t.len() - 1] + 10 * 60_000;
+    let past = Anchor {
+        t: far,
+        price: 100.0,
+    };
+    let d = Drawing::new(1, DrawingKind::AnchoredVwap, past, past);
+    assert!(!tickchart::datatools::vwap_hit(
+        &sc.cd,
+        &sc.view,
+        &sc.axis,
+        &d,
+        pt(&sc, 60, 100.0),
+        PLOT
+    ));
+    // Empty candles: geometry fns return empty/false without panicking.
+    let empty = tickchart::datatools::anchored_vwap(&sc.cd, sc.cd.t.len());
+    assert!(empty.is_empty());
+    let _ = map(past);
 }

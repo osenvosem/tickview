@@ -239,11 +239,11 @@ Steps: 1 failing `annotation_family_geometry` (Text hits text bounds; Note hits 
 - Produces: `datatools::anchored_vwap(cd: &Candles, start: usize) -> Vec<(usize, f64)>` — running `Σ(typical·vol)/Σvol` with typical = (h+l+c)/3, one point per bar from `start` to last; empty slice if `start >= cd.len()` or zero volume.
 - Consumes: `Candles`, paint pipeline `cd` argument (already threaded).
 
-- [ ] **Step 1: Failing unit tests** — `datatools::vwap_hand_computed` (3-bar fixture, expected values exact to 1e-9) and `datatools::vwap_short_history_is_empty`.
-- [ ] **Step 2: Run to fail**, 3 implement `anchored_vwap`, 4 run to pass.
-- [ ] **Step 5: Failing golden case** — `vwap_case`: anchor at bar 40, hit at polyline midpoint (expected price computed in-test from fixture candles via `anchored_vwap`), miss 15 px off; `data_tools_survive_short_history`: VWAP + (Task 11) profiles render/hit with anchor past end and empty `Candles` without panic (paint through the public `paint` entry with a null-ish painter is not required — call hit + geometry fns).
-- [ ] **Step 6: Wire kind/tool/icon/flyout**, capture `TICKVIEW_SCENE=vwap TICKVIEW_THEME=dark` → `docs/screenshots/parity/vwap-dark.png`; evidence `drawings-vwap.md` (formula ΣTP·V/ΣV, TV doc link, extends-to-right-edge behavior, no persisted arrays); manifest flip.
-- [ ] **Step 7: Gates + commit** — `git add crates/tickchart/src/datatools.rs crates/tickchart/src/lib.rs crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs docs/evidence/tv/drawings-vwap.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: anchored VWAP drawing with TV value math"`
+- [x] **Step 1: Failing unit tests** — `datatools::vwap_hand_computed` (3-bar fixture, expected values exact to 1e-9) and `datatools::vwap_short_history_is_empty`.
+- [x] **Step 2: Run to fail**, 3 implement `anchored_vwap`, 4 run to pass.
+- [x] **Step 5: Failing golden case** — `vwap_case`: anchor at bar 40, hit at polyline midpoint (expected price computed in-test from fixture candles via `anchored_vwap`), miss 15 px off; `data_tools_survive_short_history`: VWAP + (Task 11) profiles render/hit with anchor past end and empty `Candles` without panic (paint through the public `paint` entry with a null-ish painter is not required — call hit + geometry fns).
+- [x] **Step 6: Wire kind/tool/icon/flyout**, capture `TICKVIEW_SCENE=vwap TICKVIEW_THEME=dark` → `docs/screenshots/parity/vwap-dark.png`; evidence `drawings-vwap.md` (formula ΣTP·V/ΣV, TV doc link, extends-to-right-edge behavior, no persisted arrays); manifest flip.
+- [x] **Step 7: Gates + commit** — `git add crates/tickchart/src/datatools.rs crates/tickchart/src/lib.rs crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs docs/evidence/tv/drawings-vwap.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: anchored VWAP drawing with TV value math"`
 
 ### Task 11: Volume profiles (fixed range + anchored)
 

@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 69 verified, 15 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 79 verified, 5 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -61,7 +61,7 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Bars pattern | `LineToolBarsPattern` | `BarsPattern` | `bars-pattern` | in-progress |
 | Ghost feed | `LineToolGhostFeed` | `GhostFeed` | `ghost-feed` | in-progress |
 | Sector | `LineToolProjection` | `Sector` | `sector` | verified |
-| Anchored VWAP | `LineToolAnchoredVWAP` | `AnchoredVwap` | `anchored-vwap` | in-progress |
+| Anchored VWAP | `LineToolAnchoredVWAP` | `AnchoredVwap` | `anchored-vwap` | verified |
 | Fixed range volume profile | `LineToolFixedRangeVolumeProfile` | `FixedRangeVolumeProfile` | `volume-profile-fixed` | in-progress |
 | Anchored volume profile | `LineToolAnchoredVolumeProfile` | `AnchoredVolumeProfile` | `volume-profile-anchored` | in-progress |
 | Price range | `LineToolPriceRange` | `PriceRange` | `price-range` | verified |
@@ -83,16 +83,16 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Arc | `LineToolArc` | `Arc` | `arc-shape` | verified |
 | Curve | `LineToolBezierQuadro` | `Curve` | `curve-shape` | verified |
 | Double curve | `LineToolBezierCubic` | `DoubleCurve` | `double-curve` | verified |
-| Text | `LineToolText` | `Text` | `text` | in-progress |
-| Note | `LineToolTextNote` | `Note` | `note` | in-progress |
-| Price note | `LineToolPriceNote` | `PriceNote` | `price-note` | in-progress |
-| Pin | `LineToolNote` | `Pin` | `pin` | in-progress |
+| Text | `LineToolText` | `Text` | `text` | verified |
+| Note | `LineToolTextNote` | `Note` | `note` | verified |
+| Price note | `LineToolPriceNote` | `PriceNote` | `price-note` | verified |
+| Pin | `LineToolNote` | `Pin` | `pin` | verified |
 | Table | `LineToolTable` | `Table` | `table` | in-progress |
-| Callout | `LineToolCallout` | `Callout` | `callout` | in-progress |
-| Comment | `LineToolComment` | `Comment` | `comment` | in-progress |
-| Price label | `LineToolPriceLabel` | `PriceLabel` | `price-label` | in-progress |
-| Signpost | `LineToolSignpost` | `Signpost` | `signpost` | in-progress |
-| Flag mark | `LineToolFlagMark` | `FlagMark` | `flag-mark` | in-progress |
+| Callout | `LineToolCallout` | `Callout` | `callout` | verified |
+| Comment | `LineToolComment` | `Comment` | `comment` | verified |
+| Price label | `LineToolPriceLabel` | `PriceLabel` | `price-label` | verified |
+| Signpost | `LineToolSignpost` | `Signpost` | `signpost` | verified |
+| Flag mark | `LineToolFlagMark` | `FlagMark` | `flag-mark` | verified |
 | Image | `LineToolImage` | `Image` | `image` | excluded |
 | Post | `LineToolTweet` | `Post` | `post` | excluded |
 | Idea | `LineToolIdea` | `Idea` | `idea` | excluded |

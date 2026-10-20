@@ -1114,10 +1114,19 @@
       "icon": "anchored-vwap",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart::datatools::tests::vwap_hand_computed",
+        "tickchart::datatools::tests::vwap_anchor_offset_skips_earlier_bars",
+        "tickchart::datatools::tests::vwap_short_history_is_empty",
+        "tickchart::tests::drawing_goldens::vwap_case_hits_curve_and_misses_off",
+        "app::tests::every_drawing_tool_has_a_unique_icon"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-vwap.md",
+        "docs/screenshots/parity/vwap-dark.png"
+      ],
+      "notes": "TV recomputes VWAP from chart data; we compute at paint/hit time, nothing persisted. Zero-volume bars emit no point."
     },
     {
       "kind": "drawing",
@@ -1555,10 +1564,17 @@
       "icon": "text",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Plain text at anchor (new Text kind, split from Note)."
     },
     {
       "kind": "drawing",
@@ -1569,10 +1585,17 @@
       "icon": "note",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Bubble note (existing Note kind)."
     },
     {
       "kind": "drawing",
@@ -1583,10 +1606,17 @@
       "icon": "price-note",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Price line + label; bounds select."
     },
     {
       "kind": "drawing",
@@ -1597,10 +1627,17 @@
       "icon": "pin",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Pin glyph; footprint select."
     },
     {
       "kind": "drawing",
@@ -1625,10 +1662,17 @@
       "icon": "callout",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Bubble with tail; bounds select."
     },
     {
       "kind": "drawing",
@@ -1639,10 +1683,17 @@
       "icon": "comment",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Comment bubble; bounds select."
     },
     {
       "kind": "drawing",
@@ -1653,10 +1704,17 @@
       "icon": "price-label",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Axis-style price tag; bounds select."
     },
     {
       "kind": "drawing",
@@ -1667,10 +1725,17 @@
       "icon": "signpost",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Flag-on-pole glyph; footprint select."
     },
     {
       "kind": "drawing",
@@ -1681,10 +1746,17 @@
       "icon": "flag-mark",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-annotation.md",
+        "docs/screenshots/parity/annot-dark.png"
+      ],
+      "notes": "Flag glyph; footprint select."
     },
     {
       "kind": "drawing",
