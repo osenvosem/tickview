@@ -184,7 +184,10 @@
 - Consumes: harness; `position_colors`, `measure_summary`.
 - Produces: cases for LongPosition, ShortPosition, PositionForecast, Sector, PriceRange, DateRange, DatePriceRange — hits inside fill/edge, misses outside; `measure_summary` percent/bar-count assertions for the three range kinds (existing helper).
 
-Steps: Task 5 shape; scene `TICKVIEW_SCENE=forecast` → `forecast-dark.png`; commit `"feat: audit forecasting and measurement drawings"`.
+- [x] **Step 1: Failing `forecast_family_geometry`** — box interiors/exterior, wedge centroid, range rects + `measure_summary` hand check + anchor counts; run to fail.
+- [x] **Step 2: Implement/fix** — `PositionForecast` box-select arm, `Sector` wedge interior (`point_in_triangle`), DateRange/DatePriceRange bar-count + PriceRange pct labels; PASS linear + log.
+- [x] **Step 3: Evidence + seed + flip** — `drawings-forecast.md` (Projection anchors resolved = 3), `TICKVIEW_SCENE=forecast` → `forecast-dark.png`, manifest → 53 verified.
+- [x] **Step 4: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit forecasting and measurement drawings"`.
 
 ### Task 8: Shapes-family audit (16 kinds)
 
@@ -198,7 +201,10 @@ Steps: Task 5 shape; scene `TICKVIEW_SCENE=forecast` → `forecast-dark.png`; co
 - Consumes: harness.
 - Produces: cases for Brush, Highlighter (hit on stroke path via `extra` vertices midpoints), ArrowMarker/ArrowMarkUp/ArrowMarkDown (hit at anchor glyph, miss beyond), Arrow (shaft midpoint + head), Rect/RotatedRect/Circle/Ellipse/TriangleShape (interior + edge hits, exterior misses), Path/Polyline (open-path segment midpoints), Arc/Curve/DoubleCurve (sampled curve midpoints from the same parametric math the painter uses).
 
-Steps: Task 5 shape; scene `TICKVIEW_SCENE=shapes` → `shapes-dark.png`; commit `"feat: audit geometric shape drawings against TV"`.
+- [x] **Step 1: Failing `shapes_family_geometry`** — interiors, curve midpoints, stroke trails, arrow shaft/head, marker glyph + anchor counts; run to fail (13 expected failures).
+- [x] **Step 2: Implement/fix** — fill-interior select for Rect/Ellipse/Circle/Triangle/RotatedRect (`rotated_rect_contains`), sampled-curve arms for Arc/Curve/DoubleCurve, 16px glyph markers, full brush trail; re-pinned `rectangle_hit_follows_tv_fill_semantics`; PASS linear + log.
+- [x] **Step 3: Evidence + seed + flip** — `drawings-shapes.md`, `TICKVIEW_SCENE=shapes` → `shapes-dark.png`, manifest → 69 verified.
+- [x] **Step 4: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit geometric shape drawings against TV"`.
 
 ### Task 9: Annotation-family audit + plain-Text kind
 

@@ -728,6 +728,7 @@ pub struct TickView {
     pending_gannfib: bool,
     pending_patterns: bool,
     pending_forecast: bool,
+    pending_shapes: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1039,6 +1040,7 @@ impl TickView {
             pending_gannfib: false,
             pending_patterns: false,
             pending_forecast: false,
+            pending_shapes: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1130,6 +1132,7 @@ impl TickView {
                 "gannfib" => me.pending_gannfib = true,
                 "patterns" => me.pending_patterns = true,
                 "forecast" => me.pending_forecast = true,
+                "shapes" => me.pending_shapes = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1559,6 +1562,92 @@ impl TickView {
         self.tabs[ti].chart.drawings.extend([long, sector, pr, dr]);
         self.tabs[ti].chart.selection.select(9601);
     }
+    /// `TICKVIEW_SCENE=shapes`: representative geometric shapes over the recent
+    /// visible window, for shapes-family review.
+    fn seed_shapes(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 120).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(120);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 120..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 120)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        let mk = |id: u64, kind: DrawingKind, pts: &[(usize, f64)]| -> Drawing {
+            let mut d = Drawing::new(
+                id,
+                kind,
+                a(ts(pts[0].0), pts[0].1),
+                a(ts(pts[1].0), pts[1].1),
+            );
+            if pts.len() >= 3 {
+                d.c = Some(a(ts(pts[2].0), pts[2].1));
+            }
+            d.extra = pts.iter().skip(3).map(|&(i, pr)| a(ts(i), pr)).collect();
+            d.style = tickchart::kind_defaults(kind);
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(
+                9701,
+                DrawingKind::Rect,
+                &[(n - 110, p(0.70)), (n - 70, p(0.88))],
+            ),
+            mk(
+                9702,
+                DrawingKind::Circle,
+                &[(n - 60, p(0.66)), (n - 25, p(0.86))],
+            ),
+            mk(
+                9703,
+                DrawingKind::TriangleShape,
+                &[(n - 105, p(0.30)), (n - 80, p(0.52)), (n - 55, p(0.28))],
+            ),
+            mk(
+                9704,
+                DrawingKind::Arrow,
+                &[(n - 95, p(0.10)), (n - 55, p(0.26))],
+            ),
+            mk(
+                9705,
+                DrawingKind::Curve,
+                &[(n - 45, p(0.30)), (n - 10, p(0.34)), (n - 28, p(0.48))],
+            ),
+            mk(
+                9706,
+                DrawingKind::Polyline,
+                &[
+                    (n - 115, p(0.44)),
+                    (n - 100, p(0.58)),
+                    (n - 85, p(0.46)),
+                    (n - 70, p(0.60)),
+                ],
+            ),
+            mk(
+                9707,
+                DrawingKind::Brush,
+                &[
+                    (n - 50, p(0.06)),
+                    (n - 42, p(0.12)),
+                    (n - 34, p(0.08)),
+                    (n - 26, p(0.16)),
+                    (n - 18, p(0.10)),
+                ],
+            ),
+        ]);
+        self.tabs[ti].chart.selection.select(9701);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -1890,6 +1979,9 @@ impl TickView {
                                 }
                                 if self.pending_forecast && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_forecast(ti);
+                                }
+                                if self.pending_shapes && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_shapes(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2383,7 +2475,8 @@ impl TickView {
             || self.pending_trend
             || self.pending_gannfib
             || self.pending_patterns
-            || self.pending_forecast;
+            || self.pending_forecast
+            || self.pending_shapes;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {

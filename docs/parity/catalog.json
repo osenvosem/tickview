@@ -1219,10 +1219,17 @@
       "icon": "brush",
       "anchors": 0,
       "interaction": "freehand",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Stroke trail a->b->vertices selects."
     },
     {
       "kind": "drawing",
@@ -1233,10 +1240,17 @@
       "icon": "highlighter",
       "anchors": 0,
       "interaction": "freehand",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Stroke trail selects (same path model as brush)."
     },
     {
       "kind": "drawing",
@@ -1247,10 +1261,17 @@
       "icon": "arrow-marker",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Glyph-extent hit: 16px around anchor."
     },
     {
       "kind": "drawing",
@@ -1261,10 +1282,17 @@
       "icon": "arrow",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Shaft + head select."
     },
     {
       "kind": "drawing",
@@ -1275,10 +1303,17 @@
       "icon": "arrow-mark-up",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Glyph-extent hit: 16px around anchor."
     },
     {
       "kind": "drawing",
@@ -1289,10 +1324,17 @@
       "icon": "arrow-mark-down",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Glyph-extent hit: 16px around anchor."
     },
     {
       "kind": "drawing",
@@ -1303,10 +1345,17 @@
       "icon": "rectangle",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Border always; interior when filled."
     },
     {
       "kind": "drawing",
@@ -1317,10 +1366,17 @@
       "icon": "rotated-rect",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Parallelogram interior when filled; edges always."
     },
     {
       "kind": "drawing",
@@ -1331,10 +1387,17 @@
       "icon": "path",
       "anchors": 0,
       "interaction": "open-path",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Open-path vertex chain."
     },
     {
       "kind": "drawing",
@@ -1345,10 +1408,17 @@
       "icon": "circle-shape",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Ring always; disc interior when filled."
     },
     {
       "kind": "drawing",
@@ -1359,10 +1429,17 @@
       "icon": "ellipse",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Ring always; interior when filled."
     },
     {
       "kind": "drawing",
@@ -1373,10 +1450,17 @@
       "icon": "polyline",
       "anchors": 0,
       "interaction": "open-path",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Open-path vertex chain."
     },
     {
       "kind": "drawing",
@@ -1387,10 +1471,17 @@
       "icon": "triangle-shape",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Interior when filled; edges always."
     },
     {
       "kind": "drawing",
@@ -1401,10 +1492,17 @@
       "icon": "arc-shape",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Hit fix: sampled arc curve, not anchor chords."
     },
     {
       "kind": "drawing",
@@ -1415,10 +1513,17 @@
       "icon": "curve-shape",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Hit fix: quadratic curve sample."
     },
     {
       "kind": "drawing",
@@ -1429,10 +1534,17 @@
       "icon": "double-curve",
       "anchors": 4,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-shapes.md",
+        "docs/screenshots/parity/shapes-dark.png"
+      ],
+      "notes": "Hit fix: cubic curve sample (4 anchors)."
     },
     {
       "kind": "drawing",

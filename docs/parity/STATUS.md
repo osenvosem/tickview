@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 53 verified, 31 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 69 verified, 15 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -67,22 +67,22 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Price range | `LineToolPriceRange` | `PriceRange` | `price-range` | verified |
 | Date range | `LineToolDateRange` | `DateRange` | `date-range` | verified |
 | Date and price range | `LineToolDateAndPriceRange` | `DatePriceRange` | `date-price-range` | verified |
-| Brush | `LineToolBrush` | `Brush` | `brush` | in-progress |
-| Highlighter | `LineToolHighlighter` | `Highlighter` | `highlighter` | in-progress |
-| Arrow marker | `LineToolArrowMarker` | `ArrowMarker` | `arrow-marker` | in-progress |
-| Arrow | `LineToolArrow` | `Arrow` | `arrow` | in-progress |
-| Arrow mark up | `LineToolArrowMarkUp` | `ArrowMarkUp` | `arrow-mark-up` | in-progress |
-| Arrow mark down | `LineToolArrowMarkDown` | `ArrowMarkDown` | `arrow-mark-down` | in-progress |
-| Rectangle | `LineToolRectangle` | `Rect` | `rectangle` | in-progress |
-| Rotated rectangle | `LineToolRotatedRectangle` | `RotatedRect` | `rotated-rect` | in-progress |
-| Path | `LineToolPath` | `Path` | `path` | in-progress |
-| Circle | `LineToolCircle` | `Circle` | `circle-shape` | in-progress |
-| Ellipse | `LineToolEllipse` | `Ellipse` | `ellipse` | in-progress |
-| Polyline | `LineToolPolyline` | `Polyline` | `polyline` | in-progress |
-| Triangle | `LineToolTriangle` | `TriangleShape` | `triangle-shape` | in-progress |
-| Arc | `LineToolArc` | `Arc` | `arc-shape` | in-progress |
-| Curve | `LineToolBezierQuadro` | `Curve` | `curve-shape` | in-progress |
-| Double curve | `LineToolBezierCubic` | `DoubleCurve` | `double-curve` | in-progress |
+| Brush | `LineToolBrush` | `Brush` | `brush` | verified |
+| Highlighter | `LineToolHighlighter` | `Highlighter` | `highlighter` | verified |
+| Arrow marker | `LineToolArrowMarker` | `ArrowMarker` | `arrow-marker` | verified |
+| Arrow | `LineToolArrow` | `Arrow` | `arrow` | verified |
+| Arrow mark up | `LineToolArrowMarkUp` | `ArrowMarkUp` | `arrow-mark-up` | verified |
+| Arrow mark down | `LineToolArrowMarkDown` | `ArrowMarkDown` | `arrow-mark-down` | verified |
+| Rectangle | `LineToolRectangle` | `Rect` | `rectangle` | verified |
+| Rotated rectangle | `LineToolRotatedRectangle` | `RotatedRect` | `rotated-rect` | verified |
+| Path | `LineToolPath` | `Path` | `path` | verified |
+| Circle | `LineToolCircle` | `Circle` | `circle-shape` | verified |
+| Ellipse | `LineToolEllipse` | `Ellipse` | `ellipse` | verified |
+| Polyline | `LineToolPolyline` | `Polyline` | `polyline` | verified |
+| Triangle | `LineToolTriangle` | `TriangleShape` | `triangle-shape` | verified |
+| Arc | `LineToolArc` | `Arc` | `arc-shape` | verified |
+| Curve | `LineToolBezierQuadro` | `Curve` | `curve-shape` | verified |
+| Double curve | `LineToolBezierCubic` | `DoubleCurve` | `double-curve` | verified |
 | Text | `LineToolText` | `Text` | `text` | in-progress |
 | Note | `LineToolTextNote` | `Note` | `note` | in-progress |
 | Price note | `LineToolPriceNote` | `PriceNote` | `price-note` | in-progress |

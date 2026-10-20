@@ -149,9 +149,12 @@ fan, Gann box, both Gann squares, Gann fan), the patterns/Elliott/cycles
 family (14 tools: XABCD, Cypher, head-and-shoulders, ABCD, triangle, three
 drives, five Elliott wave counts, cyclic lines, time cycles, sine line) and
 the forecasting/measurement family (7 tools: long/short position, position
-forecast, sector projection, price/date/date-price ranges) are `verified` via
-the golden geometry harness (`crates/tickchart/tests/drawing_goldens.rs`,
-linear + log axes) and `TICKVIEW_SCENE=trend|gannfib|patterns|forecast`
-screenshots. Milestone 3 covers the study catalog.
+forecast, sector projection, price/date/date-price ranges) and the geometric
+shapes family (16 tools: brush, highlighter, four arrows/marker, rectangle,
+rotated rectangle, circle, ellipse, triangle, path, polyline, arc, quadratic
+and cubic curves) are `verified` via the golden geometry harness
+(`crates/tickchart/tests/drawing_goldens.rs`, linear + log axes) and
+`TICKVIEW_SCENE=trend|gannfib|patterns|forecast|shapes` screenshots.
+Milestone 3 covers the study catalog.
 
 `PARITY.md` tracks the shell surface and the 66-study indicator matrix.

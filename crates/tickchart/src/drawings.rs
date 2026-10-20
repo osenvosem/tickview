@@ -1381,24 +1381,31 @@ impl Drawing {
                     | DrawingKind::Sector
                     | DrawingKind::RotatedRect
                     | DrawingKind::TriangleShape
-                    | DrawingKind::Arc
-                    | DrawingKind::Curve
-                    | DrawingKind::DoubleCurve
                     | DrawingKind::Path
                     | DrawingKind::Polyline
-                    | DrawingKind::ArrowMarker
-                    | DrawingKind::ArrowMarkUp
-                    | DrawingKind::ArrowMarkDown
             )
         {
             let points = self.screen_points(&map);
             let stroke_hit = points
                 .windows(2)
                 .any(|pair| distance_to_segment(p, pair[0], pair[1]) <= TOL);
-            // TV selects the filled Sector wedge anywhere inside, not just edges.
-            let interior = self.kind == DrawingKind::Sector
-                && points.len() >= 3
-                && point_in_triangle(p, points[0], points[1], points[2]);
+            // TV selects filled polygons anywhere inside, not just edges.
+            let interior = match self.kind {
+                DrawingKind::Sector => {
+                    points.len() >= 3 && point_in_triangle(p, points[0], points[1], points[2])
+                }
+                DrawingKind::TriangleShape => {
+                    self.style.fill
+                        && points.len() >= 3
+                        && point_in_triangle(p, points[0], points[1], points[2])
+                }
+                DrawingKind::RotatedRect => {
+                    self.style.fill
+                        && points.len() >= 3
+                        && rotated_rect_contains(p, points[0], points[1], points[2], TOL)
+                }
+                _ => false,
+            };
             return stroke_hit || interior;
         }
         let a = map(self.a);
@@ -1420,21 +1427,17 @@ impl Drawing {
         if self.kind == DrawingKind::Circle {
             let r = Rect::from_two_pos(a, b);
             let radius = r.width().min(r.height()) * 0.5;
-            return (p.distance(r.center()) - radius).abs() <= TOL;
+            // TV selects the filled disc interior too.
+            return (p.distance(r.center()) - radius).abs() <= TOL
+                || (self.style.fill && p.distance(r.center()) <= radius);
         }
         match self.kind {
             DrawingKind::Brush | DrawingKind::Highlighter => {
-                let mut prev = a;
-                let mut found = false;
-                for anchor in &self.extra {
-                    let cur = map(*anchor);
-                    if distance_to_segment(p, prev, cur) <= TOL {
-                        found = true;
-                        break;
-                    }
-                    prev = cur;
-                }
-                found || (self.extra.is_empty() && distance_to_segment(p, a, b) <= TOL)
+                // Full stroke path a -> b -> captured vertices (TV selects the
+                // painted trail, including the initial drag segment).
+                self.screen_points(&map)
+                    .windows(2)
+                    .any(|pair| distance_to_segment(p, pair[0], pair[1]) <= TOL)
             }
             DrawingKind::CrossLine => (p.y - a.y).abs() <= TOL || (p.x - a.x).abs() <= TOL,
             DrawingKind::FlatChannel => {
@@ -1487,7 +1490,7 @@ impl Drawing {
             DrawingKind::VLine => (p.x - a.x).abs() <= TOL,
             DrawingKind::Rect => {
                 let r = Rect::from_two_pos(a, b);
-                distance_to_rect_edge(p, r) <= TOL
+                distance_to_rect_edge(p, r) <= TOL || (self.style.fill && r.contains(p))
             }
             DrawingKind::Ellipse => {
                 let r = Rect::from_two_pos(a, b);
@@ -1497,6 +1500,7 @@ impl Drawing {
                 let dy = (p.y - r.center().y) / ry;
                 let d = (dx * dx + dy * dy).sqrt();
                 (d - 1.0).abs() * rx.min(ry) <= TOL
+                    || (self.style.fill && d <= 1.0 + TOL / rx.min(ry))
             }
             DrawingKind::Fib => {
                 let x0 = a.x.min(b.x);
@@ -1604,6 +1608,35 @@ impl Drawing {
                     .windows(2)
                     .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
                     || distance_to_segment(p, a, b) <= TOL
+            }
+            DrawingKind::Arc => {
+                let Some(pc) = self.c.map(map) else {
+                    return false;
+                };
+                arc_points(a, b, pc)
+                    .windows(2)
+                    .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
+            }
+            DrawingKind::Curve => {
+                let Some(pc) = self.c.map(map) else {
+                    return false;
+                };
+                quadratic_points(a, pc, b, 48)
+                    .windows(2)
+                    .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
+            }
+            DrawingKind::DoubleCurve => {
+                let Some(pc) = self.c.map(&map) else {
+                    return false;
+                };
+                let end = self.extra.first().copied().map(&map).unwrap_or(b);
+                cubic_points(a, b, pc, end, 64)
+                    .windows(2)
+                    .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
+            }
+            // TV markers select by their glyph extent (~14px around anchor).
+            DrawingKind::ArrowMarker | DrawingKind::ArrowMarkUp | DrawingKind::ArrowMarkDown => {
+                p.distance(a) <= 16.0
             }
             _ => false,
         }
@@ -3756,6 +3789,20 @@ fn point_in_triangle(p: Pos2, a: Pos2, b: Pos2, c: Pos2) -> bool {
     (s1 >= 0.0 && s2 >= 0.0 && s3 >= 0.0) || (s1 <= 0.0 && s2 <= 0.0 && s3 <= 0.0)
 }
 
+/// True when `p` projects inside the parallelogram spanned by base `a b` and
+/// the perpendicular offset of `c` (TV rotated rectangle fill).
+#[must_use]
+fn rotated_rect_contains(p: Pos2, a: Pos2, b: Pos2, c: Pos2, tol: f32) -> bool {
+    let base = b - a;
+    let len = base.length().max(1.0);
+    let u = base / len;
+    let n = Vec2::new(-u.y, u.x);
+    let s = (p - a).dot(u);
+    let t = (p - a).dot(n);
+    let h = (c - a).dot(n);
+    s >= -tol && s <= len + tol && t >= h.min(0.0) - tol && t <= h.max(0.0) + tol
+}
+
 #[must_use]
 fn distance_to_rect_edge(p: Pos2, r: Rect) -> f32 {
     let inside_x = p.x.clamp(r.min.x, r.max.x);
@@ -3846,7 +3893,7 @@ mod tests {
     }
 
     #[test]
-    fn rectangle_hit_is_edge_based() {
+    fn rectangle_hit_follows_tv_fill_semantics() {
         let d = Drawing::new(
             2,
             DrawingKind::Rect,
@@ -3858,7 +3905,15 @@ mod tests {
         );
         let plot = Rect::from_min_max(Pos2::ZERO, Pos2::new(200.0, 50.0));
         assert!(d.hit(Pos2::new(0.0, 20.0), map, plot));
-        assert!(!d.hit(Pos2::new(50.0, 20.0), map, plot));
+        // TV: unfilled shapes select on the border only.
+        let mut unfilled = d.clone();
+        unfilled.style.fill = false;
+        assert!(!unfilled.hit(Pos2::new(50.0, 20.0), map, plot));
+        // TV: filled shapes also select in the interior.
+        let mut filled = d.clone();
+        filled.style.fill = true;
+        assert!(filled.hit(Pos2::new(50.0, 20.0), map, plot));
+        assert!(!filled.hit(Pos2::new(50.0, 48.0), map, plot));
     }
 
     #[test]

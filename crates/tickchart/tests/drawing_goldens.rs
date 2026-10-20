@@ -1222,3 +1222,277 @@ fn forecast_family_geometry_holds_on_log_axis() {
         errs.join("\n")
     );
 }
+
+/// TV shapes select on the border always and on the interior when filled;
+/// curves select along the sampled curve, not the anchor chords.
+fn run_shapes_family(sc: &Scene) -> Vec<String> {
+    let mut errs = Vec::new();
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let filled = |d: &mut Drawing| {
+        d.style.fill = true;
+        d.style.fill_opacity = 40;
+    };
+    // Rect: interior + border hit, exterior miss.
+    {
+        let mut d = Drawing::new(1, DrawingKind::Rect, an(sc, 30, 98.0), an(sc, 90, 110.0));
+        filled(&mut d);
+        let r = Rect::from_two_pos(map(d.a), map(d.b));
+        for q in [
+            r.center(),
+            r.min + Vec2::splat(1.0),
+            r.max - Vec2::splat(1.0),
+        ] {
+            if !d.hit(q, map, PLOT) {
+                errs.push("Rect: interior misses".to_owned());
+            }
+        }
+        if d.hit(r.max + Vec2::splat(8.0), map, PLOT) {
+            errs.push("Rect: 8px outside hits".to_owned());
+        }
+    }
+    // Circle: center + ring hit, beyond radius miss.
+    {
+        let mut d = Drawing::new(1, DrawingKind::Circle, an(sc, 30, 98.0), an(sc, 90, 110.0));
+        filled(&mut d);
+        let r = Rect::from_two_pos(map(d.a), map(d.b));
+        let radius = r.width().min(r.height()) * 0.5;
+        if !d.hit(r.center(), map, PLOT) {
+            errs.push("Circle: center misses".to_owned());
+        }
+        let ring = r.center() + Vec2::new(radius, 0.0);
+        if !d.hit(ring, map, PLOT) {
+            errs.push("Circle: ring point misses".to_owned());
+        }
+        if d.hit(r.center() + Vec2::new(radius + 8.0, 0.0), map, PLOT) {
+            errs.push("Circle: 8px beyond ring hits".to_owned());
+        }
+    }
+    // Ellipse: center + ring hit, outside miss.
+    {
+        let mut d = Drawing::new(1, DrawingKind::Ellipse, an(sc, 30, 98.0), an(sc, 95, 112.0));
+        filled(&mut d);
+        let r = Rect::from_two_pos(map(d.a), map(d.b));
+        if !d.hit(r.center(), map, PLOT) {
+            errs.push("Ellipse: center misses".to_owned());
+        }
+        let ring = r.center() + Vec2::new(r.width() * 0.5, 0.0);
+        if !d.hit(ring, map, PLOT) {
+            errs.push("Ellipse: ring point misses".to_owned());
+        }
+        if d.hit(
+            r.center() + Vec2::new(r.width() * 0.5 + 8.0, 0.0),
+            map,
+            PLOT,
+        ) {
+            errs.push("Ellipse: outside hits".to_owned());
+        }
+    }
+    // Triangle: centroid + edge midpoints hit, exterior miss.
+    {
+        let mut d = Drawing::new(
+            1,
+            DrawingKind::TriangleShape,
+            an(sc, 30, 100.0),
+            an(sc, 60, 114.0),
+        );
+        d.c = Some(an(sc, 90, 100.0));
+        filled(&mut d);
+        let (va, vb, vc) = (map(d.a), map(d.b), map(d.c.unwrap()));
+        let centroid = Pos2::new((va.x + vb.x + vc.x) / 3.0, (va.y + vb.y + vc.y) / 3.0);
+        if !d.hit(centroid, map, PLOT) {
+            errs.push("TriangleShape: centroid misses".to_owned());
+        }
+        if !d.hit(va.lerp(vb, 0.5), map, PLOT) {
+            errs.push("TriangleShape: edge midpoint misses".to_owned());
+        }
+        if d.hit(Pos2::new(vb.x, vb.y - 20.0), map, PLOT) {
+            errs.push("TriangleShape: above apex hits".to_owned());
+        }
+    }
+    // Rotated rect: parallelogram interior + edges hit, exterior miss.
+    {
+        let mut d = Drawing::new(
+            1,
+            DrawingKind::RotatedRect,
+            an(sc, 30, 100.0),
+            an(sc, 80, 106.0),
+        );
+        d.c = Some(an(sc, 40, 112.0));
+        filled(&mut d);
+        let (pa, pb, pc) = (map(d.a), map(d.b), map(d.c.unwrap()));
+        let shift = pc - pa;
+        let center = pa + (pb - pa) * 0.5 + shift * 0.5;
+        if !d.hit(center, map, PLOT) {
+            errs.push("RotatedRect: interior misses".to_owned());
+        }
+        if !d.hit(pa.lerp(pb, 0.5), map, PLOT) {
+            errs.push("RotatedRect: base edge misses".to_owned());
+        }
+        let bdir = (pb - pa).normalized();
+        let n = Vec2::new(-bdir.y, bdir.x);
+        let past = if (pc - pa).dot(n) > 0.0 { -n } else { n };
+        if d.hit(pa.lerp(pb, 0.5) + past * 30.0, map, PLOT) {
+            errs.push("RotatedRect: 30px past base edge hits".to_owned());
+        }
+    }
+    // Arc: anchors and circumcircle mid-arc point hit, radial miss.
+    {
+        let d = Drawing::new(1, DrawingKind::Arc, an(sc, 30, 100.0), an(sc, 90, 100.0));
+        let d = {
+            let mut dd = d;
+            dd.c = Some(an(sc, 60, 110.0));
+            dd
+        };
+        let (va, vb, vc) = (map(d.a), map(d.b), map(d.c.unwrap()));
+        let ctr = circumcenter(va, vb, vc);
+        let rad = ctr.distance(va);
+        let mut dir = (va - ctr).normalized() + (vb - ctr).normalized();
+        if dir.dot(vc - ctr) < 0.0 {
+            dir = -dir;
+        }
+        let mid = ctr + dir.normalized() * rad;
+        if !d.hit(mid, map, PLOT) {
+            errs.push("Arc: mid-arc point misses".to_owned());
+        }
+        if d.hit(ctr + dir.normalized() * (rad + 14.0), map, PLOT) {
+            errs.push("Arc: 14px outside arc hits".to_owned());
+        }
+    }
+    // Curve (quadratic, control c): midpoint of the parabola hits.
+    {
+        let mut d = Drawing::new(1, DrawingKind::Curve, an(sc, 30, 100.0), an(sc, 90, 100.0));
+        d.c = Some(an(sc, 60, 116.0));
+        let (va, vb, vc) = (map(d.a), map(d.b), map(d.c.unwrap()));
+        let q = va * 0.25 + vc.to_vec2() * 0.5 + vb.to_vec2() * 0.25;
+        if !d.hit(q, map, PLOT) {
+            errs.push("Curve: parabola midpoint misses".to_owned());
+        }
+        if d.hit(q + Vec2::new(0.0, -18.0), map, PLOT) {
+            errs.push("Curve: 18px off curve hits".to_owned());
+        }
+    }
+    // DoubleCurve (cubic): midpoint hits, off-curve misses.
+    {
+        let mut d = Drawing::new(
+            1,
+            DrawingKind::DoubleCurve,
+            an(sc, 25, 100.0),
+            an(sc, 50, 114.0),
+        );
+        d.c = Some(an(sc, 75, 96.0));
+        d.extra = vec![an(sc, 100, 110.0)];
+        let (va, vb, vc, vd) = (map(d.a), map(d.b), map(d.c.unwrap()), map(d.extra[0]));
+        let q = (va.to_vec2() + vb.to_vec2() * 3.0 + vc.to_vec2() * 3.0 + vd.to_vec2()) / 8.0;
+        if !d.hit(q.to_pos2(), map, PLOT) {
+            errs.push("DoubleCurve: cubic midpoint misses".to_owned());
+        }
+        if d.hit(q.to_pos2() + Vec2::new(0.0, 18.0), map, PLOT) {
+            errs.push("DoubleCurve: 18px off curve hits".to_owned());
+        }
+    }
+    // Path / Polyline: open-path segment midpoints hit, off-path misses.
+    for kind in [DrawingKind::Path, DrawingKind::Polyline] {
+        let mut d = Drawing::new(1, kind, an(sc, 30, 100.0), an(sc, 55, 110.0));
+        d.extra = vec![an(sc, 80, 102.0), an(sc, 105, 112.0)];
+        let pts = d.screen_points(&map);
+        for w in pts.windows(2) {
+            if !d.hit(w[0].lerp(w[1], 0.5), map, PLOT) {
+                errs.push(format!("{kind:?}: segment midpoint misses"));
+            }
+        }
+        if d.hit(pts[1] + Vec2::new(0.0, 16.0), map, PLOT) {
+            errs.push(format!("{kind:?}: off-path point hits"));
+        }
+    }
+    // Brush / Highlighter: freehand vertices, midpoints hit, off-stroke misses.
+    for kind in [DrawingKind::Brush, DrawingKind::Highlighter] {
+        let mut d = Drawing::new(1, kind, an(sc, 30, 100.0), an(sc, 45, 104.0));
+        d.extra = vec![an(sc, 60, 100.0), an(sc, 75, 106.0)];
+        let pts = d.screen_points(&map);
+        for w in pts.windows(2) {
+            if !d.hit(w[0].lerp(w[1], 0.5), map, PLOT) {
+                errs.push(format!("{kind:?}: stroke midpoint misses"));
+            }
+        }
+        if d.hit(pts[1] + Vec2::new(0.0, -16.0), map, PLOT) {
+            errs.push(format!("{kind:?}: off-stroke point hits"));
+        }
+    }
+    // Arrow: shaft midpoint and head hit, beyond tip misses.
+    {
+        let d = Drawing::new(1, DrawingKind::Arrow, an(sc, 30, 100.0), an(sc, 80, 112.0));
+        let (va, vb) = (map(d.a), map(d.b));
+        if !d.hit(va.lerp(vb, 0.5), map, PLOT) {
+            errs.push("Arrow: shaft midpoint misses".to_owned());
+        }
+        if !d.hit(vb, map, PLOT) {
+            errs.push("Arrow: head misses".to_owned());
+        }
+        if d.hit(vb + (vb - va).normalized() * 24.0, map, PLOT) {
+            errs.push("Arrow: 24px past tip hits".to_owned());
+        }
+    }
+    // Markers: glyph around the anchor selects, far points miss.
+    for kind in [
+        DrawingKind::ArrowMarker,
+        DrawingKind::ArrowMarkUp,
+        DrawingKind::ArrowMarkDown,
+    ] {
+        let d = Drawing::new(1, kind, an(sc, 50, 105.0), an(sc, 50, 105.0));
+        let va = map(d.a);
+        if !d.hit(va, map, PLOT) {
+            errs.push(format!("{kind:?}: anchor misses"));
+        }
+        if !d.hit(va + Vec2::new(0.0, -10.0), map, PLOT) {
+            errs.push(format!("{kind:?}: 10px glyph offset misses"));
+        }
+        if d.hit(va + Vec2::new(0.0, 24.0), map, PLOT) {
+            errs.push(format!("{kind:?}: 24px away hits"));
+        }
+    }
+    errs
+}
+
+#[test]
+fn shape_anchor_counts_match_tv() {
+    let expected: [(DrawingKind, u8); 12] = [
+        (DrawingKind::ArrowMarker, 1),
+        (DrawingKind::ArrowMarkUp, 1),
+        (DrawingKind::ArrowMarkDown, 1),
+        (DrawingKind::Arrow, 2),
+        (DrawingKind::Rect, 2),
+        (DrawingKind::RotatedRect, 3),
+        (DrawingKind::Circle, 2),
+        (DrawingKind::Ellipse, 2),
+        (DrawingKind::TriangleShape, 3),
+        (DrawingKind::Arc, 3),
+        (DrawingKind::Curve, 3),
+        (DrawingKind::DoubleCurve, 4),
+    ];
+    for (k, want) in expected {
+        assert_eq!(k.points(), want, "{k:?} anchors");
+    }
+}
+
+#[test]
+fn shapes_family_geometry_hits_and_misses() {
+    let errs = run_shapes_family(&scene(false));
+    assert!(
+        errs.is_empty(),
+        "{} shapes failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+#[test]
+fn shapes_family_geometry_holds_on_log_axis() {
+    let errs = run_shapes_family(&scene(true));
+    assert!(
+        errs.is_empty(),
+        "{} shapes failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
