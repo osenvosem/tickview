@@ -66,7 +66,6 @@ const VALID_STATUS: [&str; 4] = ["missing", "in-progress", "verified", "excluded
 
 /// Repository root, resolved at compile time so tests work from any CWD.
 #[must_use]
-#[allow(dead_code)] // consumed by validate_full/run in Task 2-3
 pub fn workspace_root() -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -78,15 +77,13 @@ pub fn workspace_root() -> std::path::PathBuf {
 /// (`freehand`, `open-path`).
 #[derive(serde::Deserialize, Clone, Debug)]
 #[serde(untagged)]
-#[allow(dead_code)] // consumed by validate_full in Task 2
 pub enum Anchors {
-    Count(u8),
-    Mode(String),
+    Count(#[allow(dead_code)] u8),
+    Mode(#[allow(dead_code)] String),
 }
 
 /// One row of the extracted TradingView drawing catalog.
 #[derive(serde::Deserialize)]
-#[allow(dead_code)] // fields consumed by validate_full in Task 2-3
 pub struct TvTool {
     pub tv_id: String,
     #[allow(dead_code)]
@@ -102,12 +99,12 @@ pub struct TvTool {
     #[allow(dead_code)]
     pub interaction: String,
     pub scope: String,
+    #[allow(dead_code)] // reason lives in the manifest Entry; TV side is documentation
     pub exclusion_reason: Option<String>,
 }
 
 /// The extracted TV drawing catalog (`docs/evidence/tv/drawings-catalog.json`).
 #[derive(serde::Deserialize)]
-#[allow(dead_code)] // consumed by validate_full in Task 2
 pub struct TvCatalog {
     #[allow(dead_code)]
     pub schema_version: u32,
@@ -119,11 +116,118 @@ pub struct TvCatalog {
 /// Parse the extracted TV drawing catalog JSON.
 ///
 /// # Errors
-///
 /// Returns a message when the JSON does not match the catalog shape.
-#[allow(dead_code)] // consumed by run() wiring in Task 2
 pub fn parse_tv_catalog(json: &str) -> Result<TvCatalog, String> {
     serde_json::from_str(json).map_err(|error| format!("invalid TV catalog JSON: {error}"))
+}
+
+/// Parse `DrawingKind` variant names from the tickchart source text.
+#[must_use]
+pub fn parse_kind_variants(src: &str) -> Vec<String> {
+    let head = "pub enum DrawingKind {";
+    let Some(start) = src.find(head) else {
+        return Vec::new();
+    };
+    let body = &src[start + head.len()..];
+    let end = body.find('}').unwrap_or(body.len());
+    body[..end]
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with("//") && !line.starts_with('#'))
+        .map(|line| line.trim_end_matches(',').to_owned())
+        .filter(|name| name.chars().next().is_some_and(|c| c.is_ascii_uppercase()))
+        .collect()
+}
+
+/// Full validation: structural rules plus TV-catalog coverage, implemented-kind
+/// coverage, and verified-drawing coverage (≥3 tests, ≥2 evidence incl. png).
+#[must_use]
+pub fn validate_full(
+    catalog_json: &str,
+    tv_json: &str,
+    kinds: &[String],
+    evidence_exists: &impl Fn(&str) -> bool,
+) -> Vec<String> {
+    let mut errors = validate_str(catalog_json, evidence_exists);
+    let Ok(catalog) = serde_json::from_str::<Catalog>(catalog_json) else {
+        return errors;
+    };
+    let tv = match parse_tv_catalog(tv_json) {
+        Ok(tv) => tv,
+        Err(error) => {
+            errors.push(error);
+            return errors;
+        }
+    };
+
+    let tickview_ids: HashSet<&str> = catalog
+        .drawings
+        .iter()
+        .map(|entry| entry.tickview_id.as_str())
+        .collect();
+    for kind in kinds {
+        if !tickview_ids.contains(kind.as_str()) {
+            errors.push(format!(
+                "implemented drawing kind {kind} has no manifest entry"
+            ));
+        }
+    }
+
+    let manifest_tv_ids: HashSet<&str> = catalog
+        .drawings
+        .iter()
+        .map(|entry| entry.tv_id.as_str())
+        .collect();
+    for tool in &tv.tools {
+        match tool.scope.as_str() {
+            "in-scope" => {
+                if !manifest_tv_ids.contains(tool.tv_id.as_str()) {
+                    errors.push(format!(
+                        "in-scope TV tool {} has no manifest entry",
+                        tool.tv_id
+                    ));
+                }
+            }
+            "excluded" => match catalog.drawings.iter().find(|e| e.tv_id == tool.tv_id) {
+                Some(entry) if entry.status == "excluded" => {}
+                Some(_) => {
+                    errors.push(format!(
+                        "TV tool {} is excluded but not excluded",
+                        tool.tv_id
+                    ));
+                }
+                None => {
+                    errors.push(format!(
+                        "excluded TV tool {} has no manifest entry",
+                        tool.tv_id
+                    ));
+                }
+            },
+            other => errors.push(format!("{}: unknown scope {other:?}", tool.tv_id)),
+        }
+    }
+
+    let tv_catalog_ids: HashSet<&str> = tv.tools.iter().map(|tool| tool.tv_id.as_str()).collect();
+    for entry in &catalog.drawings {
+        if !tv_catalog_ids.contains(entry.tv_id.as_str()) {
+            errors.push(format!("{}: tv_id not in TV catalog", entry.tv_id));
+        }
+    }
+
+    for entry in &catalog.drawings {
+        if entry.status == "verified" {
+            if entry.tests.len() < 3 {
+                errors.push(format!("{}: verified drawings need >=3 tests", entry.tv_id));
+            }
+            if entry.evidence.len() < 2 || !entry.evidence.iter().any(|p| p.ends_with(".png")) {
+                errors.push(format!(
+                    "{}: verified drawings need >=2 evidence incl. a .png",
+                    entry.tv_id
+                ));
+            }
+        }
+    }
+    errors
 }
 
 /// Validate a manifest string. `evidence_exists` decides whether an evidence
@@ -268,15 +372,35 @@ fn push_table(out: &mut String, title: &str, entries: &[Entry]) {
 /// `xtask parity [--write]` entry point. Returns a process exit code.
 pub fn run(args: &[String]) -> i32 {
     let write = args.iter().any(|arg| arg == "--write");
-    let path = Path::new("docs/parity/catalog.json");
-    let json = match std::fs::read_to_string(path) {
+    let root = workspace_root();
+    let path = root.join("docs/parity/catalog.json");
+    let json = match std::fs::read_to_string(&path) {
         Ok(json) => json,
         Err(error) => {
             eprintln!("cannot read {}: {error}", path.display());
             return 1;
         }
     };
-    let errors = validate_str(&json, |candidate| Path::new(candidate).exists());
+    let tv_path = root.join("docs/evidence/tv/drawings-catalog.json");
+    let tv_json = match std::fs::read_to_string(&tv_path) {
+        Ok(tv) => tv,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", tv_path.display());
+            return 1;
+        }
+    };
+    let kinds_path = root.join("crates/tickchart/src/drawings.rs");
+    let kinds_src = match std::fs::read_to_string(&kinds_path) {
+        Ok(src) => src,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", kinds_path.display());
+            return 1;
+        }
+    };
+    let kinds = parse_kind_variants(&kinds_src);
+    let errors = validate_full(&json, &tv_json, &kinds, &|candidate| {
+        root.join(candidate).exists() || Path::new(candidate).exists()
+    });
     if !errors.is_empty() {
         for error in &errors {
             eprintln!("parity: {error}");
@@ -306,7 +430,9 @@ pub fn run(args: &[String]) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{TvTool, parse_tv_catalog, validate_str, workspace_root};
+    use super::{
+        TvTool, parse_kind_variants, parse_tv_catalog, validate_full, validate_str, workspace_root,
+    };
 
     /// Only the Gann evidence path "exists" in tests.
     fn evidence(path: &str) -> bool {
@@ -461,5 +587,96 @@ mod tests {
         let total = ids.len();
         ids.dedup();
         assert_eq!(ids.len(), total, "duplicate tv_id in TV catalog");
+    }
+
+    fn tv_json(rows: &[String]) -> String {
+        format!(
+            r#"{{"schema_version":1,"source":{{"app_version":"3.4.1","captured":"2026-10-20"}},"tools":[{}]}}"#,
+            rows.join(",")
+        )
+    }
+
+    fn tv_row(id: &str, scope: &str) -> String {
+        format!(
+            r#"{{"tv_id":"{id}","label":"L","group":"G","section":"S","shortcut":null,"anchors":2,"interaction":"two-point","scope":"{scope}","exclusion_reason":null}}"#
+        )
+    }
+
+    fn empty_catalog() -> String {
+        r#"{"schema_version":1,"source":{"app_version":"3.4.1","captured":"2026-10-20"},"drawings":[],"studies":[]}"#
+            .to_owned()
+    }
+
+    #[test]
+    fn parse_kind_variants_finds_gann_fan() {
+        let src = "pub enum DrawingKind {\n    TrendLine,\n    GannFan,\n}\n";
+        assert_eq!(parse_kind_variants(src), vec!["TrendLine", "GannFan"]);
+    }
+
+    #[test]
+    fn implemented_kind_without_entry_is_error() {
+        let errors = validate_full(
+            &empty_catalog(),
+            &tv_json(&[]),
+            &["TrendLine".to_owned()],
+            &evidence,
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("implemented drawing kind TrendLine has no manifest entry")),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn in_scope_tv_id_without_entry_is_error() {
+        let errors = validate_full(
+            &empty_catalog(),
+            &tv_json(&[tv_row("LineToolX", "in-scope")]),
+            &[],
+            &evidence,
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("in-scope TV tool LineToolX has no manifest entry")),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn excluded_tv_id_must_be_excluded_status() {
+        let json = with_drawing(
+            r#"{ "kind": "drawing", "tv_id": "A", "tickview_id": "A", "name": "a",
+                "icon": "ia", "status": "missing" }"#,
+        );
+        let errors = validate_full(&json, &tv_json(&[tv_row("A", "excluded")]), &[], &evidence);
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("TV tool A is excluded but not excluded")),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn verified_drawing_needs_coverage() {
+        let json = with_drawing(
+            r#"{ "kind": "drawing", "tv_id": "A", "tickview_id": "A", "name": "a",
+                "icon": "ia", "status": "verified", "tests": ["t"],
+                "evidence": ["docs/evidence/tv/gann-fan.md"] }"#,
+        );
+        let errors = validate_full(&json, &tv_json(&[tv_row("A", "in-scope")]), &[], &evidence);
+        assert!(
+            errors.iter().any(|e| e.contains("need >=3 tests")),
+            "{errors:?}"
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("need >=2 evidence incl. a .png")),
+            "{errors:?}"
+        );
     }
 }
