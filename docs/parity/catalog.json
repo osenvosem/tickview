@@ -389,10 +389,17 @@
       "icon": "fibonacci",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "TV level set 0..100%; screen-space levels (log-axis placement noted divergence in evidence)."
     },
     {
       "kind": "drawing",
@@ -403,10 +410,17 @@
       "icon": "fibonacci-extension",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Levels project from c along a->b price delta; TV ratio set incl. 1.272+."
     },
     {
       "kind": "drawing",
@@ -417,10 +431,17 @@
       "icon": "fib-channel",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Rails = base a->b shifted by ratio*(c-a); TV ratio set."
     },
     {
       "kind": "drawing",
@@ -431,10 +452,17 @@
       "icon": "fib-time-zone",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Verticals at fib ratios of the anchor bar span incl. 1.618/2.618."
     },
     {
       "kind": "drawing",
@@ -445,10 +473,17 @@
       "icon": "fib-speed-fan",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "TV anchors=2; TickView reduced from 3 to 2. Rays from origin to ratio points on vertical through b."
     },
     {
       "kind": "drawing",
@@ -459,10 +494,17 @@
       "icon": "fib-time",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "3 anchors accepted; vertical ratio set as FibTimeZone (trend anchor c reserved)."
     },
     {
       "kind": "drawing",
@@ -473,10 +515,17 @@
       "icon": "fib-circles",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Radii base+(outer-base)*ratio around a; TV ratio set incl. 161.8%."
     },
     {
       "kind": "drawing",
@@ -487,10 +536,17 @@
       "icon": "fib-spiral",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "TV anchors=3; TickView raised from 2 to 3. Growth spiral radius*turn-fraction."
     },
     {
       "kind": "drawing",
@@ -501,10 +557,17 @@
       "icon": "fib-arcs",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Swept arcs between |a-b| and |a-c| radii at TV ratios."
     },
     {
       "kind": "drawing",
@@ -515,10 +578,17 @@
       "icon": "fib-wedge",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Edges a->b, a->c plus intermediate ratio lines 23.6..78.6%."
     },
     {
       "kind": "drawing",
@@ -529,10 +599,17 @@
       "icon": "pitchfan",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Rays from origin through ratio points of the b->c span; dotted b->c guide."
     },
     {
       "kind": "drawing",
@@ -543,10 +620,17 @@
       "icon": "gann-box",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "TV 'Gann box': rect + quarter grid + diagonals."
     },
     {
       "kind": "drawing",
@@ -557,10 +641,17 @@
       "icon": "gann-square-fixed",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "Square side = max(|dx|,|dy|) signed by b; quarter grid + diagonals."
     },
     {
       "kind": "drawing",
@@ -571,10 +662,17 @@
       "icon": "gann-square",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-gannfib.md",
+        "docs/screenshots/parity/gannfib-dark.png"
+      ],
+      "notes": "TV 'Gann square': grid + complex rays from origin corner to far-edge fractions (1/8..7/8)."
     },
     {
       "kind": "drawing",
@@ -591,13 +689,15 @@
         "tickchart::drawings::tests::gann_fan_has_nine_tv_rays_and_labels",
         "tickchart::chart::tests::gann_fan_hit_tests_follow_ratio_rays",
         "tickview::app::tests::every_drawing_tool_has_a_unique_icon",
-        "tickview::drawing_toolbar::tests::bar_sits_top_right_with_16px_inset"
+        "tickview::drawing_toolbar::tests::bar_sits_top_right_with_16px_inset",
+        "tickchart/tests/drawing_goldens.rs::gann_fan_case_hits_tv_rays_both_axes"
       ],
       "evidence": [
         "docs/evidence/tv/gann-fan.md",
-        "docs/screenshots/parity/gann-fan-dark.png"
+        "docs/screenshots/parity/gann-fan-dark.png",
+        "docs/screenshots/parity/gannfib-dark.png"
       ],
-      "notes": "Milestone 1 slice: TV ratio geometry, labels, hit-testing, selection toolbar."
+      "notes": "M1 ratio geometry + M2 log-axis ray fix (rays pass through ratio point at end bar)."
     },
     {
       "kind": "drawing",

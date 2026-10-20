@@ -6,10 +6,10 @@
 //! harness from TV-documented definitions, never by calling the production
 //! geometry helpers, except where noted.
 
-use egui::{Pos2, Rect};
+use egui::{Pos2, Rect, Vec2};
 use ta::Candles;
 use tickchart::bars::View;
-use tickchart::drawings::{anchor_pos, reg_band_hit};
+use tickchart::drawings::{anchor_pos, gann_fan_hit, reg_band_hit};
 use tickchart::priceaxis::PriceAxis;
 use tickchart::{Anchor, Drawing, DrawingKind};
 
@@ -395,4 +395,385 @@ fn regtrend_band_hit_matches_geometry() {
         !reg_band_hit(la, lb, half, Pos2::new(mid.x, mid.y + half + 8.0)),
         "outside band miss"
     );
+}
+
+/// Chart-space point from raw screen pixels (harness-side derivation).
+fn scr(sc: &Scene, x: f32, y: f32) -> (usize, f64) {
+    (
+        sc.view.index_at(x).expect("x in range"),
+        sc.axis.price_of(y),
+    )
+}
+
+fn gannfib_cases(sc: &Scene) -> Vec<Case> {
+    let mut cases = Vec::new();
+
+    // Fib retracement: TV levels 0..100% as horizontal lines.
+    {
+        let (pa, pb) = (pt(sc, 20, 100.0), pt(sc, 120, 118.0));
+        let xm = (pa.x + pb.x) * 0.5;
+        let lvl = |r: f32| pa.y + (pb.y - pa.y) * r;
+        let hits: Vec<(usize, f64)> = [0.236f32, 0.382, 0.5, 0.618, 0.786]
+            .into_iter()
+            .map(|r| scr(sc, xm, lvl(r)))
+            .collect();
+        let misses = vec![scr(sc, xm, lvl(0.5) + 10.0), scr(sc, pb.x + 12.0, lvl(0.5))];
+        cases.push(Case {
+            kind: DrawingKind::Fib,
+            a: (20, 100.0),
+            b: (120, 118.0),
+            c: None,
+            hits,
+            misses,
+        });
+    }
+    // Trend-based fib extension: levels project from c along the a->b delta.
+    {
+        let (pa, pb, pc) = (pt(sc, 20, 100.0), pt(sc, 70, 102.0), pt(sc, 120, 110.0));
+        let xm = (pa.x + pc.x) * 0.5;
+        let delta = pb.y - pa.y;
+        let lvl = |r: f32| pc.y + delta * r;
+        let hits: Vec<(usize, f64)> = [0.382f32, 0.618, 1.0, 1.618, 2.618, 3.618, 4.236]
+            .into_iter()
+            .map(|r| scr(sc, xm, lvl(r)))
+            .collect();
+        let misses = vec![scr(sc, pc.x + 12.0, lvl(1.0))];
+        cases.push(Case {
+            kind: DrawingKind::FibExt,
+            a: (20, 100.0),
+            b: (70, 102.0),
+            c: Some((120, 110.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib channel: base a->b plus rails shifted by ratio * (c - a).
+    {
+        let (pa, pb, pc) = (pt(sc, 20, 100.0), pt(sc, 120, 112.0), pt(sc, 60, 120.0));
+        let off = pc - pa;
+        let rail_mid = |r: f32| {
+            let s = off * r;
+            (pa + s).lerp(pb + s, 0.5)
+        };
+        let hits: Vec<(usize, f64)> = [0.0f32, 0.382, 0.618]
+            .into_iter()
+            .map(|r| scr(sc, rail_mid(r).x, rail_mid(r).y))
+            .collect();
+        let m = rail_mid(0.236);
+        let misses = vec![scr(sc, m.x, m.y + 12.0)];
+        cases.push(Case {
+            kind: DrawingKind::FibChannel,
+            a: (20, 100.0),
+            b: (120, 112.0),
+            c: Some((60, 120.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib time zones + trend-based fib time: verticals at ratio * width.
+    {
+        let pa = pt(sc, 40, 100.0);
+        let width = (100.0 - 40.0) * sc.view.spacing;
+        let hits: Vec<(usize, f64)> = [0.0f32, 0.236, 0.5, 0.786, 1.0, 1.618, 2.618]
+            .into_iter()
+            .map(|r| scr(sc, pa.x + width * r, 300.0))
+            .collect();
+        let misses = vec![scr(sc, pa.x + width * 0.382 + 10.0, 300.0)];
+        cases.push(Case {
+            kind: DrawingKind::FibTimeZone,
+            a: (40, 100.0),
+            b: (100, 110.0),
+            c: None,
+            hits: hits.clone(),
+            misses: misses.clone(),
+        });
+        cases.push(Case {
+            kind: DrawingKind::FibTime,
+            a: (40, 100.0),
+            b: (100, 110.0),
+            c: Some((80, 105.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib speed resistance fan (2 anchors): rays from a to ratio points on
+    // the vertical through b.
+    {
+        let (pa, pb) = (pt(sc, 30, 95.0), pt(sc, 150, 115.0));
+        let ray_mid = |r: f32| {
+            let target = Pos2::new(pb.x, pa.y + (pb.y - pa.y) * r);
+            pa.lerp(target, 0.5)
+        };
+        let hits: Vec<(usize, f64)> = [0.0f32, 0.236, 0.5, 0.786, 1.0]
+            .into_iter()
+            .map(|r| scr(sc, ray_mid(r).x, ray_mid(r).y))
+            .collect();
+        let misses = vec![scr(sc, 425.0, 350.0)];
+        cases.push(Case {
+            kind: DrawingKind::FibSpeedFan,
+            a: (30, 95.0),
+            b: (150, 115.0),
+            c: None,
+            hits,
+            misses,
+        });
+    }
+    // Pitchfan: rays from a through ratio points of the b->c span.
+    {
+        let (pa, pb, pc) = (pt(sc, 20, 110.0), pt(sc, 100, 95.0), pt(sc, 140, 105.0));
+        let ray_mid = |r: f32| {
+            let target = pb + (pc - pb) * r;
+            pa.lerp(target, 0.5)
+        };
+        let hits: Vec<(usize, f64)> = [0.0f32, 0.382, 0.5, 1.0]
+            .into_iter()
+            .map(|r| scr(sc, ray_mid(r).x, ray_mid(r).y))
+            .collect();
+        let misses = vec![scr(sc, 430.0, 345.0)];
+        cases.push(Case {
+            kind: DrawingKind::Pitchfan,
+            a: (20, 110.0),
+            b: (100, 95.0),
+            c: Some((140, 105.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib wedge: edges a->b, a->c plus intermediate ratio lines.
+    {
+        let (pa, pb, pc) = (pt(sc, 20, 105.0), pt(sc, 140, 95.0), pt(sc, 140, 118.0));
+        let mid = |s: Pos2, e: Pos2| scr(sc, s.lerp(e, 0.5).x, s.lerp(e, 0.5).y);
+        let hits = vec![
+            mid(pa, pb),
+            mid(pa, pc),
+            mid(pa + (pb - pa) * 0.5, pa + (pc - pa) * 0.5),
+            mid(pa + (pb - pa) * 0.236, pa + (pc - pa) * 0.236),
+        ];
+        let m = pa.lerp(pb, 0.5);
+        let misses = vec![scr(sc, m.x, m.y + 14.0)];
+        cases.push(Case {
+            kind: DrawingKind::FibWedge,
+            a: (20, 105.0),
+            b: (140, 95.0),
+            c: Some((140, 118.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib circles: radii base + (outer - base) * ratio around a.
+    {
+        let (pc0, pe, po) = (pt(sc, 80, 105.0), pt(sc, 120, 105.0), pt(sc, 160, 105.0));
+        let base = pc0.distance(pe);
+        let outer = pc0.distance(po);
+        let hits: Vec<(usize, f64)> = [0.236f32, 0.5, 1.0, 1.618]
+            .into_iter()
+            .map(|r| scr(sc, pc0.x + base + (outer - base) * r, pc0.y))
+            .collect();
+        let misses = vec![scr(sc, pc0.x + base + (outer - base) * 1.618 + 12.0, pc0.y)];
+        cases.push(Case {
+            kind: DrawingKind::FibCircles,
+            a: (80, 105.0),
+            b: (120, 105.0),
+            c: Some((160, 105.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib spiral: 3 turns, r = base * t along the sweep.
+    {
+        let (pc0, pe) = (pt(sc, 80, 105.0), pt(sc, 120, 105.0));
+        let radius = pc0.distance(pe);
+        let hits: Vec<(usize, f64)> = [0.25f32, 0.5, 0.75]
+            .into_iter()
+            .map(|t| {
+                let angle = t * 3.0 * std::f32::consts::TAU;
+                let q = pc0 + Vec2::new(angle.cos(), angle.sin()) * (radius * t);
+                scr(sc, q.x, q.y)
+            })
+            .collect();
+        let misses = vec![scr(sc, pc0.x + radius + 12.0, pc0.y)];
+        cases.push(Case {
+            kind: DrawingKind::FibSpiral,
+            a: (80, 105.0),
+            b: (120, 105.0),
+            c: Some((140, 108.0)),
+            hits,
+            misses,
+        });
+    }
+    // Fib speed resistance arcs: swept radii between |a-b| and |a-c|.
+    {
+        let (pc0, ps, pe) = (pt(sc, 80, 105.0), pt(sc, 120, 105.0), pt(sc, 80, 111.0));
+        let base = pc0.distance(ps);
+        let outer = pc0.distance(pe);
+        let hits: Vec<(usize, f64)> = [0.236f32, 0.5, 1.0]
+            .into_iter()
+            .map(|r| {
+                let rad = base + (outer - base) * r;
+                let ang = -std::f32::consts::FRAC_PI_4;
+                let q = pc0 + Vec2::new(ang.cos(), ang.sin()) * rad;
+                scr(sc, q.x, q.y)
+            })
+            .collect();
+        let misses = vec![scr(sc, pc0.x + 102.0 * 0.989, pc0.y + 102.0 * 0.149)];
+        cases.push(Case {
+            kind: DrawingKind::FibArcs,
+            a: (80, 105.0),
+            b: (120, 105.0),
+            c: Some((80, 111.0)),
+            hits,
+            misses,
+        });
+    }
+    // Gann box: rect, quarter grid lines and diagonals.
+    {
+        let (pa, pb) = (pt(sc, 30, 95.0), pt(sc, 150, 115.0));
+        let (x0, y0) = (pa.x.min(pb.x), pa.y.min(pb.y));
+        let (w, h) = ((pb.x - pa.x).abs(), (pb.y - pa.y).abs());
+        let hits = vec![
+            scr(sc, x0 + w * 0.5, y0 + h * 0.5),
+            scr(sc, x0 + w * 0.25, y0 + 40.0),
+            scr(sc, x0 + w * 0.5, y0 + h * 0.25),
+            scr(sc, x0 + w * 0.35, y0 + h * 0.35),
+        ];
+        let misses = vec![scr(sc, x0 + w * 0.625, y0 + h * 0.32)];
+        cases.push(Case {
+            kind: DrawingKind::GannBox,
+            a: (30, 95.0),
+            b: (150, 115.0),
+            c: None,
+            hits,
+            misses,
+        });
+    }
+    // Gann square fixed: square side = max(|dx|, |dy|), signed by b.
+    {
+        let (pa, pb) = (pt(sc, 40, 100.0), pt(sc, 100, 118.0));
+        let side = (pb.x - pa.x).abs().max((pb.y - pa.y).abs());
+        let (x0, y1) = (pa.x, pa.y);
+        let (x1, y0) = (pa.x + side, pa.y - side);
+        let hits = vec![
+            scr(sc, (x0 + x1) * 0.5, y0),
+            scr(sc, (x0 + x1) * 0.5, y1),
+            scr(sc, x0 + side * 0.5, y0 + side * 0.45),
+            scr(sc, x0 + side * 0.35, y0 + side * 0.5),
+        ];
+        let misses = vec![scr(sc, x0 + side * 0.625, y0 + side * 0.28)];
+        cases.push(Case {
+            kind: DrawingKind::GannSquareFixed,
+            a: (40, 100.0),
+            b: (100, 118.0),
+            c: None,
+            hits,
+            misses,
+        });
+    }
+    // Gann square (complex): grid plus rays from the origin corner to far
+    // edge fractions.
+    {
+        let (pa, pb) = (pt(sc, 30, 95.0), pt(sc, 150, 115.0));
+        let (_x0, y0) = (pa.x.min(pb.x), pa.y.min(pb.y));
+        let (x1, y1) = (pa.x.max(pb.x), pa.y.max(pb.y));
+        let (fx, fy) = (x1, y0);
+        let ray_mid = |k: f32| scr(sc, pa.x + (fx - pa.x) * 0.5, pa.y + (fy - pa.y) * k * 0.5);
+        let hits = vec![ray_mid(0.25), ray_mid(0.5), ray_mid(0.75)];
+        let misses = vec![scr(sc, x1 + 12.0, y0 + (y1 - y0) * 0.5)];
+        cases.push(Case {
+            kind: DrawingKind::GannSquare,
+            a: (30, 95.0),
+            b: (150, 115.0),
+            c: None,
+            hits,
+            misses,
+        });
+    }
+    cases
+}
+
+fn run_gannfib_family(sc: &Scene) {
+    let mut errs = Vec::new();
+    for case in gannfib_cases(sc) {
+        errs.extend(run_case(sc, &case));
+    }
+    assert!(
+        errs.is_empty(),
+        "{} golden failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+/// TV gann fan: nine ratio rays verified through the production selection
+/// path (`gann_fan_hit`), on linear and log axes. Ray targets are TV price
+/// ratios of the anchor price span.
+#[test]
+fn gann_fan_case_hits_tv_rays_both_axes() {
+    for log in [false, true] {
+        let sc = scene(log);
+        let d = Drawing::new(
+            1,
+            DrawingKind::GannFan,
+            an(&sc, 20, 95.0),
+            an(&sc, 140, 115.0),
+        );
+        let map = |q: Anchor| {
+            anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4))
+        };
+        let pa = pt(&sc, 20, 95.0);
+        for r in [0.125f32, 0.25, 1.0 / 3.0, 0.5, 1.0] {
+            let target = pt(&sc, 140, 95.0 + f64::from(r) * 20.0);
+            let m = pa.lerp(target, 0.4);
+            assert!(
+                gann_fan_hit(&d, m, map, &sc.view, &sc.axis, PLOT),
+                "fan ray {r} (log={log})"
+            );
+        }
+        let t18 = pt(&sc, 140, 97.5);
+        let m18 = pa.lerp(t18, 0.5);
+        assert!(
+            !gann_fan_hit(
+                &d,
+                Pos2::new(m18.x, m18.y + 8.0),
+                map,
+                &sc.view,
+                &sc.axis,
+                PLOT
+            ),
+            "between 1/8 and 1/4 rays misses (log={log})"
+        );
+    }
+}
+
+#[test]
+fn gannfib_anchor_counts_match_tv() {
+    let expected: [(DrawingKind, u8); 15] = [
+        (DrawingKind::Fib, 2),
+        (DrawingKind::FibExt, 3),
+        (DrawingKind::FibChannel, 3),
+        (DrawingKind::FibTimeZone, 2),
+        (DrawingKind::FibSpeedFan, 2),
+        (DrawingKind::FibTime, 3),
+        (DrawingKind::FibCircles, 3),
+        (DrawingKind::FibSpiral, 3),
+        (DrawingKind::FibArcs, 3),
+        (DrawingKind::FibWedge, 3),
+        (DrawingKind::Pitchfan, 3),
+        (DrawingKind::GannBox, 2),
+        (DrawingKind::GannSquareFixed, 2),
+        (DrawingKind::GannSquare, 2),
+        (DrawingKind::GannFan, 2),
+    ];
+    for (kind, want) in expected {
+        assert_eq!(kind.points(), want, "{kind:?} anchor count");
+    }
+}
+
+#[test]
+fn gannfib_family_geometry_hits_and_misses() {
+    run_gannfib_family(&scene(false));
+}
+
+#[test]
+fn gannfib_family_geometry_holds_on_log_axis() {
+    run_gannfib_family(&scene(true));
 }

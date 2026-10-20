@@ -297,9 +297,9 @@ impl DrawingKind {
             | Self::ModifiedSchiffPitchfork
             | Self::InsidePitchfork
             | Self::FibChannel
-            | Self::FibSpeedFan
             | Self::FibTime
             | Self::FibCircles
+            | Self::FibSpiral
             | Self::FibArcs
             | Self::FibWedge
             | Self::Pitchfan
@@ -1378,17 +1378,6 @@ impl Drawing {
                 self.kind,
                 DrawingKind::InfoLine
                     | DrawingKind::TrendAngle
-                    | DrawingKind::FibChannel
-                    | DrawingKind::FibWedge
-                    | DrawingKind::FibTimeZone
-                    | DrawingKind::FibTime
-                    | DrawingKind::FibCircles
-                    | DrawingKind::FibSpiral
-                    | DrawingKind::FibArcs
-                    | DrawingKind::GannBox
-                    | DrawingKind::GannSquareFixed
-                    | DrawingKind::GannSquare
-                    | DrawingKind::Pitchfan
                     | DrawingKind::CyclicLines
                     | DrawingKind::TimeCycles
                     | DrawingKind::PositionForecast
@@ -1549,6 +1538,32 @@ impl Drawing {
             }
             DrawingKind::Arrow => distance_to_segment(p, a, b) <= TOL || p.distance(b) <= 10.0,
             DrawingKind::Note => note_rect(a, &self.style.text).contains(p),
+            DrawingKind::FibChannel
+            | DrawingKind::FibTimeZone
+            | DrawingKind::FibTime
+            | DrawingKind::FibSpeedFan
+            | DrawingKind::FibWedge
+            | DrawingKind::Pitchfan
+            | DrawingKind::GannBox
+            | DrawingKind::GannSquareFixed
+            | DrawingKind::GannSquare => {
+                let pc = self.c.map(map);
+                gannfib_hit_segments(self.kind, a, b, pc, plot)
+                    .iter()
+                    .any(|&(s, e)| distance_to_segment(p, s, e) <= TOL)
+            }
+            DrawingKind::FibCircles | DrawingKind::FibSpiral | DrawingKind::FibArcs => {
+                let pc = self.c.map(map);
+                let curves = gannfib_hit_curves(self.kind, a, b, pc);
+                curves
+                    .circles
+                    .iter()
+                    .any(|&(ctr, r)| (p.distance(ctr) - r).abs() <= TOL)
+                    || curves.polylines.iter().any(|pts| {
+                        pts.windows(2)
+                            .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
+                    })
+            }
             _ => false,
         }
     }
@@ -2302,7 +2317,10 @@ fn draw_one(
         DrawingKind::FibTimeZone | DrawingKind::FibTime => {
             paint_fib_time(p, pa, pb, stroke, dash, font.clone(), color, plot);
         }
-        DrawingKind::FibSpeedFan | DrawingKind::Pitchfan => {
+        DrawingKind::FibSpeedFan => {
+            paint_fib_speed_fan(p, pa, pb, stroke, dash, plot, font.clone(), color);
+        }
+        DrawingKind::Pitchfan => {
             let Some(pc) = pc else { return };
             paint_fib_fan(p, pa, pb, pc, stroke, dash, plot, font.clone(), color);
         }
@@ -2329,7 +2347,7 @@ fn draw_one(
                 fill(d.style.fill_opacity),
             );
         }
-        DrawingKind::GannBox | DrawingKind::GannSquare => {
+        DrawingKind::GannBox => {
             paint_gann_grid(
                 p,
                 Rect::from_two_pos(pa, pb),
@@ -2337,6 +2355,11 @@ fn draw_one(
                 d.style.fill,
                 fill(d.style.fill_opacity),
             );
+        }
+        DrawingKind::GannSquare => {
+            let rect = Rect::from_two_pos(pa, pb);
+            paint_gann_grid(p, rect, stroke, d.style.fill, fill(d.style.fill_opacity));
+            paint_gann_complex(p, rect, pa, stroke);
         }
         DrawingKind::GannSquareFixed => {
             let side = (pb.x - pa.x).abs().max((pb.y - pa.y).abs());
@@ -2718,6 +2741,198 @@ fn fib_ratios() -> [f32; 7] {
     [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
 }
 
+fn fib_time_ratios() -> [f32; 9] {
+    [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618, 2.618]
+}
+
+fn fib_wedge_ratios() -> [f32; 5] {
+    [0.236, 0.382, 0.5, 0.618, 0.786]
+}
+
+fn gann_grid_ratios() -> [f32; 3] {
+    [0.25, 0.5, 0.75]
+}
+
+fn gann_complex_ratios() -> [f32; 7] {
+    [0.125, 0.25, 1.0 / 3.0, 0.5, 2.0 / 3.0, 0.75, 0.875]
+}
+
+fn fib_circle_ratios() -> [f32; 7] {
+    [0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618]
+}
+
+fn fib_arc_ratios() -> [f32; 6] {
+    [0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
+}
+
+/// Straight strokes painted by the ratio-based Gann/Fib tools. Shared by the
+/// hit arms so selection matches every visible stroke (TV behavior).
+#[must_use]
+pub fn gannfib_hit_segments(
+    kind: DrawingKind,
+    a: Pos2,
+    b: Pos2,
+    c: Option<Pos2>,
+    plot: Rect,
+) -> Vec<(Pos2, Pos2)> {
+    let mut out = Vec::new();
+    match kind {
+        DrawingKind::FibChannel => {
+            let Some(c) = c else { return out };
+            let offset = c - a;
+            out.push((a, b));
+            for ratio in fib_ratios() {
+                let shift = offset * ratio;
+                out.push((a + shift, b + shift));
+            }
+        }
+        DrawingKind::FibTimeZone | DrawingKind::FibTime => {
+            let width = b.x - a.x;
+            for ratio in fib_time_ratios() {
+                let x = a.x + width * ratio;
+                if (plot.min.x..=plot.max.x).contains(&x) {
+                    out.push((Pos2::new(x, plot.min.y), Pos2::new(x, plot.max.y)));
+                }
+            }
+        }
+        DrawingKind::FibSpeedFan => {
+            out.push((a, b));
+            for ratio in fib_ratios() {
+                let target = Pos2::new(b.x, a.y + (b.y - a.y) * ratio);
+                if let Some(seg) = clip_line(a, target, plot) {
+                    out.push(seg);
+                }
+            }
+        }
+        DrawingKind::Pitchfan => {
+            let Some(c) = c else { return out };
+            out.push((b, c));
+            for ratio in fib_ratios() {
+                let target = b + (c - b) * ratio;
+                if let Some(seg) = clip_line(a, target, plot) {
+                    out.push(seg);
+                }
+            }
+        }
+        DrawingKind::FibWedge => {
+            let Some(c) = c else { return out };
+            out.push((a, b));
+            out.push((a, c));
+            for ratio in fib_wedge_ratios() {
+                out.push((a + (b - a) * ratio, a + (c - a) * ratio));
+            }
+        }
+        DrawingKind::GannBox | DrawingKind::GannSquareFixed | DrawingKind::GannSquare => {
+            let rect = if kind == DrawingKind::GannSquareFixed {
+                let side = (b.x - a.x).abs().max((b.y - a.y).abs());
+                let sx = if b.x >= a.x { 1.0 } else { -1.0 };
+                let sy = if b.y >= a.y { 1.0 } else { -1.0 };
+                Rect::from_two_pos(a, a + Vec2::new(side * sx, side * sy))
+            } else {
+                Rect::from_two_pos(a, b)
+            };
+            out.extend_from_slice(&[
+                (rect.left_top(), rect.right_top()),
+                (rect.right_top(), rect.right_bottom()),
+                (rect.right_bottom(), rect.left_bottom()),
+                (rect.left_bottom(), rect.left_top()),
+                (rect.left_top(), rect.right_bottom()),
+                (rect.right_top(), rect.left_bottom()),
+            ]);
+            for ratio in gann_grid_ratios() {
+                let x = rect.min.x + rect.width() * ratio;
+                let y = rect.min.y + rect.height() * ratio;
+                out.push((Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)));
+                out.push((Pos2::new(rect.min.x, y), Pos2::new(rect.max.x, y)));
+            }
+            if kind == DrawingKind::GannSquare {
+                let far_x = if a.x <= rect.center().x {
+                    rect.max.x
+                } else {
+                    rect.min.x
+                };
+                let far_y = if a.y <= rect.center().y {
+                    rect.max.y
+                } else {
+                    rect.min.y
+                };
+                for k in gann_complex_ratios() {
+                    out.push((a, Pos2::new(far_x, a.y + (far_y - a.y) * k)));
+                    out.push((a, Pos2::new(a.x + (far_x - a.x) * k, far_y)));
+                }
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
+/// Curved strokes painted by `FibCircles`, `FibSpiral` and `FibArcs`.
+#[derive(Clone, Debug, Default)]
+pub struct GannfibCurves {
+    pub circles: Vec<(Pos2, f32)>,
+    pub polylines: Vec<Vec<Pos2>>,
+}
+
+#[must_use]
+pub fn gannfib_hit_curves(
+    kind: DrawingKind,
+    center: Pos2,
+    edge: Pos2,
+    outer: Option<Pos2>,
+) -> GannfibCurves {
+    let mut out = GannfibCurves::default();
+    match kind {
+        DrawingKind::FibCircles => {
+            let base = center.distance(edge);
+            let outer_radius = outer.map_or(base, |q| center.distance(q));
+            for ratio in fib_circle_ratios() {
+                let radius = base + (outer_radius - base) * ratio;
+                if radius.is_finite() && radius > 0.5 {
+                    out.circles.push((center, radius));
+                }
+            }
+        }
+        DrawingKind::FibSpiral => {
+            let radius = center.distance(edge);
+            out.polylines.push(
+                (0..=160)
+                    .map(|i| {
+                        let t = i as f32 / 160.0;
+                        let angle = t * 3.0 * std::f32::consts::TAU;
+                        center + Vec2::new(angle.cos(), angle.sin()) * (radius * t)
+                    })
+                    .collect(),
+            );
+        }
+        DrawingKind::FibArcs => {
+            let Some(end_point) = outer else { return out };
+            let start = (edge - center).angle();
+            let end = (end_point - center).angle();
+            let (from, to) = if end >= start {
+                (start, end)
+            } else {
+                (end, start)
+            };
+            let base = center.distance(edge);
+            let outer_radius = center.distance(end_point);
+            for ratio in fib_arc_ratios() {
+                let radius = base + (outer_radius - base) * ratio;
+                out.polylines.push(
+                    (0..=36)
+                        .map(|i| {
+                            let angle = from + (to - from) * i as f32 / 36.0;
+                            center + Vec2::new(angle.cos(), angle.sin()) * radius
+                        })
+                        .collect(),
+                );
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
 #[allow(clippy::too_many_arguments)]
 fn paint_pitchfork_variant(
     p: &Painter,
@@ -2795,7 +3010,7 @@ fn paint_fib_time(
     plot: Rect,
 ) {
     let width = b.x - a.x;
-    for ratio in [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618, 2.618] {
+    for ratio in fib_time_ratios() {
         let x = a.x + width * ratio;
         if x < plot.min.x || x > plot.max.x {
             continue;
@@ -2830,7 +3045,7 @@ fn paint_fib_fan(
     color: Color32,
 ) {
     paint_line(p, b, c, stroke, dash_spec(LineStyle::Dotted));
-    for ratio in [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0] {
+    for ratio in fib_ratios() {
         let target = b + (c - b) * ratio;
         if let Some((start, end)) = clip_line(a, target, plot) {
             paint_line(p, start, end, stroke, dash);
@@ -2845,6 +3060,64 @@ fn paint_fib_fan(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn paint_fib_speed_fan(
+    p: &Painter,
+    a: Pos2,
+    b: Pos2,
+    stroke: Stroke,
+    dash: Option<(f32, f32)>,
+    plot: Rect,
+    font: FontId,
+    color: Color32,
+) {
+    paint_line(p, a, b, stroke, dash_spec(LineStyle::Dotted));
+    for ratio in fib_ratios() {
+        let target = Pos2::new(b.x, a.y + (b.y - a.y) * ratio);
+        if let Some((start, end)) = clip_line(a, target, plot) {
+            paint_line(p, start, end, stroke, dash);
+            p.text(
+                end + Vec2::new(3.0, -3.0),
+                Align2::LEFT_BOTTOM,
+                format!("{:.1}%", ratio * 100.0),
+                font.clone(),
+                color,
+            );
+        }
+    }
+}
+
+/// Gann square complex rays: origin corner to fractional points on the far
+/// edges (TV 1x1..1x8 / 2x1..8x1 family).
+fn paint_gann_complex(p: &Painter, rect: Rect, origin: Pos2, stroke: Stroke) {
+    let far_x = if origin.x <= rect.center().x {
+        rect.max.x
+    } else {
+        rect.min.x
+    };
+    let far_y = if origin.y <= rect.center().y {
+        rect.max.y
+    } else {
+        rect.min.y
+    };
+    for k in gann_complex_ratios() {
+        paint_line(
+            p,
+            origin,
+            Pos2::new(far_x, origin.y + (far_y - origin.y) * k),
+            stroke,
+            None,
+        );
+        paint_line(
+            p,
+            origin,
+            Pos2::new(origin.x + (far_x - origin.x) * k, far_y),
+            stroke,
+            None,
+        );
+    }
+}
+
 fn paint_fib_circles(
     p: &Painter,
     center: Pos2,
@@ -2856,7 +3129,7 @@ fn paint_fib_circles(
 ) {
     let base = center.distance(edge);
     let outer_radius = outer.map_or(base, |point| center.distance(point));
-    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618] {
+    for ratio in fib_circle_ratios() {
         let radius = base + (outer_radius - base) * ratio;
         if radius.is_finite() && radius > 0.5 {
             p.circle_stroke(center, radius, stroke);
@@ -2917,7 +3190,7 @@ fn paint_fib_arcs(
     } else {
         (end, start)
     };
-    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786, 1.0] {
+    for ratio in fib_arc_ratios() {
         let radius = base + (outer - base) * ratio;
         let points: Vec<Pos2> = (0..=36)
             .map(|i| {
@@ -2956,7 +3229,7 @@ fn paint_fib_wedge(
     }
     paint_line(p, a, b, stroke, dash);
     paint_line(p, a, c, stroke, dash);
-    for ratio in [0.236, 0.382, 0.5, 0.618, 0.786] {
+    for ratio in fib_wedge_ratios() {
         paint_line(p, a + (b - a) * ratio, a + (c - a) * ratio, stroke, dash);
     }
 }
@@ -2966,7 +3239,7 @@ fn paint_gann_grid(p: &Painter, rect: Rect, stroke: Stroke, fill: bool, fill_col
         p.rect_filled(rect, 0.0, fill_color);
     }
     p.rect_stroke(rect, 0.0, stroke, egui::StrokeKind::Inside);
-    for ratio in [0.25, 0.5, 0.75] {
+    for ratio in gann_grid_ratios() {
         let x = rect.min.x + rect.width() * ratio;
         let y = rect.min.y + rect.height() * ratio;
         paint_line(
@@ -3046,11 +3319,9 @@ pub fn gann_fan_rays(
     let mut rays = Vec::with_capacity(GANN_FAN_RATIOS.len());
     for (index, &ratio) in GANN_FAN_RATIOS.iter().enumerate() {
         let label = GANN_FAN_LABELS[index];
-        let target_price = gann_price_at(origin.price, end.price, ratio, far_bars, drag_bars);
-        let target = Pos2::new(
-            origin_pos.x + view.spacing * far_bars,
-            axis.y_of(target_price),
-        );
+        let ratio_price = origin.price + (end.price - origin.price) * f64::from(ratio);
+        let ratio_point = Pos2::new(end_pos.x, axis.y_of(ratio_price));
+        let target = origin_pos + (ratio_point - origin_pos) * (far_bars / drag_bars);
         let Some((start, clipped_end)) = clip_segment(origin_pos, target, plot) else {
             continue;
         };

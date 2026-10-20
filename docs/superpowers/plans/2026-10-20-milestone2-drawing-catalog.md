@@ -148,10 +148,10 @@
 - Produces: `gannfib_cases()` covering all 15 kinds: ratio-set kinds assert hits at computed ray/level positions (fib levels `0, .236, .382, .5, .618, .786, 1` for retracement; extension/channel/time kinds use their standard level sets from TV docs cited in the evidence md); arcs/circles/spiral assert hits on curve midpoints sampled from the geometry formula; `GannFan` case id `gann_fan_case` (9-ray ratio set, reuse `gann_price_uses_tv_ratios` math).
 - Note: `FibSpeedFan` TV anchors = 2 vs `points()` = 3 — resolve against TV docs/live during this audit; if TV is 2, change `points()` and the creation branch, update `new_kinds_report_points_and_drag`.
 
-- [ ] **Step 1: Write failing `gannfib_family_geometry`** with all 15 cases + anchor-count asserts.
-- [ ] **Step 2: Run to fail** — `cargo test -p tickchart --test drawing_goldens gannfib` → FAIL.
-- [ ] **Step 3: Implement/fix** until PASS (linear + log axis).
-- [ ] **Step 4: Evidence + flip entries** — `drawings-gannfib.md` (ratio tables per kind, TV doc links, anchor resolutions, test ids); manifest flip with `evidence` incl. `docs/screenshots/parity/gannfib-dark.png` (add `TICKVIEW_SCENE=gannfib` seed: selected FibRetracement + GannFan + FibChannel; capture dark 1440×900).
+- [x] **Step 1: Write failing `gannfib_family_geometry`** with all 15 cases + anchor-count asserts.
+- [x] **Step 2: Run to fail** — `cargo test -p tickchart --test drawing_goldens gannfib` → FAIL.
+- [x] **Step 3: Implement/fix** until PASS (linear + log axis).
+- [x] **Step 4: Evidence + flip entries** — `drawings-gannfib.md` (ratio tables per kind, TV doc links, anchor resolutions, test ids); manifest flip with `evidence` incl. `docs/screenshots/parity/gannfib-dark.png` (add `TICKVIEW_SCENE=gannfib` seed: selected FibRetracement + GannFan + FibChannel; capture dark 1440×900).
 - [ ] **Step 5: Gates + commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-gannfib.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit gann and fib drawing family against TV geometry"`
 
 ### Task 6: Patterns/Elliott/cycles-family audit (14 kinds)

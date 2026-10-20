@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 18 verified, 66 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 32 verified, 52 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -26,20 +26,20 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Schiff pitchfork | `LineToolSchiffPitchfork2` | `SchiffPitchfork` | `schiff-pitchfork` | verified |
 | Modified Schiff pitchfork | `LineToolSchiffPitchfork` | `ModifiedSchiffPitchfork` | `modified-schiff` | verified |
 | Inside pitchfork | `LineToolInsidePitchfork` | `InsidePitchfork` | `inside-pitchfork` | verified |
-| Fib retracement | `LineToolFibRetracement` | `Fib` | `fibonacci` | in-progress |
-| Trend-based fib extension | `LineToolTrendBasedFibExtension` | `FibExt` | `fibonacci-extension` | in-progress |
-| Fib channel | `LineToolFibChannel` | `FibChannel` | `fib-channel` | in-progress |
-| Fib time zone | `LineToolFibTimeZone` | `FibTimeZone` | `fib-time-zone` | in-progress |
-| Fib speed resistance fan | `LineToolFibSpeedResistanceFan` | `FibSpeedFan` | `fib-speed-fan` | in-progress |
-| Trend-based fib time | `LineToolTrendBasedFibTime` | `FibTime` | `fib-time` | in-progress |
-| Fib circles | `LineToolFibCircles` | `FibCircles` | `fib-circles` | in-progress |
-| Fib spiral | `LineToolFibSpiral` | `FibSpiral` | `fib-spiral` | in-progress |
-| Fib speed resistance arcs | `LineToolFibSpeedResistanceArcs` | `FibArcs` | `fib-arcs` | in-progress |
-| Fib wedge | `LineToolFibWedge` | `FibWedge` | `fib-wedge` | in-progress |
-| Pitchfan | `LineToolPitchfan` | `Pitchfan` | `pitchfan` | in-progress |
-| Gann box | `LineToolGannSquare` | `GannBox` | `gann-box` | in-progress |
-| Gann square fixed | `LineToolGannFixed` | `GannSquareFixed` | `gann-square-fixed` | in-progress |
-| Gann square | `LineToolGannComplex` | `GannSquare` | `gann-square` | in-progress |
+| Fib retracement | `LineToolFibRetracement` | `Fib` | `fibonacci` | verified |
+| Trend-based fib extension | `LineToolTrendBasedFibExtension` | `FibExt` | `fibonacci-extension` | verified |
+| Fib channel | `LineToolFibChannel` | `FibChannel` | `fib-channel` | verified |
+| Fib time zone | `LineToolFibTimeZone` | `FibTimeZone` | `fib-time-zone` | verified |
+| Fib speed resistance fan | `LineToolFibSpeedResistanceFan` | `FibSpeedFan` | `fib-speed-fan` | verified |
+| Trend-based fib time | `LineToolTrendBasedFibTime` | `FibTime` | `fib-time` | verified |
+| Fib circles | `LineToolFibCircles` | `FibCircles` | `fib-circles` | verified |
+| Fib spiral | `LineToolFibSpiral` | `FibSpiral` | `fib-spiral` | verified |
+| Fib speed resistance arcs | `LineToolFibSpeedResistanceArcs` | `FibArcs` | `fib-arcs` | verified |
+| Fib wedge | `LineToolFibWedge` | `FibWedge` | `fib-wedge` | verified |
+| Pitchfan | `LineToolPitchfan` | `Pitchfan` | `pitchfan` | verified |
+| Gann box | `LineToolGannSquare` | `GannBox` | `gann-box` | verified |
+| Gann square fixed | `LineToolGannFixed` | `GannSquareFixed` | `gann-square-fixed` | verified |
+| Gann square | `LineToolGannComplex` | `GannSquare` | `gann-square` | verified |
 | Gann fan | `LineToolGannFan` | `GannFan` | `gann-fan` | verified |
 | XABCD pattern | `LineTool5PointsPattern` | `Xabcd` | `xabcd` | in-progress |
 | Cypher pattern | `LineToolCypherPattern` | `Cypher` | `cypher` | in-progress |

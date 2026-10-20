@@ -725,6 +725,7 @@ pub struct TickView {
     pending_gannf: bool,
     pending_toolbar: bool,
     pending_trend: bool,
+    pending_gannfib: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1033,6 +1034,7 @@ impl TickView {
             pending_gannf: false,
             pending_toolbar: false,
             pending_trend: false,
+            pending_gannfib: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1121,6 +1123,7 @@ impl TickView {
                 "gannf" => me.pending_gannf = true,
                 "toolbar" => me.pending_toolbar = true,
                 "trend" => me.pending_trend = true,
+                "gannfib" => me.pending_gannfib = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1358,6 +1361,74 @@ impl TickView {
             d.style = tickchart::kind_defaults(kind);
             self.tabs[ti].chart.drawings.push(d);
         }
+    }
+    /// `TICKVIEW_SCENE=gannfib`: Fib retracement (selected), Fib channel and
+    /// Gann fan over the recent visible window, for Gann/Fib review captures.
+    fn seed_gannfib(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 110).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(110);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 110..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 110)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        type SeedSpec = (
+            u64,
+            DrawingKind,
+            (usize, f64),
+            (usize, f64),
+            Option<(usize, f64)>,
+        );
+        let specs: [SeedSpec; 3] = [
+            (
+                9401,
+                DrawingKind::Fib,
+                (n - 100, p(0.30)),
+                (n - 30, p(0.72)),
+                None,
+            ),
+            (
+                9402,
+                DrawingKind::FibChannel,
+                (n - 90, p(0.22)),
+                (n - 35, p(0.40)),
+                Some((n - 60, p(0.66))),
+            ),
+            (
+                9403,
+                DrawingKind::GannFan,
+                (n - 105, p(0.12)),
+                (n - 45, p(0.58)),
+                None,
+            ),
+        ];
+        for (id, kind, a0, b0, c0) in specs {
+            let mut d = match c0 {
+                Some((ct, cp)) => Drawing::with_c(
+                    id,
+                    kind,
+                    a(ts(a0.0), a0.1),
+                    a(ts(b0.0), b0.1),
+                    a(ts(ct), cp),
+                ),
+                None => Drawing::new(id, kind, a(ts(a0.0), a0.1), a(ts(b0.0), b0.1)),
+            };
+            d.style = tickchart::kind_defaults(kind);
+            self.tabs[ti].chart.drawings.push(d);
+        }
+        self.tabs[ti].chart.selection.select(9401);
     }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
@@ -1681,6 +1752,9 @@ impl TickView {
                                 }
                                 if self.pending_trend && self.tabs[ti].candles.t.len() >= 60 {
                                     self.seed_trend(ti);
+                                }
+                                if self.pending_gannfib && self.tabs[ti].candles.t.len() >= 112 {
+                                    self.seed_gannfib(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2171,7 +2245,8 @@ impl TickView {
             || self.pending_zoomrect
             || self.pending_gannf
             || self.pending_toolbar
-            || self.pending_trend;
+            || self.pending_trend
+            || self.pending_gannfib;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
