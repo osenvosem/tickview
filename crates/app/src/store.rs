@@ -417,6 +417,61 @@ mod tests {
     }
 
     #[test]
+    fn v2_payload_without_table_fields_loads() {
+        // Configs saved before the `grid`/`cells` fields must load with
+        // defaults, without data loss.
+        let json = r#"{
+            "version": 2,
+            "tabs": [{
+                "symbol": {"ticker":"AAPL","exchange":"NASDAQ","kind":"stock","currency":"USD","description":""},
+                "interval": "1D",
+                "chart_type": "Candles",
+                "log": false,
+                "right_offset": 0.0,
+                "spacing": 8.0,
+                "drawings_locked": false,
+                "drawings_hidden": false,
+                "drawings": {"AAPL": [{
+                    "id": 1, "kind": "Table",
+                    "a": {"t": 1700000000, "price": 100.0},
+                    "b": {"t": 1700086400, "price": 120.0},
+                    "style": {"line": "Solid", "width": 1, "color": null, "fill": false, "fill_opacity": 20, "text": ""}
+                }]},
+                "indicators": [],
+                "compare": null
+            }]
+        }"#;
+        let cfg: SavedConfig = serde_json::from_str(json).unwrap();
+        let d = &cfg.tabs[0].drawings["AAPL"][0];
+        assert_eq!(d.kind, tickchart::DrawingKind::Table);
+        assert_eq!(d.grid, None);
+        assert!(d.cells.is_empty());
+    }
+
+    #[test]
+    fn table_cells_round_trip() {
+        let mut drawing = tickchart::Drawing::new(
+            9,
+            tickchart::DrawingKind::Table,
+            tickchart::Anchor {
+                t: 1_700_000_000,
+                price: 100.0,
+            },
+            tickchart::Anchor {
+                t: 1_700_086_400,
+                price: 120.0,
+            },
+        );
+        tickchart::apply_style_edit(&mut drawing, tickchart::StyleEdit::Grid([2, 3]));
+        tickchart::apply_style_edit(&mut drawing, tickchart::StyleEdit::Cell(4, "42".into()));
+        let json = serde_json::to_string(&drawing).unwrap();
+        let back: tickchart::Drawing = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.grid, Some([2, 3]));
+        assert_eq!(back.cells.len(), 6);
+        assert_eq!(back.cells[4], "42");
+    }
+
+    #[test]
     fn saved_tab_round_trips_drawings_lock_and_style() {
         let mut drawing = tickchart::Drawing::with_c(
             7,

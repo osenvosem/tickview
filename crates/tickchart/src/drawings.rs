@@ -105,6 +105,7 @@ pub enum DrawingKind {
     AnchoredVolumeProfile,
     BarsPattern,
     GhostFeed,
+    Table,
 }
 
 impl DrawingKind {
@@ -192,6 +193,7 @@ impl DrawingKind {
         Self::AnchoredVolumeProfile,
         Self::BarsPattern,
         Self::GhostFeed,
+        Self::Table,
     ];
 
     #[must_use]
@@ -280,6 +282,7 @@ impl DrawingKind {
             Self::AnchoredVolumeProfile => "Anchored Volume Profile",
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
+            Self::Table => "Table",
         }
     }
 
@@ -310,6 +313,7 @@ impl DrawingKind {
             Self::AnchoredVolumeProfile => 1,
             Self::BarsPattern => 2,
             Self::GhostFeed => 2,
+            Self::Table => 2,
             Self::Channel
             | Self::FibExt
             | Self::Pitchfork
@@ -519,6 +523,7 @@ pub enum DrawTool {
     VolumeProfileAnchored,
     BarsPattern,
     GhostFeed,
+    Table,
 }
 
 impl DrawTool {
@@ -610,6 +615,7 @@ impl DrawTool {
         Self::VolumeProfileAnchored,
         Self::BarsPattern,
         Self::GhostFeed,
+        Self::Table,
     ];
 
     #[must_use]
@@ -702,6 +708,7 @@ impl DrawTool {
             Self::VolumeProfileAnchored => "Anchored Volume Profile",
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
+            Self::Table => "Table",
         }
     }
 
@@ -792,6 +799,7 @@ impl DrawTool {
             Self::VolumeProfileAnchored => Some(DrawingKind::AnchoredVolumeProfile),
             Self::BarsPattern => Some(DrawingKind::BarsPattern),
             Self::GhostFeed => Some(DrawingKind::GhostFeed),
+            Self::Table => Some(DrawingKind::Table),
         }
     }
 
@@ -1228,6 +1236,8 @@ pub enum StyleEdit {
     FillOpacity(u8),
     Text(String),
     Deviation(f32),
+    Grid([u8; 2]),
+    Cell(usize, String),
 }
 
 /// Apply one toolbar edit, clamping numeric ranges to the UI limits.
@@ -1239,6 +1249,17 @@ pub fn apply_style_edit(d: &mut Drawing, edit: StyleEdit) {
         StyleEdit::FillOpacity(opacity) => d.style.fill_opacity = opacity.min(80),
         StyleEdit::Text(text) => d.style.text = text,
         StyleEdit::Deviation(v) => d.reg_dev = v.clamp(0.5, 3.0),
+        StyleEdit::Grid(g) => {
+            let g = [g[0].clamp(1, 12), g[1].clamp(1, 12)];
+            d.grid = Some(g);
+            let want = usize::from(g[0]) * usize::from(g[1]);
+            d.cells.resize(want, String::new());
+        }
+        StyleEdit::Cell(index, text) => {
+            if let Some(slot) = d.cells.get_mut(index) {
+                *slot = text;
+            }
+        }
     }
 }
 
@@ -1282,6 +1303,12 @@ pub struct Drawing {
     /// Regression channel band multiplier (regression trend only).
     #[serde(default = "default_reg_dev")]
     pub reg_dev: f32,
+    /// Table grid size `[rows, cols]` (`Table` kind only).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grid: Option<[u8; 2]>,
+    /// Table cell texts, row-major (`Table` kind only).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cells: Vec<String>,
     /// Per-object visibility, independent of global Hide-all.
     #[serde(default, skip_serializing_if = "is_false")]
     pub hidden: bool,
@@ -1297,6 +1324,12 @@ pub struct Drawing {
 #[must_use]
 fn default_reg_dev() -> f32 {
     1.0
+}
+
+/// Default table grid, matching TV's freshly-inserted table.
+#[must_use]
+pub fn default_grid() -> [u8; 2] {
+    [3, 3]
 }
 
 const fn is_false(value: &bool) -> bool {
@@ -1351,6 +1384,8 @@ impl Drawing {
 
             extra: Vec::new(),
             reg_dev: default_reg_dev(),
+            grid: None,
+            cells: Vec::new(),
             hidden: false,
             visible_intervals: None,
             locked: false,
@@ -1368,6 +1403,8 @@ impl Drawing {
             style: DrawingStyle::default(),
             extra: Vec::new(),
             reg_dev: default_reg_dev(),
+            grid: None,
+            cells: Vec::new(),
             hidden: false,
             visible_intervals: None,
             locked: false,
@@ -1421,7 +1458,10 @@ impl Drawing {
         if !plot.contains(p) {
             return false;
         }
-        if matches!(self.kind, DrawingKind::BarsPattern | DrawingKind::GhostFeed) {
+        if matches!(
+            self.kind,
+            DrawingKind::BarsPattern | DrawingKind::GhostFeed | DrawingKind::Table
+        ) {
             let ra = map(self.a);
             let rb = map(self.b);
             return Rect::from_min_max(ra.min(rb), ra.max(rb))
@@ -2071,6 +2111,8 @@ pub fn paint(
             style: kind_defaults(draft.kind),
             extra,
             reg_dev: default_reg_dev(),
+            grid: None,
+            cells: Vec::new(),
             hidden: false,
             visible_intervals: None,
             locked: false,
@@ -2822,6 +2864,40 @@ fn draw_one(
                     0.0,
                     tint,
                 );
+            }
+        }
+        DrawingKind::Table => {
+            let r = Rect::from_min_max(pa.min(pb), pa.max(pb));
+            let gr = d.grid.unwrap_or_else(default_grid);
+            let rows = gr[0].clamp(1, 12);
+            let cols = gr[1].clamp(1, 12);
+            let cw = r.width() / f32::from(cols);
+            let ch = r.height() / f32::from(rows);
+            p.rect_stroke(r, 0.0, stroke, egui::StrokeKind::Middle);
+            for i in 1..rows {
+                let y = r.min.y + ch * f32::from(i);
+                p.line_segment([Pos2::new(r.min.x, y), Pos2::new(r.max.x, y)], stroke);
+            }
+            for j in 1..cols {
+                let x = r.min.x + cw * f32::from(j);
+                p.line_segment([Pos2::new(x, r.min.y), Pos2::new(x, r.max.y)], stroke);
+            }
+            let small = FontId::proportional((font.size - 2.0).max(8.0));
+            for (idx, text) in d.cells.iter().enumerate() {
+                if text.is_empty() {
+                    continue;
+                }
+                let row = idx / usize::from(cols);
+                let col = idx % usize::from(cols);
+                if row >= usize::from(rows) {
+                    break;
+                }
+                let center = Pos2::new(
+                    r.min.x + cw * (col as f32 + 0.5),
+                    r.min.y + ch * (row as f32 + 0.5),
+                );
+                let clipped = truncate_to_width(p, text, small.clone(), cw - 8.0);
+                p.text(center, Align2::CENTER_CENTER, clipped, small.clone(), color);
             }
         }
         // TV plain text: glyph run at the anchor, no bubble.
@@ -3886,6 +3962,29 @@ pub fn snap_price_with_tolerance(
         }
     }
     best
+}
+
+/// Ellipsize `text` so it fits `max_w` px in `font` (cell text clipping).
+#[must_use]
+fn truncate_to_width(p: &egui::Painter, text: &str, font: FontId, max_w: f32) -> String {
+    if p.layout_no_wrap(text.to_owned(), font.clone(), Color32::WHITE)
+        .size()
+        .x
+        <= max_w
+    {
+        return text.to_owned();
+    }
+    let mut keep = text.to_owned();
+    while !keep.is_empty()
+        && p.layout_no_wrap(format!("{keep}…"), font.clone(), Color32::WHITE)
+            .size()
+            .x
+            > max_w
+    {
+        keep.pop();
+    }
+    keep.push('…');
+    keep
 }
 
 /// Move both anchors by a bar-index delta and a price delta.

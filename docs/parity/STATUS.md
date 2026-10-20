@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 83 verified, 1 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -87,7 +87,7 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Note | `LineToolTextNote` | `Note` | `note` | verified |
 | Price note | `LineToolPriceNote` | `PriceNote` | `price-note` | verified |
 | Pin | `LineToolNote` | `Pin` | `pin` | verified |
-| Table | `LineToolTable` | `Table` | `table` | in-progress |
+| Table | `LineToolTable` | `Table` | `table` | verified |
 | Callout | `LineToolCallout` | `Callout` | `callout` | verified |
 | Comment | `LineToolComment` | `Comment` | `comment` | verified |
 | Price label | `LineToolPriceLabel` | `PriceLabel` | `price-label` | verified |

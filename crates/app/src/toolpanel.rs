@@ -204,6 +204,7 @@ pub const GROUPS: &[ToolGroup] = &[
                 Tool::PriceNote,
                 Tool::Pin,
                 Tool::Callout,
+                Tool::Table,
                 Tool::Comment,
                 Tool::PriceLabel,
                 Tool::Signpost,

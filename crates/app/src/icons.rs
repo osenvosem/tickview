@@ -90,6 +90,7 @@ pub enum Icon {
     VolumeProfileAnchored,
     BarsPattern,
     GhostFeed,
+    TableGrid,
     Magnet,
     Search,
     Bell,
@@ -239,6 +240,7 @@ impl Icon {
         Self::VolumeProfileAnchored,
         Self::BarsPattern,
         Self::GhostFeed,
+        Self::TableGrid,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -388,6 +390,7 @@ impl Icon {
             Self::VolumeProfileAnchored => "volume-profile-anchored",
             Self::BarsPattern => "bars-pattern",
             Self::GhostFeed => "ghost-feed",
+            Self::TableGrid => "table",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -1062,6 +1065,18 @@ impl Icon {
                 ]);
                 path(&[(20.0, 11.0), (20.0, 16.0)]);
             }
+            Self::TableGrid => {
+                path(&[
+                    (4.0, 5.0),
+                    (20.0, 5.0),
+                    (20.0, 19.0),
+                    (4.0, 19.0),
+                    (4.0, 5.0),
+                ]);
+                path(&[(4.0, 9.7), (20.0, 9.7)]);
+                path(&[(4.0, 14.3), (20.0, 14.3)]);
+                path(&[(12.0, 5.0), (12.0, 19.0)]);
+            }
             Self::Magnet => {
                 path(&[
                     (5.0, 4.0),
@@ -1581,7 +1596,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 144);
+        assert_eq!(Icon::ALL.len(), 145);
     }
 
     #[test]

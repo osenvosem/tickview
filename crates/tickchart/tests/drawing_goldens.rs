@@ -1730,3 +1730,32 @@ fn bars_ghost_cases_hit_source_range() {
     g.kind = DrawingKind::GhostFeed;
     assert!(g.hit(center, map, PLOT), "ghost feed source misses");
 }
+
+#[test]
+fn table_case_hits_rect_and_misses_outside() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let mut d = Drawing::new(
+        4,
+        DrawingKind::Table,
+        an(&sc, 60, 104.0),
+        an(&sc, 100, 96.0),
+    );
+    d.grid = Some([3, 3]);
+    d.cells = (0..9).map(|i| format!("c{i}")).collect();
+    let ra = map(d.a);
+    let rb = map(d.b);
+    let center = Pos2::new((ra.x + rb.x) * 0.5, (ra.y + rb.y) * 0.5);
+    assert!(d.hit(center, map, PLOT), "table center misses");
+    for corner in [ra, rb] {
+        let inset = corner
+            + Vec2::new(
+                (center.x - corner.x).signum() * 2.0,
+                (center.y - corner.y).signum() * 2.0,
+            );
+        assert!(d.hit(inset, map, PLOT), "table corner inset 2px misses");
+    }
+    let outside = Pos2::new(rb.x + 15.0, ra.y);
+    assert!(!d.hit(outside, map, PLOT), "15px right of table hits");
+}

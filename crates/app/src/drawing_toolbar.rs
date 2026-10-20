@@ -7,7 +7,7 @@ use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Rect, RichText, Sense,
     Stroke, Ui, Vec2, vec2,
 };
-use tickchart::{Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup};
+use tickchart::{Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup, default_grid};
 
 use crate::icons::Icon;
 use crate::theme::{Palette, font_mono, font_regular, font_semibold, type_size};
@@ -630,6 +630,63 @@ fn popup_rect_and_actions(
                                 }
                             });
                         }
+                        if kind == DrawingKind::Table {
+                            let g = primary
+                                .map_or_else(default_grid, |d| d.grid.unwrap_or_else(default_grid));
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new("GRID")
+                                        .font(font_mono(type_size::TINY))
+                                        .color(p.muted),
+                                );
+                                let mut rows = g[0];
+                                let mut cols = g[1];
+                                if ui
+                                    .add(egui::DragValue::new(&mut rows).range(1..=12))
+                                    .changed()
+                                {
+                                    actions
+                                        .push(ToolbarAction::Edit(StyleEdit::Grid([rows, g[1]])));
+                                }
+                                if ui
+                                    .add(egui::DragValue::new(&mut cols).range(1..=12))
+                                    .changed()
+                                {
+                                    actions
+                                        .push(ToolbarAction::Edit(StyleEdit::Grid([g[0], cols])));
+                                }
+                            });
+                            let ncols = usize::from(g[1]);
+                            let cells: Vec<String> = primary.map_or_else(
+                                || vec![String::new(); usize::from(g[0]) * ncols],
+                                |d| {
+                                    let mut c = d.cells.clone();
+                                    c.resize(usize::from(g[0]) * ncols, String::new());
+                                    c
+                                },
+                            );
+                            for (i, chunk) in cells.chunks(ncols).enumerate() {
+                                ui.horizontal(|ui| {
+                                    for (j, cell) in chunk.iter().enumerate() {
+                                        let mut val = cell.clone();
+                                        if ui
+                                            .add(
+                                                egui::TextEdit::singleline(&mut val)
+                                                    .desired_width(62.0)
+                                                    .text_color(p.text)
+                                                    .background_color(p.panel_alt),
+                                            )
+                                            .changed()
+                                        {
+                                            actions.push(ToolbarAction::Edit(StyleEdit::Cell(
+                                                i * ncols + j,
+                                                val,
+                                            )));
+                                        }
+                                    }
+                                });
+                            }
+                        }
                         if kind.is_annotation() {
                             ui.horizontal(|ui| {
                                 ui.label(
@@ -747,6 +804,10 @@ fn has_settings(drawing: &Drawing) -> bool {
 }
 
 fn settings_height(kind: DrawingKind) -> f32 {
+    if kind == DrawingKind::Table {
+        // GRID stepper row + a default 3x3 cell grid.
+        return 12.0 + 4.0 * 24.0;
+    }
     let rows = usize::from(kind.supports_fill())
         + usize::from(kind == DrawingKind::RegTrend)
         + usize::from(kind.is_annotation());

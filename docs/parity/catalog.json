@@ -1677,10 +1677,17 @@
       "icon": "table",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "app::store::tests::v2_payload_without_table_fields_loads",
+        "app::store::tests::table_cells_round_trip",
+        "tickchart::tests::drawing_goldens::table_case_hits_rect_and_misses_outside"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-table.md",
+        "docs/screenshots/parity/table-dark.png"
+      ],
+      "notes": "Default 3x3; settings popover rows/cols steppers + cell text; additive serde fields."
     },
     {
       "kind": "drawing",

@@ -234,6 +234,7 @@ pub enum Tool {
     VolumeProfileAnchored,
     BarsPattern,
     GhostFeed,
+    Table,
 }
 
 impl Tool {
@@ -325,6 +326,7 @@ impl Tool {
         Self::VolumeProfileAnchored,
         Self::BarsPattern,
         Self::GhostFeed,
+        Self::Table,
     ];
 
     #[must_use]
@@ -417,6 +419,7 @@ impl Tool {
             Self::VolumeProfileAnchored => Icon::VolumeProfileAnchored,
             Self::BarsPattern => Icon::BarsPattern,
             Self::GhostFeed => Icon::GhostFeed,
+            Self::Table => Icon::TableGrid,
         }
     }
 
@@ -510,6 +513,7 @@ impl Tool {
             Self::VolumeProfileAnchored => "Anchored Volume Profile",
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
+            Self::Table => "Table",
         }
     }
 
@@ -643,6 +647,7 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::VolumeProfileAnchored => DrawTool::VolumeProfileAnchored,
         Tool::BarsPattern => DrawTool::BarsPattern,
         Tool::GhostFeed => DrawTool::GhostFeed,
+        Tool::Table => DrawTool::Table,
     }
 }
 
@@ -763,6 +768,7 @@ pub struct TickView {
     pending_vwap: bool,
     pending_vprofile: bool,
     pending_barghost: bool,
+    pending_table: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1079,6 +1085,7 @@ impl TickView {
             pending_vwap: false,
             pending_vprofile: false,
             pending_barghost: false,
+            pending_table: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1175,6 +1182,7 @@ impl TickView {
                 "vwap" => me.pending_vwap = true,
                 "vprofile" => me.pending_vprofile = true,
                 "barghost" => me.pending_barghost = true,
+                "table" => me.pending_table = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1814,6 +1822,47 @@ impl TickView {
         ]);
         self.tabs[ti].chart.selection.select(9921);
     }
+    /// `TICKVIEW_SCENE=table`: a 3x3 table with sample cells, selected, for
+    /// table-tool review.
+    fn seed_table(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let hi = cv.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let lo = cv.iter().copied().fold(f64::INFINITY, f64::min);
+        let span = hi - lo;
+        let a = Anchor {
+            t: tv[idx(0.15) - vs],
+            price: lo + span * 0.75,
+        };
+        let b = Anchor {
+            t: tv[idx(0.45) - vs],
+            price: lo + span * 0.45,
+        };
+        let mut d = Drawing::new(9931, DrawingKind::Table, a, b);
+        d.style = tickchart::kind_defaults(DrawingKind::Table);
+        d.grid = Some(tickchart::default_grid());
+        d.cells = [
+            "RSI",
+            "61.4",
+            "overbought",
+            "MACD",
+            "-120",
+            "bearish",
+            "Vol",
+            "2.1x",
+            "rising",
+        ]
+        .iter()
+        .map(|s| (*s).to_owned())
+        .collect();
+        self.tabs[ti].chart.drawings.push(d);
+        self.tabs[ti].chart.selection.select(9931);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -2160,6 +2209,9 @@ impl TickView {
                                 }
                                 if self.pending_barghost && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_barghost(ti);
+                                }
+                                if self.pending_table && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_table(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2658,7 +2710,8 @@ impl TickView {
             || self.pending_annot
             || self.pending_vwap
             || self.pending_vprofile
-            || self.pending_barghost;
+            || self.pending_barghost
+            || self.pending_table;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
