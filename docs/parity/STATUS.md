@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 81 verified, 3 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 83 verified, 1 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -58,8 +58,8 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Long position | `LineToolRiskRewardLong` | `LongPosition` | `long-position` | verified |
 | Short position | `LineToolRiskRewardShort` | `ShortPosition` | `short-position` | verified |
 | Position forecast | `LineToolPrediction` | `PositionForecast` | `position-forecast` | verified |
-| Bars pattern | `LineToolBarsPattern` | `BarsPattern` | `bars-pattern` | in-progress |
-| Ghost feed | `LineToolGhostFeed` | `GhostFeed` | `ghost-feed` | in-progress |
+| Bars pattern | `LineToolBarsPattern` | `BarsPattern` | `bars-pattern` | verified |
+| Ghost feed | `LineToolGhostFeed` | `GhostFeed` | `ghost-feed` | verified |
 | Sector | `LineToolProjection` | `Sector` | `sector` | verified |
 | Anchored VWAP | `LineToolAnchoredVWAP` | `AnchoredVwap` | `anchored-vwap` | verified |
 | Fixed range volume profile | `LineToolFixedRangeVolumeProfile` | `FixedRangeVolumeProfile` | `volume-profile-fixed` | verified |

@@ -103,6 +103,8 @@ pub enum DrawingKind {
     AnchoredVwap,
     FixedRangeVolumeProfile,
     AnchoredVolumeProfile,
+    BarsPattern,
+    GhostFeed,
 }
 
 impl DrawingKind {
@@ -188,6 +190,8 @@ impl DrawingKind {
         Self::AnchoredVwap,
         Self::FixedRangeVolumeProfile,
         Self::AnchoredVolumeProfile,
+        Self::BarsPattern,
+        Self::GhostFeed,
     ];
 
     #[must_use]
@@ -274,6 +278,8 @@ impl DrawingKind {
             Self::AnchoredVwap => "Anchored VWAP",
             Self::FixedRangeVolumeProfile => "Fixed Range Volume Profile",
             Self::AnchoredVolumeProfile => "Anchored Volume Profile",
+            Self::BarsPattern => "Bars pattern",
+            Self::GhostFeed => "Ghost feed",
         }
     }
 
@@ -302,6 +308,8 @@ impl DrawingKind {
             | Self::AnchoredVwap => 1,
             Self::FixedRangeVolumeProfile => 2,
             Self::AnchoredVolumeProfile => 1,
+            Self::BarsPattern => 2,
+            Self::GhostFeed => 2,
             Self::Channel
             | Self::FibExt
             | Self::Pitchfork
@@ -509,6 +517,8 @@ pub enum DrawTool {
     AnchoredVwap,
     VolumeProfileFixed,
     VolumeProfileAnchored,
+    BarsPattern,
+    GhostFeed,
 }
 
 impl DrawTool {
@@ -598,6 +608,8 @@ impl DrawTool {
         Self::AnchoredVwap,
         Self::VolumeProfileFixed,
         Self::VolumeProfileAnchored,
+        Self::BarsPattern,
+        Self::GhostFeed,
     ];
 
     #[must_use]
@@ -688,6 +700,8 @@ impl DrawTool {
             Self::AnchoredVwap => "Anchored VWAP",
             Self::VolumeProfileFixed => "Fixed Range Volume Profile",
             Self::VolumeProfileAnchored => "Anchored Volume Profile",
+            Self::BarsPattern => "Bars pattern",
+            Self::GhostFeed => "Ghost feed",
         }
     }
 
@@ -776,6 +790,8 @@ impl DrawTool {
             Self::AnchoredVwap => Some(DrawingKind::AnchoredVwap),
             Self::VolumeProfileFixed => Some(DrawingKind::FixedRangeVolumeProfile),
             Self::VolumeProfileAnchored => Some(DrawingKind::AnchoredVolumeProfile),
+            Self::BarsPattern => Some(DrawingKind::BarsPattern),
+            Self::GhostFeed => Some(DrawingKind::GhostFeed),
         }
     }
 
@@ -1404,6 +1420,13 @@ impl Drawing {
     pub fn hit(&self, p: Pos2, map: impl Fn(Anchor) -> Pos2, plot: Rect) -> bool {
         if !plot.contains(p) {
             return false;
+        }
+        if matches!(self.kind, DrawingKind::BarsPattern | DrawingKind::GhostFeed) {
+            let ra = map(self.a);
+            let rb = map(self.b);
+            return Rect::from_min_max(ra.min(rb), ra.max(rb))
+                .expand(6.0)
+                .contains(p);
         }
         const TOL: f32 = 6.0;
         if self.kind.is_pattern()
@@ -2761,6 +2784,45 @@ fn draw_one(
                 pal.bg,
                 font.clone(),
             );
+        }
+        DrawingKind::BarsPattern | DrawingKind::GhostFeed => {
+            let Some(i0) = nearest_index(cd, d.a.t) else {
+                return;
+            };
+            let Some(i1) = nearest_index(cd, d.b.t) else {
+                return;
+            };
+            let (di, dp) = crate::datatools::offset_for(d);
+            let (lo_i, hi_i) = if d.kind == DrawingKind::GhostFeed {
+                let (vs, ve) = view.visible();
+                (vs, ve.saturating_sub(1))
+            } else {
+                (i0.min(i1), i0.max(i1))
+            };
+            let tint = color.gamma_multiply(0.35);
+            let last = cd.c.len().saturating_sub(1);
+            for i in lo_i..=hi_i.min(last) {
+                let j = (i as i64 + di).clamp(0, last as i64) as usize;
+                let x = view.x_of(j);
+                let xw = (view.spacing * 0.35).max(1.0);
+                p.line_segment(
+                    [
+                        Pos2::new(x, axis.y_of(cd.h[i] + dp)),
+                        Pos2::new(x, axis.y_of(cd.l[i] + dp)),
+                    ],
+                    stroke,
+                );
+                let body_t = cd.o[i].max(cd.c[i]) + dp;
+                let body_b = cd.o[i].min(cd.c[i]) + dp;
+                p.rect_filled(
+                    Rect::from_min_max(
+                        Pos2::new(x - xw, axis.y_of(body_t)),
+                        Pos2::new(x + xw, axis.y_of(body_b)),
+                    ),
+                    0.0,
+                    tint,
+                );
+            }
         }
         // TV plain text: glyph run at the anchor, no bubble.
         DrawingKind::Text => {

@@ -1705,3 +1705,28 @@ fn profiles_survive_anchor_past_end() {
         PLOT
     ));
 }
+
+#[test]
+fn bars_ghost_cases_hit_source_range() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let mut d = Drawing::new(
+        3,
+        DrawingKind::BarsPattern,
+        an(&sc, 60, 98.0),
+        an(&sc, 100, 104.0),
+    );
+    d.extra.push(Anchor { t: 30, price: 2.0 });
+    assert_eq!(tickchart::datatools::offset_for(&d), (30, 2.0));
+    let center = Pos2::new(
+        (map(d.a).x + map(d.b).x) * 0.5,
+        (map(d.a).y + map(d.b).y) * 0.5,
+    );
+    assert!(d.hit(center, map, PLOT), "source rect center misses");
+    let outside = Pos2::new(map(d.b).x + 15.0, map(d.a).y);
+    assert!(!d.hit(outside, map, PLOT), "15px right of the source hits");
+    let mut g = d.clone();
+    g.kind = DrawingKind::GhostFeed;
+    assert!(g.hit(center, map, PLOT), "ghost feed source misses");
+}

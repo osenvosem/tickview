@@ -1065,10 +1065,17 @@
       "icon": "bars-pattern",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart::datatools::tests::offset_default_and_stored",
+        "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
+        "app::tests::every_drawing_tool_has_a_unique_icon"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-bars-ghost.md",
+        "docs/screenshots/parity/barghost-dark.png"
+      ],
+      "notes": "Offset in extra[0] (bar-count + price shift); source rect selects, ghost is tinted copy."
     },
     {
       "kind": "drawing",
@@ -1079,10 +1086,17 @@
       "icon": "ghost-feed",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart::datatools::tests::offset_default_and_stored",
+        "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
+        "app::tests::every_drawing_tool_has_a_unique_icon"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-bars-ghost.md",
+        "docs/screenshots/parity/barghost-dark.png"
+      ],
+      "notes": "Whole visible series shifted by the same offset; source rect selects."
     },
     {
       "kind": "drawing",

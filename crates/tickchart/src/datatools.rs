@@ -201,6 +201,14 @@ pub fn profile_hit(
     })
 }
 
+/// Ghost-copy offset for bars pattern / ghost feed: `(Δbars, Δprice)` stored
+/// in `extra[0]` (`t` = bar-count shift, `price` = vertical shift), so the
+/// offset survives moving the source range. Default `(0, 0)`.
+#[must_use]
+pub fn offset_for(d: &crate::drawings::Drawing) -> (i64, f64) {
+    d.extra.first().map_or((0, 0.0), |e| (e.t, e.price))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -286,5 +294,21 @@ mod tests {
         let cd = fixture(&[10.0], &[10.0], &[10.0], &[0.0]);
         assert!(volume_profile(&cd, 0, 0, 4).is_none()); // flat + zero volume
         assert!(volume_profile(&cd, 0, 5, 4).is_none()); // range past end
+    }
+
+    #[test]
+    fn offset_default_and_stored() {
+        let mut d = crate::drawings::Drawing::new(
+            1,
+            crate::drawings::DrawingKind::BarsPattern,
+            crate::drawings::Anchor { t: 0, price: 10.0 },
+            crate::drawings::Anchor {
+                t: 60_000,
+                price: 12.0,
+            },
+        );
+        assert_eq!(offset_for(&d), (0, 0.0));
+        d.extra.push(crate::drawings::Anchor { t: 25, price: 1.5 });
+        assert_eq!(offset_for(&d), (25, 1.5));
     }
 }

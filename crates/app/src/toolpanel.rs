@@ -143,6 +143,8 @@ pub const GROUPS: &[ToolGroup] = &[
                     Tool::LongPosition,
                     Tool::ShortPosition,
                     Tool::PositionForecast,
+                    Tool::BarsPattern,
+                    Tool::GhostFeed,
                     Tool::Sector,
                 ],
             ),

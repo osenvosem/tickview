@@ -232,6 +232,8 @@ pub enum Tool {
     AnchoredVwap,
     VolumeProfileFixed,
     VolumeProfileAnchored,
+    BarsPattern,
+    GhostFeed,
 }
 
 impl Tool {
@@ -321,6 +323,8 @@ impl Tool {
         Self::AnchoredVwap,
         Self::VolumeProfileFixed,
         Self::VolumeProfileAnchored,
+        Self::BarsPattern,
+        Self::GhostFeed,
     ];
 
     #[must_use]
@@ -411,6 +415,8 @@ impl Tool {
             Self::AnchoredVwap => Icon::AnchoredVwap,
             Self::VolumeProfileFixed => Icon::VolumeProfileFixed,
             Self::VolumeProfileAnchored => Icon::VolumeProfileAnchored,
+            Self::BarsPattern => Icon::BarsPattern,
+            Self::GhostFeed => Icon::GhostFeed,
         }
     }
 
@@ -502,6 +508,8 @@ impl Tool {
             Self::AnchoredVwap => "Anchored VWAP",
             Self::VolumeProfileFixed => "Fixed Range Volume Profile",
             Self::VolumeProfileAnchored => "Anchored Volume Profile",
+            Self::BarsPattern => "Bars pattern",
+            Self::GhostFeed => "Ghost feed",
         }
     }
 
@@ -633,6 +641,8 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::AnchoredVwap => DrawTool::AnchoredVwap,
         Tool::VolumeProfileFixed => DrawTool::VolumeProfileFixed,
         Tool::VolumeProfileAnchored => DrawTool::VolumeProfileAnchored,
+        Tool::BarsPattern => DrawTool::BarsPattern,
+        Tool::GhostFeed => DrawTool::GhostFeed,
     }
 }
 
@@ -752,6 +762,7 @@ pub struct TickView {
     pending_annot: bool,
     pending_vwap: bool,
     pending_vprofile: bool,
+    pending_barghost: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1067,6 +1078,7 @@ impl TickView {
             pending_annot: false,
             pending_vwap: false,
             pending_vprofile: false,
+            pending_barghost: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1162,6 +1174,7 @@ impl TickView {
                 "annot" => me.pending_annot = true,
                 "vwap" => me.pending_vwap = true,
                 "vprofile" => me.pending_vprofile = true,
+                "barghost" => me.pending_barghost = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1765,6 +1778,42 @@ impl TickView {
         ]);
         self.tabs[ti].chart.selection.select(9911);
     }
+    /// `TICKVIEW_SCENE=barghost`: bars pattern over an early window with a
+    /// shifted ghost copy, plus a ghost feed of the visible series, for
+    /// pattern-tool review.
+    fn seed_barghost(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let mk = |id: u64, kind: DrawingKind, f0: f64, f1: f64, db: i64, dp: f64| -> Drawing {
+            let a = Anchor {
+                t: tv[idx(f0) - vs],
+                price: cv[idx(f0) - vs],
+            };
+            let b = Anchor {
+                t: tv[idx(f1) - vs],
+                price: cv[idx(f1) - vs],
+            };
+            let mut d = Drawing::new(id, kind, a, b);
+            d.style = tickchart::kind_defaults(kind);
+            d.extra.push(Anchor { t: db, price: dp });
+            d
+        };
+        let span = {
+            let hi = cv.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+            let lo = cv.iter().copied().fold(f64::INFINITY, f64::min);
+            hi - lo
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9921, DrawingKind::BarsPattern, 0.05, 0.35, 25, span * 0.08),
+            mk(9922, DrawingKind::GhostFeed, 0.5, 0.78, -18, -span * 0.05),
+        ]);
+        self.tabs[ti].chart.selection.select(9921);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -2108,6 +2157,9 @@ impl TickView {
                                 }
                                 if self.pending_vprofile && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_vprofile(ti);
+                                }
+                                if self.pending_barghost && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_barghost(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2605,7 +2657,8 @@ impl TickView {
             || self.pending_shapes
             || self.pending_annot
             || self.pending_vwap
-            || self.pending_vprofile;
+            || self.pending_vprofile
+            || self.pending_barghost;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {

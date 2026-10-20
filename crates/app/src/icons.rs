@@ -88,6 +88,8 @@ pub enum Icon {
     AnchoredVwap,
     VolumeProfileFixed,
     VolumeProfileAnchored,
+    BarsPattern,
+    GhostFeed,
     Magnet,
     Search,
     Bell,
@@ -235,6 +237,8 @@ impl Icon {
         Self::AnchoredVwap,
         Self::VolumeProfileFixed,
         Self::VolumeProfileAnchored,
+        Self::BarsPattern,
+        Self::GhostFeed,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -382,6 +386,8 @@ impl Icon {
             Self::AnchoredVwap => "anchored-vwap",
             Self::VolumeProfileFixed => "volume-profile-fixed",
             Self::VolumeProfileAnchored => "volume-profile-anchored",
+            Self::BarsPattern => "bars-pattern",
+            Self::GhostFeed => "ghost-feed",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -1032,6 +1038,30 @@ impl Icon {
                 line(9.0, 13.0, 16.0, 13.0);
                 line(9.0, 18.0, 19.0, 18.0);
             }
+            Self::BarsPattern => {
+                path(&[(5.0, 7.0), (5.0, 17.0)]);
+                path(&[(9.0, 5.0), (9.0, 19.0)]);
+                path(&[(13.0, 9.0), (13.0, 19.0)]);
+                path(&[(17.0, 7.0), (17.0, 17.0)]);
+                path(&[(21.0, 5.0), (21.0, 15.0)]);
+            }
+            Self::GhostFeed => {
+                path(&[
+                    (4.0, 16.0),
+                    (8.0, 12.0),
+                    (12.0, 14.0),
+                    (16.0, 9.0),
+                    (20.0, 11.0),
+                ]);
+                path(&[
+                    (4.0, 21.0),
+                    (8.0, 17.0),
+                    (12.0, 19.0),
+                    (16.0, 14.0),
+                    (20.0, 16.0),
+                ]);
+                path(&[(20.0, 11.0), (20.0, 16.0)]);
+            }
             Self::Magnet => {
                 path(&[
                     (5.0, 4.0),
@@ -1551,7 +1581,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 142);
+        assert_eq!(Icon::ALL.len(), 144);
     }
 
     #[test]
