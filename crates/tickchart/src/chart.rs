@@ -103,8 +103,6 @@ pub struct ChartEvent {
     pub drawing_completed: bool,
     /// The compare legend was clicked; app should clear its compare symbol.
     pub compare_removed: bool,
-    /// Screen anchor for the floating drawing settings toolbar.
-    pub drawing_toolbar_pos: Option<Pos2>,
 }
 
 impl ChartState {
@@ -574,18 +572,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             egui::StrokeKind::Inside,
         );
     }
-
-    ev.drawing_toolbar_pos = (!st.drawings_hidden)
-        .then_some(st.selection.primary())
-        .flatten()
-        .and_then(|id| st.drawings.iter().find(|d| d.id == id))
-        .and_then(|d| drawings::anchor_pos(d.last_anchor(), cd, &st.view, &price_axis))
-        .map(|pos| {
-            Pos2::new(
-                pos.x.clamp(plot.min.x, plot.max.x),
-                pos.y.clamp(plot.min.y, plot.max.y),
-            )
-        });
 
     // Last price line + axis tag.
     if let Some(&last) = cd.c.last() {
@@ -1830,15 +1816,14 @@ mod tests {
     }
 
     #[test]
-    fn selected_drawing_reports_a_toolbar_anchor_inside_the_plot() {
+    fn selected_drawing_is_available_to_the_toolbar() {
         let ctx = egui::Context::default();
         let cd = ui_candles();
         let mut st = ChartState::new("AAPL", "1D");
         st.tools.set_tool(crate::drawings::DrawTool::HLine);
-        let ev = click(&ctx, &mut st, &cd, Pos2::new(800.0, 350.0));
-        let plot = Rect::from_min_size(Pos2::ZERO, Vec2::new(840.0, 676.0));
-        let anchor = ev.drawing_toolbar_pos.expect("toolbar anchor");
-        assert!(plot.contains(anchor), "{anchor:?}");
+        let _ = click(&ctx, &mut st, &cd, Pos2::new(800.0, 350.0));
+        let id = st.selection.primary().expect("selected drawing id");
+        assert!(st.drawings.iter().any(|drawing| drawing.id == id));
 
         let key = egui::Event::Key {
             key: egui::Key::Escape,
@@ -1847,13 +1832,13 @@ mod tests {
             repeat: false,
             modifiers: egui::Modifiers::default(),
         };
-        let ev = frame(
+        let _ev = frame(
             &ctx,
             &mut st,
             &cd,
             vec![egui::Event::PointerMoved(Pos2::new(800.0, 350.0)), key],
         );
-        assert!(ev.drawing_toolbar_pos.is_none());
+        assert!(st.selection.primary().is_none());
     }
 
     #[test]

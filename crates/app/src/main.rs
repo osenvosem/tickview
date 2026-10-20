@@ -5,6 +5,7 @@
 
 mod app;
 mod chrome;
+mod drawing_toolbar;
 mod icon_sheet;
 mod icons;
 mod store;
