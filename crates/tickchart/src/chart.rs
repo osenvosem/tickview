@@ -73,6 +73,8 @@ pub struct ChartState {
     pub price_zoom: Option<(f64, f64)>,
     /// Live rectangle-zoom selection in screen space.
     pub zoom_sel: Option<(Pos2, Pos2)>,
+    /// Toolbar-driven screen-space movement applied to the selection next frame.
+    pending_toolbar_move: Vec2,
     /// Whether the last primary press happened with shift (rect-zoom arm).
     zoom_pending: bool,
     pub compare: Option<CompareSeries>,
@@ -138,6 +140,7 @@ impl ChartState {
             popup_rect: None,
             price_zoom: None,
             zoom_sel: None,
+            pending_toolbar_move: Vec2::ZERO,
             zoom_pending: false,
             compare: None,
             replay: None,
@@ -164,6 +167,12 @@ impl ChartState {
             map.insert(self.symbol.clone(), self.drawings.clone());
         }
         map
+    }
+
+    /// Queue a screen-space move of the current selection, applied on the next
+    /// chart frame while axes and candle data are available.
+    pub fn nudge_selection(&mut self, delta: Vec2) {
+        self.pending_toolbar_move += delta;
     }
 
     /// Restore per-symbol drawings loaded from disk.
@@ -804,6 +813,8 @@ fn handle_input(
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
 
+    apply_pending_toolbar_move(st, cd, ax, ev);
+
     if ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary)) {
         st.zoom_pending = ctx.input(|i| {
             i.modifiers.shift
@@ -1098,6 +1109,36 @@ fn apply_price_zoom(ax: PriceAxis, zoom: Option<(f64, f64)>) -> PriceAxis {
     match zoom {
         Some((lo, hi)) => ax.with_range(lo, hi),
         None => ax,
+    }
+}
+
+fn apply_pending_toolbar_move(
+    st: &mut ChartState,
+    cd: &Candles,
+    ax: &PriceAxis,
+    ev: &mut ChartEvent,
+) {
+    let delta = std::mem::take(&mut st.pending_toolbar_move);
+    if delta == Vec2::ZERO {
+        return;
+    }
+    let ids = st.selection.ids().clone();
+    for id in ids {
+        let Some(drawing) = st.drawings.iter_mut().find(|d| d.id == id && !d.locked) else {
+            continue;
+        };
+        let Some(from_pos) = drawings::anchor_pos(drawing.a, cd, &st.view, ax) else {
+            continue;
+        };
+        let Some(from) = drawings::anchor_at(cd, &st.view, ax, from_pos, false) else {
+            continue;
+        };
+        let Some(to) = drawings::anchor_at(cd, &st.view, ax, from_pos + delta, false) else {
+            continue;
+        };
+        if drawings::move_drawing(drawing, from, to, cd) {
+            ev.changed = true;
+        }
     }
 }
 
@@ -1466,6 +1507,35 @@ mod tests {
                 modifiers,
             }],
         );
+    }
+
+    #[test]
+    fn toolbar_nudge_moves_selected_drawing() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 10.0;
+        st.set_drawings(vec![Drawing::new(
+            1,
+            crate::drawings::DrawingKind::TrendLine,
+            Anchor { t: 0, price: 10.0 },
+            Anchor { t: 60, price: 12.0 },
+        )]);
+        st.selection.select(1);
+        let before_a = st.drawings[0].a;
+        let before_b = st.drawings[0].b;
+
+        st.nudge_selection(Vec2::new(10.0, 0.0));
+        let ev = frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(Pos2::new(800.0, 350.0))],
+        );
+
+        assert!(ev.changed);
+        assert_eq!(st.drawings[0].a.t, before_a.t + 60);
+        assert_eq!(st.drawings[0].b.t, before_b.t + 60);
     }
 
     #[test]

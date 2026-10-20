@@ -887,11 +887,17 @@ impl Default for DrawingToolState {
 impl DrawingToolState {
     #[must_use]
     pub fn with_drawings(drawings: &[Drawing]) -> Self {
-        let next_id = drawings.iter().map(|d| d.id).max().unwrap_or(0) + 1;
+        let next_id = next_id(drawings);
         Self {
             next_id,
             ..Self::default()
         }
+    }
+
+    pub fn allocate_id(&mut self) -> u64 {
+        let id = self.next_id;
+        self.next_id += 1;
+        id
     }
 
     pub fn set_tool(&mut self, tool: DrawTool) {
@@ -1059,6 +1065,59 @@ pub fn delete_selected(drawings: &mut Vec<Drawing>, selection: &mut Selection) -
     let deleted = drawings.len() != n;
     selection.retain(|id| drawings.iter().any(|d| d.id == id));
     deleted
+}
+
+#[must_use]
+pub fn next_id(drawings: &[Drawing]) -> u64 {
+    drawings.iter().map(|d| d.id).max().unwrap_or(0) + 1
+}
+
+pub fn raise_to_front(drawings: &mut Vec<Drawing>, ids: &BTreeSet<u64>) {
+    let (mut selected, rest): (Vec<_>, Vec<_>) =
+        drawings.drain(..).partition(|d| ids.contains(&d.id));
+    drawings.extend(rest);
+    drawings.append(&mut selected);
+}
+
+pub fn send_to_back(drawings: &mut Vec<Drawing>, ids: &BTreeSet<u64>) {
+    let (mut selected, rest): (Vec<_>, Vec<_>) =
+        drawings.drain(..).partition(|d| ids.contains(&d.id));
+    drawings.append(&mut selected);
+    drawings.extend(rest);
+}
+
+pub fn bring_forward(drawings: &mut [Drawing], ids: &BTreeSet<u64>) {
+    for i in (0..drawings.len().saturating_sub(1)).rev() {
+        if ids.contains(&drawings[i].id) && !ids.contains(&drawings[i + 1].id) {
+            drawings.swap(i, i + 1);
+        }
+    }
+}
+
+pub fn send_backward(drawings: &mut [Drawing], ids: &BTreeSet<u64>) {
+    for i in 1..drawings.len() {
+        if ids.contains(&drawings[i].id) && !ids.contains(&drawings[i - 1].id) {
+            drawings.swap(i, i - 1);
+        }
+    }
+}
+
+#[must_use]
+pub fn duplicate(d: &Drawing, id: u64, price_scale: f64) -> Drawing {
+    let scale = |a: &mut Anchor| a.price *= price_scale;
+    let mut copy = d.clone();
+    copy.id = id;
+    scale(&mut copy.a);
+    scale(&mut copy.b);
+    if let Some(c) = &mut copy.c {
+        scale(c);
+    }
+    for a in &mut copy.extra {
+        scale(a);
+    }
+    copy.hidden = false;
+    copy.locked = false;
+    copy
 }
 
 /// Stroke pattern for a drawing.
@@ -4154,5 +4213,43 @@ mod tests {
         assert!(!d.hidden);
         assert!(!d.locked);
         assert!(d.visible_intervals.is_none());
+    }
+
+    fn sample(id: u64) -> Drawing {
+        Drawing::new(
+            id,
+            DrawingKind::TrendLine,
+            Anchor { t: 0, price: 10.0 },
+            Anchor { t: 60, price: 12.0 },
+        )
+    }
+
+    #[test]
+    fn z_order_moves_selected_drawings() {
+        let mut v = vec![sample(1), sample(2), sample(3)];
+        let ids = BTreeSet::from([2]);
+        raise_to_front(&mut v, &ids);
+        assert_eq!(v.iter().map(|d| d.id).collect::<Vec<_>>(), vec![1, 3, 2]);
+        send_to_back(&mut v, &ids);
+        assert_eq!(v.iter().map(|d| d.id).collect::<Vec<_>>(), vec![2, 1, 3]);
+    }
+
+    #[test]
+    fn duplicate_offsets_and_clears_state() {
+        let mut d = sample(1);
+        d.hidden = true;
+        d.locked = true;
+        let copy = duplicate(&d, 9, 1.01);
+        assert_eq!(copy.id, 9);
+        assert!((copy.a.price - d.a.price * 1.01).abs() < 1e-9);
+        assert!(!copy.hidden);
+        assert!(!copy.locked);
+    }
+
+    #[test]
+    fn drawing_tool_state_allocate_id_advances() {
+        let mut tools = DrawingToolState::with_drawings(&[sample(1), sample(2)]);
+        assert_eq!(tools.allocate_id(), 3);
+        assert_eq!(tools.allocate_id(), 4);
     }
 }
