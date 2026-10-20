@@ -411,6 +411,11 @@ pub struct TickView {
     pending_replay: bool,
     pending_phase4: bool,
     pending_zoomrect: bool,
+    search_anchor: Option<egui::Vec2>,
+    indicators_anchor: Option<egui::Vec2>,
+    editor_anchor: Option<egui::Vec2>,
+    alerts_anchor: Option<egui::Vec2>,
+    settings_anchor: Option<egui::Vec2>,
     cfg: SavedConfig,
 }
 
@@ -668,6 +673,11 @@ impl TickView {
             replay_autoplay: false,
             replay_next: Instant::now(),
             pending_replay: false,
+            search_anchor: Some(egui::vec2(0.0, 92.0)),
+            indicators_anchor: Some(egui::vec2(0.0, 96.0)),
+            editor_anchor: Some(egui::vec2(0.0, 140.0)),
+            alerts_anchor: Some(egui::vec2(0.0, 120.0)),
+            settings_anchor: Some(egui::vec2(0.0, 110.0)),
             cfg,
         };
 
@@ -2031,122 +2041,119 @@ impl TickView {
             SearchPurpose::Symbol => "Search symbol, e.g. AAPL, BTCUSDT, EURUSD",
             SearchPurpose::Compare => "Compare with, e.g. SPY, QQQ, BTCUSDT",
         };
-        egui::Window::new(title)
+        let mut win = egui::Window::new(title)
             .open(&mut open)
             .collapsible(false)
-            .resizable(false)
+            .auto_sized()
             .default_width(500.0)
-            .anchor(Align2::CENTER_TOP, [0.0, 92.0])
-            .frame(theme::menu_frame(p))
-            .show(ctx, |ui| {
-                ui.set_width(500.0);
-                widgets::dialog_bg(ui, p);
-                let re = ui.add(
-                    egui::TextEdit::singleline(&mut self.search_q)
-                        .hint_text(hint)
-                        .desired_width(f32::INFINITY)
-                        .font(font_regular(type_size::BODY)),
-                );
-                if self.search_focus {
-                    re.request_focus();
-                    self.search_focus = false;
+            .frame(theme::menu_frame(p));
+        if let Some(off) = self.search_anchor.take() {
+            win = win.anchor(Align2::CENTER_TOP, off);
+        }
+        win.show(ctx, |ui| {
+            ui.set_width(500.0);
+            widgets::dialog_bg(ui, p);
+            let re = ui.add(
+                egui::TextEdit::singleline(&mut self.search_q)
+                    .hint_text(hint)
+                    .desired_width(f32::INFINITY)
+                    .font(font_regular(type_size::BODY)),
+            );
+            if self.search_focus {
+                re.request_focus();
+                self.search_focus = false;
+            }
+            if re.changed() {
+                self.refresh_search();
+            }
+            if re.has_focus()
+                && ui.input(|i| i.key_pressed(Key::Enter))
+                && let Some(s) = self.search_results.get(self.search_sel).cloned()
+            {
+                self.pick_search_symbol(s);
+            }
+            if re.has_focus() {
+                if ui.input(|i| i.key_pressed(Key::ArrowDown)) {
+                    self.search_sel =
+                        (self.search_sel + 1).min(self.search_results.len().saturating_sub(1));
                 }
-                if re.changed() {
-                    self.refresh_search();
+                if ui.input(|i| i.key_pressed(Key::ArrowUp)) {
+                    self.search_sel = self.search_sel.saturating_sub(1);
                 }
-                if re.has_focus()
-                    && ui.input(|i| i.key_pressed(Key::Enter))
-                    && let Some(s) = self.search_results.get(self.search_sel).cloned()
-                {
-                    self.pick_search_symbol(s);
-                }
-                if re.has_focus() {
-                    if ui.input(|i| i.key_pressed(Key::ArrowDown)) {
-                        self.search_sel =
-                            (self.search_sel + 1).min(self.search_results.len().saturating_sub(1));
+            }
+            widgets::hline(ui, p);
+            let results: Vec<Symbol> = if self.search_q.trim().is_empty() {
+                self.watchlist.clone()
+            } else {
+                self.search_results.clone()
+            };
+            let mut pick: Option<Symbol> = None;
+            egui::ScrollArea::vertical()
+                .max_height(360.0)
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    if results.is_empty() {
+                        widgets::empty_state(
+                            ui,
+                            p,
+                            "No symbols found",
+                            "Try a ticker, company name, or crypto pair.",
+                        );
                     }
-                    if ui.input(|i| i.key_pressed(Key::ArrowUp)) {
-                        self.search_sel = self.search_sel.saturating_sub(1);
-                    }
-                }
-                widgets::hline(ui, p);
-                let results: Vec<Symbol> = if self.search_q.trim().is_empty() {
-                    self.watchlist.clone()
-                } else {
-                    self.search_results.clone()
-                };
-                let mut pick: Option<Symbol> = None;
-                egui::ScrollArea::vertical()
-                    .max_height(360.0)
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        if results.is_empty() {
-                            widgets::empty_state(
-                                ui,
-                                p,
-                                "No symbols found",
-                                "Try a ticker, company name, or crypto pair.",
-                            );
-                        }
-                        for (i, s) in results.iter().enumerate() {
-                            let selected = i == self.search_sel;
-                            let (rect, resp) = ui.allocate_exact_size(
-                                vec2(ui.available_width(), 42.0),
-                                Sense::click(),
-                            );
-                            if selected || resp.hovered() {
-                                ui.painter().rect_filled(
-                                    rect,
-                                    egui::CornerRadius::same(3),
-                                    if selected { p.selection } else { p.hover },
-                                );
-                            }
-                            let badge_w = (s.exchange.len() as f32 * 6.3 + 10.0).max(42.0);
-                            let badge = egui::Rect::from_min_size(
-                                rect.left_top() + vec2(8.0, 12.0),
-                                vec2(badge_w, 18.0),
-                            );
+                    for (i, s) in results.iter().enumerate() {
+                        let selected = i == self.search_sel;
+                        let (rect, resp) = ui
+                            .allocate_exact_size(vec2(ui.available_width(), 42.0), Sense::click());
+                        if selected || resp.hovered() {
                             ui.painter().rect_filled(
-                                badge,
+                                rect,
                                 egui::CornerRadius::same(3),
-                                p.panel_alt,
+                                if selected { p.selection } else { p.hover },
                             );
-                            ui.painter().text(
-                                badge.center(),
-                                Align2::CENTER_CENTER,
-                                &s.exchange,
-                                font_medium(type_size::TINY),
-                                p.muted,
-                            );
-                            let tx = badge.right() + 10.0;
-                            ui.painter().text(
-                                egui::pos2(tx, rect.center().y - 7.0),
-                                Align2::LEFT_CENTER,
-                                &s.ticker,
-                                font_semibold(type_size::BODY),
-                                p.text,
-                            );
-                            let desc = if s.description.is_empty() {
-                                format!("{:?}", s.kind)
-                            } else {
-                                s.description.clone()
-                            };
-                            ui.painter().text(
-                                egui::pos2(tx, rect.center().y + 8.0),
-                                Align2::LEFT_CENTER,
-                                desc,
-                                font_regular(type_size::TINY),
-                                p.muted,
-                            );
-                            if resp.clicked() {
-                                pick = Some(s.clone());
-                            }
                         }
-                    });
-                if let Some(s) = pick {
-                    self.pick_search_symbol(s);
-                }
-            });
+                        let badge_w = (s.exchange.len() as f32 * 6.3 + 10.0).max(42.0);
+                        let badge = egui::Rect::from_min_size(
+                            rect.left_top() + vec2(8.0, 12.0),
+                            vec2(badge_w, 18.0),
+                        );
+                        ui.painter()
+                            .rect_filled(badge, egui::CornerRadius::same(3), p.panel_alt);
+                        ui.painter().text(
+                            badge.center(),
+                            Align2::CENTER_CENTER,
+                            &s.exchange,
+                            font_medium(type_size::TINY),
+                            p.muted,
+                        );
+                        let tx = badge.right() + 10.0;
+                        ui.painter().text(
+                            egui::pos2(tx, rect.center().y - 7.0),
+                            Align2::LEFT_CENTER,
+                            &s.ticker,
+                            font_semibold(type_size::BODY),
+                            p.text,
+                        );
+                        let desc = if s.description.is_empty() {
+                            format!("{:?}", s.kind)
+                        } else {
+                            s.description.clone()
+                        };
+                        ui.painter().text(
+                            egui::pos2(tx, rect.center().y + 8.0),
+                            Align2::LEFT_CENTER,
+                            desc,
+                            font_regular(type_size::TINY),
+                            p.muted,
+                        );
+                        if resp.clicked() {
+                            pick = Some(s.clone());
+                        }
+                    }
+                });
+            if let Some(s) = pick {
+                self.pick_search_symbol(s);
+            }
+        });
         if !open {
             self.search_open = false;
         }
@@ -2178,164 +2185,163 @@ impl TickView {
         let mut del_tpl: Option<usize> = None;
         let mut save_tpl = false;
 
-        egui::Window::new("Indicators & strategies")
+        let mut win = egui::Window::new("Indicators & strategies")
             .open(&mut open)
             .collapsible(false)
+            .auto_sized()
             .default_width(560.0)
-            .anchor(Align2::CENTER_TOP, [0.0, 96.0])
-            .frame(theme::menu_frame(p))
-            .show(ctx, |ui| {
-                ui.set_width(560.0);
-                widgets::dialog_bg(ui, p);
-                widgets::section_label(ui, p, "ON THIS CHART");
-                if layers.is_empty() {
+            .frame(theme::menu_frame(p));
+        if let Some(off) = self.indicators_anchor.take() {
+            win = win.anchor(Align2::CENTER_TOP, off);
+        }
+        win.show(ctx, |ui| {
+            ui.set_width(560.0);
+            widgets::dialog_bg(ui, p);
+            widgets::section_label(ui, p, "ON THIS CHART");
+            if layers.is_empty() {
+                ui.label(
+                    RichText::new("No studies attached")
+                        .font(font_regular(type_size::SMALL))
+                        .color(p.faint),
+                );
+            }
+            for (id, name, visible) in &layers {
+                ui.horizontal(|ui| {
+                    if widgets::icon_button(
+                        ui,
+                        p,
+                        if *visible { Icon::Eye } else { Icon::EyeOff },
+                        vec2(24.0, 24.0),
+                        false,
+                        true,
+                        if *visible { "Hide" } else { "Show" },
+                    )
+                    .clicked()
+                    {
+                        toggle = Some(*id);
+                    }
                     ui.label(
-                        RichText::new("No studies attached")
-                            .font(font_regular(type_size::SMALL))
-                            .color(p.faint),
+                        RichText::new(name)
+                            .font(font_regular(type_size::BODY))
+                            .color(if *visible { p.text } else { p.faint }),
                     );
-                }
-                for (id, name, visible) in &layers {
-                    ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if widgets::icon_button(
                             ui,
                             p,
-                            if *visible { Icon::Eye } else { Icon::EyeOff },
+                            Icon::Trash,
                             vec2(24.0, 24.0),
                             false,
                             true,
-                            if *visible { "Hide" } else { "Show" },
+                            "Remove",
                         )
                         .clicked()
                         {
-                            toggle = Some(*id);
+                            remove = Some(*id);
                         }
-                        ui.label(
-                            RichText::new(name)
-                                .font(font_regular(type_size::BODY))
-                                .color(if *visible { p.text } else { p.faint }),
-                        );
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if widgets::icon_button(
-                                ui,
-                                p,
-                                Icon::Trash,
-                                vec2(24.0, 24.0),
-                                false,
-                                true,
-                                "Remove",
-                            )
-                            .clicked()
-                            {
-                                remove = Some(*id);
-                            }
-                        });
                     });
-                }
-                widgets::hline(ui, p);
-                widgets::section_label(ui, p, "TEMPLATES");
-                if templates.is_empty() {
-                    ui.label(
-                        RichText::new("No templates saved")
-                            .font(font_regular(type_size::SMALL))
-                            .color(p.faint),
-                    );
-                }
-                for (i, tpl) in templates.iter().enumerate() {
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new(&tpl.name)
-                                .font(font_regular(type_size::BODY))
-                                .color(p.text),
-                        );
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if widgets::icon_button(
-                                ui,
-                                p,
-                                Icon::Trash,
-                                vec2(24.0, 24.0),
-                                false,
-                                true,
-                                "Delete template",
-                            )
-                            .clicked()
-                            {
-                                del_tpl = Some(i);
-                            }
-                            if ui.button("Apply").clicked() {
-                                apply_tpl = Some(i);
-                            }
-                        });
-                    });
-                }
-                ui.horizontal(|ui| {
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.template_q)
-                            .hint_text("Template name")
-                            .desired_width(240.0)
-                            .font(font_regular(type_size::BODY)),
-                    );
-                    if ui.button("Save current").clicked() {
-                        save_tpl = true;
-                    }
                 });
+            }
+            widgets::hline(ui, p);
+            widgets::section_label(ui, p, "TEMPLATES");
+            if templates.is_empty() {
+                ui.label(
+                    RichText::new("No templates saved")
+                        .font(font_regular(type_size::SMALL))
+                        .color(p.faint),
+                );
+            }
+            for (i, tpl) in templates.iter().enumerate() {
                 ui.horizontal(|ui| {
                     ui.label(
-                        RichText::new("ADD STUDY")
-                            .font(font_semibold(type_size::TINY))
-                            .color(p.faint),
+                        RichText::new(&tpl.name)
+                            .font(font_regular(type_size::BODY))
+                            .color(p.text),
                     );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if widgets::icon_button(
+                            ui,
+                            p,
+                            Icon::Trash,
+                            vec2(24.0, 24.0),
+                            false,
+                            true,
+                            "Delete template",
+                        )
+                        .clicked()
+                        {
+                            del_tpl = Some(i);
+                        }
+                        if ui.button("Apply").clicked() {
+                            apply_tpl = Some(i);
+                        }
+                    });
                 });
+            }
+            ui.horizontal(|ui| {
                 ui.add(
-                    egui::TextEdit::singleline(&mut self.study_q)
-                        .hint_text("Search 66 built-in studies")
-                        .desired_width(f32::INFINITY)
+                    egui::TextEdit::singleline(&mut self.template_q)
+                        .hint_text("Template name")
+                        .desired_width(240.0)
                         .font(font_regular(type_size::BODY)),
                 );
-                let q = self.study_q.to_lowercase();
-                egui::ScrollArea::vertical()
-                    .max_height(330.0)
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        for d in defs().iter().filter(|d| {
-                            q.trim().is_empty() || d.tv_name.to_lowercase().contains(&q)
-                        }) {
-                            let (rect, resp) = ui.allocate_exact_size(
-                                vec2(ui.available_width(), 28.0),
-                                Sense::click(),
-                            );
-                            if resp.hovered() {
-                                ui.painter().rect_filled(
-                                    rect,
-                                    egui::CornerRadius::same(3),
-                                    p.hover,
-                                );
-                            }
-                            ui.painter().text(
-                                rect.left_center() + vec2(8.0, 0.0),
-                                Align2::LEFT_CENTER,
-                                d.tv_name,
-                                font_regular(type_size::BODY),
-                                p.text,
-                            );
-                            let pane = match d.pane {
-                                ta::registry::Pane::Price => "PRICE",
-                                ta::registry::Pane::Volume => "VOLUME",
-                                ta::registry::Pane::Separate => "PANE",
-                            };
-                            ui.painter().text(
-                                rect.right_center() - vec2(8.0, 0.0),
-                                Align2::RIGHT_CENTER,
-                                pane,
-                                font_mono(type_size::TINY),
-                                p.faint,
-                            );
-                            if resp.clicked() {
-                                add = Some(d.id);
-                            }
-                        }
-                    });
+                if ui.button("Save current").clicked() {
+                    save_tpl = true;
+                }
             });
+            ui.horizontal(|ui| {
+                ui.label(
+                    RichText::new("ADD STUDY")
+                        .font(font_semibold(type_size::TINY))
+                        .color(p.faint),
+                );
+            });
+            ui.add(
+                egui::TextEdit::singleline(&mut self.study_q)
+                    .hint_text("Search 66 built-in studies")
+                    .desired_width(f32::INFINITY)
+                    .font(font_regular(type_size::BODY)),
+            );
+            let q = self.study_q.to_lowercase();
+            egui::ScrollArea::vertical()
+                .max_height(330.0)
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    for d in defs()
+                        .iter()
+                        .filter(|d| q.trim().is_empty() || d.tv_name.to_lowercase().contains(&q))
+                    {
+                        let (rect, resp) = ui
+                            .allocate_exact_size(vec2(ui.available_width(), 28.0), Sense::click());
+                        if resp.hovered() {
+                            ui.painter()
+                                .rect_filled(rect, egui::CornerRadius::same(3), p.hover);
+                        }
+                        ui.painter().text(
+                            rect.left_center() + vec2(8.0, 0.0),
+                            Align2::LEFT_CENTER,
+                            d.tv_name,
+                            font_regular(type_size::BODY),
+                            p.text,
+                        );
+                        let pane = match d.pane {
+                            ta::registry::Pane::Price => "PRICE",
+                            ta::registry::Pane::Volume => "VOLUME",
+                            ta::registry::Pane::Separate => "PANE",
+                        };
+                        ui.painter().text(
+                            rect.right_center() - vec2(8.0, 0.0),
+                            Align2::RIGHT_CENTER,
+                            pane,
+                            font_mono(type_size::TINY),
+                            p.faint,
+                        );
+                        if resp.clicked() {
+                            add = Some(d.id);
+                        }
+                    }
+                });
+        });
         if let Some(id) = toggle {
             self.toggle_indicator_visibility(ti, id);
         }
@@ -2370,93 +2376,96 @@ impl TickView {
         let mut open = true;
         let mut apply = false;
         let mut cancel = false;
-        egui::Window::new(d.tv_name)
+        let mut win = egui::Window::new(d.tv_name)
             .open(&mut open)
             .collapsible(false)
+            .auto_sized()
             .default_width(380.0)
-            .anchor(Align2::CENTER_TOP, [0.0, 140.0])
-            .frame(theme::menu_frame(p))
-            .show(ctx, |ui| {
-                ui.set_width(380.0);
-                widgets::dialog_bg(ui, p);
-                ui.label(
-                    RichText::new(match d.pane {
-                        ta::registry::Pane::Price => "Overlay on price",
-                        ta::registry::Pane::Volume => "Volume pane",
-                        ta::registry::Pane::Separate => "Separate pane",
-                    })
-                    .font(font_regular(type_size::SMALL))
-                    .color(p.muted),
-                );
-                ui.add_space(4.0);
-                egui::Grid::new("indicator_params")
-                    .num_columns(2)
-                    .spacing([16.0, 8.0])
-                    .show(ui, |ui| {
-                        for (i, param) in d.params.iter().enumerate() {
-                            ui.label(
-                                RichText::new(param.name)
-                                    .font(font_regular(type_size::BODY))
-                                    .color(p.text),
-                            );
-                            match param.kind {
-                                ParamKind::Int { min, max, .. } => {
-                                    let mut v = ed.draft[i].n() as i64;
-                                    if ui
-                                        .add(egui::DragValue::new(&mut v).range(min..=max))
-                                        .changed()
-                                    {
-                                        ed.draft[i] = PVal::N(v as f64);
-                                    }
-                                }
-                                ParamKind::Float { min, max, step, .. } => {
-                                    let mut v = ed.draft[i].n();
-                                    if ui
-                                        .add(
-                                            egui::DragValue::new(&mut v)
-                                                .range(min..=max)
-                                                .speed(step.max(0.01)),
-                                        )
-                                        .changed()
-                                    {
-                                        ed.draft[i] = PVal::N(v);
-                                    }
-                                }
-                                ParamKind::Bool { .. } => {
-                                    let mut b = ed.draft[i].b();
-                                    if widgets::checkbox(ui, p, &mut b, "").changed() {
-                                        ed.draft[i] = PVal::B(b);
-                                    }
-                                }
-                                ParamKind::Enum { variants, .. } => {
-                                    let idx = ed.draft[i].e() as usize;
-                                    egui::ComboBox::from_id_salt(("pv", ed.id, i))
-                                        .selected_text(variants.get(idx).copied().unwrap_or("?"))
-                                        .show_ui(ui, |ui| {
-                                            for (vi, vn) in variants.iter().enumerate() {
-                                                if ui.selectable_label(idx == vi, *vn).clicked() {
-                                                    ed.draft[i] = PVal::E(vi as u32);
-                                                }
-                                            }
-                                        });
+            .frame(theme::menu_frame(p));
+        if let Some(off) = self.editor_anchor.take() {
+            win = win.anchor(Align2::CENTER_TOP, off);
+        }
+        win.show(ctx, |ui| {
+            ui.set_width(380.0);
+            widgets::dialog_bg(ui, p);
+            ui.label(
+                RichText::new(match d.pane {
+                    ta::registry::Pane::Price => "Overlay on price",
+                    ta::registry::Pane::Volume => "Volume pane",
+                    ta::registry::Pane::Separate => "Separate pane",
+                })
+                .font(font_regular(type_size::SMALL))
+                .color(p.muted),
+            );
+            ui.add_space(4.0);
+            egui::Grid::new("indicator_params")
+                .num_columns(2)
+                .spacing([16.0, 8.0])
+                .show(ui, |ui| {
+                    for (i, param) in d.params.iter().enumerate() {
+                        ui.label(
+                            RichText::new(param.name)
+                                .font(font_regular(type_size::BODY))
+                                .color(p.text),
+                        );
+                        match param.kind {
+                            ParamKind::Int { min, max, .. } => {
+                                let mut v = ed.draft[i].n() as i64;
+                                if ui
+                                    .add(egui::DragValue::new(&mut v).range(min..=max))
+                                    .changed()
+                                {
+                                    ed.draft[i] = PVal::N(v as f64);
                                 }
                             }
-                            ui.end_row();
+                            ParamKind::Float { min, max, step, .. } => {
+                                let mut v = ed.draft[i].n();
+                                if ui
+                                    .add(
+                                        egui::DragValue::new(&mut v)
+                                            .range(min..=max)
+                                            .speed(step.max(0.01)),
+                                    )
+                                    .changed()
+                                {
+                                    ed.draft[i] = PVal::N(v);
+                                }
+                            }
+                            ParamKind::Bool { .. } => {
+                                let mut b = ed.draft[i].b();
+                                if widgets::checkbox(ui, p, &mut b, "").changed() {
+                                    ed.draft[i] = PVal::B(b);
+                                }
+                            }
+                            ParamKind::Enum { variants, .. } => {
+                                let idx = ed.draft[i].e() as usize;
+                                egui::ComboBox::from_id_salt(("pv", ed.id, i))
+                                    .selected_text(variants.get(idx).copied().unwrap_or("?"))
+                                    .show_ui(ui, |ui| {
+                                        for (vi, vn) in variants.iter().enumerate() {
+                                            if ui.selectable_label(idx == vi, *vn).clicked() {
+                                                ed.draft[i] = PVal::E(vi as u32);
+                                            }
+                                        }
+                                    });
+                            }
                         }
-                    });
-                if let Some(err) = &ed.error {
-                    ui.colored_label(p.down, err);
-                }
-                ui.add_space(6.0);
-                ui.horizontal(|ui| {
-                    if widgets::primary_button(ui, p, "Add to chart").clicked() {
-                        apply = true;
-                    }
-                    if ui.button("Cancel").clicked() {
-                        cancel = true;
+                        ui.end_row();
                     }
                 });
+            if let Some(err) = &ed.error {
+                ui.colored_label(p.down, err);
+            }
+            ui.add_space(6.0);
+            ui.horizontal(|ui| {
+                if widgets::primary_button(ui, p, "Add to chart").clicked() {
+                    apply = true;
+                }
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
             });
+        });
         if apply {
             let mut params = Params::with_defaults(d);
             for (i, param) in d.params.iter().enumerate() {
@@ -2481,143 +2490,131 @@ impl TickView {
         let mut open = true;
         let mut add = None;
         let mut del: Vec<u64> = Vec::new();
-        egui::Window::new("Alerts")
+        let mut win = egui::Window::new("Alerts")
             .open(&mut open)
             .collapsible(false)
+            .auto_sized()
             .default_width(380.0)
-            .anchor(Align2::CENTER_TOP, [0.0, 120.0])
-            .frame(theme::menu_frame(p))
-            .show(ctx, |ui| {
-                ui.set_width(380.0);
-                widgets::dialog_bg(ui, p);
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new(&self.tabs[self.active].symbol.ticker)
-                            .font(font_semibold(type_size::BODY))
-                            .color(p.text),
-                    );
-                    let cond_label = if self.alert_cond == 0 {
-                        "Crossing above"
-                    } else {
-                        "Crossing below"
-                    };
-                    let resp = widgets::command_button(
-                        ui,
-                        p,
-                        Some(Icon::ChevronDown),
-                        cond_label,
-                        false,
-                        true,
-                        "",
-                    );
-                    egui::Popup::menu(&resp).show(|ui| {
-                        ui.set_min_width(180.0);
-                        if widgets::menu_item(
-                            ui,
-                            p,
-                            None,
-                            "Crossing above",
-                            None,
-                            self.alert_cond == 0,
-                        )
+            .frame(theme::menu_frame(p));
+        if let Some(off) = self.alerts_anchor.take() {
+            win = win.anchor(Align2::CENTER_TOP, off);
+        }
+        win.show(ctx, |ui| {
+            widgets::dialog_bg(ui, p);
+            ui.horizontal(|ui| {
+                ui.label(
+                    RichText::new(&self.tabs[self.active].symbol.ticker)
+                        .font(font_semibold(type_size::BODY))
+                        .color(p.text),
+                );
+                let cond_label = if self.alert_cond == 0 {
+                    "Crossing above"
+                } else {
+                    "Crossing below"
+                };
+                let resp = widgets::command_button(
+                    ui,
+                    p,
+                    Some(Icon::ChevronDown),
+                    cond_label,
+                    false,
+                    true,
+                    "",
+                );
+                egui::Popup::menu(&resp).show(|ui| {
+                    ui.set_min_width(180.0);
+                    if widgets::menu_item(ui, p, None, "Crossing above", None, self.alert_cond == 0)
                         .clicked()
-                        {
-                            self.alert_cond = 0;
-                            ui.close();
-                        }
-                        if widgets::menu_item(
-                            ui,
-                            p,
-                            None,
-                            "Crossing below",
-                            None,
-                            self.alert_cond == 1,
-                        )
-                        .clicked()
-                        {
-                            self.alert_cond = 1;
-                            ui.close();
-                        }
-                    });
-                    let mut price = self.alert_price;
-                    if price <= 0.0
-                        && let Some(&last) = self.tabs[self.active].candles.c.last()
                     {
-                        price = last;
+                        self.alert_cond = 0;
+                        ui.close();
                     }
-                    ui.add_sized(
-                        vec2(86.0, 24.0),
-                        egui::DragValue::new(&mut price).speed(0.05),
-                    );
-                    self.alert_price = price;
-                    if widgets::primary_button(ui, p, "Add").clicked() {
-                        add = Some((
-                            self.tabs[self.active].symbol.clone(),
-                            self.alert_cond,
-                            price,
-                        ));
+                    if widgets::menu_item(ui, p, None, "Crossing below", None, self.alert_cond == 1)
+                        .clicked()
+                    {
+                        self.alert_cond = 1;
+                        ui.close();
                     }
                 });
-                widgets::hline(ui, p);
-                egui::ScrollArea::vertical()
-                    .max_height(300.0)
-                    .show(ui, |ui| {
-                        let list = self.alerts.alerts.clone();
-                        if list.is_empty() {
-                            widgets::empty_state(
-                                ui,
-                                p,
-                                "No alerts yet",
-                                "Add a price level to start watching.",
-                            );
-                        }
-                        for a in list {
-                            ui.horizontal(|ui| {
-                                let mut act = a.active;
-                                if ui
-                                    .checkbox(
-                                        &mut act,
-                                        format!(
-                                            "{} {} {}",
-                                            a.symbol.ticker,
-                                            if a.condition == Condition::CrossesAbove {
-                                                "↗"
-                                            } else {
-                                                "↘"
-                                            },
-                                            a.price
-                                        ),
-                                    )
-                                    .changed()
-                                {
-                                    for x in &mut self.alerts.alerts {
-                                        if x.id == a.id {
-                                            x.active = act;
-                                        }
+                let mut price = self.alert_price;
+                if price <= 0.0
+                    && let Some(&last) = self.tabs[self.active].candles.c.last()
+                {
+                    price = last;
+                }
+                ui.add_sized(
+                    vec2(86.0, 24.0),
+                    egui::DragValue::new(&mut price).speed(0.05),
+                );
+                self.alert_price = price;
+                if widgets::primary_button(ui, p, "Add").clicked() {
+                    add = Some((
+                        self.tabs[self.active].symbol.clone(),
+                        self.alert_cond,
+                        price,
+                    ));
+                }
+            });
+            widgets::hline(ui, p);
+            egui::ScrollArea::vertical()
+                .max_height(300.0)
+                .show(ui, |ui| {
+                    let list = self.alerts.alerts.clone();
+                    if list.is_empty() {
+                        widgets::empty_state(
+                            ui,
+                            p,
+                            "No alerts yet",
+                            "Add a price level to start watching.",
+                        );
+                    }
+                    for a in list {
+                        ui.horizontal(|ui| {
+                            let mut act = a.active;
+                            if ui
+                                .checkbox(
+                                    &mut act,
+                                    format!(
+                                        "{} {} {}",
+                                        a.symbol.ticker,
+                                        if a.condition == Condition::CrossesAbove {
+                                            "↗"
+                                        } else {
+                                            "↘"
+                                        },
+                                        a.price
+                                    ),
+                                )
+                                .changed()
+                            {
+                                for x in &mut self.alerts.alerts {
+                                    if x.id == a.id {
+                                        x.active = act;
                                     }
                                 }
-                                ui.with_layout(
-                                    egui::Layout::right_to_left(egui::Align::Center),
-                                    |ui| {
-                                        if widgets::icon_button(
-                                            ui,
-                                            p,
-                                            Icon::Trash,
-                                            vec2(22.0, 22.0),
-                                            false,
-                                            true,
-                                            "Delete",
-                                        )
-                                        .clicked()
-                                        {
-                                            del.push(a.id);
-                                        }
-                                    },
-                                );
-                            });
-                        }
-                    });
-            });
+                            }
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    if widgets::icon_button(
+                                        ui,
+                                        p,
+                                        Icon::Trash,
+                                        vec2(22.0, 22.0),
+                                        false,
+                                        true,
+                                        "Delete",
+                                    )
+                                    .clicked()
+                                    {
+                                        del.push(a.id);
+                                    }
+                                },
+                            );
+                        });
+                    }
+                });
+        });
         if let Some((s, c, price)) = add {
             self.alerts.add(
                 s,
@@ -2647,81 +2644,83 @@ impl TickView {
         let mut open = true;
         let mut chosen = None;
         let mut streaming = self.cfg.stream_enabled();
-        egui::Window::new("Settings")
+        let mut win = egui::Window::new("Settings")
             .open(&mut open)
             .collapsible(false)
+            .auto_sized()
             .default_width(420.0)
-            .anchor(Align2::CENTER_TOP, [0.0, 110.0])
-            .frame(theme::menu_frame(p))
-            .show(ctx, |ui| {
-                ui.set_width(420.0);
-                widgets::dialog_bg(ui, p);
-                widgets::section_label(ui, p, "APPEARANCE");
-                ui.horizontal(|ui| {
-                    for mode in [ThemeMode::Dark, ThemeMode::Light, ThemeMode::System] {
-                        if ui
-                            .selectable_label(self.theme == mode, mode.label())
-                            .clicked()
-                        {
-                            chosen = Some(mode);
-                        }
+            .frame(theme::menu_frame(p));
+        if let Some(off) = self.settings_anchor.take() {
+            win = win.anchor(Align2::CENTER_TOP, off);
+        }
+        win.show(ctx, |ui| {
+            ui.set_width(420.0);
+            widgets::dialog_bg(ui, p);
+            widgets::section_label(ui, p, "APPEARANCE");
+            ui.horizontal(|ui| {
+                for mode in [ThemeMode::Dark, ThemeMode::Light, ThemeMode::System] {
+                    if ui
+                        .selectable_label(self.theme == mode, mode.label())
+                        .clicked()
+                    {
+                        chosen = Some(mode);
                     }
-                });
-                ui.add_space(8.0);
-                widgets::section_label(ui, p, "CHART");
-                if widgets::checkbox(
-                    ui,
-                    p,
-                    &mut self.tabs[self.active].chart.log_scale,
-                    "Logarithmic price scale",
-                )
-                .changed()
-                {
-                    self.persist();
                 }
-                if widgets::checkbox(
-                    ui,
-                    p,
-                    &mut self.magnet,
-                    "Magnet mode (snap drawings to OHLC)",
-                )
-                .changed()
-                {
-                    self.persist();
-                }
-                if widgets::checkbox(ui, p, &mut self.show_watchlist, "Show watchlist panel")
-                    .changed()
-                {
-                    self.persist();
-                }
-                if widgets::checkbox(ui, p, &mut streaming, "Live streaming (crypto)").changed() {
-                    self.cfg.stream = Some(streaming);
-                    self.persist();
-                    self.restart_stream();
-                }
-                if ui.button("Reset chart view").clicked() {
-                    self.tabs[self.active].chart.view.right_offset = 0.0;
-                    self.tabs[self.active].chart.view.spacing = 8.0;
-                }
-                ui.add_space(8.0);
-                widgets::section_label(ui, p, "ABOUT");
-                ui.label(
-                    RichText::new(format!(
-                        "TickView 0.1 · {} studies · {} bars · {} {}",
-                        defs().len(),
-                        self.tabs[self.active].candles.len(),
-                        self.tabs.len(),
-                        if self.tabs.len() == 1 { "tab" } else { "tabs" }
-                    ))
-                    .font(font_regular(type_size::SMALL))
-                    .color(p.muted),
-                );
-                ui.label(
-                    RichText::new("Native charts in Rust + egui. Keyless data.")
-                        .font(font_regular(type_size::SMALL))
-                        .color(p.faint),
-                );
             });
+            ui.add_space(8.0);
+            widgets::section_label(ui, p, "CHART");
+            if widgets::checkbox(
+                ui,
+                p,
+                &mut self.tabs[self.active].chart.log_scale,
+                "Logarithmic price scale",
+            )
+            .changed()
+            {
+                self.persist();
+            }
+            if widgets::checkbox(
+                ui,
+                p,
+                &mut self.magnet,
+                "Magnet mode (snap drawings to OHLC)",
+            )
+            .changed()
+            {
+                self.persist();
+            }
+            if widgets::checkbox(ui, p, &mut self.show_watchlist, "Show watchlist panel").changed()
+            {
+                self.persist();
+            }
+            if widgets::checkbox(ui, p, &mut streaming, "Live streaming (crypto)").changed() {
+                self.cfg.stream = Some(streaming);
+                self.persist();
+                self.restart_stream();
+            }
+            if ui.button("Reset chart view").clicked() {
+                self.tabs[self.active].chart.view.right_offset = 0.0;
+                self.tabs[self.active].chart.view.spacing = 8.0;
+            }
+            ui.add_space(8.0);
+            widgets::section_label(ui, p, "ABOUT");
+            ui.label(
+                RichText::new(format!(
+                    "TickView 0.1 · {} studies · {} bars · {} {}",
+                    defs().len(),
+                    self.tabs[self.active].candles.len(),
+                    self.tabs.len(),
+                    if self.tabs.len() == 1 { "tab" } else { "tabs" }
+                ))
+                .font(font_regular(type_size::SMALL))
+                .color(p.muted),
+            );
+            ui.label(
+                RichText::new("Native charts in Rust + egui. Keyless data.")
+                    .font(font_regular(type_size::SMALL))
+                    .color(p.faint),
+            );
+        });
         if let Some(mode) = chosen {
             self.set_theme(ctx, mode);
         }
