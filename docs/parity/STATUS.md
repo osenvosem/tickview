@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 32 verified, 52 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 46 verified, 38 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -41,20 +41,20 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Gann square fixed | `LineToolGannFixed` | `GannSquareFixed` | `gann-square-fixed` | verified |
 | Gann square | `LineToolGannComplex` | `GannSquare` | `gann-square` | verified |
 | Gann fan | `LineToolGannFan` | `GannFan` | `gann-fan` | verified |
-| XABCD pattern | `LineTool5PointsPattern` | `Xabcd` | `xabcd` | in-progress |
-| Cypher pattern | `LineToolCypherPattern` | `Cypher` | `cypher` | in-progress |
-| Head and shoulders | `LineToolHeadAndShoulders` | `HeadShoulders` | `head-shoulders` | in-progress |
-| ABCD pattern | `LineToolABCD` | `Abcd` | `abcd` | in-progress |
-| Triangle pattern | `LineToolTrianglePattern` | `TrianglePattern` | `triangle-pattern` | in-progress |
-| Three drives pattern | `LineToolThreeDrivers` | `ThreeDrives` | `three-drives` | in-progress |
-| Elliott impulse wave (1·2·3·4·5) | `LineToolElliottImpulse` | `ElliottImpulse` | `elliott-impulse` | in-progress |
-| Elliott correction wave (A·B·C) | `LineToolElliottCorrection` | `ElliottCorrection` | `elliott-correction` | in-progress |
-| Elliott triangle wave (A·B·C·D·E) | `LineToolElliottTriangle` | `ElliottTriangle` | `elliott-triangle` | in-progress |
-| Elliott double combo wave (W·X·Y) | `LineToolElliottDoubleCombo` | `ElliottDoubleCombo` | `elliott-double-combo` | in-progress |
-| Elliott triple combo wave (W·X·Y·X·Z) | `LineToolElliottTripleCombo` | `ElliottTripleCombo` | `elliott-triple-combo` | in-progress |
-| Cyclic lines | `LineToolCircleLines` | `CyclicLines` | `cyclic-lines` | in-progress |
-| Time cycles | `LineToolTimeCycles` | `TimeCycles` | `time-cycles` | in-progress |
-| Sine line | `LineToolSineLine` | `SineLine` | `sine-line` | in-progress |
+| XABCD pattern | `LineTool5PointsPattern` | `Xabcd` | `xabcd` | verified |
+| Cypher pattern | `LineToolCypherPattern` | `Cypher` | `cypher` | verified |
+| Head and shoulders | `LineToolHeadAndShoulders` | `HeadShoulders` | `head-shoulders` | verified |
+| ABCD pattern | `LineToolABCD` | `Abcd` | `abcd` | verified |
+| Triangle pattern | `LineToolTrianglePattern` | `TrianglePattern` | `triangle-pattern` | verified |
+| Three drives pattern | `LineToolThreeDrivers` | `ThreeDrives` | `three-drives` | verified |
+| Elliott impulse wave (1·2·3·4·5) | `LineToolElliottImpulse` | `ElliottImpulse` | `elliott-impulse` | verified |
+| Elliott correction wave (A·B·C) | `LineToolElliottCorrection` | `ElliottCorrection` | `elliott-correction` | verified |
+| Elliott triangle wave (A·B·C·D·E) | `LineToolElliottTriangle` | `ElliottTriangle` | `elliott-triangle` | verified |
+| Elliott double combo wave (W·X·Y) | `LineToolElliottDoubleCombo` | `ElliottDoubleCombo` | `elliott-double-combo` | verified |
+| Elliott triple combo wave (W·X·Y·X·Z) | `LineToolElliottTripleCombo` | `ElliottTripleCombo` | `elliott-triple-combo` | verified |
+| Cyclic lines | `LineToolCircleLines` | `CyclicLines` | `cyclic-lines` | verified |
+| Time cycles | `LineToolTimeCycles` | `TimeCycles` | `time-cycles` | verified |
+| Sine line | `LineToolSineLine` | `SineLine` | `sine-line` | verified |
 | Long position | `LineToolRiskRewardLong` | `LongPosition` | `long-position` | in-progress |
 | Short position | `LineToolRiskRewardShort` | `ShortPosition` | `short-position` | in-progress |
 | Position forecast | `LineToolPrediction` | `PositionForecast` | `position-forecast` | in-progress |

@@ -152,7 +152,7 @@
 - [x] **Step 2: Run to fail** — `cargo test -p tickchart --test drawing_goldens gannfib` → FAIL.
 - [x] **Step 3: Implement/fix** until PASS (linear + log axis).
 - [x] **Step 4: Evidence + flip entries** — `drawings-gannfib.md` (ratio tables per kind, TV doc links, anchor resolutions, test ids); manifest flip with `evidence` incl. `docs/screenshots/parity/gannfib-dark.png` (add `TICKVIEW_SCENE=gannfib` seed: selected FibRetracement + GannFan + FibChannel; capture dark 1440×900).
-- [ ] **Step 5: Gates + commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-gannfib.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit gann and fib drawing family against TV geometry"`
+- [x] **Step 5: Gates + commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-gannfib.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit gann and fib drawing family against TV geometry"`
 
 ### Task 6: Patterns/Elliott/cycles-family audit (14 kinds)
 
@@ -166,7 +166,11 @@
 - Consumes: harness; existing `pattern_labels()` for pivot text.
 - Produces: cases for Xabcd, Cypher, HeadShoulders, Abcd, TrianglePattern, ThreeDrives, 5 Elliott kinds, CyclicLines, TimeCycles, SineLine — hits on each connecting segment midpoint (chart-space via anchor pairs), misses off-segment; assert `pattern_labels()` length == catalog anchors for pattern kinds. Resolve `HeadShoulders`/`TrianglePattern` anchor counts against TV here (evidence notes).
 
-Steps: same shape as Task 5 — 1 failing `pattern_family_geometry`, 2 run-fail, 3 implement/fix, 4 evidence `drawings-patterns.md` + `TICKVIEW_SCENE=patterns` seed (selected Xabcd + ElliottImpulse + SineLine) screenshot `patterns-dark.png` + manifest flip, 5 gates + commit `"feat: audit pattern and elliott drawing family against TV geometry"` (`git add` same file set).
+- [x] **Step 1: Failing `pattern_family_geometry`** — 11 pattern segment-midpoint hits + off-segment misses, cyclic/time/sine specials; run to fail.
+- [x] **Step 2: Implement/fix** — CyclicLines circle+spokes, TimeCycles verticals, SineLine curve (shared `sine_points`) hit paths; PASS linear + log.
+- [x] **Step 3: Anchor audit** — 14 kinds vs TV catalog (evidence `drawings-patterns.md`); pattern label count == anchors.
+- [x] **Step 4: Evidence + seed + flip** — `drawings-patterns.md`, `TICKVIEW_SCENE=patterns` (selected XABCD + Elliott + sine) → `patterns-dark.png`, manifest → 46 verified.
+- [x] **Step 5: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit pattern and elliott drawing family against TV geometry"`.
 
 ### Task 7: Forecasting/measurement-family audit (7 existing kinds)
 

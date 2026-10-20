@@ -1378,8 +1378,6 @@ impl Drawing {
                 self.kind,
                 DrawingKind::InfoLine
                     | DrawingKind::TrendAngle
-                    | DrawingKind::CyclicLines
-                    | DrawingKind::TimeCycles
                     | DrawingKind::PositionForecast
                     | DrawingKind::Sector
                     | DrawingKind::RotatedRect
@@ -1387,7 +1385,6 @@ impl Drawing {
                     | DrawingKind::Arc
                     | DrawingKind::Curve
                     | DrawingKind::DoubleCurve
-                    | DrawingKind::SineLine
                     | DrawingKind::Path
                     | DrawingKind::Polyline
                     | DrawingKind::ArrowMarker
@@ -1563,6 +1560,46 @@ impl Drawing {
                         pts.windows(2)
                             .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
                     })
+            }
+            DrawingKind::CyclicLines => {
+                let Some(pc) = self.c.map(map) else {
+                    return false;
+                };
+                match circle_through_three(a, b, pc) {
+                    Some((center, radius)) => {
+                        (p.distance(center) - radius).abs() <= TOL
+                            || [a, b, pc]
+                                .iter()
+                                .any(|q| distance_to_segment(p, center, *q) <= TOL)
+                    }
+                    None => {
+                        distance_to_segment(p, a, b) <= TOL || distance_to_segment(p, b, pc) <= TOL
+                    }
+                }
+            }
+            DrawingKind::TimeCycles => {
+                let step = (b.x - a.x).abs().max(12.0);
+                let mut x = a.x;
+                let mut n = 0;
+                let mut found = false;
+                while x <= plot.max.x && n < 32 {
+                    if x >= plot.min.x && (p.x - x).abs() <= TOL {
+                        found = true;
+                        break;
+                    }
+                    x += step;
+                    n += 1;
+                }
+                found
+            }
+            DrawingKind::SineLine => {
+                let Some(pc) = self.c.map(map) else {
+                    return false;
+                };
+                sine_points(a, b, pc)
+                    .windows(2)
+                    .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
+                    || distance_to_segment(p, a, b) <= TOL
             }
             _ => false,
         }
@@ -2441,16 +2478,7 @@ fn draw_one(
         }
         DrawingKind::SineLine => {
             let Some(pc) = pc else { return };
-            let mid_y = (pa.y + pb.y) * 0.5;
-            let amplitude = (pc.y - mid_y).abs().max(6.0);
-            let points: Vec<Pos2> = (0..=96)
-                .map(|i| {
-                    let t = i as f32 / 96.0;
-                    let x = pa.x + (pb.x - pa.x) * t;
-                    let y = mid_y - amplitude * (t * std::f32::consts::TAU * 2.0).sin();
-                    Pos2::new(x, y)
-                })
-                .collect();
+            let points = sine_points(pa, pb, pc);
             paint_polyline(p, &points, stroke, dash);
             paint_line(
                 p,
@@ -2931,6 +2959,22 @@ pub fn gannfib_hit_curves(
         _ => {}
     }
     out
+}
+
+/// Two full sine cycles between `a` and `b`, amplitude from `c` (TV sine
+/// line). Shared by paint and hit.
+#[must_use]
+pub fn sine_points(a: Pos2, b: Pos2, c: Pos2) -> Vec<Pos2> {
+    let mid_y = (a.y + b.y) * 0.5;
+    let amplitude = (c.y - mid_y).abs().max(6.0);
+    (0..=96)
+        .map(|i| {
+            let t = i as f32 / 96.0;
+            let x = a.x + (b.x - a.x) * t;
+            let y = mid_y - amplitude * (t * std::f32::consts::TAU * 2.0).sin();
+            Pos2::new(x, y)
+        })
+        .collect()
 }
 
 #[allow(clippy::too_many_arguments)]

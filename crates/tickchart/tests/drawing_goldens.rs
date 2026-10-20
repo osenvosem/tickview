@@ -405,6 +405,12 @@ fn scr(sc: &Scene, x: f32, y: f32) -> (usize, f64) {
     )
 }
 
+/// Screen point at raw pixels (chart-space round-trip).
+fn scr_pt(sc: &Scene, x: f32, y: f32) -> Pos2 {
+    let (i, p) = scr(sc, x, y);
+    pt(sc, i, p)
+}
+
 fn gannfib_cases(sc: &Scene) -> Vec<Case> {
     let mut cases = Vec::new();
 
@@ -766,6 +772,313 @@ fn gannfib_anchor_counts_match_tv() {
     for (kind, want) in expected {
         assert_eq!(kind.points(), want, "{kind:?} anchor count");
     }
+}
+
+/// TV patterns connect consecutive pivots; clicking any segment selects.
+/// Expected points are segment midpoints derived in chart space.
+fn run_pattern(sc: &Scene, kind: DrawingKind, pts: &[(usize, f64)]) -> Vec<String> {
+    let mut errs = Vec::new();
+    let mut d = Drawing::new(
+        1,
+        kind,
+        an(sc, pts[0].0, pts[0].1),
+        an(sc, pts[1].0, pts[1].1),
+    );
+    if pts.len() >= 3 {
+        d.c = Some(an(sc, pts[2].0, pts[2].1));
+    }
+    d.extra = pts.iter().skip(3).map(|&(i, p)| an(sc, i, p)).collect();
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let sp: Vec<Pos2> = pts.iter().map(|&(i, p)| pt(sc, i, p)).collect();
+    for w in sp.windows(2) {
+        let m = w[0].lerp(w[1], 0.5);
+        if !d.hit(m, map, PLOT) {
+            errs.push(format!("{kind:?}: expected hit at segment midpoint"));
+        }
+    }
+    let m = sp[0].lerp(sp[1], 0.5);
+    if d.hit(Pos2::new(m.x, m.y + 20.0), map, PLOT) {
+        errs.push(format!("{kind:?}: expected miss 20px off segment"));
+    }
+    errs
+}
+
+fn circumcenter(a: Pos2, b: Pos2, c: Pos2) -> Pos2 {
+    let d = 2.0 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+    let aa = a.x * a.x + a.y * a.y;
+    let bb = b.x * b.x + b.y * b.y;
+    let cc = c.x * c.x + c.y * c.y;
+    Pos2::new(
+        (aa * (b.y - c.y) + bb * (c.y - a.y) + cc * (a.y - b.y)) / d,
+        (aa * (c.x - b.x) + bb * (a.x - c.x) + cc * (b.x - a.x)) / d,
+    )
+}
+
+fn run_pattern_family(sc: &Scene) {
+    let mut errs = Vec::new();
+    type PatternSpec = (DrawingKind, [(usize, f64); 6], usize);
+    let patterns: [PatternSpec; 11] = [
+        (
+            DrawingKind::Xabcd,
+            [
+                (20, 100.0),
+                (45, 112.0),
+                (70, 104.0),
+                (95, 116.0),
+                (120, 108.0),
+                (0, 0.0),
+            ],
+            5,
+        ),
+        (
+            DrawingKind::Cypher,
+            [
+                (20, 104.0),
+                (50, 92.0),
+                (80, 112.0),
+                (105, 98.0),
+                (130, 106.0),
+                (0, 0.0),
+            ],
+            5,
+        ),
+        (
+            DrawingKind::HeadShoulders,
+            [
+                (20, 104.0),
+                (45, 112.0),
+                (70, 98.0),
+                (95, 110.0),
+                (120, 100.0),
+                (0, 0.0),
+            ],
+            5,
+        ),
+        (
+            DrawingKind::Abcd,
+            [
+                (25, 100.0),
+                (55, 114.0),
+                (85, 106.0),
+                (115, 118.0),
+                (0, 0.0),
+                (0, 0.0),
+            ],
+            4,
+        ),
+        (
+            DrawingKind::TrianglePattern,
+            [
+                (20, 96.0),
+                (45, 110.0),
+                (70, 100.0),
+                (95, 114.0),
+                (120, 104.0),
+                (0, 0.0),
+            ],
+            5,
+        ),
+        (
+            DrawingKind::ThreeDrives,
+            [
+                (20, 118.0),
+                (45, 108.0),
+                (70, 114.0),
+                (95, 102.0),
+                (120, 108.0),
+                (0, 0.0),
+            ],
+            5,
+        ),
+        (
+            DrawingKind::ElliottImpulse,
+            [
+                (20, 95.0),
+                (40, 108.0),
+                (60, 100.0),
+                (85, 116.0),
+                (105, 106.0),
+                (130, 120.0),
+            ],
+            6,
+        ),
+        (
+            DrawingKind::ElliottCorrection,
+            [
+                (20, 115.0),
+                (50, 100.0),
+                (80, 108.0),
+                (110, 94.0),
+                (0, 0.0),
+                (0, 0.0),
+            ],
+            4,
+        ),
+        (
+            DrawingKind::ElliottTriangle,
+            [
+                (20, 118.0),
+                (45, 102.0),
+                (70, 112.0),
+                (95, 100.0),
+                (120, 108.0),
+                (145, 98.0),
+            ],
+            6,
+        ),
+        (
+            DrawingKind::ElliottDoubleCombo,
+            [
+                (20, 112.0),
+                (55, 98.0),
+                (90, 110.0),
+                (125, 96.0),
+                (0, 0.0),
+                (0, 0.0),
+            ],
+            4,
+        ),
+        (
+            DrawingKind::ElliottTripleCombo,
+            [
+                (20, 110.0),
+                (45, 98.0),
+                (70, 106.0),
+                (95, 96.0),
+                (120, 104.0),
+                (145, 94.0),
+            ],
+            6,
+        ),
+    ];
+    for (kind, pts, n) in patterns {
+        errs.extend(run_pattern(sc, kind, &pts[..n]));
+    }
+
+    // Cyclic lines: circle through three points plus center spokes.
+    {
+        let (pa, pb, pc) = (pt(sc, 40, 100.0), pt(sc, 90, 115.0), pt(sc, 140, 95.0));
+        let d = Drawing::with_c(
+            1,
+            DrawingKind::CyclicLines,
+            an(sc, 40, 100.0),
+            an(sc, 90, 115.0),
+            an(sc, 140, 95.0),
+        );
+        let map = |q: Anchor| {
+            anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4))
+        };
+        let ctr = circumcenter(pa, pb, pc);
+        let r = ctr.distance(pa);
+        let dir = (pa - ctr) / r;
+        let on_circle = ctr + dir * r;
+        let spoke_mid = ctr.lerp(pa, 0.5);
+        if !d.hit(on_circle, map, PLOT) {
+            errs.push("CyclicLines: circle point misses".to_owned());
+        }
+        if !d.hit(spoke_mid, map, PLOT) {
+            errs.push("CyclicLines: spoke midpoint misses".to_owned());
+        }
+        if d.hit(ctr + dir * (r + 12.0), map, PLOT) {
+            errs.push("CyclicLines: 12px outside circle hits".to_owned());
+        }
+    }
+    // Time cycles: verticals every |b.x - a.x| px.
+    {
+        let pa = pt(sc, 40, 100.0);
+        let step = (pt(sc, 70, 108.0).x - pa.x).abs();
+        let d = Drawing::new(
+            1,
+            DrawingKind::TimeCycles,
+            an(sc, 40, 100.0),
+            an(sc, 70, 108.0),
+        );
+        let map = |q: Anchor| {
+            anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4))
+        };
+        for k in [1.0f32, 3.0] {
+            if !d.hit(scr_pt(sc, pa.x + step * k, 300.0), map, PLOT) {
+                errs.push(format!("TimeCycles: vertical {k} misses"));
+            }
+        }
+        if d.hit(scr_pt(sc, pa.x + step + 10.0, 300.0), map, PLOT) {
+            errs.push("TimeCycles: between verticals hits".to_owned());
+        }
+    }
+    // Sine line: two full cycles, amplitude from c.
+    {
+        let (pa, pb, pc) = (pt(sc, 30, 100.0), pt(sc, 120, 110.0), pt(sc, 75, 122.0));
+        let mid = (pa.y + pb.y) * 0.5;
+        let amp = (pc.y - mid).abs();
+        let d = Drawing::with_c(
+            1,
+            DrawingKind::SineLine,
+            an(sc, 30, 100.0),
+            an(sc, 120, 110.0),
+            an(sc, 75, 122.0),
+        );
+        let map = |q: Anchor| {
+            anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4))
+        };
+        for t in [0.125f32, 0.375, 0.625] {
+            let x = pa.x + (pb.x - pa.x) * t;
+            let y = mid - amp * (t * std::f32::consts::TAU * 2.0).sin();
+            if !d.hit(scr_pt(sc, x, y), map, PLOT) {
+                errs.push(format!("SineLine: peak at t={t} misses"));
+            }
+        }
+        let x = pa.x + (pb.x - pa.x) * 0.125;
+        if d.hit(scr_pt(sc, x, mid - amp + 14.0), map, PLOT) {
+            errs.push("SineLine: 14px below peak hits".to_owned());
+        }
+    }
+    assert!(
+        errs.is_empty(),
+        "{} golden failures:\n{}",
+        errs.len(),
+        errs.join("\n")
+    );
+}
+
+#[test]
+fn pattern_anchor_counts_and_labels_match_tv() {
+    let expected: [(DrawingKind, u8); 14] = [
+        (DrawingKind::Xabcd, 5),
+        (DrawingKind::Cypher, 5),
+        (DrawingKind::HeadShoulders, 5),
+        (DrawingKind::Abcd, 4),
+        (DrawingKind::TrianglePattern, 5),
+        (DrawingKind::ThreeDrives, 5),
+        (DrawingKind::ElliottImpulse, 6),
+        (DrawingKind::ElliottCorrection, 4),
+        (DrawingKind::ElliottTriangle, 6),
+        (DrawingKind::ElliottDoubleCombo, 4),
+        (DrawingKind::ElliottTripleCombo, 6),
+        (DrawingKind::CyclicLines, 3),
+        (DrawingKind::TimeCycles, 2),
+        (DrawingKind::SineLine, 3),
+    ];
+    for (kind, want) in expected {
+        assert_eq!(kind.points(), want, "{kind:?} anchor count");
+        if kind.is_pattern() {
+            assert_eq!(
+                kind.pattern_labels().map_or(0, <[&str]>::len),
+                usize::from(want),
+                "{kind:?} label count"
+            );
+        }
+    }
+}
+
+#[test]
+fn pattern_family_geometry_hits_and_misses() {
+    run_pattern_family(&scene(false));
+}
+
+#[test]
+fn pattern_family_geometry_holds_on_log_axis() {
+    run_pattern_family(&scene(true));
 }
 
 #[test]

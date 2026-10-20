@@ -708,10 +708,17 @@
       "icon": "xabcd",
       "anchors": 5,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 5-pivot XABCD; segment-midpoint hit path."
     },
     {
       "kind": "drawing",
@@ -722,10 +729,17 @@
       "icon": "cypher",
       "anchors": 5,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 5-pivot Cypher; shared connected-pivot renderer."
     },
     {
       "kind": "drawing",
@@ -736,10 +750,17 @@
       "icon": "head-shoulders",
       "anchors": 5,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 5 anchors (LS,H,RS + 2 neckline)."
     },
     {
       "kind": "drawing",
@@ -750,10 +771,17 @@
       "icon": "abcd",
       "anchors": 4,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 4-pivot ABCD."
     },
     {
       "kind": "drawing",
@@ -764,10 +792,17 @@
       "icon": "triangle-pattern",
       "anchors": 5,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 5-pivot triangle (A..E)."
     },
     {
       "kind": "drawing",
@@ -778,10 +813,17 @@
       "icon": "three-drives",
       "anchors": 5,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "TV 5-pivot three drives."
     },
     {
       "kind": "drawing",
@@ -792,10 +834,17 @@
       "icon": "elliott-impulse",
       "anchors": 6,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "6 pivots incl. origin 0; waves 1..5 labelled."
     },
     {
       "kind": "drawing",
@@ -806,10 +855,17 @@
       "icon": "elliott-correction",
       "anchors": 4,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "4 pivots incl. origin 0."
     },
     {
       "kind": "drawing",
@@ -820,10 +876,17 @@
       "icon": "elliott-triangle",
       "anchors": 6,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "6 pivots incl. origin 0."
     },
     {
       "kind": "drawing",
@@ -834,10 +897,17 @@
       "icon": "elliott-double-combo",
       "anchors": 4,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "4 pivots incl. origin 0."
     },
     {
       "kind": "drawing",
@@ -848,10 +918,17 @@
       "icon": "elliott-triple-combo",
       "anchors": 6,
       "interaction": "multi-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "6 pivots incl. origin 0."
     },
     {
       "kind": "drawing",
@@ -862,10 +939,17 @@
       "icon": "cyclic-lines",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "Hit fix: circle through anchors + center spokes select."
     },
     {
       "kind": "drawing",
@@ -876,10 +960,17 @@
       "icon": "time-cycles",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "Hit fix: painted verticals at k*|b-a| select."
     },
     {
       "kind": "drawing",
@@ -890,10 +981,17 @@
       "icon": "sine-line",
       "anchors": 3,
       "interaction": "three-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-patterns.md",
+        "docs/screenshots/parity/patterns-dark.png"
+      ],
+      "notes": "Hit fix: two-cycle sine curve + baseline select (shared sine_points)."
     },
     {
       "kind": "drawing",
