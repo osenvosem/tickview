@@ -1157,7 +1157,13 @@ fn hit_drawing(
         .iter()
         .rev()
         .filter(|d| d.visible_on(&st.interval))
-        .find(|d| d.hit(pos, map, price_rect))
+        .find(|d| {
+            if d.kind == crate::drawings::DrawingKind::GannFan {
+                drawings::gann_fan_hit(d, pos, map, &st.view, ax, price_rect)
+            } else {
+                d.hit(pos, map, price_rect)
+            }
+        })
         .map(|d| d.id)
 }
 
@@ -1536,6 +1542,42 @@ mod tests {
         assert!(ev.changed);
         assert_eq!(st.drawings[0].a.t, before_a.t + 60);
         assert_eq!(st.drawings[0].b.t, before_b.t + 60);
+    }
+
+    #[test]
+    fn gann_fan_hit_tests_follow_ratio_rays() {
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 10.0;
+        st.view.right_offset = 20.0;
+        st.view.width = 600.0;
+        st.view.count = cd.len();
+        st.set_drawings(vec![Drawing::new(
+            1,
+            crate::drawings::DrawingKind::GannFan,
+            Anchor { t: 0, price: 100.0 },
+            Anchor {
+                t: 60,
+                price: 120.0,
+            },
+        )]);
+        let axis = PriceAxis::fit(80.0, 200.0, false, 500.0, 0.05);
+        let plot = Rect::from_min_size(Pos2::ZERO, Vec2::new(600.0, 500.0));
+        let pa = Pos2::new(st.view.x_of(0), axis.y_of(100.0));
+        let pb = Pos2::new(st.view.x_of(1), axis.y_of(120.0));
+        let rays = crate::drawings::gann_fan_rays(
+            st.drawings[0].a,
+            st.drawings[0].b,
+            pa,
+            pb,
+            &st.view,
+            &axis,
+            plot,
+        );
+        let steep = rays.iter().find(|ray| ray.label == "8/1").expect("8/1 ray");
+        let pos = steep.start + (steep.end - steep.start) * 0.5;
+
+        assert_eq!(hit_drawing(&st, &cd, &axis, pos, plot), Some(1));
     }
 
     #[test]

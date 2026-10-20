@@ -1376,7 +1376,6 @@ impl Drawing {
                     | DrawingKind::GannBox
                     | DrawingKind::GannSquareFixed
                     | DrawingKind::GannSquare
-                    | DrawingKind::GannFan
                     | DrawingKind::Pitchfan
                     | DrawingKind::CyclicLines
                     | DrawingKind::TimeCycles
@@ -1734,6 +1733,34 @@ fn clip_line(a: Pos2, b: Pos2, rect: Rect) -> Option<(Pos2, Pos2)> {
     }
     let mut t0 = f32::NEG_INFINITY;
     let mut t1 = f32::INFINITY;
+    for (origin, dir, min, max) in [
+        (a.x, d.x, rect.min.x, rect.max.x),
+        (a.y, d.y, rect.min.y, rect.max.y),
+    ] {
+        if dir.abs() < 1e-9 {
+            if origin < min || origin > max {
+                return None;
+            }
+        } else {
+            let ta = (min - origin) / dir;
+            let tb = (max - origin) / dir;
+            t0 = t0.max(ta.min(tb));
+            t1 = t1.min(ta.max(tb));
+        }
+    }
+    if t0 > t1 {
+        return None;
+    }
+    Some((a + d * t0, a + d * t1))
+}
+
+fn clip_segment(a: Pos2, b: Pos2, rect: Rect) -> Option<(Pos2, Pos2)> {
+    let d = b - a;
+    if d.length_sq() < 1e-9 {
+        return rect.contains(a).then_some((a, a));
+    }
+    let mut t0 = 0.0f32;
+    let mut t1 = 1.0f32;
     for (origin, dir, min, max) in [
         (a.x, d.x, rect.min.x, rect.max.x),
         (a.y, d.y, rect.min.y, rect.max.y),
@@ -2270,7 +2297,19 @@ fn draw_one(
             );
         }
         DrawingKind::GannFan => {
-            paint_gann_fan(p, pa, pb, stroke, dash, plot);
+            paint_gann_fan(
+                p,
+                d,
+                pa,
+                pb,
+                view,
+                axis,
+                plot,
+                stroke,
+                dash,
+                color,
+                font.clone(),
+            );
         }
         DrawingKind::Xabcd
         | DrawingKind::Cypher
@@ -2909,23 +2948,140 @@ fn paint_gann_grid(p: &Painter, rect: Rect, stroke: Stroke, fill: bool, fill_col
     paint_line(p, rect.right_top(), rect.left_bottom(), stroke, None);
 }
 
+pub const GANN_FAN_RATIOS: [f32; 9] = [0.125, 0.25, 1.0 / 3.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0];
+pub const GANN_FAN_LABELS: [&str; 9] = [
+    "1/8", "1/4", "1/3", "1/2", "1/1", "2/1", "3/1", "4/1", "8/1",
+];
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GannRay {
+    pub ratio: f32,
+    pub label: &'static str,
+    pub start: Pos2,
+    pub end: Pos2,
+    pub label_pos: Pos2,
+    pub right_edge: bool,
+}
+
+#[must_use]
+pub fn gann_price_at(
+    origin_price: f64,
+    one_by_one_price: f64,
+    ratio: f32,
+    bars_from_origin: f32,
+    drag_bars: f32,
+) -> f64 {
+    let drag_bars = if drag_bars.abs() < 1e-6 {
+        1.0
+    } else {
+        drag_bars
+    };
+    let slope = (one_by_one_price - origin_price) / f64::from(drag_bars);
+    origin_price + f64::from(ratio) * slope * f64::from(bars_from_origin)
+}
+
+#[must_use]
+pub fn gann_fan_rays(
+    origin: Anchor,
+    end: Anchor,
+    origin_pos: Pos2,
+    end_pos: Pos2,
+    view: &View,
+    axis: &PriceAxis,
+    plot: Rect,
+) -> Vec<GannRay> {
+    let mut drag_bars = if view.spacing.abs() < 1e-6 {
+        1.0
+    } else {
+        (end_pos.x - origin_pos.x) / view.spacing
+    };
+    if drag_bars.abs() < 1e-6 {
+        drag_bars = 1.0;
+    }
+    let forward = if drag_bars < 0.0 { -1.0 } else { 1.0 };
+    let (vs, ve) = view.visible();
+    let span = (ve.saturating_sub(vs)).max(1) as f32 + drag_bars.abs() + 4.0;
+    let far_bars = forward * span;
+
+    let mut rays = Vec::with_capacity(GANN_FAN_RATIOS.len());
+    for (index, &ratio) in GANN_FAN_RATIOS.iter().enumerate() {
+        let label = GANN_FAN_LABELS[index];
+        let target_price = gann_price_at(origin.price, end.price, ratio, far_bars, drag_bars);
+        let target = Pos2::new(
+            origin_pos.x + view.spacing * far_bars,
+            axis.y_of(target_price),
+        );
+        let Some((start, clipped_end)) = clip_segment(origin_pos, target, plot) else {
+            continue;
+        };
+        let right_edge = clipped_end.x >= plot.center().x;
+        let inward_x = if right_edge { -17.0 } else { 17.0 };
+        let label_pos = clipped_end + Vec2::new(inward_x, -13.0);
+        rays.push(GannRay {
+            ratio,
+            label,
+            start,
+            end: clipped_end,
+            label_pos,
+            right_edge,
+        });
+    }
+    rays
+}
+
+#[must_use]
+pub fn gann_fan_hit(
+    d: &Drawing,
+    p: Pos2,
+    map: impl Fn(Anchor) -> Pos2,
+    view: &View,
+    axis: &PriceAxis,
+    plot: Rect,
+) -> bool {
+    let (pa, pb) = (map(d.a), map(d.b));
+    gann_fan_rays(d.a, d.b, pa, pb, view, axis, plot)
+        .iter()
+        .any(|ray| {
+            distance_to_segment(p, ray.start, ray.end) <= 6.0
+                || Rect::from_center_size(ray.label_pos, Vec2::new(26.0, 14.0)).contains(p)
+        })
+}
+
 fn paint_gann_fan(
     p: &Painter,
-    origin: Pos2,
-    edge: Pos2,
+    d: &Drawing,
+    pa: Pos2,
+    pb: Pos2,
+    view: &View,
+    axis: &PriceAxis,
+    plot: Rect,
     stroke: Stroke,
     dash: Option<(f32, f32)>,
-    plot: Rect,
+    color: Color32,
+    font: FontId,
 ) {
-    let direction = edge - origin;
-    let length = direction.length().max(12.0) * 1.8;
-    let base = direction.angle();
-    for degrees in [-63.4f32, -45.0, -26.6, 0.0, 26.6, 45.0, 63.4] {
-        let angle = base + degrees.to_radians();
-        let end = origin + Vec2::new(angle.cos(), angle.sin()) * length;
-        if let Some((start, clipped_end)) = clip_line(origin, end, plot) {
-            paint_line(p, start, clipped_end, stroke, dash);
+    let mut previous: Option<Rect> = None;
+    for ray in gann_fan_rays(d.a, d.b, pa, pb, view, axis, plot) {
+        paint_line(p, ray.start, ray.end, stroke, dash);
+
+        let mut label_center = ray.label_pos;
+        label_center.x = label_center.x.clamp(plot.min.x + 13.0, plot.max.x - 13.0);
+        label_center.y = label_center.y.clamp(plot.min.y + 7.0, plot.max.y - 7.0);
+        let mut label_rect = Rect::from_center_size(label_center, Vec2::new(26.0, 14.0));
+        while previous.is_some_and(|previous| previous.intersects(label_rect))
+            && label_rect.max.y + 13.0 <= plot.max.y
+        {
+            label_center.y += 13.0;
+            label_rect = Rect::from_center_size(label_center, Vec2::new(26.0, 14.0));
         }
+        p.text(
+            label_rect.center(),
+            Align2::CENTER_CENTER,
+            ray.label,
+            font.clone(),
+            color,
+        );
+        previous = Some(label_rect);
     }
 }
 
@@ -4251,5 +4407,49 @@ mod tests {
         let mut tools = DrawingToolState::with_drawings(&[sample(1), sample(2)]);
         assert_eq!(tools.allocate_id(), 3);
         assert_eq!(tools.allocate_id(), 4);
+    }
+
+    #[test]
+    fn gann_price_uses_tv_ratios() {
+        assert!((gann_price_at(100.0, 120.0, 1.0, 20.0, 10.0) - 140.0).abs() < 1e-9);
+        assert!((gann_price_at(100.0, 120.0, 0.5, 20.0, 10.0) - 120.0).abs() < 1e-9);
+        assert!((gann_price_at(100.0, 120.0, 8.0, 20.0, 10.0) - 420.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn gann_fan_has_nine_tv_rays_and_labels() {
+        let a = Anchor { t: 0, price: 100.0 };
+        let b = Anchor {
+            t: 10,
+            price: 120.0,
+        };
+        let view = View {
+            spacing: 10.0,
+            right_offset: 20.0,
+            width: 600.0,
+            count: 100,
+        };
+        let axis = PriceAxis::fit(80.0, 200.0, false, 500.0, 0.05);
+        let plot = Rect::from_min_size(Pos2::ZERO, Vec2::new(600.0, 500.0));
+        let rays = gann_fan_rays(
+            a,
+            b,
+            Pos2::new(view.x_of(50), axis.y_of(a.price)),
+            Pos2::new(view.x_of(60), axis.y_of(b.price)),
+            &view,
+            &axis,
+            plot,
+        );
+        assert_eq!(rays.len(), 9);
+        assert_eq!(
+            rays.iter().map(|r| r.label).collect::<Vec<_>>(),
+            vec![
+                "1/8", "1/4", "1/3", "1/2", "1/1", "2/1", "3/1", "4/1", "8/1"
+            ]
+        );
+        assert!(
+            rays.iter()
+                .all(|r| r.start == Pos2::new(view.x_of(50), axis.y_of(a.price)))
+        );
     }
 }
