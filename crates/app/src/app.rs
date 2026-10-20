@@ -230,6 +230,8 @@ pub enum Tool {
     Signpost,
     FlagMark,
     AnchoredVwap,
+    VolumeProfileFixed,
+    VolumeProfileAnchored,
 }
 
 impl Tool {
@@ -317,6 +319,8 @@ impl Tool {
         Self::Signpost,
         Self::FlagMark,
         Self::AnchoredVwap,
+        Self::VolumeProfileFixed,
+        Self::VolumeProfileAnchored,
     ];
 
     #[must_use]
@@ -405,6 +409,8 @@ impl Tool {
             Self::Signpost => Icon::Signpost,
             Self::FlagMark => Icon::FlagMark,
             Self::AnchoredVwap => Icon::AnchoredVwap,
+            Self::VolumeProfileFixed => Icon::VolumeProfileFixed,
+            Self::VolumeProfileAnchored => Icon::VolumeProfileAnchored,
         }
     }
 
@@ -494,6 +500,8 @@ impl Tool {
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
             Self::AnchoredVwap => "Anchored VWAP",
+            Self::VolumeProfileFixed => "Fixed Range Volume Profile",
+            Self::VolumeProfileAnchored => "Anchored Volume Profile",
         }
     }
 
@@ -623,6 +631,8 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Signpost => DrawTool::Signpost,
         Tool::FlagMark => DrawTool::FlagMark,
         Tool::AnchoredVwap => DrawTool::AnchoredVwap,
+        Tool::VolumeProfileFixed => DrawTool::VolumeProfileFixed,
+        Tool::VolumeProfileAnchored => DrawTool::VolumeProfileAnchored,
     }
 }
 
@@ -741,6 +751,7 @@ pub struct TickView {
     pending_shapes: bool,
     pending_annot: bool,
     pending_vwap: bool,
+    pending_vprofile: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1055,6 +1066,7 @@ impl TickView {
             pending_shapes: false,
             pending_annot: false,
             pending_vwap: false,
+            pending_vprofile: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1149,6 +1161,7 @@ impl TickView {
                 "shapes" => me.pending_shapes = true,
                 "annot" => me.pending_annot = true,
                 "vwap" => me.pending_vwap = true,
+                "vprofile" => me.pending_vprofile = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1723,6 +1736,35 @@ impl TickView {
         self.tabs[ti].chart.drawings.push(d);
         self.tabs[ti].chart.selection.select(9901);
     }
+    /// `TICKVIEW_SCENE=vprofile`: a fixed-range profile over ~two thirds of
+    /// the visible window plus an anchored profile, for volume-tool review.
+    fn seed_vprofile(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let mk = |id: u64, kind: DrawingKind, f0: f64, f1: f64| -> Drawing {
+            let a = Anchor {
+                t: tv[idx(f0) - vs],
+                price: cv[idx(f0) - vs],
+            };
+            let b = Anchor {
+                t: tv[idx(f1) - vs],
+                price: cv[idx(f1) - vs],
+            };
+            let mut d = Drawing::new(id, kind, a, b);
+            d.style = tickchart::kind_defaults(kind);
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9911, DrawingKind::FixedRangeVolumeProfile, 0.02, 0.4),
+            mk(9912, DrawingKind::AnchoredVolumeProfile, 0.62, 0.62),
+        ]);
+        self.tabs[ti].chart.selection.select(9911);
+    }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
@@ -2063,6 +2105,9 @@ impl TickView {
                                 }
                                 if self.pending_vwap && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_vwap(ti);
+                                }
+                                if self.pending_vprofile && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_vprofile(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2559,7 +2604,8 @@ impl TickView {
             || self.pending_forecast
             || self.pending_shapes
             || self.pending_annot
-            || self.pending_vwap;
+            || self.pending_vwap
+            || self.pending_vprofile;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {

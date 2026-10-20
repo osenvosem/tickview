@@ -150,7 +150,14 @@ pub const GROUPS: &[ToolGroup] = &[
                 "MEASURERS",
                 &[Tool::PriceRange, Tool::DateRange, Tool::DatePriceRange],
             ),
-            ("VOLUME-BASED", &[Tool::AnchoredVwap]),
+            (
+                "VOLUME-BASED",
+                &[
+                    Tool::AnchoredVwap,
+                    Tool::VolumeProfileFixed,
+                    Tool::VolumeProfileAnchored,
+                ],
+            ),
         ],
     },
     ToolGroup {

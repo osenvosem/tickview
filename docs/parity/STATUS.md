@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 79 verified, 5 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 81 verified, 3 in progress, 0 missing, 3 excluded (87 total).
 Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Drawings
@@ -62,8 +62,8 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 | Ghost feed | `LineToolGhostFeed` | `GhostFeed` | `ghost-feed` | in-progress |
 | Sector | `LineToolProjection` | `Sector` | `sector` | verified |
 | Anchored VWAP | `LineToolAnchoredVWAP` | `AnchoredVwap` | `anchored-vwap` | verified |
-| Fixed range volume profile | `LineToolFixedRangeVolumeProfile` | `FixedRangeVolumeProfile` | `volume-profile-fixed` | in-progress |
-| Anchored volume profile | `LineToolAnchoredVolumeProfile` | `AnchoredVolumeProfile` | `volume-profile-anchored` | in-progress |
+| Fixed range volume profile | `LineToolFixedRangeVolumeProfile` | `FixedRangeVolumeProfile` | `volume-profile-fixed` | verified |
+| Anchored volume profile | `LineToolAnchoredVolumeProfile` | `AnchoredVolumeProfile` | `volume-profile-anchored` | verified |
 | Price range | `LineToolPriceRange` | `PriceRange` | `price-range` | verified |
 | Date range | `LineToolDateRange` | `DateRange` | `date-range` | verified |
 | Date and price range | `LineToolDateAndPriceRange` | `DatePriceRange` | `date-price-range` | verified |

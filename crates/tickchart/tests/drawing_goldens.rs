@@ -1629,3 +1629,79 @@ fn data_tools_survive_short_history() {
     assert!(empty.is_empty());
     let _ = map(past);
 }
+
+#[test]
+fn profile_cases_hit_poc_and_value_area() {
+    let sc = scene(false);
+    let bar_w = 800.0 * 0.22;
+    // Fixed range over bars 60..=140: histogram right-anchored at bar 140.
+    let d = Drawing::new(
+        1,
+        DrawingKind::FixedRangeVolumeProfile,
+        an(&sc, 60, 100.0),
+        an(&sc, 140, 100.0),
+    );
+    let prof =
+        tickchart::datatools::volume_profile(&sc.cd, 60, 140, tickchart::datatools::DEFAULT_ROWS)
+            .expect("profile");
+    let right = sc.view.x_of(140);
+    let row = prof.rows[prof.poc];
+    let w = (row.volume / prof.max_volume) as f32 * bar_w;
+    let on_poc = Pos2::new(
+        right - w * 0.5,
+        sc.axis.y_of((row.price_lo + row.price_hi) * 0.5),
+    );
+    assert!(
+        tickchart::datatools::profile_hit(&sc.cd, &sc.view, &sc.axis, &d, on_poc, PLOT),
+        "POC row center misses"
+    );
+    let top_y = sc.axis.y_of(prof.rows[prof.rows.len() - 1].price_hi);
+    let above = Pos2::new(right - w * 0.5, top_y - 15.0);
+    assert!(
+        !tickchart::datatools::profile_hit(&sc.cd, &sc.view, &sc.axis, &d, above, PLOT),
+        "15px above the histogram hits"
+    );
+    // Anchored at bar 120: extends to the plot's right edge.
+    let d2 = Drawing::new(
+        2,
+        DrawingKind::AnchoredVolumeProfile,
+        an(&sc, 120, 100.0),
+        an(&sc, 120, 100.0),
+    );
+    let prof2 = tickchart::datatools::volume_profile(
+        &sc.cd,
+        120,
+        sc.cd.c.len() - 1,
+        tickchart::datatools::DEFAULT_ROWS,
+    )
+    .expect("anchored profile");
+    let row2 = prof2.rows[prof2.poc];
+    let w2 = (row2.volume / prof2.max_volume) as f32 * bar_w;
+    let on_poc2 = Pos2::new(
+        PLOT.max.x - 6.0 - w2 * 0.5,
+        sc.axis.y_of((row2.price_lo + row2.price_hi) * 0.5),
+    );
+    assert!(
+        tickchart::datatools::profile_hit(&sc.cd, &sc.view, &sc.axis, &d2, on_poc2, PLOT),
+        "anchored POC row misses"
+    );
+}
+
+#[test]
+fn profiles_survive_anchor_past_end() {
+    let sc = scene(false);
+    let far = sc.cd.t[sc.cd.t.len() - 1] + 10 * 60_000;
+    let past = Anchor {
+        t: far,
+        price: 100.0,
+    };
+    let d = Drawing::new(1, DrawingKind::AnchoredVolumeProfile, past, past);
+    assert!(!tickchart::datatools::profile_hit(
+        &sc.cd,
+        &sc.view,
+        &sc.axis,
+        &d,
+        pt(&sc, 60, 100.0),
+        PLOT
+    ));
+}

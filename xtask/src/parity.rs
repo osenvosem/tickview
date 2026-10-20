@@ -690,7 +690,7 @@ mod tests {
         let kinds_src = std::fs::read_to_string(root.join("crates/tickchart/src/drawings.rs"))
             .expect("drawings.rs");
         let kinds = parse_kind_variants(&kinds_src);
-        assert_eq!(kinds.len(), 79, "kind parse drift");
+        assert_eq!(kinds.len(), 81, "kind parse drift");
         let errors = validate_full(&catalog, &tv, &kinds, &|candidate| {
             root.join(candidate).exists()
         });

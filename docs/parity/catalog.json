@@ -1137,10 +1137,18 @@
       "icon": "volume-profile-fixed",
       "anchors": 2,
       "interaction": "two-point",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart::datatools::tests::profile_hand_computed_poc_and_value_area",
+        "tickchart::datatools::tests::profile_empty_or_flat_range_is_none",
+        "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
+        "app::tests::every_drawing_tool_has_a_unique_icon"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-volume-profile.md",
+        "docs/screenshots/parity/vprofile-dark.png"
+      ],
+      "notes": "Close-only binning, 24 bins, 70% value area from POC; right-anchored at range end."
     },
     {
       "kind": "drawing",
@@ -1151,10 +1159,17 @@
       "icon": "volume-profile-anchored",
       "anchors": 1,
       "interaction": "click",
-      "status": "in-progress",
-      "tests": [],
-      "evidence": [],
-      "notes": ""
+      "status": "verified",
+      "tests": [
+        "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
+        "tickchart::tests::drawing_goldens::profiles_survive_anchor_past_end",
+        "app::tests::every_drawing_tool_has_a_unique_icon"
+      ],
+      "evidence": [
+        "docs/evidence/tv/drawings-volume-profile.md",
+        "docs/screenshots/parity/vprofile-dark.png"
+      ],
+      "notes": "Same binning as fixed range; extends to last bar, hugs plot right edge."
     },
     {
       "kind": "drawing",

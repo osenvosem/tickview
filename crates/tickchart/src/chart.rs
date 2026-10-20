@@ -1234,6 +1234,10 @@ fn hit_drawing(
                 drawings::gann_fan_hit(d, pos, map, &st.view, ax, price_rect)
             } else if d.kind == crate::drawings::DrawingKind::AnchoredVwap {
                 crate::datatools::vwap_hit(cd, &st.view, ax, d, pos, price_rect)
+            } else if d.kind == crate::drawings::DrawingKind::FixedRangeVolumeProfile
+                || d.kind == crate::drawings::DrawingKind::AnchoredVolumeProfile
+            {
+                crate::datatools::profile_hit(cd, &st.view, ax, d, pos, price_rect)
             } else {
                 d.hit(pos, map, price_rect)
             }

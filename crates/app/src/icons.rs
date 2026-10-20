@@ -86,6 +86,8 @@ pub enum Icon {
     Signpost,
     FlagMark,
     AnchoredVwap,
+    VolumeProfileFixed,
+    VolumeProfileAnchored,
     Magnet,
     Search,
     Bell,
@@ -231,6 +233,8 @@ impl Icon {
         Self::Signpost,
         Self::FlagMark,
         Self::AnchoredVwap,
+        Self::VolumeProfileFixed,
+        Self::VolumeProfileAnchored,
         Self::Magnet,
         Self::Search,
         Self::Bell,
@@ -376,6 +380,8 @@ impl Icon {
             Self::Signpost => "signpost",
             Self::FlagMark => "flag-mark",
             Self::AnchoredVwap => "anchored-vwap",
+            Self::VolumeProfileFixed => "volume-profile-fixed",
+            Self::VolumeProfileAnchored => "volume-profile-anchored",
             Self::Magnet => "magnet",
             Self::Search => "search",
             Self::Bell => "alerts",
@@ -1008,6 +1014,24 @@ impl Icon {
                 dot(4.0, 18.0, 1.8);
                 path(&[(4.0, 18.0), (10.0, 12.0), (15.0, 9.0), (21.0, 7.0)]);
             }
+            Self::VolumeProfileFixed => {
+                path(&[
+                    (5.0, 5.0),
+                    (15.0, 5.0),
+                    (15.0, 20.0),
+                    (5.0, 20.0),
+                    (5.0, 5.0),
+                ]);
+                line(7.0, 8.0, 13.0, 8.0);
+                line(7.0, 12.0, 11.0, 12.0);
+                line(7.0, 16.0, 12.0, 16.0);
+            }
+            Self::VolumeProfileAnchored => {
+                dot(5.0, 6.0, 1.8);
+                line(9.0, 8.0, 21.0, 8.0);
+                line(9.0, 13.0, 16.0, 13.0);
+                line(9.0, 18.0, 19.0, 18.0);
+            }
             Self::Magnet => {
                 path(&[
                     (5.0, 4.0),
@@ -1527,7 +1551,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 140);
+        assert_eq!(Icon::ALL.len(), 142);
     }
 
     #[test]

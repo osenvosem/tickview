@@ -101,6 +101,8 @@ pub enum DrawingKind {
     Signpost,
     FlagMark,
     AnchoredVwap,
+    FixedRangeVolumeProfile,
+    AnchoredVolumeProfile,
 }
 
 impl DrawingKind {
@@ -184,6 +186,8 @@ impl DrawingKind {
         Self::Signpost,
         Self::FlagMark,
         Self::AnchoredVwap,
+        Self::FixedRangeVolumeProfile,
+        Self::AnchoredVolumeProfile,
     ];
 
     #[must_use]
@@ -268,6 +272,8 @@ impl DrawingKind {
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
             Self::AnchoredVwap => "Anchored VWAP",
+            Self::FixedRangeVolumeProfile => "Fixed Range Volume Profile",
+            Self::AnchoredVolumeProfile => "Anchored Volume Profile",
         }
     }
 
@@ -294,6 +300,8 @@ impl DrawingKind {
             | Self::Signpost
             | Self::FlagMark
             | Self::AnchoredVwap => 1,
+            Self::FixedRangeVolumeProfile => 2,
+            Self::AnchoredVolumeProfile => 1,
             Self::Channel
             | Self::FibExt
             | Self::Pitchfork
@@ -499,6 +507,8 @@ pub enum DrawTool {
     Signpost,
     FlagMark,
     AnchoredVwap,
+    VolumeProfileFixed,
+    VolumeProfileAnchored,
 }
 
 impl DrawTool {
@@ -586,6 +596,8 @@ impl DrawTool {
         Self::Signpost,
         Self::FlagMark,
         Self::AnchoredVwap,
+        Self::VolumeProfileFixed,
+        Self::VolumeProfileAnchored,
     ];
 
     #[must_use]
@@ -674,6 +686,8 @@ impl DrawTool {
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
             Self::AnchoredVwap => "Anchored VWAP",
+            Self::VolumeProfileFixed => "Fixed Range Volume Profile",
+            Self::VolumeProfileAnchored => "Anchored Volume Profile",
         }
     }
 
@@ -760,6 +774,8 @@ impl DrawTool {
             Self::Signpost => Some(DrawingKind::Signpost),
             Self::FlagMark => Some(DrawingKind::FlagMark),
             Self::AnchoredVwap => Some(DrawingKind::AnchoredVwap),
+            Self::VolumeProfileFixed => Some(DrawingKind::FixedRangeVolumeProfile),
+            Self::VolumeProfileAnchored => Some(DrawingKind::AnchoredVolumeProfile),
         }
     }
 
@@ -2691,6 +2707,60 @@ fn draw_one(
                     font.clone(),
                 );
             }
+        }
+        DrawingKind::FixedRangeVolumeProfile | DrawingKind::AnchoredVolumeProfile => {
+            let Some((prof, right, bar_w)) = crate::datatools::profile_geom(cd, view, plot, d)
+            else {
+                return;
+            };
+            for row in &prof.rows {
+                let w = (row.volume / prof.max_volume) as f32 * bar_w;
+                let rect = Rect::from_min_max(
+                    Pos2::new(right - w, axis.y_of(row.price_hi)),
+                    Pos2::new(right, axis.y_of(row.price_lo)),
+                );
+                let fill = if row.in_value_area {
+                    color.gamma_multiply(0.45)
+                } else {
+                    color.gamma_multiply(0.18)
+                };
+                p.rect_filled(rect, 0.0, fill);
+            }
+            let mut axis_stroke = stroke;
+            axis_stroke.width = 1.0;
+            let x0 = right - bar_w;
+            let x1 = (right + 44.0).min(plot.max.x - 2.0);
+            let y_poc =
+                axis.y_of((prof.rows[prof.poc].price_lo + prof.rows[prof.poc].price_hi) * 0.5);
+            let y_vah = axis.y_of(prof.vah);
+            let y_val = axis.y_of(prof.val);
+            for y in [y_poc, y_vah, y_val] {
+                p.line_segment([Pos2::new(x0, y), Pos2::new(x1, y)], axis_stroke);
+            }
+            paint_chip(
+                p,
+                Pos2::new(x1 - 24.0, y_poc - 10.0),
+                "POC",
+                color,
+                pal.bg,
+                font.clone(),
+            );
+            paint_chip(
+                p,
+                Pos2::new(x1 - 28.0, y_vah),
+                "VAH",
+                color,
+                pal.bg,
+                font.clone(),
+            );
+            paint_chip(
+                p,
+                Pos2::new(x1 - 28.0, y_val),
+                "VAL",
+                color,
+                pal.bg,
+                font.clone(),
+            );
         }
         // TV plain text: glyph run at the anchor, no bubble.
         DrawingKind::Text => {
