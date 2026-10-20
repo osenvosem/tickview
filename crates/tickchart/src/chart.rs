@@ -8,7 +8,7 @@ use egui::{Align2, Color32, CornerRadius, FontId, Pos2, Rect, Response, Sense, S
 use crate::barfmt::{fmt_compact, fmt_price};
 use crate::bars::View;
 use crate::compare::CompareSeries;
-use crate::drawings::{self, Anchor, Drawing, DrawingToolState};
+use crate::drawings::{self, Anchor, Drawing, DrawingToolState, Selection};
 use crate::painter::{self, ChartType, Palette};
 use crate::priceaxis::PriceAxis;
 use crate::timeaxis;
@@ -62,6 +62,7 @@ pub struct ChartState {
     pub hover: Option<usize>,
     pub drawings: Vec<Drawing>,
     pub tools: DrawingToolState,
+    pub selection: Selection,
     pub magnet: bool,
     pub magnet_strong: bool,
     pub locked: bool,
@@ -129,6 +130,7 @@ impl ChartState {
             hover: None,
             drawings: Vec::new(),
             tools: DrawingToolState::default(),
+            selection: Selection::default(),
             magnet: false,
             magnet_strong: false,
             locked: false,
@@ -151,6 +153,7 @@ impl ChartState {
         self.tools = DrawingToolState::with_drawings(&drawings);
         self.drawings = drawings;
         self.symbol_drawings.clear();
+        self.selection.clear();
     }
 
     /// All symbol drawing sets, including the current one.
@@ -173,6 +176,7 @@ impl ChartState {
         self.drawings = drawings.remove(&self.symbol).unwrap_or_default();
         self.symbol_drawings = drawings;
         self.tools = DrawingToolState::with_drawings(&self.drawings);
+        self.selection.clear();
         self.drag_drawing = None;
     }
 
@@ -186,6 +190,7 @@ impl ChartState {
         self.symbol_drawings.insert(self.symbol.clone(), old);
         self.drawings = self.symbol_drawings.remove(&symbol).unwrap_or_default();
         self.tools = DrawingToolState::with_drawings(&self.drawings);
+        self.selection.clear();
         self.drag_drawing = None;
         self.symbol = symbol;
     }
@@ -532,7 +537,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         if st.drawings_hidden {
             None
         } else {
-            st.tools.selected
+            st.selection.primary()
         },
         if st.drawings_hidden {
             None
@@ -559,7 +564,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     }
 
     ev.drawing_toolbar_pos = (!st.drawings_hidden)
-        .then_some(st.tools.selected)
+        .then_some(st.selection.primary())
         .flatten()
         .and_then(|id| st.drawings.iter().find(|d| d.id == id))
         .and_then(|d| drawings::anchor_pos(d.last_anchor(), cd, &st.view, &price_axis))
@@ -832,11 +837,12 @@ fn handle_input(
     if resp.hovered() {
         if ctx.input(|i| i.key_pressed(egui::Key::Escape))
             && (st.tools.draft.is_some()
-                || st.tools.selected.is_some()
+                || st.selection.primary().is_some()
                 || st.tools.measure.is_some()
                 || st.price_zoom.is_some())
         {
             st.tools.cancel();
+            st.selection.clear();
             st.drag_drawing = None;
             st.zoom_sel = None;
             st.price_zoom = None;
@@ -844,7 +850,7 @@ fn handle_input(
         if !st.locked
             && (ctx.input(|i| i.key_pressed(egui::Key::Delete))
                 || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
-            && st.tools.delete_selected(&mut st.drawings)
+            && drawings::delete_selected(&mut st.drawings, &mut st.selection)
         {
             ev.changed = true;
         }
@@ -891,7 +897,7 @@ fn handle_input(
                 && price_rect.contains(pos)
                 && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
             {
-                st.tools.selected = Some(id);
+                st.selection.select(id);
                 if let Some(anchor) = drawings::anchor_at_with_tolerance(
                     cd,
                     &st.view,
@@ -975,7 +981,7 @@ fn handle_input(
         }
         if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) && st.tools.draft.is_some() {
             if let Some(drawing) = st.tools.finish_brush() {
-                st.tools.selected = Some(drawing.id);
+                st.selection.select(drawing.id);
                 st.drawings.push(drawing);
                 ev.changed = true;
                 ev.drawing_completed = true;
@@ -994,9 +1000,7 @@ fn handle_input(
             if st.tools.tool == crate::drawings::DrawTool::Eraser {
                 if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
                     st.drawings.retain(|drawing| drawing.id != id);
-                    if st.tools.selected == Some(id) {
-                        st.tools.selected = None;
-                    }
+                    st.selection.retain(|selected| selected != id);
                     ev.changed = true;
                 }
             } else if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) {
@@ -1012,16 +1016,16 @@ fn handle_input(
                 if st.tools.tool == crate::drawings::DrawTool::Measure {
                     st.tools.measure_click(anchor);
                 } else if let Some(drawing) = st.tools.click(anchor) {
-                    st.tools.selected = Some(drawing.id);
+                    st.selection.select(drawing.id);
                     st.drawings.push(drawing);
                     ev.changed = true;
                     ev.drawing_completed = true;
                 }
             }
         } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
-            st.tools.selected = Some(id);
+            st.selection.select(id);
         } else {
-            st.tools.selected = None;
+            st.selection.clear();
         }
     }
 
@@ -1034,7 +1038,7 @@ fn handle_input(
                 .is_some_and(|draft| draft.kind.is_open_path())
         {
             if let Some(drawing) = st.tools.finish_open_path() {
-                st.tools.selected = Some(drawing.id);
+                st.selection.select(drawing.id);
                 st.drawings.push(drawing);
                 ev.changed = true;
                 ev.drawing_completed = true;
@@ -1350,7 +1354,7 @@ mod tests {
         let ev = click(&ctx, &mut st, &cd, pos);
         assert!(ev.changed);
         assert_eq!(st.drawings.len(), 1);
-        assert!(st.tools.selected.is_some());
+        assert!(st.selection.primary().is_some());
 
         let key = egui::Event::Key {
             key: egui::Key::Delete,
@@ -1676,7 +1680,7 @@ mod tests {
         let d = &st.drawings[0];
         assert_eq!(d.kind, crate::drawings::DrawingKind::Brush);
         assert!(d.extra.len() >= 2, "freehand captures many points");
-        assert!(st.tools.selected.is_some());
+        assert!(st.selection.primary().is_some());
     }
 
     #[test]

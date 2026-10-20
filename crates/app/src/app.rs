@@ -1079,7 +1079,9 @@ impl TickView {
                 }
                 "drawings" => {
                     let tab = &mut me.tabs[me.active];
-                    tab.chart.tools.selected = tab.chart.drawings.last().map(|d| d.id);
+                    if let Some(id) = tab.chart.drawings.last().map(|d| d.id) {
+                        tab.chart.selection.select(id);
+                    }
                 }
                 "phase4drawings" => me.pending_phase4 = true,
                 "zoomrect" => me.pending_zoomrect = true,
@@ -1182,7 +1184,7 @@ impl TickView {
         tab.chart
             .drawings
             .extend([fork, schiff, reg, long, short, brush]);
-        tab.chart.tools.selected = Some(9003);
+        tab.chart.selection.select(9003);
     }
 
     fn apply_chart_palettes(&mut self) {
@@ -2270,7 +2272,7 @@ impl TickView {
         let Some(anchor) = ev.drawing_toolbar_pos else {
             return;
         };
-        let Some(id) = self.tabs[ti].chart.tools.selected else {
+        let Some(id) = self.tabs[ti].chart.selection.primary() else {
             return;
         };
         let Some(drawing) = self.tabs[ti].chart.drawings.iter().find(|d| d.id == id) else {
@@ -2464,7 +2466,7 @@ impl TickView {
         if delete {
             let tab = &mut self.tabs[ti];
             tab.chart.drawings.retain(|d| d.id != id);
-            tab.chart.tools.selected = None;
+            tab.chart.selection.clear();
             tab.chart.popup_rect = None;
             self.mark_drawings_dirty(ui.ctx());
         } else if let Some(edit) = edit {

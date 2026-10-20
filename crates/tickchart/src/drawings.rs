@@ -1,6 +1,8 @@
 //! Drawing tools: anchors in (timestamp, price) space, hit testing and
 //! persistence-friendly geometry.
 
+use std::collections::BTreeSet;
+
 use egui::epaint::PathShape;
 use egui::{Align2, Color32, FontId, Painter, Pos2, Rect, Shape, Stroke, Vec2};
 use serde::{Deserialize, Serialize};
@@ -772,13 +774,102 @@ pub struct Measure {
     pub done: bool,
 }
 
-/// Tool/draft/selection state. Geometry stays in `Drawing`.
+/// Which drawings are currently selected. The primary id drives style UI;
+/// multi-select adds a toggleable set while preserving the primary anchor.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Selection {
+    ids: BTreeSet<u64>,
+    primary: Option<u64>,
+    multi: bool,
+}
+
+impl Selection {
+    #[must_use]
+    pub fn primary(&self) -> Option<u64> {
+        self.primary
+    }
+
+    #[must_use]
+    pub fn ids(&self) -> &BTreeSet<u64> {
+        &self.ids
+    }
+
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.ids.len()
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.ids.is_empty()
+    }
+
+    #[must_use]
+    pub fn multi(&self) -> bool {
+        self.multi
+    }
+
+    #[must_use]
+    pub fn contains(&self, id: u64) -> bool {
+        self.ids.contains(&id)
+    }
+
+    pub fn select(&mut self, id: u64) {
+        self.ids.clear();
+        self.ids.insert(id);
+        self.primary = Some(id);
+    }
+
+    pub fn toggle(&mut self, id: u64) {
+        if self.ids.remove(&id) {
+            if self.primary == Some(id) {
+                self.primary = self.ids.iter().next_back().copied();
+            }
+        } else {
+            self.ids.insert(id);
+            self.primary = Some(id);
+        }
+    }
+
+    pub fn add(&mut self, id: u64) {
+        self.ids.insert(id);
+        self.primary = Some(id);
+    }
+
+    pub fn extend(&mut self, ids: impl IntoIterator<Item = u64>) {
+        for id in ids {
+            self.ids.insert(id);
+        }
+        self.primary = self.ids.iter().next_back().copied();
+    }
+
+    pub fn clear(&mut self) {
+        self.ids.clear();
+        self.primary = None;
+    }
+
+    pub fn set_multi(&mut self, multi: bool) {
+        self.multi = multi;
+        if !multi && let Some(primary) = self.primary {
+            self.ids.retain(|id| *id == primary);
+        }
+    }
+
+    pub fn retain(&mut self, mut keep: impl FnMut(u64) -> bool) {
+        self.ids.retain(|id| keep(*id));
+        if self.primary.is_some_and(|id| !self.ids.contains(&id)) {
+            self.primary = self.ids.iter().next_back().copied();
+        }
+    }
+}
+
+/// Tool/draft state. Selection lives on `ChartState`. Geometry stays in
+/// `Drawing`.
 #[derive(Clone, Debug)]
 pub struct DrawingToolState {
     pub tool: DrawTool,
     pub draft: Option<Draft>,
     pub measure: Option<Measure>,
-    pub selected: Option<u64>,
     next_id: u64,
 }
 
@@ -788,7 +879,6 @@ impl Default for DrawingToolState {
             tool: DrawTool::Cursor,
             draft: None,
             measure: None,
-            selected: None,
             next_id: 1,
         }
     }
@@ -959,17 +1049,16 @@ impl DrawingToolState {
     pub fn cancel(&mut self) {
         self.draft = None;
         self.measure = None;
-        self.selected = None;
     }
+}
 
-    pub fn delete_selected(&mut self, drawings: &mut Vec<Drawing>) -> bool {
-        let Some(id) = self.selected.take() else {
-            return false;
-        };
-        let n = drawings.len();
-        drawings.retain(|d| d.id != id);
-        drawings.len() != n
-    }
+pub fn delete_selected(drawings: &mut Vec<Drawing>, selection: &mut Selection) -> bool {
+    let n = drawings.len();
+    let ids = selection.ids().clone();
+    drawings.retain(|d| !ids.contains(&d.id));
+    let deleted = drawings.len() != n;
+    selection.retain(|id| drawings.iter().any(|d| d.id == id));
+    deleted
 }
 
 /// Stroke pattern for a drawing.
@@ -3972,5 +4061,33 @@ mod tests {
         let back: Drawing = serde_json::from_str(&json).unwrap();
         assert_eq!(back.extra.len(), 1);
         assert_eq!(back.kind, DrawingKind::Brush);
+    }
+
+    #[test]
+    fn selection_single_and_toggle() {
+        let mut sel = Selection::default();
+        sel.select(7);
+        assert_eq!(sel.primary(), Some(7));
+        assert_eq!(sel.len(), 1);
+        sel.set_multi(true);
+        sel.toggle(9);
+        assert_eq!(sel.ids().iter().copied().collect::<Vec<_>>(), vec![7, 9]);
+        assert_eq!(sel.primary(), Some(9));
+        sel.toggle(9);
+        assert_eq!(sel.primary(), Some(7));
+        sel.set_multi(false);
+        assert_eq!(sel.len(), 1);
+        assert_eq!(sel.primary(), Some(7));
+    }
+
+    #[test]
+    fn selection_retain_drops_deleted_ids() {
+        let mut sel = Selection::default();
+        sel.select(1);
+        sel.set_multi(true);
+        sel.toggle(2);
+        sel.retain(|id| id != 1);
+        assert_eq!(sel.primary(), Some(2));
+        assert_eq!(sel.len(), 1);
     }
 }

@@ -21,7 +21,7 @@ pub use chart::{
 pub use compare::CompareSeries;
 pub use drawings::{
     Anchor, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState, LineStyle, Measure,
-    StyleEdit, apply_style_edit, clamp_popup, kind_defaults,
+    Selection, StyleEdit, apply_style_edit, clamp_popup, delete_selected, kind_defaults,
 };
 
 pub use painter::{ChartType, Palette};
