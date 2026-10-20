@@ -4,14 +4,54 @@
 //! matching TradingView's selected-object actions.
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, Id, Margin, Order, Pos2, Rect, RichText, Sense, Stroke,
-    Ui, vec2,
+    self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Pos2, Rect, RichText,
+    Sense, Stroke, Ui, Vec2, vec2,
 };
 use tickchart::{Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup};
 
 use crate::icons::Icon;
 use crate::theme::{Palette, font_mono, font_regular, font_semibold, type_size};
 use crate::widgets;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OverflowItem {
+    BringToFront,
+    SendToBack,
+    BringForward,
+    SendBackward,
+    Clone,
+    Copy,
+    Paste,
+    Hide,
+    Intervals,
+}
+
+#[must_use]
+pub fn overflow_items(has_clipboard: bool) -> Vec<OverflowItem> {
+    let mut items = vec![
+        OverflowItem::BringToFront,
+        OverflowItem::SendToBack,
+        OverflowItem::BringForward,
+        OverflowItem::SendBackward,
+        OverflowItem::Clone,
+        OverflowItem::Copy,
+    ];
+    if has_clipboard {
+        items.push(OverflowItem::Paste);
+    }
+    items.extend([OverflowItem::Hide, OverflowItem::Intervals]);
+    items
+}
+
+#[must_use]
+pub fn interval_selection(selected: &[&str]) -> Option<Vec<String>> {
+    let ordered = TV_INTERVALS
+        .iter()
+        .filter(|interval| selected.contains(interval))
+        .map(|interval| (*interval).to_owned())
+        .collect::<Vec<_>>();
+    (ordered.len() < TV_INTERVALS.len()).then_some(ordered)
+}
 
 /// TradingView's fixed color row for drawing styles.
 pub const SWATCHES: [[u8; 4]; 8] = [
@@ -25,6 +65,9 @@ pub const SWATCHES: [[u8; 4]; 8] = [
     [120, 123, 134, 255],
 ];
 
+/// TradingView's drawing intervals for per-object visibility.
+pub const TV_INTERVALS: [&str; 8] = ["1m", "5m", "15m", "1h", "4h", "D", "W", "1M"];
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Popup {
     #[default]
@@ -33,6 +76,8 @@ pub enum Popup {
     Width,
     Color,
     Settings,
+    Overflow,
+    Intervals,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -64,6 +109,17 @@ pub enum ToolbarAction {
     Edit(StyleEdit),
     Delete,
     SetLocked(bool),
+    SetHidden(bool),
+    SetIntervals(Option<Vec<String>>),
+    ToggleMulti,
+    Clone,
+    Copy,
+    Paste,
+    RaiseToFront,
+    SendToBack,
+    BringForward,
+    SendBackward,
+    Nudge(Vec2),
 }
 
 pub struct ToolbarOutput {
@@ -74,6 +130,7 @@ pub struct ToolbarOutput {
 pub struct ToolbarModel<'a> {
     pub selection: &'a Selection,
     pub drawings: &'a [Drawing],
+    pub has_clipboard: bool,
 }
 
 impl<'a> ToolbarModel<'a> {
@@ -134,6 +191,19 @@ pub fn toolbar_choice(ui: &mut Ui, p: &Palette, selected: bool, label: impl Into
     .clicked()
 }
 
+fn drag_handle(ui: &mut Ui, p: &Palette) -> Option<Vec2> {
+    let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click_and_drag());
+    if resp.hovered() || resp.dragged() {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(5), p.hover);
+    }
+    Icon::DragHandle.paint(ui.painter(), rect.shrink(7.0), p.muted, 1.5);
+    let dragged = resp.dragged();
+    let delta = resp.drag_delta();
+    let _ = resp.on_hover_cursor(CursorIcon::Move);
+    if dragged { Some(delta) } else { None }
+}
+
 pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel) -> ToolbarOutput {
     let bounds = ui.max_rect();
     let selected = model.selected();
@@ -147,13 +217,20 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
 
     let common = common_style(&selected);
     let primary = model.primary_drawing();
-    let label = primary.map_or_else(|| "Selected", |drawing| drawing.kind.label());
+    let label = if selected.len() == 1 {
+        primary.map_or_else(
+            || "Selected".to_owned(),
+            |drawing| drawing.kind.label().to_owned(),
+        )
+    } else {
+        format!("{} objects", selected.len())
+    };
     let settings_visible = selected.len() == 1 && primary.is_some_and(has_settings);
-    let button_count = if settings_visible { 6usize } else { 5usize };
+    let button_count = if settings_visible { 9usize } else { 8usize };
     let label_width = ui
         .painter()
         .layout_no_wrap(
-            label.to_owned(),
+            label.clone(),
             font_semibold(type_size::TINY),
             Color32::WHITE,
         )
@@ -168,6 +245,7 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
         + 8.0;
     let bar = bar_rect(bounds, width);
     let locked_all = selected.iter().all(|drawing| drawing.locked);
+    let hidden_all = selected.iter().all(|drawing| drawing.hidden);
     let mut exclusion = bar;
     let mut actions = Vec::new();
 
@@ -193,10 +271,26 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
             .inner_margin(Margin::symmetric(8, 8))
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.x = 4.0;
+                if let Some(delta) = drag_handle(ui, p) {
+                    actions.push(ToolbarAction::Nudge(delta));
+                }
+                if widgets::icon_button(
+                    ui,
+                    p,
+                    Icon::SelectMultiple,
+                    vec2(28.0, 28.0),
+                    model.selection.multi(),
+                    true,
+                    "Select multiple",
+                )
+                .clicked()
+                {
+                    actions.push(ToolbarAction::ToggleMulti);
+                }
                 ui.add_sized(
                     [label_width, 28.0],
                     egui::Label::new(
-                        RichText::new(label)
+                        RichText::new(&label)
                             .font(font_semibold(type_size::TINY))
                             .color(p.text),
                     )
@@ -285,17 +379,92 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
                 {
                     actions.push(ToolbarAction::Delete);
                 }
+                if widgets::icon_button(
+                    ui,
+                    p,
+                    Icon::More,
+                    vec2(28.0, 28.0),
+                    matches!(state.popup, Popup::Overflow | Popup::Intervals),
+                    true,
+                    "More",
+                )
+                .clicked()
+                {
+                    state.toggle(Popup::Overflow);
+                }
             });
     });
     exclusion = union_rect(exclusion, area.response.rect);
 
-    let popup = popup_rect_and_actions(ui, p, state, primary, &common, bar, bounds);
+    let popup = popup_rect_and_actions(
+        ui,
+        p,
+        state,
+        primary,
+        &common,
+        hidden_all,
+        model.has_clipboard,
+        bar,
+        bounds,
+    );
     actions.extend(popup.actions);
     exclusion = union_rect(exclusion, popup.rect);
     ToolbarOutput {
         actions,
         exclusion_rect: exclusion,
     }
+}
+
+fn popup_header(ui: &mut Ui, p: &Palette, label: &str, value: &str) {
+    ui.horizontal(|ui| {
+        ui.label(
+            RichText::new(label)
+                .font(font_mono(type_size::TINY))
+                .color(p.muted),
+        );
+        if !value.is_empty() {
+            ui.label(
+                RichText::new(value)
+                    .font(font_regular(type_size::TINY))
+                    .color(p.text),
+            );
+        }
+    });
+}
+
+fn common_line_label(common: &CommonStyle) -> &'static str {
+    match common.line {
+        Some(LineStyle::Solid) => "Solid",
+        Some(LineStyle::Dashed) => "Dashed",
+        Some(LineStyle::Dotted) => "Dotted",
+        None => "Mixed",
+    }
+}
+
+fn common_width_label(common: &CommonStyle) -> String {
+    common
+        .width
+        .map_or_else(|| "Mixed".to_owned(), |width| width.to_string())
+}
+
+fn common_color_label(common: &CommonStyle) -> &'static str {
+    if common.color.is_some() {
+        "Selected"
+    } else {
+        "Mixed"
+    }
+}
+
+fn current_intervals(drawing: Option<&Drawing>) -> Vec<&'static str> {
+    drawing
+        .and_then(|drawing| drawing.visible_intervals.as_ref())
+        .map(|intervals| {
+            TV_INTERVALS
+                .into_iter()
+                .filter(|interval| intervals.iter().any(|current| current == interval))
+                .collect()
+        })
+        .unwrap_or_else(|| TV_INTERVALS.to_vec())
 }
 
 fn apply_toolbar_visuals(ui: &mut Ui, p: &Palette) {
@@ -325,6 +494,8 @@ fn popup_rect_and_actions(
     state: &mut ToolbarState,
     primary: Option<&Drawing>,
     common: &CommonStyle,
+    hidden_all: bool,
+    has_clipboard: bool,
     bar: Rect,
     bounds: Rect,
 ) -> PopupOutput {
@@ -342,10 +513,15 @@ fn popup_rect_and_actions(
                 rect: Rect::NOTHING,
             };
         }
-        Popup::Style => vec2(184.0, 44.0),
-        Popup::Width => vec2(120.0, 44.0),
-        Popup::Color => vec2(176.0, 38.0),
+        Popup::Style => vec2(184.0, 66.0),
+        Popup::Width => vec2(120.0, 66.0),
+        Popup::Color => vec2(176.0, 60.0),
         Popup::Settings => vec2(236.0, settings_height(kind)),
+        Popup::Overflow => vec2(
+            170.0,
+            20.0 + overflow_items(has_clipboard).len() as f32 * 26.0,
+        ),
+        Popup::Intervals => vec2(170.0, 46.0 + TV_INTERVALS.len() as f32 * 22.0),
     };
     let pos = clamp_popup(bar.left_bottom(), bounds, size);
     let mut actions = Vec::new();
@@ -365,6 +541,7 @@ fn popup_rect_and_actions(
                 .inner_margin(Margin::symmetric(8, 6))
                 .show(ui, |ui| match state.popup {
                     Popup::Style => {
+                        popup_header(ui, p, "Line", common_line_label(common));
                         for (line, text) in [
                             (LineStyle::Solid, "Solid"),
                             (LineStyle::Dashed, "Dashed"),
@@ -378,6 +555,7 @@ fn popup_rect_and_actions(
                         }
                     }
                     Popup::Width => {
+                        popup_header(ui, p, "Width", &common_width_label(common));
                         for width in 1..=4u8 {
                             if toolbar_choice(ui, p, common.width == Some(width), width.to_string())
                             {
@@ -388,6 +566,7 @@ fn popup_rect_and_actions(
                         }
                     }
                     Popup::Color => {
+                        popup_header(ui, p, "Color", common_color_label(common));
                         ui.spacing_mut().item_spacing.x = 5.0;
                         for &swatch in &SWATCHES {
                             let color = Color32::from_rgb(swatch[0], swatch[1], swatch[2]);
@@ -471,6 +650,83 @@ fn popup_rect_and_actions(
                             });
                         }
                     }
+                    Popup::Overflow => {
+                        for item in overflow_items(has_clipboard) {
+                            let label = match item {
+                                OverflowItem::BringToFront => "Bring to front",
+                                OverflowItem::SendToBack => "Send to back",
+                                OverflowItem::BringForward => "Bring forward",
+                                OverflowItem::SendBackward => "Send backward",
+                                OverflowItem::Clone => "Clone",
+                                OverflowItem::Copy => "Copy",
+                                OverflowItem::Paste => "Paste",
+                                OverflowItem::Hide => {
+                                    if hidden_all {
+                                        "Show"
+                                    } else {
+                                        "Hide"
+                                    }
+                                }
+                                OverflowItem::Intervals => "Visibility on intervals",
+                            };
+                            if ui
+                                .add(
+                                    egui::Button::new(
+                                        RichText::new(label)
+                                            .font(font_regular(type_size::SMALL))
+                                            .color(p.text),
+                                    )
+                                    .fill(p.panel)
+                                    .min_size(vec2(size.x - 16.0, 22.0)),
+                                )
+                                .on_hover_cursor(CursorIcon::PointingHand)
+                                .clicked()
+                            {
+                                match item {
+                                    OverflowItem::BringToFront => {
+                                        actions.push(ToolbarAction::RaiseToFront)
+                                    }
+                                    OverflowItem::SendToBack => {
+                                        actions.push(ToolbarAction::SendToBack)
+                                    }
+                                    OverflowItem::BringForward => {
+                                        actions.push(ToolbarAction::BringForward)
+                                    }
+                                    OverflowItem::SendBackward => {
+                                        actions.push(ToolbarAction::SendBackward)
+                                    }
+                                    OverflowItem::Clone => actions.push(ToolbarAction::Clone),
+                                    OverflowItem::Copy => actions.push(ToolbarAction::Copy),
+                                    OverflowItem::Paste => actions.push(ToolbarAction::Paste),
+                                    OverflowItem::Hide => {
+                                        actions.push(ToolbarAction::SetHidden(!hidden_all));
+                                        state.popup = Popup::None;
+                                    }
+                                    OverflowItem::Intervals => state.popup = Popup::Intervals,
+                                }
+                                if item != OverflowItem::Intervals && item != OverflowItem::Hide {
+                                    state.popup = Popup::None;
+                                }
+                            }
+                        }
+                    }
+                    Popup::Intervals => {
+                        popup_header(ui, p, "Intervals", "");
+                        let mut intervals = current_intervals(primary);
+                        for interval in TV_INTERVALS {
+                            let mut checked = intervals.contains(&interval);
+                            if ui.checkbox(&mut checked, interval).changed() {
+                                if checked {
+                                    intervals.push(interval);
+                                } else {
+                                    intervals.retain(|current| *current != interval);
+                                }
+                                actions.push(ToolbarAction::SetIntervals(interval_selection(
+                                    &intervals,
+                                )));
+                            }
+                        }
+                    }
                     Popup::None => {}
                 });
         });
@@ -532,5 +788,45 @@ mod tests {
         let common = common_style(&[&a, &b]);
         assert_eq!(common.width, None);
         assert_eq!(common.line, Some(LineStyle::Solid));
+    }
+
+    #[test]
+    fn common_style_mixed_color_is_none() {
+        let mut a = Drawing::new(
+            1,
+            DrawingKind::TrendLine,
+            tickchart::Anchor { t: 0, price: 1.0 },
+            tickchart::Anchor { t: 1, price: 2.0 },
+        );
+        let mut b = a.clone();
+        b.id = 2;
+        a.style.color = Some([1, 2, 3, 255]);
+        b.style.color = Some([4, 5, 6, 255]);
+        assert_eq!(common_style(&[&a, &b]).color, None);
+    }
+
+    #[test]
+    fn overflow_actions_are_complete() {
+        assert_eq!(
+            overflow_items(true),
+            vec![
+                OverflowItem::BringToFront,
+                OverflowItem::SendToBack,
+                OverflowItem::BringForward,
+                OverflowItem::SendBackward,
+                OverflowItem::Clone,
+                OverflowItem::Copy,
+                OverflowItem::Paste,
+                OverflowItem::Hide,
+                OverflowItem::Intervals,
+            ]
+        );
+        assert!(!overflow_items(false).contains(&OverflowItem::Paste));
+    }
+
+    #[test]
+    fn interval_selection_round_trips() {
+        assert_eq!(interval_selection(&["1h"]), Some(vec!["1h".to_owned()]));
+        assert_eq!(interval_selection(&TV_INTERVALS), None);
     }
 }

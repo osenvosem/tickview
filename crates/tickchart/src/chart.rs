@@ -73,8 +73,13 @@ pub struct ChartState {
     pub price_zoom: Option<(f64, f64)>,
     /// Live rectangle-zoom selection in screen space.
     pub zoom_sel: Option<(Pos2, Pos2)>,
+    /// Live multi-select marquee in screen space.
+    pub marquee: Option<(Pos2, Pos2)>,
     /// Toolbar-driven screen-space movement applied to the selection next frame.
     pending_toolbar_move: Vec2,
+    /// A marquee just completed, so its release should not clear the selection.
+    suppress_empty_click: bool,
+    selected_from_press: Option<u64>,
     /// Whether the last primary press happened with shift (rect-zoom arm).
     zoom_pending: bool,
     pub compare: Option<CompareSeries>,
@@ -138,7 +143,10 @@ impl ChartState {
             popup_rect: None,
             price_zoom: None,
             zoom_sel: None,
+            marquee: None,
             pending_toolbar_move: Vec2::ZERO,
+            suppress_empty_click: false,
+            selected_from_press: None,
             zoom_pending: false,
             compare: None,
             replay: None,
@@ -155,6 +163,7 @@ impl ChartState {
         self.drawings = drawings;
         self.symbol_drawings.clear();
         self.selection.clear();
+        self.marquee = None;
     }
 
     /// All symbol drawing sets, including the current one.
@@ -184,6 +193,7 @@ impl ChartState {
         self.symbol_drawings = drawings;
         self.tools = DrawingToolState::with_drawings(&self.drawings);
         self.selection.clear();
+        self.marquee = None;
         self.drag_drawing = None;
     }
 
@@ -198,6 +208,7 @@ impl ChartState {
         self.drawings = self.symbol_drawings.remove(&symbol).unwrap_or_default();
         self.tools = DrawingToolState::with_drawings(&self.drawings);
         self.selection.clear();
+        self.marquee = None;
         self.drag_drawing = None;
         self.symbol = symbol;
     }
@@ -573,6 +584,17 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         );
     }
 
+    if let Some((a, b)) = st.marquee {
+        let sel = Rect::from_two_pos(a, b);
+        p.rect_filled(sel, 0.0, Color32::from_rgba_unmultiplied(41, 98, 255, 28));
+        p.rect_stroke(
+            sel,
+            0.0,
+            Stroke::new(1.0, painter::rgb(0x2962FF)),
+            egui::StrokeKind::Inside,
+        );
+    }
+
     // Last price line + axis tag.
     if let Some(&last) = cd.c.last() {
         let ax = price_axis;
@@ -798,6 +820,11 @@ fn handle_input(
     let over_popup = st
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
+    let primary_pressed = ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary));
+    if !primary_pressed && !resp.clicked() {
+        st.selected_from_press = None;
+        st.suppress_empty_click = false;
+    }
 
     apply_pending_toolbar_move(st, cd, ax, ev);
 
@@ -839,12 +866,14 @@ fn handle_input(
             && (st.tools.draft.is_some()
                 || st.selection.primary().is_some()
                 || st.tools.measure.is_some()
-                || st.price_zoom.is_some())
+                || st.price_zoom.is_some()
+                || st.marquee.is_some())
         {
             st.tools.cancel();
             st.selection.clear();
             st.drag_drawing = None;
             st.zoom_sel = None;
+            st.marquee = None;
             st.price_zoom = None;
         }
         if !st.locked
@@ -892,24 +921,29 @@ fn handle_input(
                     break;
                 }
             }
-            if st.drag_pane.is_none()
-                && !st.locked
-                && price_rect.contains(pos)
-                && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
-            {
-                st.selection.select(id);
-                let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
-                if draggable
-                    && let Some(anchor) = drawings::anchor_at_with_tolerance(
-                        cd,
-                        &st.view,
-                        ax,
-                        pos,
-                        st.magnet,
-                        if st.magnet_strong { 24.0 } else { 8.0 },
-                    )
-                {
-                    st.drag_drawing = Some(DrawingDrag { id, last: anchor });
+            if st.drag_pane.is_none() && !st.locked && price_rect.contains(pos) {
+                if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
+                    if st.selection.multi() {
+                        st.selection.toggle(id);
+                    } else {
+                        st.selection.select(id);
+                    }
+                    st.selected_from_press = Some(id);
+                    let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
+                    if draggable
+                        && let Some(anchor) = drawings::anchor_at_with_tolerance(
+                            cd,
+                            &st.view,
+                            ax,
+                            pos,
+                            st.magnet,
+                            if st.magnet_strong { 24.0 } else { 8.0 },
+                        )
+                    {
+                        st.drag_drawing = Some(DrawingDrag { id, last: anchor });
+                    }
+                } else if st.selection.multi() {
+                    st.marquee = Some((pos, pos));
                 }
             }
         }
@@ -951,6 +985,13 @@ fn handle_input(
             && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
         {
             st.tools.push_brush(anchor);
+        } else if let Some(marquee) = &mut st.marquee {
+            if let Some(pos) = pointer {
+                marquee.1 = Pos2::new(
+                    pos.x.clamp(price_rect.min.x, price_rect.max.x),
+                    pos.y.clamp(price_rect.min.y, price_rect.max.y),
+                );
+            }
         } else if let Some(dp) = st.drag_pane {
             if dp < st.panes.len().saturating_sub(1) {
                 let dy = resp.drag_delta().y;
@@ -979,6 +1020,27 @@ fn handle_input(
                     (st.view.index_at(sel.min.x), st.view.index_at(sel.max.x))
                 {
                     st.view.fit(i0, (i1 + 1).min(st.view.count.max(i0 + 2)));
+                }
+            }
+        }
+        if let Some((a, b)) = st.marquee.take() {
+            let sel = Rect::from_two_pos(a, b);
+            if sel.width() >= 8.0 && sel.height() >= 8.0 {
+                let map = |anchor: Anchor| {
+                    let i = drawings::nearest_index(cd, anchor.t).unwrap_or(0);
+                    Pos2::new(st.view.x_of(i), ax.y_of(anchor.price))
+                };
+                let ids = st
+                    .drawings
+                    .iter()
+                    .filter(|drawing| drawing.visible_on(&st.interval))
+                    .filter(|drawing| drawing.screen_bounds(&map).intersects(sel))
+                    .map(|drawing| drawing.id)
+                    .collect::<Vec<_>>();
+                if !ids.is_empty() {
+                    st.selection.extend(ids);
+                    ev.changed = true;
+                    st.suppress_empty_click = true;
                 }
             }
         }
@@ -1030,10 +1092,20 @@ fn handle_input(
                 }
             }
         } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
-            st.selection.select(id);
+            if st.selected_from_press != Some(id) {
+                if st.selection.multi() {
+                    st.selection.toggle(id);
+                } else {
+                    st.selection.select(id);
+                }
+            }
+        } else if st.suppress_empty_click {
+            st.suppress_empty_click = false;
         } else {
             st.selection.clear();
         }
+        st.selected_from_press = None;
+        st.suppress_empty_click = false;
     }
 
     if resp.double_clicked() {
@@ -1813,6 +1885,153 @@ mod tests {
             }],
         );
         assert!((st.drawings[0].a.price - price).abs() < 1e-9);
+    }
+
+    fn find_click_y(
+        ctx: &egui::Context,
+        st: &mut ChartState,
+        cd: &Candles,
+        x: f32,
+        expected: u64,
+    ) -> Option<f32> {
+        for y in (0..=700).map(|y| y as f32) {
+            st.selection.clear();
+            click(ctx, st, cd, Pos2::new(x, y));
+            if st.selection.primary() == Some(expected) {
+                return Some(y);
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn multi_select_toggle_click() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.drawings.push(Drawing::new(
+            1,
+            crate::drawings::DrawingKind::HLine,
+            Anchor {
+                t: cd.t[0],
+                price: 100.0,
+            },
+            Anchor {
+                t: cd.t[9],
+                price: 100.0,
+            },
+        ));
+        st.drawings.push(Drawing::new(
+            2,
+            crate::drawings::DrawingKind::HLine,
+            Anchor {
+                t: cd.t[0],
+                price: 105.0,
+            },
+            Anchor {
+                t: cd.t[9],
+                price: 105.0,
+            },
+        ));
+        let _ = frame(&ctx, &mut st, &cd, Vec::new());
+        st.selection.set_multi(true);
+        let x = st.view.x_of(5);
+        let y2 = find_click_y(&ctx, &mut st, &cd, x, 2).expect("hit second HLine");
+        let y1 = find_click_y(&ctx, &mut st, &cd, x, 1).expect("hit first HLine");
+        st.selection.clear();
+
+        click(&ctx, &mut st, &cd, Pos2::new(x, y1));
+        click(&ctx, &mut st, &cd, Pos2::new(x, y2));
+        assert!(st.selection.contains(1));
+        assert!(st.selection.contains(2));
+    }
+
+    #[test]
+    fn marquee_selects_intersecting_drawings() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        for (id, price) in [(1, 100.0), (2, 105.0)] {
+            st.drawings.push(Drawing::new(
+                id,
+                crate::drawings::DrawingKind::HLine,
+                Anchor { t: cd.t[0], price },
+                Anchor { t: cd.t[9], price },
+            ));
+        }
+        let _ = frame(&ctx, &mut st, &cd, Vec::new());
+        st.selection.set_multi(true);
+
+        let start = Pos2::new(100.0, 50.0);
+        let end = Pos2::new(800.0, 650.0);
+        let mid = Pos2::new(450.0, 350.0);
+        let _ = frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(start)]);
+        let _ = frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos: start,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers: egui::Modifiers::default(),
+            }],
+        );
+        let _ = frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(mid)]);
+        assert!(st.marquee.is_some(), "marquee did not start");
+        assert_eq!(st.marquee.map(|(_, b)| b), Some(mid));
+        let _ = frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(end)]);
+        let _ = frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerButton {
+                pos: end,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::default(),
+            }],
+        );
+        assert_eq!(st.marquee, None);
+        assert!(st.selection.contains(1));
+        assert!(st.selection.contains(2));
+    }
+
+    #[test]
+    fn toolbar_rect_blocks_chart_clicks() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.drawings.push(Drawing::new(
+            1,
+            crate::drawings::DrawingKind::HLine,
+            Anchor {
+                t: cd.t[0],
+                price: 100.0,
+            },
+            Anchor {
+                t: cd.t[9],
+                price: 100.0,
+            },
+        ));
+        let _ = frame(&ctx, &mut st, &cd, Vec::new());
+        let x = st.view.x_of(5);
+        let mut y = None;
+        for candidate in (0..=700).map(|y| y as f32) {
+            click(&ctx, &mut st, &cd, Pos2::new(x, candidate));
+            if st.selection.contains(1) {
+                y = Some(candidate);
+                break;
+            }
+        }
+        let pos = Pos2::new(x, y.expect("hit point over drawing"));
+        st.selection.clear();
+        st.popup_rect = Some(Rect::from_center_size(pos, Vec2::new(120.0, 44.0)));
+        click(&ctx, &mut st, &cd, pos);
+        assert!(st.selection.primary().is_none());
     }
 
     #[test]

@@ -1352,6 +1352,20 @@ impl Drawing {
         points
     }
 
+    #[must_use]
+    pub fn screen_bounds<F: Fn(Anchor) -> Pos2>(&self, map: &F) -> Rect {
+        let mut points = self.screen_points(map);
+        if self.kind.is_annotation() {
+            let note = note_rect(map(self.a), &self.style.text);
+            points.extend([note.min, note.max]);
+        }
+        let mut rect = Rect::from_center_size(points[0], Vec2::ZERO);
+        for p in points.into_iter().skip(1) {
+            rect = rect.union(Rect::from_center_size(p, Vec2::ZERO));
+        }
+        rect.expand(6.0)
+    }
+
     /// Hit test against a mapped drawing in screen space.
     #[must_use]
     pub fn hit(&self, p: Pos2, map: impl Fn(Anchor) -> Pos2, plot: Rect) -> bool {

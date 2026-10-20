@@ -15,7 +15,7 @@ use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
 use tickchart::{
     Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, Drawing, DrawingKind,
-    Measure,
+    DrawingToolState, Measure, Selection,
 };
 
 use crate::drawing_toolbar::{self, ToolbarAction};
@@ -716,6 +716,7 @@ pub struct TickView {
     alerts_anchor: Option<egui::Vec2>,
     settings_anchor: Option<egui::Vec2>,
     icon_sheet_open: bool,
+    drawing_clipboard: Vec<Drawing>,
     cfg: SavedConfig,
 }
 
@@ -723,6 +724,45 @@ impl Drop for TickView {
     fn drop(&mut self) {
         self.persist();
     }
+}
+
+fn clone_selected_drawings(
+    drawings: &mut Vec<Drawing>,
+    selection: &mut Selection,
+    tools: &mut DrawingToolState,
+) -> Vec<u64> {
+    let ids = selection.ids().clone();
+    let sources = drawings
+        .iter()
+        .filter(|drawing| ids.contains(&drawing.id))
+        .cloned()
+        .collect::<Vec<_>>();
+    let copies = sources
+        .into_iter()
+        .map(|source| tickchart::duplicate(&source, tools.allocate_id(), 1.01))
+        .collect::<Vec<_>>();
+    let copied_ids = copies.iter().map(|drawing| drawing.id).collect::<Vec<_>>();
+    drawings.extend(copies);
+    selection.clear();
+    selection.extend(copied_ids.clone());
+    copied_ids
+}
+
+fn paste_drawings(
+    drawings: &mut Vec<Drawing>,
+    clipboard: &[Drawing],
+    selection: &mut Selection,
+    tools: &mut DrawingToolState,
+) -> Vec<u64> {
+    let copies = clipboard
+        .iter()
+        .map(|source| tickchart::duplicate(source, tools.allocate_id(), 1.01))
+        .collect::<Vec<_>>();
+    let pasted_ids = copies.iter().map(|drawing| drawing.id).collect::<Vec<_>>();
+    drawings.extend(copies);
+    selection.clear();
+    selection.extend(pasted_ids.clone());
+    pasted_ids
 }
 
 impl TickView {
@@ -989,6 +1029,7 @@ impl TickView {
             alerts_anchor: Some(egui::vec2(0.0, 120.0)),
             settings_anchor: Some(egui::vec2(0.0, 110.0)),
             icon_sheet_open,
+            drawing_clipboard: Vec::new(),
             cfg,
         };
 
@@ -2022,6 +2063,10 @@ impl TickView {
         if fwd {
             self.step_replay(1);
         }
+        let paste = ctx.input(|i| i.modifiers.command && i.key_pressed(Key::V));
+        if paste && !self.drawing_clipboard.is_empty() {
+            self.paste_selected_drawings(ctx);
+        }
     }
 
     pub(crate) fn open_search(&mut self) {
@@ -2236,6 +2281,7 @@ impl TickView {
                     let model = drawing_toolbar::ToolbarModel {
                         selection: &selection,
                         drawings: &drawings,
+                        has_clipboard: !self.drawing_clipboard.is_empty(),
                     };
                     let out = drawing_toolbar::show(ui, p, &mut self.tabs[ti].toolbar, &model);
                     self.tabs[ti].chart.popup_rect = Some(out.exclusion_rect);
@@ -2261,7 +2307,7 @@ impl TickView {
             return;
         }
         let ti = self.active;
-        let ids = self.tabs[ti].chart.selection.ids().clone();
+        let mut ids = self.tabs[ti].chart.selection.ids().clone();
         let mut changed = false;
         for action in actions {
             match action {
@@ -2288,11 +2334,93 @@ impl TickView {
                     }
                     changed = true;
                 }
+                ToolbarAction::SetHidden(hidden) => {
+                    for drawing in &mut self.tabs[ti].chart.drawings {
+                        if ids.contains(&drawing.id) {
+                            drawing.hidden = hidden;
+                        }
+                    }
+                    changed = true;
+                }
+                ToolbarAction::SetIntervals(intervals) => {
+                    for drawing in &mut self.tabs[ti].chart.drawings {
+                        if ids.contains(&drawing.id) {
+                            drawing.visible_intervals = intervals.clone();
+                        }
+                    }
+                    changed = true;
+                }
+                ToolbarAction::ToggleMulti => {
+                    let multi = self.tabs[ti].chart.selection.multi();
+                    self.tabs[ti].chart.selection.set_multi(!multi);
+                }
+                ToolbarAction::Clone => {
+                    let tab = &mut self.tabs[ti];
+                    let copied = clone_selected_drawings(
+                        &mut tab.chart.drawings,
+                        &mut tab.chart.selection,
+                        &mut tab.chart.tools,
+                    );
+                    ids = copied.into_iter().collect();
+                    changed = true;
+                }
+                ToolbarAction::Copy => {
+                    let copied = self.tabs[ti]
+                        .chart
+                        .drawings
+                        .iter()
+                        .filter(|drawing| ids.contains(&drawing.id))
+                        .cloned()
+                        .collect::<Vec<_>>();
+                    self.toast(format!("Copied {} object(s)", copied.len()));
+                    self.drawing_clipboard = copied;
+                }
+                ToolbarAction::Paste => self.paste_selected_drawings(ctx),
+                ToolbarAction::RaiseToFront => {
+                    let tab = &mut self.tabs[ti];
+                    tickchart::raise_to_front(&mut tab.chart.drawings, &ids);
+                    changed = true;
+                }
+                ToolbarAction::SendToBack => {
+                    let tab = &mut self.tabs[ti];
+                    tickchart::send_to_back(&mut tab.chart.drawings, &ids);
+                    changed = true;
+                }
+                ToolbarAction::BringForward => {
+                    let tab = &mut self.tabs[ti];
+                    tickchart::bring_forward(&mut tab.chart.drawings, &ids);
+                    changed = true;
+                }
+                ToolbarAction::SendBackward => {
+                    let tab = &mut self.tabs[ti];
+                    tickchart::send_backward(&mut tab.chart.drawings, &ids);
+                    changed = true;
+                }
+                ToolbarAction::Nudge(delta) => self.tabs[ti].chart.nudge_selection(delta),
             }
         }
         if changed {
             self.mark_drawings_dirty(ctx);
         }
+    }
+
+    fn paste_selected_drawings(&mut self, ctx: &egui::Context) {
+        if self.drawing_clipboard.is_empty() {
+            return;
+        }
+        let clipboard = self.drawing_clipboard.clone();
+        let ti = self.active;
+        let pasted = {
+            let tab = &mut self.tabs[ti];
+            paste_drawings(
+                &mut tab.chart.drawings,
+                &clipboard,
+                &mut tab.chart.selection,
+                &mut tab.chart.tools,
+            )
+        };
+        self.toast(format!("Pasted {} object(s)", pasted.len()));
+        self.mark_drawings_dirty(ctx);
     }
 
     fn windows(&mut self, ctx: &egui::Context, p: &Palette) {
@@ -3178,5 +3306,53 @@ mod tests {
         }
         assert_eq!(draw_tool(Tool::Text), DrawTool::Note);
         assert_eq!(draw_tool(Tool::Measure), DrawTool::Measure);
+    }
+
+    #[test]
+    fn clone_selected_creates_new_ids_and_offsets() {
+        let source = Drawing::new(
+            1,
+            DrawingKind::TrendLine,
+            Anchor { t: 0, price: 100.0 },
+            Anchor {
+                t: 10,
+                price: 120.0,
+            },
+        );
+        let mut drawings = vec![source];
+        let mut selection = tickchart::Selection::default();
+        selection.select(1);
+        let mut tools = tickchart::DrawingToolState::with_drawings(&drawings);
+
+        let copied = clone_selected_drawings(&mut drawings, &mut selection, &mut tools);
+
+        assert_eq!(copied, vec![2]);
+        assert_eq!(selection.ids().iter().copied().collect::<Vec<_>>(), vec![2]);
+        assert!((drawings[1].a.price - 101.0).abs() < 1e-9);
+        assert!((drawings[1].b.price - 121.2).abs() < 1e-9);
+    }
+
+    #[test]
+    fn paste_reassigns_ids_and_selects_copies() {
+        let source = Drawing::new(
+            1,
+            DrawingKind::TrendLine,
+            Anchor { t: 0, price: 100.0 },
+            Anchor {
+                t: 10,
+                price: 120.0,
+            },
+        );
+        let mut clipboard = vec![source.clone()];
+        clipboard[0].id = 99;
+        let mut drawings = vec![source];
+        let mut selection = tickchart::Selection::default();
+        let mut tools = tickchart::DrawingToolState::with_drawings(&drawings);
+
+        let pasted = paste_drawings(&mut drawings, &clipboard, &mut selection, &mut tools);
+
+        assert_eq!(pasted, vec![2]);
+        assert_eq!(selection.ids().iter().copied().collect::<Vec<_>>(), vec![2]);
+        assert!((drawings[1].a.price - 101.0).abs() < 1e-9);
     }
 }
