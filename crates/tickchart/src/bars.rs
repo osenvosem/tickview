@@ -30,7 +30,8 @@ impl View {
     #[must_use]
     pub fn clamped(mut self) -> Self {
         self.spacing = self.spacing.clamp(MIN_SPACING, MAX_SPACING);
-        self.right_offset = self.right_offset.max(0.0);
+        let max = (self.width - 2.0 * self.spacing).max(0.0);
+        self.right_offset = self.right_offset.clamp(0.0, max);
         self
     }
 
@@ -86,8 +87,13 @@ impl View {
     }
 
     /// Pan by dx px (positive = drag content right = show older bars).
+    /// The newest bar never leaves the plot: `right_offset` is capped so at
+    /// least two bars stay on-canvas, otherwise a leftward drag past the
+    /// oldest bar (e.g. during bar replay, where `count` is clamped small)
+    /// shifts every candle off-screen and the chart looks empty.
     pub fn pan(&mut self, dx: f32) {
-        self.right_offset = (self.right_offset + dx).max(0.0);
+        let max = (self.width - 2.0 * self.spacing).max(0.0);
+        self.right_offset = (self.right_offset + dx).clamp(0.0, max);
     }
 
     /// Fit index range `[bi0, bi1)` to the plot width. The newest bars may
@@ -143,6 +149,32 @@ mod tests {
         assert_eq!(z.spacing, MAX_SPACING);
         z.zoom_at(200.0, 0.0001);
         assert_eq!(z.spacing, MIN_SPACING);
+    }
+
+    #[test]
+    fn pan_cannot_push_every_bar_off_canvas() {
+        // Drag far left past the oldest bar (e.g. mid-replay): candles must
+        // stay on-screen instead of leaving an empty canvas.
+        let mut v = View {
+            spacing: 8.0,
+            right_offset: 0.0,
+            width: 1100.0,
+            count: 351,
+        };
+        v.pan(100_000.0);
+        assert_eq!(v.right_offset, 1100.0 - 16.0);
+        let (s, e) = v.visible();
+        assert!(e > s && e <= 351, "visible {s}..{e}");
+        assert!(v.x_of(350) >= v.spacing);
+        // Restoring a persisted absurd offset clamps on load too.
+        let r = View {
+            spacing: 8.0,
+            right_offset: 5000.0,
+            width: 1100.0,
+            count: 500,
+        }
+        .clamped();
+        assert_eq!(r.right_offset, 1084.0);
     }
 
     #[test]

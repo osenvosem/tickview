@@ -591,10 +591,12 @@ impl TickView {
                     saved.log,
                     pending,
                 );
-                tab.chart.view.right_offset = saved.right_offset;
                 if saved.spacing >= 2.0 {
                     tab.chart.view.spacing = saved.spacing;
                 }
+                // Guard against a persisted runaway offset (pre-fix prefs) that
+                // would render an empty canvas on launch.
+                tab.chart.view.right_offset = saved.right_offset.max(0.0);
                 tab.chart
                     .restore_drawings(saved.symbol.ticker.clone(), saved.drawings.clone());
                 tab.locked = saved.drawings_locked;
