@@ -458,6 +458,45 @@ mod tests {
     }
 
     #[test]
+    fn drawing_object_flags_and_interval_visibility_round_trip() {
+        let mut drawing = tickchart::Drawing::new(
+            8,
+            tickchart::DrawingKind::TrendLine,
+            tickchart::Anchor { t: 0, price: 10.0 },
+            tickchart::Anchor { t: 60, price: 12.0 },
+        );
+        drawing.hidden = true;
+        drawing.locked = true;
+        drawing.visible_intervals = Some(vec!["1h".into(), "4h".into()]);
+
+        let cfg = SavedConfig {
+            tabs: vec![SavedTab {
+                symbol: sample_symbol(),
+                interval: "1D".into(),
+                chart_type: "Candles".into(),
+                log: false,
+                right_offset: 0.0,
+                spacing: 8.0,
+                drawings_locked: false,
+                drawings_hidden: false,
+                drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
+                indicators: Vec::new(),
+                compare: None,
+            }],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: SavedConfig = serde_json::from_str(&json).unwrap();
+        let stored = &back.tabs[0].drawings["AAPL"][0];
+        assert!(stored.hidden);
+        assert!(stored.locked);
+        assert_eq!(
+            stored.visible_intervals,
+            Some(vec!["1h".into(), "4h".into()])
+        );
+    }
+
+    #[test]
     fn compare_symbol_round_trips() {
         let cfg = SavedConfig {
             tabs: vec![SavedTab {

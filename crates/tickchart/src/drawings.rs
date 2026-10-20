@@ -1055,7 +1055,7 @@ impl DrawingToolState {
 pub fn delete_selected(drawings: &mut Vec<Drawing>, selection: &mut Selection) -> bool {
     let n = drawings.len();
     let ids = selection.ids().clone();
-    drawings.retain(|d| !ids.contains(&d.id));
+    drawings.retain(|d| !ids.contains(&d.id) || d.locked);
     let deleted = drawings.len() != n;
     selection.retain(|id| drawings.iter().any(|d| d.id == id));
     deleted
@@ -1174,12 +1174,25 @@ pub struct Drawing {
     /// Regression channel band multiplier (regression trend only).
     #[serde(default = "default_reg_dev")]
     pub reg_dev: f32,
+    /// Per-object visibility, independent of global Hide-all.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub hidden: bool,
+    /// Explicit interval allow-list. `None` means visible on every interval.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible_intervals: Option<Vec<String>>,
+    /// Per-object editing lock; global lock still overrides interaction.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub locked: bool,
 }
 
 /// Regression channel band multiplier default.
 #[must_use]
 fn default_reg_dev() -> f32 {
     1.0
+}
+
+const fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 /// Initial style for a finished drawing (TV default: pitchforks unfilled).
@@ -1230,6 +1243,9 @@ impl Drawing {
 
             extra: Vec::new(),
             reg_dev: default_reg_dev(),
+            hidden: false,
+            visible_intervals: None,
+            locked: false,
         }
     }
 
@@ -1244,10 +1260,21 @@ impl Drawing {
             style: DrawingStyle::default(),
             extra: Vec::new(),
             reg_dev: default_reg_dev(),
+            hidden: false,
+            visible_intervals: None,
+            locked: false,
         }
     }
 
     #[must_use]
+    pub fn visible_on(&self, interval: &str) -> bool {
+        !self.hidden
+            && self
+                .visible_intervals
+                .as_ref()
+                .is_none_or(|intervals| intervals.iter().any(|i| i == interval))
+    }
+
     pub fn last_anchor(&self) -> Anchor {
         if let Some(&last) = self.extra.last() {
             return last;
@@ -1717,7 +1744,7 @@ pub fn paint(
     painter: &Painter,
     drawings: &[Drawing],
     draft: Option<Draft>,
-    selected: Option<u64>,
+    selected: &BTreeSet<u64>,
     measure: Option<Measure>,
     cd: &Candles,
     view: &View,
@@ -1725,13 +1752,17 @@ pub fn paint(
     plot: Rect,
     pal: &Palette,
     font: FontId,
+    interval: &str,
 ) {
     let p = painter.with_clip_rect(plot);
     for d in drawings {
+        if !d.visible_on(interval) {
+            continue;
+        }
         draw_one(
             &p,
             d,
-            selected == Some(d.id),
+            selected.contains(&d.id),
             false,
             cd,
             view,
@@ -1755,6 +1786,9 @@ pub fn paint(
             style: kind_defaults(draft.kind),
             extra,
             reg_dev: default_reg_dev(),
+            hidden: false,
+            visible_intervals: None,
+            locked: false,
         };
         draw_one(&p, &d, true, true, cd, view, axis, plot, pal, font.clone());
     }
@@ -4089,5 +4123,36 @@ mod tests {
         sel.retain(|id| id != 1);
         assert_eq!(sel.primary(), Some(2));
         assert_eq!(sel.len(), 1);
+    }
+
+    #[test]
+    fn drawing_visibility_defaults_and_interval_filter() {
+        let d = Drawing::new(
+            1,
+            DrawingKind::TrendLine,
+            Anchor { t: 0, price: 10.0 },
+            Anchor { t: 60, price: 12.0 },
+        );
+        assert!(!d.hidden);
+        assert!(!d.locked);
+        assert!(d.visible_on("1D"));
+
+        let mut d = d;
+        d.hidden = true;
+        assert!(!d.visible_on("1D"));
+        d.hidden = false;
+        d.visible_intervals = Some(vec!["1h".into(), "4h".into()]);
+        assert!(d.visible_on("1h"));
+        assert!(!d.visible_on("1D"));
+    }
+
+    #[test]
+    fn legacy_drawing_json_defaults_new_fields() {
+        let json = r#"{"id":1,"kind":"TrendLine",
+            "a":{"t":0,"price":10.0},"b":{"t":60,"price":11.0}}"#;
+        let d: Drawing = serde_json::from_str(json).unwrap();
+        assert!(!d.hidden);
+        assert!(!d.locked);
+        assert!(d.visible_intervals.is_none());
     }
 }

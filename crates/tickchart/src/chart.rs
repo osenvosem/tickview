@@ -1,7 +1,7 @@
 //! Interactive multi-pane chart widget: panes, crosshair, pan/zoom, legend,
 //! last-price mark. Pure state (`ChartState`) + one `ui` entry point.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use egui::{Align2, Color32, CornerRadius, FontId, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2};
 
@@ -526,6 +526,12 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     } else {
         &st.drawings
     };
+    let no_selection = BTreeSet::new();
+    let selected: &BTreeSet<u64> = if st.drawings_hidden {
+        &no_selection
+    } else {
+        st.selection.ids()
+    };
     drawings::paint(
         &p,
         drawings,
@@ -534,11 +540,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         } else {
             st.tools.draft.clone()
         },
-        if st.drawings_hidden {
-            None
-        } else {
-            st.selection.primary()
-        },
+        selected,
         if st.drawings_hidden {
             None
         } else {
@@ -550,6 +552,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         price_rect,
         &pal,
         font_sm.clone(),
+        &st.interval,
     );
 
     if let Some((a, b)) = st.zoom_sel {
@@ -898,14 +901,17 @@ fn handle_input(
                 && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
             {
                 st.selection.select(id);
-                if let Some(anchor) = drawings::anchor_at_with_tolerance(
-                    cd,
-                    &st.view,
-                    ax,
-                    pos,
-                    st.magnet,
-                    if st.magnet_strong { 24.0 } else { 8.0 },
-                ) {
+                let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
+                if draggable
+                    && let Some(anchor) = drawings::anchor_at_with_tolerance(
+                        cd,
+                        &st.view,
+                        ax,
+                        pos,
+                        st.magnet,
+                        if st.magnet_strong { 24.0 } else { 8.0 },
+                    )
+                {
                     st.drag_drawing = Some(DrawingDrag { id, last: anchor });
                 }
             }
@@ -999,9 +1005,13 @@ fn handle_input(
         if drawing_tool {
             if st.tools.tool == crate::drawings::DrawTool::Eraser {
                 if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
-                    st.drawings.retain(|drawing| drawing.id != id);
-                    st.selection.retain(|selected| selected != id);
-                    ev.changed = true;
+                    let n = st.drawings.len();
+                    st.drawings
+                        .retain(|drawing| drawing.id != id || drawing.locked);
+                    if st.drawings.len() != n {
+                        st.selection.retain(|selected| selected != id);
+                        ev.changed = true;
+                    }
                 }
             } else if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) {
                 st.tools.cancel();
@@ -1105,6 +1115,7 @@ fn hit_drawing(
     st.drawings
         .iter()
         .rev()
+        .filter(|d| d.visible_on(&st.interval))
         .find(|d| d.hit(pos, map, price_rect))
         .map(|d| d.id)
 }
