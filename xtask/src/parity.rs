@@ -679,4 +679,21 @@ mod tests {
             "{errors:?}"
         );
     }
+
+    #[test]
+    fn real_manifest_covers_every_kind_and_tv_id() {
+        let root = workspace_root();
+        let catalog =
+            std::fs::read_to_string(root.join("docs/parity/catalog.json")).expect("manifest");
+        let tv = std::fs::read_to_string(root.join("docs/evidence/tv/drawings-catalog.json"))
+            .expect("TV catalog");
+        let kinds_src = std::fs::read_to_string(root.join("crates/tickchart/src/drawings.rs"))
+            .expect("drawings.rs");
+        let kinds = parse_kind_variants(&kinds_src);
+        assert_eq!(kinds.len(), 77, "kind parse drift");
+        let errors = validate_full(&catalog, &tv, &kinds, &|candidate| {
+            root.join(candidate).exists()
+        });
+        assert!(errors.is_empty(), "{errors:#?}");
+    }
 }
