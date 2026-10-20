@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "source": { "app_version": "3.4.1", "captured": "2026-10-20" },
+  "drawings": [
+    {
+      "kind": "drawing",
+      "tv_id": "LineToolGannFan",
+      "tickview_id": "GannFan",
+      "name": "Gann fan",
+      "group": "Gann and Fibonacci tools",
+      "icon": "gann-fan",
+      "anchors": 2,
+      "interaction": "two-point",
+      "status": "in-progress",
+      "tests": [],
+      "evidence": ["docs/evidence/tv/gann-fan.md"],
+      "notes": "Seed entry for Milestone 1; catalog expansion is M2."
+    }
+  ],
+  "studies": []
+}
