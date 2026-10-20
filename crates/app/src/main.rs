@@ -5,6 +5,7 @@
 
 mod app;
 mod chrome;
+mod icon_sheet;
 mod icons;
 mod store;
 mod theme;

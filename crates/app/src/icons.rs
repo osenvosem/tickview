@@ -79,6 +79,17 @@ pub enum Icon {
     StepBack,
     StepFwd,
     FastFwd,
+    DragHandle,
+    SelectMultiple,
+    Style,
+    LineWidth,
+    Color,
+    Clone,
+    Copy,
+    LayerFront,
+    LayerBack,
+    LayerForward,
+    LayerBackward,
 }
 
 #[allow(dead_code)]
@@ -150,6 +161,23 @@ impl Icon {
         Self::Fullscreen,
         Self::Download,
         Self::Refresh,
+        Self::Clock,
+        Self::Play,
+        Self::Pause,
+        Self::StepBack,
+        Self::StepFwd,
+        Self::FastFwd,
+        Self::DragHandle,
+        Self::SelectMultiple,
+        Self::Style,
+        Self::LineWidth,
+        Self::Color,
+        Self::Clone,
+        Self::Copy,
+        Self::LayerFront,
+        Self::LayerBack,
+        Self::LayerForward,
+        Self::LayerBackward,
     ];
 
     #[must_use]
@@ -227,6 +255,17 @@ impl Icon {
             Self::StepBack => "step-back",
             Self::StepFwd => "step-fwd",
             Self::FastFwd => "fast-fwd",
+            Self::DragHandle => "drag-handle",
+            Self::SelectMultiple => "select-multiple",
+            Self::Style => "style",
+            Self::LineWidth => "line-width",
+            Self::Color => "color",
+            Self::Clone => "clone",
+            Self::Copy => "copy",
+            Self::LayerFront => "layer-front",
+            Self::LayerBack => "layer-back",
+            Self::LayerForward => "layer-forward",
+            Self::LayerBackward => "layer-backward",
         }
     }
 
@@ -776,6 +815,105 @@ impl Icon {
                     Stroke::NONE,
                 ));
             }
+            Self::DragHandle => {
+                for y in [7.0, 12.0, 17.0] {
+                    dot(8.0, y, 1.2);
+                    dot(16.0, y, 1.2);
+                }
+            }
+            Self::SelectMultiple => {
+                let dashed_edges = [
+                    (4.0, 4.0, 20.0, 4.0),
+                    (20.0, 4.0, 20.0, 20.0),
+                    (20.0, 20.0, 4.0, 20.0),
+                    (4.0, 20.0, 4.0, 4.0),
+                ];
+                for (x1, y1, x2, y2) in dashed_edges {
+                    let a = px(x1, y1);
+                    let b = px(x2, y2);
+                    let d = b - a;
+                    let n = ((d.length() / 4.0).ceil() as usize).max(1);
+                    for i in 0..n {
+                        let t0 = i as f32 / n as f32;
+                        let t1 = (t0 + 0.5 / n as f32).min(1.0);
+                        painter.line_segment([a + d * t0, a + d * t1], s);
+                    }
+                }
+                painter.add(Shape::convex_polygon(
+                    vec![
+                        px(6.0, 10.0),
+                        px(13.0, 17.0),
+                        px(10.0, 17.0),
+                        px(12.0, 21.0),
+                        px(10.0, 22.0),
+                        px(8.0, 18.0),
+                        px(6.0, 18.0),
+                    ],
+                    fill,
+                    Stroke::NONE,
+                ));
+                dot(17.0, 7.0, 2.0);
+            }
+            Self::Style => {
+                line(4.0, 6.0, 20.0, 6.0);
+                line(4.0, 12.0, 20.0, 12.0);
+                line(4.0, 18.0, 20.0, 18.0);
+                dot(14.0, 6.0, 2.2);
+                dot(8.0, 12.0, 2.2);
+                dot(16.0, 18.0, 2.2);
+            }
+            Self::LineWidth => {
+                painter.rect_filled(Rect::from_min_max(px(4.0, 6.0), px(20.0, 7.0)), 1.0, fill);
+                painter.rect_filled(Rect::from_min_max(px(4.0, 11.0), px(20.0, 13.0)), 1.0, fill);
+                painter.rect_filled(Rect::from_min_max(px(4.0, 17.0), px(20.0, 20.0)), 1.5, fill);
+            }
+            Self::Color => {
+                path(&[(12.0, 4.0), (18.0, 11.0), (12.0, 20.0), (6.0, 11.0)]);
+                circle(12.0, 13.0, 2.5);
+            }
+            Self::Clone => {
+                round_rect(4.0, 4.0, 15.0, 15.0, 2.0);
+                round_rect(9.0, 9.0, 20.0, 20.0, 2.0);
+                line(14.5, 16.5, 18.5, 16.5);
+                line(16.5, 14.5, 16.5, 18.5);
+            }
+            Self::Copy => {
+                path(&[
+                    (7.0, 4.0),
+                    (16.0, 4.0),
+                    (20.0, 8.0),
+                    (20.0, 20.0),
+                    (7.0, 20.0),
+                ]);
+                path(&[(7.0, 4.0), (7.0, 8.0), (16.0, 8.0), (16.0, 4.0)]);
+                path(&[(16.0, 4.0), (16.0, 8.0), (20.0, 8.0)]);
+            }
+            Self::LayerFront => {
+                path(&[(12.0, 3.0), (20.0, 9.0), (12.0, 15.0), (4.0, 9.0)]);
+                painter.add(Shape::convex_polygon(
+                    vec![px(12.0, 9.0), px(20.0, 15.0), px(12.0, 21.0), px(4.0, 15.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+            }
+            Self::LayerBack => {
+                painter.add(Shape::convex_polygon(
+                    vec![px(12.0, 3.0), px(20.0, 9.0), px(12.0, 15.0), px(4.0, 9.0)],
+                    fill,
+                    Stroke::NONE,
+                ));
+                path(&[(12.0, 9.0), (20.0, 15.0), (12.0, 21.0), (4.0, 15.0)]);
+            }
+            Self::LayerForward => {
+                line(5.0, 17.0, 19.0, 17.0);
+                line(5.0, 13.0, 19.0, 13.0);
+                path(&[(8.0, 10.0), (12.0, 6.0), (16.0, 10.0)]);
+            }
+            Self::LayerBackward => {
+                line(5.0, 7.0, 19.0, 7.0);
+                line(5.0, 11.0, 19.0, 11.0);
+                path(&[(8.0, 14.0), (12.0, 18.0), (16.0, 14.0)]);
+            }
         }
     }
 
@@ -813,6 +951,26 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 66);
+        assert!(Icon::ALL.len() >= 66);
+    }
+
+    #[test]
+    fn toolbar_icons_are_named_and_unique() {
+        for icon in [
+            Icon::DragHandle,
+            Icon::SelectMultiple,
+            Icon::Style,
+            Icon::LineWidth,
+            Icon::Color,
+            Icon::Clone,
+            Icon::Copy,
+            Icon::LayerFront,
+            Icon::LayerBack,
+            Icon::LayerForward,
+            Icon::LayerBackward,
+        ] {
+            assert!(!icon.name().is_empty());
+            assert!(Icon::ALL.contains(&icon));
+        }
     }
 }

@@ -746,6 +746,7 @@ pub struct TickView {
     editor_anchor: Option<egui::Vec2>,
     alerts_anchor: Option<egui::Vec2>,
     settings_anchor: Option<egui::Vec2>,
+    icon_sheet_open: bool,
     cfg: SavedConfig,
 }
 
@@ -947,6 +948,9 @@ impl TickView {
 
         let snap = std::env::var_os("TICKVIEW_SNAPSHOT").map(PathBuf::from);
         let scene_open = std::env::var_os("TICKVIEW_SCENE").is_some();
+        let icon_sheet_open = std::env::var_os("TICKVIEW_SCENE")
+            .and_then(|v| v.into_string().ok())
+            .is_some_and(|v| v == "iconsheet");
         let snap_after_data = if snap.is_some() {
             if scene_open { 2 } else { 12 }
         } else {
@@ -1015,6 +1019,7 @@ impl TickView {
             editor_anchor: Some(egui::vec2(0.0, 140.0)),
             alerts_anchor: Some(egui::vec2(0.0, 120.0)),
             settings_anchor: Some(egui::vec2(0.0, 110.0)),
+            icon_sheet_open,
             cfg,
         };
 
@@ -2159,6 +2164,9 @@ impl eframe::App for TickView {
         crate::chrome::status_bar(ui, self, &p);
         self.chart_panel(ui, &p);
         self.windows(&ctx, &p);
+        if self.icon_sheet_open {
+            self.icon_sheet_open = crate::icon_sheet::show(&ctx, &p);
+        }
         self.toast_area(&ctx, &p);
 
         if self.dirty_drawings && Instant::now() >= self.save_at {

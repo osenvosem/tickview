@@ -86,7 +86,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay` | open a dialog or preset chart state for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet` | open a dialog, proof sheet, or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
