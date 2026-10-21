@@ -823,7 +823,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 }
 
                 // Below Icons; Measure is the first button below.
-                rail_divider(ui, p, 1);
+                rail_divider(ui, p);
                 for tool in SINGLES {
                     if rail_single(ui, p, tool.icon(), app.tool == *tool, tool.label()) {
                         app.select_tool(*tool);
@@ -835,7 +835,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 }
 
                 // Below Zoom in; Keep drawing is the third button.
-                rail_divider(ui, p, 3);
+                rail_divider(ui, p);
                 let magnet = rail_utility(
                     ui,
                     p,
@@ -902,7 +902,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 }
 
                 // Below Hide drawings; Remove drawings is the first button.
-                rail_divider(ui, p, 1);
+                rail_divider(ui, p);
                 let remove = rail_utility(
                     ui,
                     p,
@@ -1172,10 +1172,7 @@ fn rail_utility(
     }
     icon.paint(
         ui.painter(),
-        Rect::from_center_size(
-            Pos2::new((rect.min.x + arrow_rect.min.x) / 2.0, rect.center().y),
-            Vec2::splat(RAIL_ICON),
-        ),
+        Rect::from_center_size(rect.center(), Vec2::splat(RAIL_ICON)),
         color,
         1.45,
     );
@@ -1215,19 +1212,16 @@ fn rail_utility(
     }
 }
 
-/// Splits rail sections. `above_count` is the number of buttons that sit
-/// directly above the rule (TV sizes the gap to the first/last button of
-/// the section the rule belongs to).
-fn rail_divider(ui: &mut egui::Ui, p: &Palette, above_count: usize) {
-    let gap = (space::ROW_H * above_count as f32 / 2.0).max(GROUP_PAD);
-    ui.add_space(gap);
-    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, 1.0), Sense::hover());
+/// Splits rail sections. The rule occupies one full row pitch, so it sits
+/// exactly midway between the buttons above and below — the rail keeps one
+/// uniform icon-to-icon margin everywhere.
+fn rail_divider(ui: &mut egui::Ui, p: &Palette) {
+    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, space::ROW_H), Sense::hover());
     ui.painter().hline(
         rect.x_range().shrink(8.0),
         rect.center().y,
         Stroke::new(1.0, p.menu_divider),
     );
-    ui.add_space(GROUP_PAD);
 }
 
 fn flyout_width(ui: &egui::Ui, group: usize) -> f32 {
