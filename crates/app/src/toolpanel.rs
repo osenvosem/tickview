@@ -813,9 +813,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                                 .request_repaint_after(SELECT_DELAY + Duration::from_millis(8));
                         }
                     }
-                    // TV keeps the tool-group rail free of horizontal rules
-                    // above the Icons button; groups stack with plain spacing.
-                    ui.add_space(GROUP_PAD * 2.0 + 1.0);
+                    // Uniform rhythm: every rail button sits at one row pitch.
                 }
 
                 if !ui.ctx().input(|i| i.pointer.any_down()) {
@@ -831,7 +829,6 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.tool_panel.close_overlays();
                     app.zoom_in();
                 }
-                rail_divider(ui, p);
 
                 let magnet = rail_utility(
                     ui,
@@ -893,7 +890,6 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.tool_panel.close_overlays();
                     app.set_drawings_hidden(!hidden);
                 }
-                rail_divider(ui, p);
 
                 let remove = rail_utility(
                     ui,
@@ -1197,17 +1193,6 @@ fn rail_utility(
         arrow_clicked,
         main_down,
     }
-}
-
-fn rail_divider(ui: &mut egui::Ui, p: &Palette) {
-    ui.add_space(GROUP_PAD);
-    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, 1.0), Sense::hover());
-    ui.painter().hline(
-        rect.x_range().shrink(8.0),
-        rect.center().y,
-        Stroke::new(1.0, p.menu_divider),
-    );
-    ui.add_space(GROUP_PAD);
 }
 
 fn flyout_width(ui: &egui::Ui, group: usize) -> f32 {
