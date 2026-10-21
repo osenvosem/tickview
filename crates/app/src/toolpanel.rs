@@ -5,11 +5,11 @@
 //! button opens a content-sized floating flyout. The 11 px arrow always opens
 //! or closes the flyout. The Icons group opens the emoji picker instead.
 
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, CursorIcon, FontId, Margin, Pos2, Rect, Sense, Stroke,
-    Vec2, vec2,
+    self, Align2, Color32, CornerRadius, CursorIcon, Margin, Pos2, Rect, Sense, Stroke, Vec2, vec2,
 };
 
 use crate::app::{TickView, Tool};
@@ -272,7 +272,7 @@ struct PendingSelect {
 
 /// Per-session and persisted panel state: which overlay is open, the last tool
 /// picked from each group, and globally starred favorites.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct PanelState {
     flyout: Option<usize>,
     utility: Option<UtilityMenu>,
@@ -280,6 +280,8 @@ pub struct PanelState {
     picker_open: bool,
     picker_anchor: Option<Rect>,
     picker_tab: usize,
+    emoji_textures: HashMap<String, egui::TextureHandle>,
+    picker_scroll: f32,
     last: [Tool; GROUPS.len()],
     favorites: Vec<Tool>,
     pending: Option<PendingSelect>,
@@ -299,6 +301,8 @@ impl Default for PanelState {
             picker_open: false,
             picker_anchor: None,
             picker_tab: 0,
+            emoji_textures: HashMap::new(),
+            picker_scroll: 0.0,
             last,
             favorites: Vec::new(),
             pending: None,
@@ -524,7 +528,6 @@ const PICKER_W: f32 = 354.0;
 const PICKER_H: f32 = 200.0;
 const PICKER_COLS: usize = 8;
 const PICKER_CELL: f32 = 38.0;
-const PICKER_GLYPH: f32 = 20.0;
 
 pub const EMOJI_CATEGORIES: [(&str, &[&str]); 8] = [
     (
@@ -606,6 +609,92 @@ pub const EMOJI_CATEGORIES: [(&str, &[&str]); 8] = [
         ],
     ),
 ];
+
+/// Representative glyph for each category tab, in `EMOJI_CATEGORIES` order.
+const TAB_GLYPHS: [&str; 8] = ["😊", "🐶", "🍎", "⚽", "✈️", "💡", "❤️", "🏁"];
+
+/// Rasterization size (px) for each vendored OpenMoji SVG.
+const EMOJI_TEX: u32 = 64;
+
+/// Vendored OpenMoji color SVGs, one file per emoji, named by uppercase
+/// hex codepoints joined with hyphens (OpenMoji 17.0.0 upstream convention).
+static OPENMOJI: include_dir::Dir<'_> =
+    include_dir::include_dir!("$CARGO_MANIFEST_DIR/assets/openmoji/color");
+
+/// Candidate filenames for `glyph`, in preference order: the sequence verbatim,
+/// then with U+FE0F variation selectors dropped (upstream omits FE0F for
+/// standalone emoji but keeps it inside ZWJ sequences).
+fn openmoji_names(glyph: &str) -> [String; 2] {
+    let join = |skip_fe0f: bool| {
+        glyph
+            .chars()
+            .filter(|c| !skip_fe0f || *c != '\u{fe0f}')
+            .map(|c| format!("{:X}", u32::from(c)))
+            .collect::<Vec<_>>()
+            .join("-")
+            + ".svg"
+    };
+    [join(false), join(true)]
+}
+
+/// The vendored SVG file for `glyph`, if any.
+fn openmoji_asset(glyph: &str) -> Option<&'static include_dir::File<'static>> {
+    openmoji_names(glyph)
+        .iter()
+        .find_map(|name| OPENMOJI.get_file(name.as_str()))
+}
+
+/// Rasterize the OpenMoji SVG for `glyph` into a cached texture. `None` when
+/// the file is missing or parsing fails; callers then draw nothing.
+fn emoji_texture(
+    ctx: &egui::Context,
+    cache: &mut HashMap<String, egui::TextureHandle>,
+    glyph: &str,
+) -> Option<egui::TextureHandle> {
+    let file = openmoji_asset(glyph)?;
+    let key = file.path().to_string_lossy().into_owned();
+    if let Some(tex) = cache.get(&key) {
+        return Some(tex.clone());
+    }
+    let tree =
+        resvg::usvg::Tree::from_data(file.contents(), &resvg::usvg::Options::default()).ok()?;
+    let mut pixmap = resvg::tiny_skia::Pixmap::new(EMOJI_TEX, EMOJI_TEX)?;
+    let scale = EMOJI_TEX as f32 / tree.size().width().max(1.0);
+    let mut target = pixmap.as_mut();
+    resvg::render(
+        &tree,
+        resvg::tiny_skia::Transform::from_scale(scale, scale),
+        &mut target,
+    );
+    let image = egui::ColorImage::from_rgba_premultiplied(
+        [EMOJI_TEX as usize, EMOJI_TEX as usize],
+        pixmap.data(),
+    );
+    let tex = ctx.load_texture(
+        format!("openmoji-{key}"),
+        image,
+        egui::TextureOptions::LINEAR,
+    );
+    cache.insert(key, tex.clone());
+    Some(tex)
+}
+
+/// TV-style wheel tab cycling: accumulate the scroll delta; one category step
+/// per accumulated 48 px, clamped at both ends. Returns the (tab, accumulator).
+#[must_use]
+pub fn next_tab_on_scroll(tab: usize, acc: f32, delta: f32, count: usize) -> (usize, f32) {
+    if count == 0 {
+        return (tab, acc);
+    }
+    let sum = acc + delta;
+    if sum <= -48.0 {
+        ((tab + 1).min(count - 1), 0.0)
+    } else if sum >= 48.0 {
+        (tab.saturating_sub(1), 0.0)
+    } else {
+        (tab, sum)
+    }
+}
 
 /// Draw the grouped rail and, when open, its floating selector.
 pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
@@ -1414,7 +1503,7 @@ fn draw_utility_menu(
 }
 
 fn draw_picker(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, rect: Rect) {
-    egui::Area::new(egui::Id::unique("tickview-emoji-picker"))
+    let area_resp = egui::Area::new(egui::Id::unique("tickview-emoji-picker"))
         .order(egui::Order::Foreground)
         .fade_in(false)
         .movable(false)
@@ -1434,66 +1523,94 @@ fn draw_picker(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, rect: Rect) {
                 .show(ui, |ui| {
                     ui.set_width(rect.width() - FLYOUT_PAD * 2.0);
                     let active_tab = app.tool_panel.picker_tab();
-                    ui.horizontal_wrapped(|ui| {
+                    // Icon-only category tabs: 28 px OpenMoji tiles.
+                    ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
                         for (i, (name, _)) in EMOJI_CATEGORIES.iter().enumerate() {
                             let active = i == active_tab;
-                            let resp = ui.add(
-                                egui::Button::new(egui::RichText::new(*name).size(11.0).color(
-                                    if active {
-                                        p.menu_text
-                                    } else {
-                                        p.menu_secondary
-                                    },
-                                ))
-                                .fill(if active { p.menu_active } else { p.menu_bg })
-                                .corner_radius(4.0),
-                            );
-                            if resp.clicked() {
+                            let (tab_rect, tab_resp) =
+                                ui.allocate_exact_size(Vec2::splat(28.0), Sense::click());
+                            let hovered = tab_resp.hovered();
+                            let fill = if active {
+                                p.menu_active
+                            } else if hovered {
+                                p.menu_hover
+                            } else {
+                                p.menu_bg
+                            };
+                            ui.painter()
+                                .rect_filled(tab_rect.shrink2(vec2(1.0, 1.0)), 6.0, fill);
+                            if let Some(tex) = emoji_texture(
+                                ui.ctx(),
+                                &mut app.tool_panel.emoji_textures,
+                                TAB_GLYPHS[i],
+                            ) {
+                                ui.painter().image(
+                                    tex.id(),
+                                    Rect::from_center_size(tab_rect.center(), Vec2::splat(22.0)),
+                                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                                    Color32::WHITE,
+                                );
+                            }
+                            if tab_resp.on_hover_text(*name).clicked() {
                                 app.tool_panel.set_picker_tab(i);
+                                app.tool_panel.picker_scroll = 0.0;
                             }
                         }
                     });
                     ui.add_space(4.0);
                     let tab = app.tool_panel.picker_tab();
-                    egui::ScrollArea::vertical()
-                        .id_salt("tickview-emoji-grid")
-                        .auto_shrink([false, false])
-                        .max_height(rect.height() - FLYOUT_PAD * 2.0 - 40.0)
-                        .show(ui, |ui| {
-                            for chunk in EMOJI_CATEGORIES[tab].1.chunks(PICKER_COLS) {
-                                ui.horizontal(|ui| {
-                                    for glyph in chunk {
-                                        let (cell, resp) = ui.allocate_exact_size(
-                                            Vec2::splat(PICKER_CELL),
-                                            Sense::click(),
-                                        );
-                                        if resp.hovered() {
-                                            ui.painter().rect_filled(
-                                                cell.shrink2(vec2(2.0, 2.0)),
-                                                6.0,
-                                                p.menu_hover,
-                                            );
-                                        }
-                                        ui.painter().text(
-                                            cell.center(),
-                                            Align2::CENTER_CENTER,
-                                            *glyph,
-                                            FontId::proportional(PICKER_GLYPH),
-                                            p.menu_text,
-                                        );
-                                        if resp.clicked() {
-                                            app.select_tool(Tool::Emoji);
-                                            app.tabs[app.active].chart.tools.pending_text =
-                                                Some((*glyph).to_owned());
-                                            app.tool_panel.close_overlays();
-                                        }
-                                    }
-                                });
+                    for chunk in EMOJI_CATEGORIES[tab].1.chunks(PICKER_COLS) {
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                            for glyph in chunk {
+                                let (cell, resp) = ui
+                                    .allocate_exact_size(Vec2::splat(PICKER_CELL), Sense::click());
+                                if resp.hovered() {
+                                    ui.painter().rect_filled(
+                                        cell.shrink2(vec2(2.0, 2.0)),
+                                        6.0,
+                                        p.menu_hover,
+                                    );
+                                }
+                                if let Some(tex) = emoji_texture(
+                                    ui.ctx(),
+                                    &mut app.tool_panel.emoji_textures,
+                                    glyph,
+                                ) {
+                                    ui.painter().image(
+                                        tex.id(),
+                                        Rect::from_center_size(cell.center(), Vec2::splat(30.0)),
+                                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                                        Color32::WHITE,
+                                    );
+                                }
+                                if resp.clicked() {
+                                    app.select_tool(Tool::Emoji);
+                                    app.tabs[app.active].chart.tools.pending_text =
+                                        Some((*glyph).to_owned());
+                                    app.tool_panel.close_overlays();
+                                }
                             }
                         });
+                    }
                 });
         });
+    // TV-style wheel behavior: scrolling over the picker cycles categories.
+    if area_resp.response.contains_pointer() {
+        let delta = ui.input(|i| i.smooth_scroll_delta.y);
+        if delta != 0.0 {
+            let (tab, acc) = next_tab_on_scroll(
+                app.tool_panel.picker_tab(),
+                app.tool_panel.picker_scroll,
+                delta,
+                EMOJI_CATEGORIES.len(),
+            );
+            app.tool_panel.set_picker_tab(tab);
+            app.tool_panel.picker_scroll = acc;
+            ui.ctx().request_repaint();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1595,6 +1712,42 @@ mod tests {
             let unique: std::collections::HashSet<_> = glyphs.iter().collect();
             assert_eq!(unique.len(), 24, "{name} has duplicate glyphs");
         }
+    }
+
+    #[test]
+    fn every_picker_glyph_has_a_vendored_openmoji_svg() {
+        for (name, glyphs) in EMOJI_CATEGORIES {
+            for glyph in glyphs {
+                assert!(
+                    openmoji_asset(glyph).is_some(),
+                    "{name}: no vendored SVG for {:?} ({})",
+                    glyph,
+                    openmoji_names(glyph).join(" | ")
+                );
+            }
+        }
+        for glyph in TAB_GLYPHS {
+            assert!(
+                openmoji_asset(glyph).is_some(),
+                "tab: no vendored SVG for {glyph:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn next_tab_on_scroll_walks_categories_and_clamps() {
+        // Partial deltas accumulate without switching.
+        assert_eq!(next_tab_on_scroll(0, 0.0, -30.0, 8), (0, -30.0));
+        // Crossing the threshold advances one tab and resets the accumulator.
+        assert_eq!(next_tab_on_scroll(0, -30.0, -30.0, 8), (1, 0.0));
+        // Up-scroll walks back.
+        assert_eq!(next_tab_on_scroll(3, 30.0, 30.0, 8), (2, 0.0));
+        // Clamped at both ends.
+        assert_eq!(next_tab_on_scroll(0, 40.0, 30.0, 8), (0, 0.0));
+        assert_eq!(next_tab_on_scroll(7, -40.0, -30.0, 8), (7, 0.0));
+        // Single wheel notch (TV ~ +/-100 px) switches immediately.
+        assert_eq!(next_tab_on_scroll(2, 0.0, -100.0, 8), (3, 0.0));
+        assert_eq!(next_tab_on_scroll(2, 0.0, 100.0, 8), (1, 0.0));
     }
 
     #[test]
