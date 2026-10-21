@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 78 verified, 5 in progress, 0 missing, 1 excluded (84 total).
+Studies: 81 verified, 2 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -168,12 +168,12 @@ Studies: 78 verified, 5 in progress, 0 missing, 1 excluded (84 total).
 | SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | verified |
 | Supertrend | `STD;Supertrend` | `Supertrend` | `` | verified |
 | True Strength Index (TSI) | `STD;Tsi` | `Tsi` | `` | verified |
-| Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | in-progress |
+| Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | verified |
 | Volume Oscillator | `STD;VolumeOscillator` | `VolumeOscillator` | `` | verified |
 | Volume Ratio | `STD;VolumeRatio` | `VolumeRatio` | `` | verified |
 | Vortex | `STD;Vortex` | `Vortex` | `` | verified |
-| Williams Fractal | `STD;Whilliams_Fractals` | `WilliamsFractals` | `` | in-progress |
-| Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | in-progress |
+| Williams Fractal | `STD;Whilliams_Fractals` | `WilliamsFractals` | `` | verified |
+| Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | verified |
 | Zero-Lag EMA | `STD;Zlema` | `Zlema` | `` | verified |
 | Z-Score | `STD;ZScore` | `ZScore` | `` | verified |
 | Stochastic | `Stochastic@tv` | `Stochastic` | `` | verified |

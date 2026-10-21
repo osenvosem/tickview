@@ -610,5 +610,21 @@
    "mult": 2.0
   },
   "name": "Volatility Stop"
+ },
+ "WilliamsFractals": {
+  "wire_id": "STD;Williams_Fractals",
+  "inputs": {
+   "left": 2,
+   "right": 2
+  },
+  "name": "Williams Fractals"
+ },
+ "ZigZag": {
+  "wire_id": "STD;ZigZag",
+  "inputs": {
+   "deviation": 5.0,
+   "depth": 10
+  },
+  "name": "Zig Zag"
  }
 }

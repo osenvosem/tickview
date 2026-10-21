@@ -505,6 +505,79 @@ def smi_ergodic(h, l, c, n, sig):
     line = [100.0 * qn[i] / qd[i] if FIN(qn[i]) and FIN(qd[i]) and qd[i] != 0
             else float("nan") for i in range(len(c))]
     return line, sma(line, sig)
+
+
+def vol_stop(h, l, c, n, mult):
+    ln = len(c)
+    atr = rma(tr(h, l, c), n)
+    line = [float("nan")] * ln
+    trend = [float("nan")] * ln
+    lower = [float("nan")] * ln
+    upper = [float("nan")] * ln
+    prev_t = 1.0
+    for i in range(ln):
+        if not FIN(atr[i]) or not FIN(c[i]):
+            continue
+        lb, ub = c[i] - mult * atr[i], c[i] + mult * atr[i]
+        lower[i] = lb if (i == 0 or not FIN(lower[i - 1]) or lb > lower[i - 1]
+                          or c[i - 1] > lower[i - 1]) else lower[i - 1]
+        upper[i] = ub if (i == 0 or not FIN(upper[i - 1]) or ub < upper[i - 1]
+                          or c[i - 1] < upper[i - 1]) else upper[i - 1]
+        t = prev_t
+        if prev_t > 0 and c[i] <= lower[i]:
+            t = -1.0
+        elif prev_t < 0 and c[i] >= upper[i]:
+            t = 1.0
+        line[i] = lower[i] if t > 0 else upper[i]
+        trend[i] = t
+        prev_t = t
+    return line, trend
+
+
+def fractals(h, l, left, right):
+    ln = len(h)
+    up = [float("nan")] * ln
+    dn = [float("nan")] * ln
+    for j in range(left, ln - right):
+        is_up = all(h[j] > h[k] for k in range(max(0, j - left), j + right + 1) if k != j)
+        is_dn = all(l[j] < l[k] for k in range(max(0, j - left), j + right + 1) if k != j)
+        if is_up:
+            up[j] = h[j]
+        if is_dn:
+            dn[j] = l[j]
+    return up, dn
+
+
+def zigzag(h, l, depth, deviation):
+    n = len(h)
+    out = [float("nan")] * n
+    if depth == 0 or n <= 2 * depth:
+        return out
+    dev = deviation / 100.0
+    last = None
+    hj, hv = 0, h[0]
+    lj, lv = 0, l[0]
+    for j in range(depth, n):
+        e = j - depth
+        if h[e] > hv:
+            hv, hj = h[e], e
+        if l[e] < lv:
+            lv, lj = l[e], e
+        if hj + depth == j and hv > max(h[hj + 1:j + 1]):
+            accept = (last is None or (last[2] and hv > last[1])
+                      or (not last[2] and hv >= last[1] * (1 + dev)))
+            if accept:
+                out[hj] = hv
+                last = (hj, hv, True)
+                lv, lj = l[j], j
+        if lj + depth == j and lv < min(l[lj + 1:j + 1]):
+            accept = (last is None or (not last[2] and lv < last[1])
+                      or (last[2] and lv <= last[1] * (1 - dev)))
+            if accept:
+                out[lj] = lv
+                last = (lj, lv, False)
+                hv, hj = h[j], j
+    return out
 # ---------------------------------------------------------------- defaults
 DOC_FALLBACK = {
     "Sma": {"length": 9},
@@ -634,6 +707,14 @@ def main():
         "PO": posc, "PO_SIG": posig,
         "RVI2": rel_vol_index(closes, 10, 10),
         "SMI": smi_l, "SMI_SIG": smi_s,
+    })
+
+    vs_l, vs_t = vol_stop(highs, lows, closes, 20, 2.0)
+    fr_u, fr_d = fractals(highs, lows, 2, 2)
+    series.update({
+        "VS": vs_l, "VS_T": vs_t,
+        "FR_U": fr_u, "FR_D": fr_d,
+        "ZZ": zigzag(highs, lows, 10, 5.0),
     })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")

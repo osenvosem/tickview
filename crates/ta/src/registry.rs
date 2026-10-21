@@ -60,6 +60,9 @@ pub enum TvId {
     PriceOscillator,
     RelativeVolatilityIndex,
     SmiErgodic,
+    VolatilityStop,
+    WilliamsFractals,
+    ZigZag,
     PercentB,
     KeltnerChannels,
     DonchianChannels,
@@ -803,6 +806,42 @@ const DEFS_PRICE: &[Def] = &[
             fp!("mult", "Multiplier", 3.0, 0.1, 10.0, 0.1),
         ],
         plots: &[pl!("Long Stop", GREEN), pl!("Short Stop", RED)],
+    },
+    Def {
+        id: TvId::VolatilityStop,
+        tv_name: "Volatility Stop",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("length", "Length", 20, 1, 5000),
+            fp!("mult", "Multiplier", 2.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Stop", BLUE), pl!("Trend", GRAY)],
+    },
+    Def {
+        id: TvId::WilliamsFractals,
+        tv_name: "Williams Fractals",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("left", "Left Bars", 2, 1, 50),
+            ip!("right", "Right Bars", 2, 1, 50),
+        ],
+        plots: &[pl!("Up", GREEN), pl!("Down", RED)],
+    },
+    Def {
+        id: TvId::ZigZag,
+        tv_name: "Zig Zag",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            fp!("deviation", "Deviation %", 5.0, 0.01, 100.0, 0.1),
+            ip!("depth", "Depth", 10, 2, 500),
+        ],
+        plots: &[pl!("ZigZag", BLUE)],
     },
 ];
 
@@ -1608,6 +1647,19 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
             );
             out(vec![ch.long, ch.short])
         }
+        TvId::VolatilityStop => {
+            let vs = trends::vol_stop(cd, p.i(defn, "length"), p.f(defn, "mult"));
+            out(vec![vs.line, vs.trend])
+        }
+        TvId::WilliamsFractals => {
+            let (up, dn) = trends::fractals(cd, p.i(defn, "left"), p.i(defn, "right"));
+            out(vec![up, dn])
+        }
+        TvId::ZigZag => out(vec![trends::zigzag(
+            cd,
+            p.i(defn, "depth"),
+            p.f(defn, "deviation"),
+        )]),
         TvId::ChoppinessIndex => out(vec![trends::choppiness(cd, p.i(defn, "length"))]),
         TvId::ConnorsRsi => out(vec![oscs::connors_rsi(
             &src,
@@ -2164,7 +2216,7 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 78);
+        assert_eq!(count, 81);
     }
 }
 
@@ -2464,5 +2516,67 @@ mod gold_wave1b {
                 approx(&plot.series, w, &format!("{id:?} {}", plot.title));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1c {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+    use crate::trends::{fractals, zigzag};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1c_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 3] = [
+            (TvId::VolatilityStop, &[&VS, &VS_T]),
+            (TvId::WilliamsFractals, &[&FR_U, &FR_D]),
+            (TvId::ZigZag, &[&ZZ]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+
+    #[test]
+    fn fractals_and_zigzag_do_not_repaint() {
+        for k in (40..=FIX_C.len()).step_by(7) {
+            let mut bars = Vec::new();
+            for i in 0..k {
+                bars.push(crate::Bar {
+                    t: FIX_T[i],
+                    o: FIX_O[i],
+                    h: FIX_H[i],
+                    l: FIX_L[i],
+                    c: FIX_C[i],
+                    v: FIX_V[i],
+                });
+            }
+            let pre = crate::Candles::from_bars(&bars);
+            let (up, dn) = fractals(&pre, 2, 2);
+            for i in 0..k.saturating_sub(2) {
+                assert_same(up[i], FR_U[i], &format!("fractal up repaint {k}:{i}"));
+                assert_same(dn[i], FR_D[i], &format!("fractal down repaint {k}:{i}"));
+            }
+            let zz = zigzag(&pre, 10, 5.0);
+            for i in 0..k.saturating_sub(10) {
+                assert_same(zz[i], ZZ[i], &format!("zigzag repaint {k}:{i}"));
+            }
+        }
+    }
+
+    fn assert_same(got: f64, want: f64, what: &str) {
+        assert!(
+            (got.is_nan() && want.is_nan()) || got == want,
+            "{what}: {got} vs {want}"
+        );
     }
 }

@@ -3048,9 +3048,16 @@
    "tickview_id": "VolatilityStop",
    "name": "Volatility Stop",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -3114,9 +3121,16 @@
    "tickview_id": "WilliamsFractals",
    "name": "Williams Fractal",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -3126,9 +3140,16 @@
    "tickview_id": "ZigZag",
    "name": "Zig Zag",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
