@@ -2640,9 +2640,18 @@
    "tickview_id": "CorrelationCoeff",
    "name": "Correlation Coefficient",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_corr::correlation_matches_python_reference",
+    "ta::registry::gold_corr::perfect_correlation_is_one",
+    "ta::registry::gold_corr::correlation_without_comparison_is_all_nan",
+    "ta::registry::gold_corr::constant_comparison_is_nan_not_panic",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2908,9 +2917,18 @@
    "tickview_id": "RankCorrelationIndex",
    "name": "Rank Correlation Index",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_corr::correlation_matches_python_reference",
+    "ta::registry::gold_corr::perfect_correlation_is_one",
+    "ta::registry::gold_corr::correlation_without_comparison_is_all_nan",
+    "ta::registry::gold_corr::constant_comparison_is_nan_not_panic",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },

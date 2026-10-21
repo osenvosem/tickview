@@ -626,5 +626,19 @@
    "depth": 10
   },
   "name": "Zig Zag"
+ },
+ "CorrelationCoeff": {
+  "wire_id": "STD;Correlation_Coeff",
+  "inputs": {
+   "length": 20
+  },
+  "name": "Correlation Coefficient"
+ },
+ "RankCorrelationIndex": {
+  "wire_id": "STD;Rank_Correlation_Index",
+  "inputs": {
+   "length": 10
+  },
+  "name": "Rank Correlation Index"
  }
 }

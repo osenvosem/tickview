@@ -54,10 +54,12 @@ pub enum TvId {
     ChandelierExit,
     ChoppinessIndex,
     ConnorsRsi,
+    CorrelationCoeff,
     Dmi,
     FisherTransform,
     KnowSureThing,
     PriceOscillator,
+    RankCorrelationIndex,
     RelativeVolatilityIndex,
     SmiErgodic,
     VolatilityStop,
@@ -1472,6 +1474,24 @@ const DEFS_OSC: &[Def] = &[
         ],
         plots: &[pl!("SMI", BLUE), pl!("Signal", ORANGE)],
     },
+    Def {
+        id: TvId::CorrelationCoeff,
+        tv_name: "Correlation Coefficient",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0, 1.0],
+        params: &[ip!("length", "Length", 20, 1, 5000)],
+        plots: &[pl!("Correlation", BLUE)],
+    },
+    Def {
+        id: TvId::RankCorrelationIndex,
+        tv_name: "Rank Correlation Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0, 1.0],
+        params: &[ip!("length", "Length", 10, 1, 5000)],
+        plots: &[pl!("Rank Correlation", BLUE)],
+    },
 ];
 
 /// All indicator definitions, stable order.
@@ -1517,7 +1537,14 @@ fn ma_by(src: &[f64], len: usize, typ: usize) -> Vec<f64> {
 }
 
 #[allow(clippy::too_many_lines)]
-fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> Output {
+fn compute_id(
+    id: TvId,
+    p: &Params,
+    defn: &Def,
+    cd: &Candles,
+    ax: &Anchors,
+    cmp: Option<&Candles>,
+) -> Output {
     let n = cd.len();
     let src = source_series(cd, p.e(defn, "source"));
     let h = &cd.h;
@@ -1712,6 +1739,19 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
         TvId::SmiErgodic => {
             let s = oscs::smi_ergodic(cd, p.i(defn, "length"), p.i(defn, "sig"));
             out(vec![s.smi, s.signal])
+        }
+        TvId::CorrelationCoeff | TvId::RankCorrelationIndex => {
+            let len = p.i(defn, "length");
+            let mut s = vec![f64::NAN; n];
+            if let Some(other) = cmp {
+                let raw = if id == TvId::RankCorrelationIndex {
+                    oscs::spearman(&src, &other.c, len)
+                } else {
+                    oscs::pearson(&src, &other.c, len)
+                };
+                s[..raw.len()].copy_from_slice(&raw);
+            }
+            out(vec![s])
         }
         TvId::KeltnerChannels => {
             let len = p.i(defn, "length");
@@ -2077,7 +2117,7 @@ fn cci_on(src: &[f64], len: usize) -> Vec<f64> {
 #[must_use]
 pub fn compute(id: TvId, params: &Params, cd: &Candles, ax: &Anchors) -> Output {
     let d = def(id);
-    let mut o = compute_id(id, params, d, cd, ax);
+    let mut o = compute_id(id, params, d, cd, ax, None);
     debug_assert_eq!(o.plots.len(), d.plots.len(), "plot count drift for {id:?}");
     if o.plots.len() != d.plots.len() {
         // release-safe normalization
@@ -2102,7 +2142,7 @@ pub struct StudyContext<'a> {
 #[must_use]
 pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext<'_>) -> Output {
     let d = def(id);
-    let mut o = compute_id(id, params, d, cd, &ctx.anchors);
+    let mut o = compute_id(id, params, d, cd, &ctx.anchors, ctx.comparison);
     debug_assert_eq!(o.plots.len(), d.plots.len(), "plot count drift for {id:?}");
     if o.plots.len() != d.plots.len() {
         o.plots.truncate(d.plots.len().max(1));
@@ -2216,7 +2256,7 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 81);
+        assert_eq!(count, 83);
     }
 }
 
@@ -2578,5 +2618,87 @@ mod gold_wave1c {
             (got.is_nan() && want.is_nan()) || got == want,
             "{what}: {got} vs {want}"
         );
+    }
+}
+
+#[cfg(test)]
+mod gold_corr {
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, StudyContext, TvId};
+    use crate::{compute, compute_with};
+
+    include!("gold_mis.rs");
+
+    fn ctx<'a>(cmp: Option<&'a crate::Candles>) -> StudyContext<'a> {
+        StudyContext {
+            htfc: None,
+            anchors: Anchors::from_ts(&FIX_T),
+            visible: None,
+            comparison: cmp,
+            symbol: "TEST",
+            interval: "1m",
+        }
+    }
+
+    #[test]
+    fn correlation_matches_python_reference() {
+        let cd = fixture2();
+        let mut volcmp = fixture2();
+        volcmp.c.copy_from_slice(&FIX_V);
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&volcmp)),
+        );
+        approx(&out.plots[0].series, &CORR, "Pearson close-vs-volume");
+        let out = compute_with(
+            TvId::RankCorrelationIndex,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&volcmp)),
+        );
+        approx(&out.plots[0].series, &RANK_CORR, "Spearman close-vs-volume");
+    }
+
+    #[test]
+    fn perfect_correlation_is_one() {
+        let cd = fixture2();
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&cd)),
+        );
+        for (i, v) in out.plots[0].series.iter().enumerate().skip(19) {
+            assert!((v - 1.0).abs() <= 1e-12, "self-correlation at {i}: {v}");
+        }
+    }
+
+    #[test]
+    fn correlation_without_comparison_is_all_nan() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        for id in [TvId::CorrelationCoeff, TvId::RankCorrelationIndex] {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert!(
+                out.plots[0].series.iter().all(|v| v.is_nan()),
+                "{id:?} without cmp"
+            );
+        }
+    }
+
+    #[test]
+    fn constant_comparison_is_nan_not_panic() {
+        let cd = fixture2();
+        let mut flat = fixture2();
+        flat.c.fill(42.0);
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&flat)),
+        );
+        assert!(out.plots[0].series.iter().all(|v| v.is_nan()));
     }
 }

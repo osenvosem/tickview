@@ -738,6 +738,78 @@ pub fn smi_ergodic(cd: &Candles, n: usize, sig: usize) -> Smi {
     }
 }
 
+/// Rolling Pearson correlation (TV `ta.correlation`); NaN while either
+/// window has zero variance.
+#[must_use]
+pub fn pearson(x: &[f64], y: &[f64], len: usize) -> Series {
+    let n = x.len().min(y.len());
+    let mut out = vec![f64::NAN; n];
+    if len < 2 {
+        return out;
+    }
+    for i in len - 1..n {
+        let wx = &x[i + 1 - len..=i];
+        let wy = &y[i + 1 - len..=i];
+        if !wx.iter().all(|v| v.is_finite()) || !wy.iter().all(|v| v.is_finite()) {
+            continue;
+        }
+        let mx = wx.iter().sum::<f64>() / len as f64;
+        let my = wy.iter().sum::<f64>() / len as f64;
+        let (mut sxy, mut sxx, mut syy) = (0.0, 0.0, 0.0);
+        for k in 0..len {
+            let dx = wx[k] - mx;
+            let dy = wy[k] - my;
+            sxy += dx * dy;
+            sxx += dx * dx;
+            syy += dy * dy;
+        }
+        if sxx > 0.0 && syy > 0.0 {
+            out[i] = sxy / (sxx.sqrt() * syy.sqrt());
+        }
+    }
+    out
+}
+
+/// Rolling Spearman rank correlation: average ranks inside each window,
+/// then Pearson over the ranks (TV `ta.correlation(ranks)`).
+#[must_use]
+pub fn spearman(x: &[f64], y: &[f64], len: usize) -> Series {
+    let n = x.len().min(y.len());
+    let mut out = vec![f64::NAN; n];
+    if len < 2 {
+        return out;
+    }
+    let rank = |w: &[f64]| -> Vec<f64> {
+        let mut idx: Vec<usize> = (0..w.len()).collect();
+        idx.sort_by(|&a, &b| w[a].partial_cmp(&w[b]).unwrap_or(std::cmp::Ordering::Equal));
+        let mut r = vec![0.0; w.len()];
+        let mut k = 0;
+        while k < w.len() {
+            let mut j = k;
+            while j + 1 < w.len() && w[idx[j + 1]] == w[idx[k]] {
+                j += 1;
+            }
+            let avg = (k + j) as f64 / 2.0 + 1.0;
+            for t in &idx[k..=j] {
+                r[*t] = avg;
+            }
+            k = j + 1;
+        }
+        r
+    };
+    for i in len - 1..n {
+        let wx = &x[i + 1 - len..=i];
+        let wy = &y[i + 1 - len..=i];
+        if !wx.iter().all(|v| v.is_finite()) || !wy.iter().all(|v| v.is_finite()) {
+            continue;
+        }
+        let rx = rank(wx);
+        let ry = rank(wy);
+        out[i] = pearson(&rx, &ry, len)[len - 1];
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

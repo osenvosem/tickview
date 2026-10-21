@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 81 verified, 2 in progress, 0 missing, 1 excluded (84 total).
+Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -145,7 +145,7 @@ Studies: 81 verified, 2 in progress, 0 missing, 1 excluded (84 total).
 | Chandelier Exit | `STD;Chandelier_Exit` | `ChandelierExit` | `` | verified |
 | Choppiness Index | `STD;Choppiness_Index` | `ChoppinessIndex` | `` | verified |
 | Connors RSI | `STD;Connors_RSI` | `ConnorsRsi` | `` | verified |
-| Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | in-progress |
+| Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | verified |
 | Directional Movement | `STD;DMI` | `Dmi` | `` | verified |
 | Elder-ray Index | `STD;ElderRay` | `ElderRay` | `` | verified |
 | EMA Ribbons | `STD;EmaRibbons` | `EmaRibbons` | `` | verified |
@@ -160,7 +160,7 @@ Studies: 81 verified, 2 in progress, 0 missing, 1 excluded (84 total).
 | Parkinson Volatility | `STD;ParkinsonVolatility` | `ParkinsonVolatility` | `` | verified |
 | Price Oscillator | `STD;Price_Oscillator` | `PriceOscillator` | `` | verified |
 | PVI & DVI | `STD;PviDvi` | `PviDvi` | `` | verified |
-| Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | in-progress |
+| Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | verified |
 | ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | verified |
 | Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | verified |
 | Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |

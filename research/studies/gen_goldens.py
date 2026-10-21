@@ -578,6 +578,50 @@ def zigzag(h, l, depth, deviation):
                 last = (lj, lv, False)
                 hv, hj = h[j], j
     return out
+
+
+def pearson(x, y, ln):
+    n = min(len(x), len(y))
+    out = [float("nan")] * n
+    for i in range(ln - 1, n):
+        wx, wy = x[i + 1 - ln:i + 1], y[i + 1 - ln:i + 1]
+        if not all(FIN(v) for v in wx) or not all(FIN(v) for v in wy):
+            continue
+        mx, my = sum(wx) / ln, sum(wy) / ln
+        dx = [v - mx for v in wx]
+        dy = [v - my for v in wy]
+        sxx = sum(a * a for a in dx)
+        syy = sum(b * b for b in dy)
+        if sxx > 0 and syy > 0:
+            out[i] = sum(a * b for a, b in zip(dx, dy)) / (sxx ** 0.5 * syy ** 0.5)
+    return out
+
+
+def spearman(x, y, ln):
+    n = min(len(x), len(y))
+    out = [float("nan")] * n
+
+    def rank(w):
+        order = sorted(range(len(w)), key=lambda j: w[j])
+        r = [0.0] * len(w)
+        k = 0
+        while k < len(w):
+            j = k
+            while j + 1 < len(w) and w[order[j + 1]] == w[order[k]]:
+                j += 1
+            avg = (k + j) / 2.0 + 1.0
+            for t in order[k:j + 1]:
+                r[t] = avg
+            k = j + 1
+        return r
+
+    for i in range(ln - 1, n):
+        wx, wy = x[i + 1 - ln:i + 1], y[i + 1 - ln:i + 1]
+        if not all(FIN(v) for v in wx) or not all(FIN(v) for v in wy):
+            continue
+        r = pearson(rank(wx), rank(wy), ln)
+        out[i] = r[ln - 1]
+    return out
 # ---------------------------------------------------------------- defaults
 DOC_FALLBACK = {
     "Sma": {"length": 9},
@@ -715,6 +759,11 @@ def main():
         "VS": vs_l, "VS_T": vs_t,
         "FR_U": fr_u, "FR_D": fr_d,
         "ZZ": zigzag(highs, lows, 10, 5.0),
+    })
+
+    series.update({
+        "CORR": pearson(closes, vols, 20),
+        "RANK_CORR": spearman(closes, vols, 10),
     })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")
