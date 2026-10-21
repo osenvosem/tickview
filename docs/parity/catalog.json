@@ -2490,9 +2490,15 @@
    "tickview_id": "Aroon",
    "name": "Aroon",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2502,9 +2508,15 @@
    "tickview_id": "Atr",
    "name": "Average True Range",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2568,9 +2580,15 @@
    "tickview_id": "ChandelierExit",
    "name": "Chandelier Exit",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2580,9 +2598,15 @@
    "tickview_id": "ChoppinessIndex",
    "name": "Choppiness Index",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2592,9 +2616,15 @@
    "tickview_id": "ConnorsRsi",
    "name": "Connors RSI",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },

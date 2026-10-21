@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 66 verified, 17 in progress, 0 missing, 1 excluded (84 total).
+Studies: 71 verified, 12 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -137,14 +137,14 @@ Studies: 66 verified, 17 in progress, 0 missing, 1 excluded (84 total).
 | Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | in-progress |
 | Advance/Decline | `STD;Advance_Decline_Ratio_Bars` | `` | `` | excluded |
 | Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | verified |
-| Aroon | `STD;Aroon` | `Aroon` | `` | in-progress |
-| Average True Range | `STD;Average_True_Range` | `Atr` | `` | in-progress |
+| Aroon | `STD;Aroon` | `Aroon` | `` | verified |
+| Average True Range | `STD;Average_True_Range` | `Atr` | `` | verified |
 | Bias | `STD;Bias` | `Bias` | `` | verified |
 | Bollinger Bands Width | `STD;Bollinger_Bands_Width` | `BollingerBandsWidth` | `` | verified |
 | Chaikin Volatility | `STD;ChaikinVolatility` | `ChaikinVolatility` | `` | verified |
-| Chandelier Exit | `STD;Chandelier_Exit` | `ChandelierExit` | `` | in-progress |
-| Choppiness Index | `STD;Choppiness_Index` | `ChoppinessIndex` | `` | in-progress |
-| Connors RSI | `STD;Connors_RSI` | `ConnorsRsi` | `` | in-progress |
+| Chandelier Exit | `STD;Chandelier_Exit` | `ChandelierExit` | `` | verified |
+| Choppiness Index | `STD;Choppiness_Index` | `ChoppinessIndex` | `` | verified |
+| Connors RSI | `STD;Connors_RSI` | `ConnorsRsi` | `` | verified |
 | Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | in-progress |
 | Directional Movement | `STD;DMI` | `Dmi` | `` | in-progress |
 | Elder-ray Index | `STD;ElderRay` | `ElderRay` | `` | verified |

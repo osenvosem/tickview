@@ -508,5 +508,44 @@
  "BollingerBandsWidth": {
   "missing": true,
   "name": "Bollinger Bands Width"
+ },
+ "Aroon": {
+  "wire_id": "STD;Aroon",
+  "inputs": {
+   "period": 14
+  },
+  "name": "Aroon"
+ },
+ "Atr": {
+  "wire_id": "STD;Average_True_Range",
+  "inputs": {
+   "length": 14
+  },
+  "name": "Average True Range"
+ },
+ "ChandelierExit": {
+  "wire_id": "STD;Chandelier_Exit",
+  "inputs": {
+   "period": 22,
+   "atr_len": 22,
+   "mult": 3
+  },
+  "name": "Chandelier Exit"
+ },
+ "ChoppinessIndex": {
+  "wire_id": "STD;Choppiness_Index",
+  "inputs": {
+   "length": 14
+  },
+  "name": "Choppiness Index"
+ },
+ "ConnorsRsi": {
+  "wire_id": "STD;Connors_RSI",
+  "inputs": {
+   "fast": 3,
+   "rank_len": 2,
+   "slow": 100
+  },
+  "name": "Connors RSI"
  }
 }

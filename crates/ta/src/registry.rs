@@ -49,6 +49,11 @@ pub enum TvId {
     Alligator,
     BollingerBands,
     BollingerBandsWidth,
+    Aroon,
+    Atr,
+    ChandelierExit,
+    ChoppinessIndex,
+    ConnorsRsi,
     PercentB,
     KeltnerChannels,
     DonchianChannels,
@@ -780,6 +785,19 @@ const DEFS_PRICE: &[Def] = &[
             pl!("S4", GREEN, PlotStyle::Line, hide),
         ],
     },
+    Def {
+        id: TvId::ChandelierExit,
+        tv_name: "Chandelier Exit",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("period", "Length", 22, 1, 5000),
+            ip!("atr_len", "ATR Length", 22, 1, 5000),
+            fp!("mult", "Multiplier", 3.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Long Stop", GREEN), pl!("Short Stop", RED)],
+    },
 ];
 
 const DEFS_OSC: &[Def] = &[
@@ -1291,6 +1309,47 @@ const DEFS_OSC: &[Def] = &[
         params: &[ip!("length", "Length", 10, 1, 500)],
         plots: &[pl!("VI+", PURPLE), pl!("VI-", ORANGE)],
     },
+    Def {
+        id: TvId::Aroon,
+        tv_name: "Aroon",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[50.0],
+        params: &[ip!("period", "Period", 14, 1, 5000)],
+        plots: &[pl!("Aroon Up", GREEN), pl!("Aroon Down", RED)],
+    },
+    Def {
+        id: TvId::Atr,
+        tv_name: "Average True Range",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[ip!("length", "Length", 14, 1, 5000)],
+        plots: &[pl!("ATR", BLUE)],
+    },
+    Def {
+        id: TvId::ChoppinessIndex,
+        tv_name: "Choppiness Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[61.3, 38.2],
+        params: &[ip!("length", "Length", 14, 1, 5000)],
+        plots: &[pl!("CHOP", PURPLE)],
+    },
+    Def {
+        id: TvId::ConnorsRsi,
+        tv_name: "Connors RSI",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[70.0, 30.0],
+        params: &[
+            ip!("fast", "RSI Length", 3, 1, 500),
+            ip!("rank_len", "Rank Length", 2, 1, 500),
+            ip!("slow", "Long RSI Length", 100, 1, 500),
+            ip!("ema_len", "EMA Length", 7, 1, 500),
+        ],
+        plots: &[pl!("CRSI", BLUE)],
+    },
 ];
 
 /// All indicator definitions, stable order.
@@ -1449,12 +1508,31 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
         TvId::PercentB => out(vec![
             channels::bollinger(&src, p.i(defn, "length"), p.f(defn, "mult")).percent_b,
         ]),
-        TvId::BollingerBandsWidth => out(vec![channels::bollinger(
+        TvId::BollingerBandsWidth => out(vec![
+            channels::bollinger(&src, p.i(defn, "length"), p.f(defn, "mult")).band_width,
+        ]),
+        TvId::Aroon => {
+            let (up, down) = trends::aroon(h, l, p.i(defn, "period"));
+            out(vec![up, down])
+        }
+        TvId::Atr => out(vec![series::rma(&series::tr(cd), p.i(defn, "length"))]),
+        TvId::ChandelierExit => {
+            let ch = trends::chandelier(
+                cd,
+                p.i(defn, "period"),
+                p.i(defn, "atr_len"),
+                p.f(defn, "mult"),
+            );
+            out(vec![ch.long, ch.short])
+        }
+        TvId::ChoppinessIndex => out(vec![trends::choppiness(cd, p.i(defn, "length"))]),
+        TvId::ConnorsRsi => out(vec![oscs::connors_rsi(
             &src,
-            p.i(defn, "length"),
-            p.f(defn, "mult"),
-        )
-        .band_width]),
+            p.i(defn, "fast"),
+            p.i(defn, "rank_len"),
+            p.i(defn, "slow"),
+            p.i(defn, "ema_len"),
+        )]),
         TvId::KeltnerChannels => {
             let len = p.i(defn, "length");
             let mult = p.f(defn, "mult");
@@ -1958,7 +2036,7 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 67);
+        assert_eq!(count, 72);
     }
 }
 
@@ -2197,6 +2275,35 @@ mod ctx_tests {
         assert_eq!(a.plots.len(), b.plots.len());
         for (x, y) in a.plots.iter().zip(&b.plots) {
             assert_eq!(x.series, y.series, "{}", x.title);
+        }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1a {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1a_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 5] = [
+            (TvId::Aroon, &[&AROON_UP, &AROON_DN]),
+            (TvId::Atr, &[&ATR]),
+            (TvId::ChandelierExit, &[&CHAND_L, &CHAND_S]),
+            (TvId::ChoppinessIndex, &[&CHOP]),
+            (TvId::ConnorsRsi, &[&CRSI]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
         }
     }
 }

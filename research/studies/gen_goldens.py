@@ -323,6 +323,86 @@ def ichimoku(h, l, conv, base, sb, disp):
         if FIN(sh[i]) and FIN(sl[i]):
             sbv[i] = (sh[i] + sl[i]) / 2
     return cv, bs, sa, sbv
+
+
+def compact_apply(src, fn):
+    lead = 0
+    while lead < len(src) and not FIN(src[lead]):
+        lead += 1
+    tail = 0
+    while tail < len(src) - lead and not FIN(src[len(src) - 1 - tail]):
+        tail += 1
+    core = fn(src[lead:len(src) - tail]) if lead + tail < len(src) else []
+    return [float("nan")] * lead + core + [float("nan")] * tail
+
+
+def rsi(c, n):
+    gains = [float("nan")] + [
+        max(c[i] - c[i - 1], 0.0) if FIN(c[i]) and FIN(c[i - 1]) else float("nan")
+        for i in range(1, len(c))]
+    losses = [float("nan")] + [
+        max(c[i - 1] - c[i], 0.0) if FIN(c[i]) and FIN(c[i - 1]) else float("nan")
+        for i in range(1, len(c))]
+    rg = compact_apply(gains, lambda d: rma(d, n))
+    rl = compact_apply(losses, lambda d: rma(d, n))
+    out = [float("nan")] * len(c)
+    for i in range(len(c)):
+        if FIN(rg[i]) and FIN(rl[i]):
+            out[i] = 100.0 if rl[i] == 0 else 100.0 - 100.0 / (1.0 + rg[i] / rl[i])
+    return out
+
+
+def aroon(h, l, period):
+    n = len(h)
+    up = [float("nan")] * n
+    dn = [float("nan")] * n
+    p = float(period)
+    for i in range(period - 1, n):
+        w = h[i + 1 - period:i + 1]
+        if all(FIN(x) for x in w):
+            hb = max(range(period), key=lambda k: w[k])
+            up[i] = 100.0 * (hb + 1) / p
+        w = l[i + 1 - period:i + 1]
+        if all(FIN(x) for x in w):
+            lb = min(range(period), key=lambda k: w[k])
+            dn[i] = 100.0 * (lb + 1) / p
+    return up, dn
+
+
+def chandelier(h, l, c, period, atr_len, mult):
+    hh = rolling_bound(h, period, True)
+    ll = rolling_bound(l, period, False)
+    atr = rma(tr(h, l, c), atr_len)
+    ln = [hhv - mult * a if FIN(hhv) and FIN(a) else float("nan")
+          for hhv, a in zip(hh, atr)]
+    sh = [llv + mult * a if FIN(llv) and FIN(a) else float("nan")
+          for llv, a in zip(ll, atr)]
+    return ln, sh
+
+
+def choppiness(h, l, c, n):
+    t = tr(h, l, c)
+    hh = rolling_bound(h, n, True)
+    ll = rolling_bound(l, n, False)
+    out = [float("nan")] * len(c)
+    for i in range(n - 1, len(c)):
+        w = t[i + 1 - n:i + 1]
+        if all(FIN(x) for x in w) and FIN(hh[i]) and FIN(ll[i]) and hh[i] > ll[i]:
+            out[i] = 100.0 * math.log10(sum(w) / (hh[i] - ll[i])) / math.log10(n)
+    return out
+
+
+def connors_rsi(c, fast, rank_len, slow, ema_len):
+    r1, r2, r3 = rsi(c, fast), rsi(c, rank_len), rsi(c, slow)
+    avg = [float("nan")] * len(c)
+    for i in range(len(c)):
+        if FIN(r1[i]) and FIN(r2[i]) and FIN(r3[i]):
+            win = min(i + 1, slow)
+            le = sum(1 for j in range(i + 1 - win, i + 1)
+                    if FIN(r2[j]) and r2[j] <= r2[i])
+            rank = 100.0 * le / win
+            avg[i] = (rank + r1[i] + r3[i]) / 3.0
+    return ema(avg, ema_len)
 # ---------------------------------------------------------------- defaults
 DOC_FALLBACK = {
     "Sma": {"length": 9},
@@ -427,6 +507,17 @@ def main():
         "MOM": mom, "ROC": roc, "ZSCORE": zs, "BIAS": bias,
         "ER_BULL": [h - m if FIN(m) else float("nan") for h, m in zip(highs, e13)],
         "ER_BEAR": [l - m if FIN(m) else float("nan") for l, m in zip(lows, e13)],
+    })
+
+
+    au, ad = aroon(highs, lows, 14)
+    ch_l, ch_s = chandelier(highs, lows, closes, 22, 22, 3.0)
+    series.update({
+        "AROON_UP": au, "AROON_DN": ad,
+        "ATR": rma(tr(highs, lows, closes), 14),
+        "CHAND_L": ch_l, "CHAND_S": ch_s,
+        "CHOP": choppiness(highs, lows, closes, 14),
+        "CRSI": connors_rsi(closes, 3, 2, 100, 7),
     })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")

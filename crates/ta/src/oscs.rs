@@ -579,6 +579,31 @@ pub fn elder_ray(cd: &Candles, len: usize) -> ElderRay {
     ElderRay { bull, bear }
 }
 
+/// Connors RSI: mean of RSI(fast), RSI(slow) and the percent-rank of
+/// RSI(rank_len) over the trailing `slow` bars, smoothed by EMA(ema_len).
+#[must_use]
+pub fn connors_rsi(c: &[f64], fast: usize, rank_len: usize, slow: usize, ema_len: usize) -> Series {
+    let r_fast = rsi(c, fast);
+    let r_rank = rsi(c, rank_len);
+    let r_slow = rsi(c, slow);
+    let n = c.len();
+    let avg: Series = (0..n)
+        .map(|i| {
+            if !(r_fast[i].is_finite() && r_rank[i].is_finite() && r_slow[i].is_finite()) {
+                return f64::NAN;
+            }
+            let win = (i + 1).min(slow);
+            let start = i + 1 - win;
+            let le = (start..=i)
+                .filter(|&j| r_rank[j].is_finite() && r_rank[j] <= r_rank[i])
+                .count();
+            let rank = 100.0 * (le as f64) / (win as f64);
+            (rank + r_fast[i] + r_slow[i]) / 3.0
+        })
+        .collect();
+    crate::series::ema_seed(&avg, ema_len, crate::series::Seed::Sma)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
