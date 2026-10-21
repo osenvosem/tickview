@@ -606,12 +606,15 @@ impl Icon {
                 line(7.0, 12.0, 14.0, 12.0);
             }
             Self::Measure => {
-                line(3.0, 18.0, 21.0, 6.0);
-                line(3.0, 15.0, 6.0, 21.0);
-                line(21.0, 3.0, 18.0, 9.0);
-                line(7.0, 15.0, 10.0, 17.0);
-                line(12.0, 12.0, 15.0, 14.0);
-                line(17.0, 9.0, 20.0, 11.0);
+                // Diagonal ruler: parallel edges, end caps, alternating ticks.
+                line(3.0, 17.0, 17.0, 3.0);
+                line(7.0, 21.0, 21.0, 7.0);
+                line(3.0, 17.0, 7.0, 21.0);
+                line(17.0, 3.0, 21.0, 7.0);
+                line(6.2, 13.8, 9.4, 17.0);
+                line(9.0, 11.0, 11.2, 13.2);
+                line(11.8, 8.2, 15.0, 11.4);
+                line(14.6, 5.4, 16.8, 7.6);
             }
             Self::Brush => {
                 line(3.0, 17.0, 8.0, 10.0);
@@ -1099,15 +1102,17 @@ impl Icon {
                 path(&[(12.0, 5.0), (12.0, 19.0)]);
             }
             Self::Magnet => {
-                // Horseshoe: outer arc, inner arc, pole feet.
-                arc(12.0, 13.0, 8.0, std::f32::consts::PI, std::f32::consts::TAU);
-                arc(12.0, 13.0, 4.5, std::f32::consts::PI, std::f32::consts::TAU);
-                line(4.0, 13.0, 7.5, 13.0);
-                line(16.5, 13.0, 20.0, 13.0);
-                line(4.0, 13.0, 4.0, 16.5);
-                line(7.5, 13.0, 7.5, 16.5);
-                line(16.5, 13.0, 16.5, 16.5);
-                line(20.0, 13.0, 20.0, 16.5);
+                // Horseshoe magnet, poles up: U body, leg caps, pole bands.
+                arc(12.0, 12.0, 7.0, 0.0, std::f32::consts::PI);
+                arc(12.0, 12.0, 3.8, 0.0, std::f32::consts::PI);
+                line(5.0, 12.0, 5.0, 6.0);
+                line(8.2, 12.0, 8.2, 6.0);
+                line(5.0, 6.0, 8.2, 6.0);
+                line(15.8, 12.0, 15.8, 6.0);
+                line(19.0, 12.0, 19.0, 6.0);
+                line(15.8, 6.0, 19.0, 6.0);
+                line(5.0, 8.5, 8.2, 8.5);
+                line(15.8, 8.5, 19.0, 8.5);
             }
             Self::Search => {
                 circle(10.5, 10.5, 6.0);
