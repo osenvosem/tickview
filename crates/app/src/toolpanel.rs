@@ -813,13 +813,9 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                                 .request_repaint_after(SELECT_DELAY + Duration::from_millis(8));
                         }
                     }
-                    // No rule above the Icons group (TV keeps it flush).
-                    if GROUPS
-                        .get(group_index + 1)
-                        .is_none_or(|next| next.name != "Icons")
-                    {
-                        rail_divider(ui, p);
-                    }
+                    // TV keeps the tool-group rail free of horizontal rules
+                    // above the Icons button; groups stack with plain spacing.
+                    ui.add_space(GROUP_PAD * 2.0 + 1.0);
                 }
 
                 if !ui.ctx().input(|i| i.pointer.any_down()) {
