@@ -870,6 +870,7 @@ fn paste_drawings(
 
 impl TickView {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        tickchart::set_emoji_texture_resolver(crate::toolpanel::chart_emoji_texture);
         let ctx = &cc.egui_ctx;
         let mut cfg = store::load();
         if let Ok(v) = std::env::var("TICKVIEW_THEME") {

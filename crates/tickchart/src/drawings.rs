@@ -2121,6 +2121,16 @@ pub fn emoji_size_px(width: f32) -> f32 {
     16.0 + width.clamp(1.0, 8.0) * 4.0
 }
 
+/// App-registered glyph→texture resolver for Emoji drawings. The chart crate
+/// owns no font assets; the app hands in its vendored OpenMoji rasterizer so
+/// emoji drawings render as color art instead of blank font glyphs.
+type EmojiTextureFn = fn(&egui::Context, &str) -> Option<egui::TextureHandle>;
+static EMOJI_RESOLVER: std::sync::OnceLock<EmojiTextureFn> = std::sync::OnceLock::new();
+
+pub fn set_emoji_texture_resolver(f: EmojiTextureFn) {
+    let _ = EMOJI_RESOLVER.set(f);
+}
+
 /// Seven Fibonacci extension levels projected from `c` as `(ratio, price)`.
 #[must_use]
 pub fn fib_ext_levels(a: f64, b: f64, c: f64) -> [(f32, f32); 7] {
@@ -3082,13 +3092,23 @@ fn draw_one(
             } else {
                 &d.style.text
             };
-            p.text(
-                pa,
-                Align2::CENTER_CENTER,
-                glyph,
-                FontId::proportional(emoji_size_px(f32::from(d.style.width))),
-                color,
-            );
+            let size = emoji_size_px(f32::from(d.style.width));
+            if let Some(tex) = EMOJI_RESOLVER.get().and_then(|f| f(p.ctx(), glyph)) {
+                p.image(
+                    tex.id(),
+                    Rect::from_center_size(pa, Vec2::splat(size)),
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    Color32::WHITE,
+                );
+            } else {
+                p.text(
+                    pa,
+                    Align2::CENTER_CENTER,
+                    glyph,
+                    FontId::proportional(size),
+                    color,
+                );
+            }
         }
     }
 
