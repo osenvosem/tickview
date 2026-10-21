@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
+Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -103,7 +103,7 @@ Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 |---|---|---|---|---|
 | Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | in-progress |
 | Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | in-progress |
-| Bollinger Bands | `BB@tv` | `BollingerBands` | `` | in-progress |
+| Bollinger Bands | `BB@tv` | `BollingerBands` | `` | verified |
 | %B | `BollingerBandsR@tv` | `PercentB` | `` | in-progress |
 | Commodity Channel Index (CCI) | `CCI@tv` | `Cci` | `` | in-progress |
 | Chaikin Oscillator | `ChaikinOscillator@tv` | `ChaikinOscillator` | `` | in-progress |
@@ -111,17 +111,17 @@ Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 | Chaikin Money Flow | `CMF@tv` | `ChaikinMoneyFlow` | `` | in-progress |
 | Detrended Price Oscillator | `DetrendedPriceOscillator@tv` | `Dpo` | `` | in-progress |
 | Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | in-progress |
-| Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | in-progress |
+| Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | verified |
 | Double EMA | `DoubleEMA@tv` | `Dema` | `` | verified |
 | Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | in-progress |
 | Elder's Force Index | `EFI@tv` | `ElderForce` | `` | in-progress |
-| Envelope | `ENV@tv` | `Envelope` | `` | in-progress |
+| Envelope | `ENV@tv` | `Envelope` | `` | verified |
 | Hull Moving Average | `hullMA@tv` | `Hma` | `` | verified |
 | Historical Volatility | `HV@tv` | `HistoricalVolatility` | `` | in-progress |
-| Ichimoku Cloud | `IchimokuCloud@tv` | `Ichimoku` | `` | in-progress |
-| Keltner Channels | `KLTNR@tv` | `KeltnerChannels` | `` | in-progress |
+| Ichimoku Cloud | `IchimokuCloud@tv` | `Ichimoku` | `` | verified |
+| Keltner Channels | `KLTNR@tv` | `KeltnerChannels` | `` | verified |
 | KST Oscillator | `KST@tv` | `Kst` | `` | in-progress |
-| Linear Regression | `LinearRegression@tv` | `LinReg` | `` | in-progress |
+| Linear Regression | `LinearRegression@tv` | `LinReg` | `` | verified |
 | MACD | `MACD@tv` | `Macd` | `` | in-progress |
 | Exponential Moving Average | `MAExp@tv` | `Ema` | `` | verified |
 | Simple Moving Average | `MASimple@tv` | `Sma` | `` | verified |
@@ -131,7 +131,7 @@ Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 | On Balance Volume (OBV) | `OBV@tv` | `Obv` | `` | in-progress |
 | Pivot Points Standard | `PivotPointsStandard@tv` | `Pivots` | `` | in-progress |
 | Volume Price Trend | `PriceVolumeTrend@tv` | `VolumePriceTrend` | `` | in-progress |
-| Parabolic SAR | `PSAR@tv` | `Psar` | `` | in-progress |
+| Parabolic SAR | `PSAR@tv` | `Psar` | `` | verified |
 | Rate of Change (ROC) | `ROC@tv` | `Roc` | `` | in-progress |
 | Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | in-progress |
 | Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | in-progress |
@@ -166,7 +166,7 @@ Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 | Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |
 | Rogers-Satchell Volatility | `STD;RogersSatchellVolatility` | `RogersSatchellVolatility` | `` | in-progress |
 | SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | in-progress |
-| Supertrend | `STD;Supertrend` | `Supertrend` | `` | in-progress |
+| Supertrend | `STD;Supertrend` | `Supertrend` | `` | verified |
 | True Strength Index (TSI) | `STD;Tsi` | `Tsi` | `` | in-progress |
 | Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | in-progress |
 | Volume Oscillator | `STD;VolumeOscillator` | `VolumeOscillator` | `` | in-progress |
@@ -184,5 +184,5 @@ Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 | Relative Vigor Index (RVI) | `VigorIndex@tv` | `Rvi` | `` | in-progress |
 | VWAP | `VWAP@tv` | `Vwap` | `` | in-progress |
 | Williams %R | `WilliamR@tv` | `WilliamsR` | `` | in-progress |
-| Alligator | `WilliamsAlligator@tv` | `Alligator` | `` | in-progress |
+| Alligator | `WilliamsAlligator@tv` | `Alligator` | `` | verified |
 

@@ -154,6 +154,175 @@ def kama(src, er_len, fast, slow):
         out[i] = prev
     return out
 
+
+# ------------------------------------------------------------- overlays
+FIN = math.isfinite
+
+
+def tr(h, l, c):
+    out = [h[0] - l[0]]
+    for i in range(1, len(c)):
+        out.append(max(h[i] - l[i], abs(h[i] - c[i - 1]), abs(l[i] - c[i - 1])))
+    return out
+
+
+def rolling_bound(src, n, mx):
+    out = [float("nan")] * len(src)
+    for i in range(n - 1, len(src)):
+        w = src[i + 1 - n:i + 1]
+        if all(FIN(x) for x in w):
+            out[i] = max(w) if mx else min(w)
+    return out
+
+
+def stdev_pop(w):
+    m = sum(w) / len(w)
+    return math.sqrt(sum((x - m) ** 2 for x in w) / len(w))
+
+
+def bollinger(src, n, mult):
+    basis = sma(src, n)
+    up = [float("nan")] * len(src)
+    lo = [float("nan")] * len(src)
+    for i in range(n - 1, len(src)):
+        w = src[i + 1 - n:i + 1]
+        if all(FIN(x) for x in w):
+            sd = stdev_pop(w)
+            up[i] = basis[i] + mult * sd
+            lo[i] = basis[i] - mult * sd
+    return up, basis, lo
+
+
+def keltner(h, l, c, n, mult):
+    mid = ema(c, n)
+    ra = rma(tr(h, l, c), n)
+    up = [float("nan")] * len(c)
+    lo = [float("nan")] * len(c)
+    for i in range(len(c)):
+        if FIN(mid[i]) and FIN(ra[i]):
+            up[i] = mid[i] + mult * ra[i]
+            lo[i] = mid[i] - mult * ra[i]
+    return up, mid, lo
+
+
+def donchian(h, l, n):
+    up = rolling_bound(h, n, True)
+    lo = rolling_bound(l, n, False)
+    med = [(u + d) / 2 if FIN(u) and FIN(d) else float("nan") for u, d in zip(up, lo)]
+    return up, med, lo
+
+
+def envelope(src, n, pct):
+    basis = sma(src, n)
+    up = [b * (1 + pct / 100) if FIN(b) else float("nan") for b in basis]
+    lo = [b * (1 - pct / 100) if FIN(b) else float("nan") for b in basis]
+    return up, basis, lo
+
+
+def linreg_channel(src, n, mult):
+    out_c = [float("nan")] * len(src)
+    out_u = [float("nan")] * len(src)
+    out_l = [float("nan")] * len(src)
+    if n < 2:
+        return out_c, out_u, out_l
+    mx = (n - 1) / 2.0
+    sxx = sum((k - mx) ** 2 for k in range(n))
+    for i in range(n - 1, len(src)):
+        w = src[i + 1 - n:i + 1]
+        if not all(FIN(x) for x in w):
+            continue
+        my = sum(w) / n
+        sxy = sum((k - mx) * (w[k] - my) for k in range(n))
+        slope = sxy / sxx
+        icpt = my - slope * mx
+        last = icpt + slope * (n - 1)
+        sd = math.sqrt(sum((w[k] - (icpt + slope * k)) ** 2 for k in range(n)) / n)
+        out_c[i] = last
+        out_u[i] = last + mult * sd
+        out_l[i] = last - mult * sd
+    return out_c, out_u, out_l
+
+
+def psar(h, l, start, inc, max_af):
+    n = len(h)
+    out = [float("nan")] * n
+    if n < 2:
+        return out
+    bull, af, ep, sar = True, start, h[0], l[0]
+    for i in range(1, n):
+        s = sar + af * (ep - sar)
+        if bull:
+            s = min(s, l[i - 1], l[i - 2] if i >= 2 else s)
+            if l[i] < s:
+                bull, s, ep, af = False, ep, l[i], start
+            elif h[i] > ep:
+                ep = h[i]
+                af = min(af + inc, max_af)
+        else:
+            s = max(s, h[i - 1], h[i - 2] if i >= 2 else s)
+            if h[i] > s:
+                bull, s, ep, af = True, ep, h[i], start
+            elif l[i] < ep:
+                ep = l[i]
+                af = min(af + inc, max_af)
+        out[i] = s
+        sar = s
+    return out
+
+
+def supertrend(h, l, c, atr_len, mult):
+    n = len(c)
+    atr = rma(tr(h, l, c), atr_len)
+    line = [float("nan")] * n
+    trend = [float("nan")] * n
+    fub = [float("nan")] * n
+    flb = [float("nan")] * n
+    prev_t = 1.0
+    for i in range(n):
+        if not FIN(atr[i]):
+            continue
+        hl2 = (h[i] + l[i]) / 2
+        ub, lb = hl2 + mult * atr[i], hl2 - mult * atr[i]
+        fub[i] = ub if (i == 0 or not FIN(fub[i - 1]) or ub < fub[i - 1]
+                        or c[i - 1] > fub[i - 1]) else fub[i - 1]
+        flb[i] = lb if (i == 0 or not FIN(flb[i - 1]) or lb > flb[i - 1]
+                        or c[i - 1] < flb[i - 1]) else flb[i - 1]
+        if prev_t > 0 and c[i] <= flb[i]:
+            t = -1.0
+        elif prev_t < 0 and c[i] >= fub[i]:
+            t = 1.0
+        else:
+            t = prev_t
+        line[i] = flb[i] if t > 0 else fub[i]
+        trend[i] = t
+        prev_t = t
+    return line, trend
+
+
+def alligator(h, l, jb, js, tb, ts, lb, ls):
+    hl2 = [(a + b) / 2 for a, b in zip(h, l)]
+
+    def sh(arr, k):
+        return [float("nan")] * k + arr[:len(arr) - k]
+    return (sh(rma(hl2, jb), js), sh(rma(hl2, tb), ts), sh(rma(hl2, lb), ls))
+
+
+def ichimoku(h, l, conv, base, sb, disp):
+    n = len(h)
+    ch, cl = rolling_bound(h, conv, True), rolling_bound(l, conv, False)
+    bh, bl = rolling_bound(h, base, True), rolling_bound(l, base, False)
+    sh, sl = rolling_bound(h, sb, True), rolling_bound(l, sb, False)
+    cv = [(a + b) / 2 if FIN(a) and FIN(b) else float("nan") for a, b in zip(ch, cl)]
+    bs = [(a + b) / 2 if FIN(a) and FIN(b) else float("nan") for a, b in zip(bh, bl)]
+    sa = [float("nan")] * n
+    sbv = [float("nan")] * n
+    for i in range(disp, n):
+        j = i - disp
+        if FIN(cv[j]) and FIN(bs[j]):
+            sa[i] = (cv[j] + bs[j]) / 2
+        if FIN(sh[i]) and FIN(sl[i]):
+            sbv[i] = (sh[i] + sl[i]) / 2
+    return cv, bs, sa, sbv
 # ---------------------------------------------------------------- defaults
 DOC_FALLBACK = {
     "Sma": {"length": 9},
@@ -200,6 +369,42 @@ def main():
     }
     for L in (8, 13, 21, 34, 55, 89, 144, 169):
         series[f"RIBBON_E{L}"] = ema(src, L)
+
+    ev = json.loads(EVIDENCE.read_text())
+
+    def w(sid, key, fb):
+        return ev.get(sid, {}).get("inputs", {}).get(key, fb)
+
+    bb_u, bb_b, bb_l = bollinger(src, w("BollingerBands", "length", 20),
+                                 w("BollingerBands", "stdDev", 2.0))
+    ku, kb, kl = keltner(highs, lows, closes, w("KeltnerChannels", "length", 20),
+                         w("KeltnerChannels", "multiplier", 1.0))
+    do_u, do_m, do_l = donchian(highs, lows, w("DonchianChannels", "length", 20))
+    en_u, en_b, en_l = envelope(src, w("Envelope", "length", 20),
+                                w("Envelope", "percent", 10.0))
+    lr_c, lr_u, lr_l = linreg_channel(src, w("LinReg", "count", 100),
+                                      abs(w("LinReg", "upper diviation", 2.0)))
+    ps = psar(highs, lows, w("Psar", "start", 0.02), w("Psar", "increment", 0.02),
+              w("Psar", "max value", 0.2))
+    st_line, st_trend = supertrend(highs, lows, closes, 10, 3.0)  # doc default, no wire
+    ag = alligator(highs, lows, w("Alligator", "jaw length", 13), 8,
+                   w("Alligator", "teeth length", 8), 3,
+                   w("Alligator", "lips length", 5), 1)
+    ic = ichimoku(highs, lows, w("Ichimoku", "turning line periods", 9),
+                  w("Ichimoku", "standard line periods", 26),
+                  w("Ichimoku", "leading span 2 periods", 52),
+                  w("Ichimoku", "displacement", 26))
+    series.update({
+        "BB_U": bb_u, "BB_B": bb_b, "BB_L": bb_l,
+        "KELT_U": ku, "KELT_B": kb, "KELT_L": kl,
+        "DON_U": do_u, "DON_M": do_m, "DON_L": do_l,
+        "ENV_U": en_u, "ENV_B": en_b, "ENV_L": en_l,
+        "LR_C": lr_c, "LR_U": lr_u, "LR_L": lr_l,
+        "PSAR": ps, "ST_UP": [x if tt > 0 else float("nan") for x, tt in zip(st_line, st_trend)],
+        "ST_DN": [x if tt < 0 else float("nan") for x, tt in zip(st_line, st_trend)],
+        "AG_JAW": ag[0], "AG_TEETH": ag[1], "AG_LIPS": ag[2],
+        "ICHI_C": ic[0], "ICHI_B": ic[1], "ICHI_SA": ic[2], "ICHI_SB": ic[3],
+    })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")
     for name, arr in (("FIX_O", opens), ("FIX_H", highs), ("FIX_C", closes), ("FIX_L", lows)):

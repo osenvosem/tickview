@@ -80,3 +80,11 @@ disagree, the bundle value is used and the conflict is recorded here:
   the study entry notes.
 - Connors %R rank-percentile window semantics (RSI(2) percentile rank over
   100 bars) follow the published formula; no wire plot values were extractable.
+
+## Price-overlay audit findings (T5)
+
+- `KeltnerChannels` source default was `hl2`; wire `enum_inputs.source = "close"` → default fixed to close.
+- `Envelope` deviation default was 5%; wire `inputs.percent = 10` → fixed to 10.
+- `LinReg` stddev multiplier was 1.0; wire `upper diviation = 2` → fixed to 2.0.
+- `Supertrend` and `EMA Ribbons` have no wire row; defaults follow TV docs (ATR 10 / factor 3; ribbon 8..169 Fibonacci set) — open questions.
+- `Vwap` goldens deferred to session-anchor work (T9); `Pivots` needs day-aggregation evidence — both stay in-progress.

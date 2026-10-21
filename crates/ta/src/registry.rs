@@ -667,7 +667,7 @@ const DEFS_PRICE: &[Def] = &[
         params: &[
             ip!("length", "Length", 20, 1, 5000),
             fp!("mult", "Multiplier", 1.0, 0.5, 10.0, 0.1),
-            ep!("source", "source", 4, SOURCE_VARIANTS),
+            ep!("source", "source", 0, SOURCE_VARIANTS), // wire: source=close
         ],
         plots: &[
             pl!("Middle", PURPLE),
@@ -696,7 +696,7 @@ const DEFS_PRICE: &[Def] = &[
         hlines: &[],
         params: &[
             ip!("length", "Length", 20, 1, 5000),
-            fp!("deviation", "Deviation %", 5.0, 0.1, 100.0, 0.1),
+            fp!("deviation", "Deviation %", 10.0, 0.1, 100.0, 0.1), // wire: percent 10
             ep!("ma_type", "MA Type", 0, "sma", "ema"),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
@@ -730,7 +730,7 @@ const DEFS_PRICE: &[Def] = &[
         hlines: &[],
         params: &[
             ip!("length", "Length", 100, 2, 5000),
-            fp!("mult", "StdDev Multiplier", 1.0, 0.0, 5.0, 0.1),
+            fp!("mult", "StdDev Multiplier", 2.0, 0.0, 5.0, 0.1),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
         plots: &[
@@ -1926,7 +1926,7 @@ mod gold_ma {
 
     include!("gold_mis.rs");
 
-    fn fixture2() -> Candles {
+    pub(super) fn fixture2() -> Candles {
         let bars: Vec<Bar> = FIX_T
             .iter()
             .enumerate()
@@ -1942,7 +1942,7 @@ mod gold_ma {
         Candles::from_bars(&bars)
     }
 
-    fn approx(got: &[f64], want: &[f64], what: &str) {
+    pub(super) fn approx(got: &[f64], want: &[f64], what: &str) {
         assert_eq!(got.len(), want.len(), "{what}: len");
         for (i, (g, w)) in got.iter().zip(want).enumerate() {
             if w.is_nan() {
@@ -2026,5 +2026,48 @@ mod gold_ma {
         }
         let ribbons = super::def(TvId::EmaRibbons);
         assert_eq!(ribbons.plots.len(), 8, "ribbon plot count");
+    }
+}
+
+#[cfg(test)]
+mod gold_price {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+    use crate::Candles;
+
+    include!("gold_mis.rs");
+
+    fn check(id: TvId, want: &[&[f64]], cd: &Candles, ax: &Anchors) {
+        let out = compute(id, &Params::default(), cd, ax);
+        assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+        for (plot, w) in out.plots.iter().zip(want) {
+            approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+        }
+    }
+
+    #[test]
+    fn price_overlays_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        check(TvId::BollingerBands, &[&BB_U, &BB_B, &BB_L], &cd, &ax);
+        check(
+            TvId::KeltnerChannels,
+            &[&KELT_B, &KELT_U, &KELT_L],
+            &cd,
+            &ax,
+        );
+        check(TvId::DonchianChannels, &[&DON_U, &DON_M, &DON_L], &cd, &ax);
+        check(TvId::Envelope, &[&ENV_U, &ENV_B, &ENV_L], &cd, &ax);
+        check(TvId::LinReg, &[&LR_C, &LR_U, &LR_L], &cd, &ax);
+        check(TvId::Psar, &[&PSAR], &cd, &ax);
+        check(TvId::Supertrend, &[&ST_UP, &ST_DN], &cd, &ax);
+        check(TvId::Alligator, &[&AG_JAW, &AG_TEETH, &AG_LIPS], &cd, &ax);
+        check(
+            TvId::Ichimoku,
+            &[&ICHI_C, &ICHI_B, &ICHI_SA, &ICHI_SB],
+            &cd,
+            &ax,
+        );
     }
 }
