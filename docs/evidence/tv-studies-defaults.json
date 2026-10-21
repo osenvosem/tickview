@@ -547,5 +547,68 @@
    "slow": 100
   },
   "name": "Connors RSI"
+ },
+ "Dmi": {
+  "wire_id": "STD;DMI",
+  "inputs": {
+   "di_len": 14,
+   "adx_sm": 14
+  },
+  "name": "Directional Movement Index"
+ },
+ "FisherTransform": {
+  "wire_id": "STD;Fisher_Transform",
+  "inputs": {
+   "length": 9
+  },
+  "name": "Fisher Transform"
+ },
+ "KnowSureThing": {
+  "wire_id": "STD;Know_Sure_Thing",
+  "inputs": {
+   "roc1": 10,
+   "roc2": 15,
+   "roc3": 20,
+   "roc4": 30,
+   "sma1": 10,
+   "sma2": 10,
+   "sma3": 10,
+   "sma4": 15,
+   "sig": 9
+  },
+  "name": "Know Sure Thing"
+ },
+ "PriceOscillator": {
+  "wire_id": "STD;Price_Oscillator",
+  "inputs": {
+   "fast": 12,
+   "slow": 26,
+   "sig": 9
+  },
+  "name": "Price Oscillator"
+ },
+ "RelativeVolatilityIndex": {
+  "wire_id": "STD;Relative_Volatility_Index",
+  "inputs": {
+   "length": 10,
+   "smooth": 10
+  },
+  "name": "Relative Volatility Index"
+ },
+ "SmiErgodic": {
+  "wire_id": "STD;SMI_Ergodic_Indicator_Oscillator",
+  "inputs": {
+   "length": 20,
+   "sig": 5
+  },
+  "name": "SMI Ergodic Indicator/Oscillator"
+ },
+ "VolatilityStop": {
+  "wire_id": "STD;Volatility_Stop",
+  "inputs": {
+   "length": 20,
+   "mult": 2.0
+  },
+  "name": "Volatility Stop"
  }
 }

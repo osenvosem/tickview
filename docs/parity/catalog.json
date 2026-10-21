@@ -2193,7 +2193,7 @@
    "pane": "separate",
    "status": "verified",
    "tests": [
-    "ta::oscs::tests::goldens_match_all",
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
     "tv_defaults::registry_defaults_match_tv_wire"
    ],
    "evidence": [
@@ -2447,9 +2447,15 @@
    "tickview_id": "Accelerator",
    "name": "Accelerator Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2646,9 +2652,15 @@
    "tickview_id": "Dmi",
    "name": "Directional Movement",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2696,9 +2708,15 @@
    "tickview_id": "FisherTransform",
    "name": "Fisher Transform",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2763,9 +2781,15 @@
    "tickview_id": "KnowSureThing",
    "name": "Know Sure Thing",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2848,9 +2872,15 @@
    "tickview_id": "PriceOscillator",
    "name": "Price Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2908,9 +2938,15 @@
    "tickview_id": "RelativeVolatilityIndex",
    "name": "Relative Volatility Index",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2957,9 +2993,15 @@
    "tickview_id": "SmiErgodic",
    "name": "SMI Ergodic Indicator/Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },

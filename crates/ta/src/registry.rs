@@ -54,6 +54,12 @@ pub enum TvId {
     ChandelierExit,
     ChoppinessIndex,
     ConnorsRsi,
+    Dmi,
+    FisherTransform,
+    KnowSureThing,
+    PriceOscillator,
+    RelativeVolatilityIndex,
+    SmiErgodic,
     PercentB,
     KeltnerChannels,
     DonchianChannels,
@@ -1350,6 +1356,83 @@ const DEFS_OSC: &[Def] = &[
         ],
         plots: &[pl!("CRSI", BLUE)],
     },
+    Def {
+        id: TvId::Dmi,
+        tv_name: "Directional Movement Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("di_len", "DI Length", 14, 1, 5000),
+            ip!("adx_sm", "ADX Smoothing", 14, 1, 5000),
+        ],
+        plots: &[pl!("DI+", BLUE), pl!("DI-", RED), pl!("ADX", ORANGE)],
+    },
+    Def {
+        id: TvId::FisherTransform,
+        tv_name: "Fisher Transform",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[ip!("length", "Length", 9, 1, 5000)],
+        plots: &[pl!("Fisher", BLUE), pl!("Trigger", RED)],
+    },
+    Def {
+        id: TvId::KnowSureThing,
+        tv_name: "Know Sure Thing",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("roc1", "ROC Length 1", 10, 1, 500),
+            ip!("roc2", "ROC Length 2", 15, 1, 500),
+            ip!("roc3", "ROC Length 3", 20, 1, 500),
+            ip!("roc4", "ROC Length 4", 30, 1, 500),
+            ip!("sma1", "SMA Length 1", 10, 1, 500),
+            ip!("sma2", "SMA Length 2", 10, 1, 500),
+            ip!("sma3", "SMA Length 3", 10, 1, 500),
+            ip!("sma4", "SMA Length 4", 15, 1, 500),
+            ip!("sig", "Signal Length", 9, 1, 500),
+        ],
+        plots: &[pl!("KST", BLUE), pl!("Signal", ORANGE)],
+    },
+    Def {
+        id: TvId::PriceOscillator,
+        tv_name: "Price Oscillator",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("fast", "Short EMA", 12, 1, 5000),
+            ip!("slow", "Long EMA", 26, 1, 5000),
+            ip!("sig", "Signal EMA", 9, 1, 5000),
+        ],
+        plots: &[pl!("Oscillator", BLUE), pl!("Signal", ORANGE)],
+    },
+    Def {
+        id: TvId::RelativeVolatilityIndex,
+        tv_name: "Relative Volatility Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[50.0],
+        params: &[
+            ip!("length", "Length", 10, 1, 5000),
+            ip!("smooth", "Smoothing", 10, 1, 5000),
+        ],
+        plots: &[pl!("RVI", BLUE)],
+    },
+    Def {
+        id: TvId::SmiErgodic,
+        tv_name: "SMI Ergodic Indicator/Oscillator",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("length", "SMI Length", 20, 1, 5000),
+            ip!("sig", "Trigger Length", 5, 1, 5000),
+        ],
+        plots: &[pl!("SMI", BLUE), pl!("Signal", ORANGE)],
+    },
 ];
 
 /// All indicator definitions, stable order.
@@ -1533,6 +1616,51 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
             p.i(defn, "slow"),
             p.i(defn, "ema_len"),
         )]),
+        TvId::Dmi => {
+            let a = oscs::adx(cd, p.i(defn, "di_len"), p.i(defn, "adx_sm"));
+            out(vec![a.di_plus, a.di_minus, a.adx])
+        }
+        TvId::FisherTransform => {
+            let (f, t) = oscs::fisher(cd, p.i(defn, "length"));
+            out(vec![f, t])
+        }
+        TvId::KnowSureThing => {
+            let k = oscs::kst(
+                &src,
+                [
+                    p.i(defn, "roc1"),
+                    p.i(defn, "roc2"),
+                    p.i(defn, "roc3"),
+                    p.i(defn, "roc4"),
+                ],
+                [
+                    p.i(defn, "sma1"),
+                    p.i(defn, "sma2"),
+                    p.i(defn, "sma3"),
+                    p.i(defn, "sma4"),
+                ],
+                p.i(defn, "sig"),
+            );
+            out(vec![k.kst, k.signal])
+        }
+        TvId::PriceOscillator => {
+            let po = oscs::price_oscillator(
+                &src,
+                p.i(defn, "fast"),
+                p.i(defn, "slow"),
+                p.i(defn, "sig"),
+            );
+            out(vec![po.osc, po.signal])
+        }
+        TvId::RelativeVolatilityIndex => out(vec![oscs::rel_vol_index(
+            &src,
+            p.i(defn, "length"),
+            p.i(defn, "smooth"),
+        )]),
+        TvId::SmiErgodic => {
+            let s = oscs::smi_ergodic(cd, p.i(defn, "length"), p.i(defn, "sig"));
+            out(vec![s.smi, s.signal])
+        }
         TvId::KeltnerChannels => {
             let len = p.i(defn, "length");
             let mult = p.f(defn, "mult");
@@ -2036,7 +2164,7 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 72);
+        assert_eq!(count, 78);
     }
 }
 
@@ -2297,6 +2425,37 @@ mod gold_wave1a {
             (TvId::ChandelierExit, &[&CHAND_L, &CHAND_S]),
             (TvId::ChoppinessIndex, &[&CHOP]),
             (TvId::ConnorsRsi, &[&CRSI]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1b {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1b_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 7] = [
+            (TvId::Dmi, &[&DI_P, &DI_M, &ADX]),
+            (TvId::FisherTransform, &[&FISHER, &FISHER_TRIG]),
+            (TvId::KnowSureThing, &[&KST_K, &KST_SIG]),
+            (TvId::Kst, &[&KST_K, &KST_SIG]),
+            (TvId::PriceOscillator, &[&PO, &PO_SIG]),
+            (TvId::RelativeVolatilityIndex, &[&RVI2]),
+            (TvId::SmiErgodic, &[&SMI, &SMI_SIG]),
         ];
         for (id, want) in cases {
             let out = compute(id, &Params::default(), &cd, &ax);

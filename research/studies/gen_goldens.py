@@ -403,6 +403,108 @@ def connors_rsi(c, fast, rank_len, slow, ema_len):
             rank = 100.0 * le / win
             avg[i] = (rank + r1[i] + r3[i]) / 3.0
     return ema(avg, ema_len)
+
+
+def dmi(h, l, c, di_len, adx_sm):
+    n = len(c)
+    dp = [float("nan")] * n
+    dm = [float("nan")] * n
+    for i in range(1, n):
+        up = h[i] - h[i - 1]
+        dn = l[i - 1] - l[i]
+        dp[i] = up if up > dn and up > 0 else 0.0
+        dm[i] = dn if dn > up and dn > 0 else 0.0
+    atr = rma(tr(h, l, c), di_len)
+    pr = compact_apply(dp, lambda d: rma(d, di_len))
+    mr = compact_apply(dm, lambda d: rma(d, di_len))
+    dip = [float("nan")] * n
+    dim = [float("nan")] * n
+    dx = [float("nan")] * n
+    for i in range(n):
+        if FIN(atr[i]) and atr[i] != 0:
+            dip[i] = 100.0 * pr[i] / atr[i]
+            dim[i] = 100.0 * mr[i] / atr[i]
+            s = dip[i] + dim[i]
+            if s != 0:
+                dx[i] = 100.0 * abs(dip[i] - dim[i]) / s
+    adx = compact_apply(dx, lambda d: rma(d, adx_sm))
+    return dip, dim, adx
+
+
+def fisher(h, l, c, n):
+    ln = len(c)
+    hh = rolling_bound(h, n, True)
+    ll = rolling_bound(l, n, False)
+    fish = [float("nan")] * ln
+    trig = [float("nan")] * ln
+    vp = fp = 0.0
+    for i in range(ln):
+        if FIN(hh[i]) and FIN(ll[i]) and hh[i] > ll[i] and FIN(c[i]):
+            raw = 2.0 * ((c[i] - ll[i]) / (hh[i] - ll[i])) - 1.0
+            v = max(-0.999, min(0.999, 0.33 * raw + 0.67 * vp))
+            f = 0.5 * math.log((1 + v) / (1 - v)) + 0.5 * fp
+            fish[i] = f
+            trig[i] = fp
+            vp, fp = v, f
+    return fish, trig
+
+
+def roc_pct(src, r):
+    out = [float("nan")] * len(src)
+    for i in range(r, len(src)):
+        if FIN(src[i]) and FIN(src[i - r]) and src[i - r] != 0:
+            out[i] = (src[i] - src[i - r]) / abs(src[i - r]) * 100
+    return out
+
+
+def kst(src, rocs, smas, sig):
+    parts = []
+    for k, (r, s) in enumerate(zip(rocs, smas)):
+        w = k + 1
+        parts.append([w * x if FIN(x) else float("nan") for x in sma(roc_pct(src, r), s)])
+    line = [sum(p[i] for p in parts) if all(FIN(p[i]) for p in parts) else float("nan")
+            for i in range(len(src))]
+    return line, sma(line, sig)
+
+
+def price_osc(c, fast, slow, sig):
+    ef, es = ema(c, fast), ema(c, slow)
+    osc = [100.0 * (f - s) / s if FIN(f) and FIN(s) and s != 0 else float("nan")
+           for f, s in zip(ef, es)]
+    return osc, ema(osc, sig)
+
+
+def rel_vol_index(c, n, smooth):
+    ln = len(c)
+    sd = [float("nan")] * ln
+    for i in range(n - 1, ln):
+        w = c[i + 1 - n:i + 1]
+        if all(FIN(x) for x in w):
+            sd[i] = stdev_pop(w)
+    up = [float("nan")] * ln
+    dn = [float("nan")] * ln
+    for i in range(1, ln):
+        if FIN(sd[i]) and FIN(c[i]) and FIN(c[i - 1]):
+            up[i] = sd[i] if c[i] > c[i - 1] else 0.0
+            dn[i] = sd[i] if c[i] < c[i - 1] else 0.0
+    su, sv = sma(up, smooth), sma(dn, smooth)
+    return [100.0 * su[i] / (su[i] + sv[i])
+            if FIN(su[i]) and FIN(sv[i]) and su[i] + sv[i] != 0 else float("nan")
+            for i in range(ln)]
+
+
+def smi_ergodic(h, l, c, n, sig):
+    hh = rolling_bound(h, n, True)
+    ll = rolling_bound(l, n, False)
+    num = [c[i] - (hh[i] + ll[i]) / 2 if FIN(hh[i]) and FIN(ll[i]) and FIN(c[i])
+           else float("nan") for i in range(len(c))]
+    den = [hh[i] - ll[i] if FIN(hh[i]) and FIN(ll[i]) else float("nan")
+           for i in range(len(c))]
+    qn = ema(ema(num, n), n)
+    qd = ema(ema(den, n), n)
+    line = [100.0 * qn[i] / qd[i] if FIN(qn[i]) and FIN(qd[i]) and qd[i] != 0
+            else float("nan") for i in range(len(c))]
+    return line, sma(line, sig)
 # ---------------------------------------------------------------- defaults
 DOC_FALLBACK = {
     "Sma": {"length": 9},
@@ -518,6 +620,20 @@ def main():
         "CHAND_L": ch_l, "CHAND_S": ch_s,
         "CHOP": choppiness(highs, lows, closes, 14),
         "CRSI": connors_rsi(closes, 3, 2, 100, 7),
+    })
+
+    di_p, di_m, adx = dmi(highs, lows, closes, 14, 14)
+    fish, ftrig = fisher(highs, lows, closes, 9)
+    kline, ksig = kst(closes, (10, 15, 20, 30), (10, 10, 10, 15), 9)
+    posc, posig = price_osc(closes, 12, 26, 9)
+    smi_l, smi_s = smi_ergodic(highs, lows, closes, 20, 5)
+    series.update({
+        "DI_P": di_p, "DI_M": di_m, "ADX": adx,
+        "FISHER": fish, "FISHER_TRIG": ftrig,
+        "KST_K": kline, "KST_SIG": ksig,
+        "PO": posc, "PO_SIG": posig,
+        "RVI2": rel_vol_index(closes, 10, 10),
+        "SMI": smi_l, "SMI_SIG": smi_s,
     })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")

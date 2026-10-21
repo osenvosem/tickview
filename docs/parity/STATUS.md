@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 71 verified, 12 in progress, 0 missing, 1 excluded (84 total).
+Studies: 78 verified, 5 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -134,7 +134,7 @@ Studies: 71 verified, 12 in progress, 0 missing, 1 excluded (84 total).
 | Parabolic SAR | `PSAR@tv` | `Psar` | `` | verified |
 | Rate of Change (ROC) | `ROC@tv` | `Roc` | `` | verified |
 | Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | verified |
-| Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | in-progress |
+| Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | verified |
 | Advance/Decline | `STD;Advance_Decline_Ratio_Bars` | `` | `` | excluded |
 | Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | verified |
 | Aroon | `STD;Aroon` | `Aroon` | `` | verified |
@@ -146,26 +146,26 @@ Studies: 71 verified, 12 in progress, 0 missing, 1 excluded (84 total).
 | Choppiness Index | `STD;Choppiness_Index` | `ChoppinessIndex` | `` | verified |
 | Connors RSI | `STD;Connors_RSI` | `ConnorsRsi` | `` | verified |
 | Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | in-progress |
-| Directional Movement | `STD;DMI` | `Dmi` | `` | in-progress |
+| Directional Movement | `STD;DMI` | `Dmi` | `` | verified |
 | Elder-ray Index | `STD;ElderRay` | `ElderRay` | `` | verified |
 | EMA Ribbons | `STD;EmaRibbons` | `EmaRibbons` | `` | verified |
-| Fisher Transform | `STD;Fisher_Transform` | `FisherTransform` | `` | in-progress |
+| Fisher Transform | `STD;Fisher_Transform` | `FisherTransform` | `` | verified |
 | Garman-Klass Volatility | `STD;GarmanKlassVolatility` | `GarmanKlassVolatility` | `` | verified |
 | Kaufman Adaptive Moving Average | `STD;Kama` | `Kama` | `` | verified |
 | Klinger Volume Oscillator | `STD;Klinger` | `Klinger` | `` | verified |
-| Know Sure Thing | `STD;Know_Sure_Thing` | `KnowSureThing` | `` | in-progress |
+| Know Sure Thing | `STD;Know_Sure_Thing` | `KnowSureThing` | `` | verified |
 | Least Squares Moving Average | `STD;Lsma` | `Lsma` | `` | verified |
 | Mass Index | `STD;MassIndex` | `MassIndex` | `` | verified |
 | Money Flow Index | `STD;MoneyFlowIndex` | `MoneyFlowIndex` | `` | verified |
 | Parkinson Volatility | `STD;ParkinsonVolatility` | `ParkinsonVolatility` | `` | verified |
-| Price Oscillator | `STD;Price_Oscillator` | `PriceOscillator` | `` | in-progress |
+| Price Oscillator | `STD;Price_Oscillator` | `PriceOscillator` | `` | verified |
 | PVI & DVI | `STD;PviDvi` | `PviDvi` | `` | verified |
 | Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | in-progress |
 | ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | verified |
-| Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | in-progress |
+| Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | verified |
 | Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |
 | Rogers-Satchell Volatility | `STD;RogersSatchellVolatility` | `RogersSatchellVolatility` | `` | verified |
-| SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | in-progress |
+| SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | verified |
 | Supertrend | `STD;Supertrend` | `Supertrend` | `` | verified |
 | True Strength Index (TSI) | `STD;Tsi` | `Tsi` | `` | verified |
 | Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | in-progress |
