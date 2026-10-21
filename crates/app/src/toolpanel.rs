@@ -815,11 +815,17 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     }
                     // Uniform rhythm: every rail button sits at one row pitch.
                 }
+                // A normal click on an inactive group selects its last-used
+                // tool once the double-click window has elapsed.
+                if let Some(tool) = app.tool_panel.take_due_select(now) {
+                    app.select_tool(tool);
+                }
 
                 if !ui.ctx().input(|i| i.pointer.any_down()) {
                     app.tool_panel.end_press();
                 }
 
+                rail_divider(ui, p);
                 for tool in SINGLES {
                     if rail_single(ui, p, tool.icon(), app.tool == *tool, tool.label()) {
                         app.select_tool(*tool);
@@ -830,6 +836,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.zoom_in();
                 }
 
+                rail_divider(ui, p);
                 let magnet = rail_utility(
                     ui,
                     p,
@@ -891,6 +898,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.set_drawings_hidden(!hidden);
                 }
 
+                rail_divider(ui, p);
                 let remove = rail_utility(
                     ui,
                     p,
@@ -1193,6 +1201,17 @@ fn rail_utility(
         arrow_clicked,
         main_down,
     }
+}
+
+fn rail_divider(ui: &mut egui::Ui, p: &Palette) {
+    ui.add_space(GROUP_PAD);
+    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, 1.0), Sense::hover());
+    ui.painter().hline(
+        rect.x_range().shrink(8.0),
+        rect.center().y,
+        Stroke::new(1.0, p.menu_divider),
+    );
+    ui.add_space(GROUP_PAD);
 }
 
 fn flyout_width(ui: &egui::Ui, group: usize) -> f32 {
