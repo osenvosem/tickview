@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 65 verified, 18 in progress, 0 missing, 1 excluded (84 total).
+Studies: 66 verified, 17 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -182,7 +182,7 @@ Studies: 65 verified, 18 in progress, 0 missing, 1 excluded (84 total).
 | TRIX | `Trix@tv` | `Trix` | `` | verified |
 | Ultimate Oscillator | `UltimateOsc@tv` | `UltimateOscillator` | `` | verified |
 | Relative Vigor Index (RVI) | `VigorIndex@tv` | `Rvi` | `` | verified |
-| VWAP | `VWAP@tv` | `Vwap` | `` | in-progress |
+| VWAP | `VWAP@tv` | `Vwap` | `` | verified |
 | Williams %R | `WilliamR@tv` | `WilliamsR` | `` | verified |
 | Alligator | `WilliamsAlligator@tv` | `Alligator` | `` | verified |
 

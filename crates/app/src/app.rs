@@ -12,7 +12,7 @@ use marketdata::{
     Symbol, SymbolKind, default_index, refresh_remote_index, search_with,
 };
 use ta::Candles;
-use ta::registry::{Anchors, PVal, ParamKind, Params, TvId, def, defs};
+use ta::registry::{Anchors, PVal, ParamKind, Params, StudyContext, TvId, def, defs};
 use tickchart::{
     Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, Drawing, DrawingKind,
     DrawingToolState, Measure, Selection,
@@ -2118,12 +2118,26 @@ impl TickView {
     fn recompute(&mut self, tab_idx: usize) {
         let ax = self.anchors(tab_idx);
         let tab = &mut self.tabs[tab_idx];
+        let visible = tab.chart.view.visible();
+        // Take the compare series out so the study context does not borrow
+        // the chart while layers are recomputed.
+        let cmp = tab.chart.compare.take();
+        let iv = tab.interval.as_tv_str();
+        let ctx = StudyContext {
+            htfc: None,
+            anchors: ax,
+            visible: Some(visible),
+            comparison: cmp.as_ref().map(|c| &c.candles),
+            symbol: &tab.symbol.ticker,
+            interval: &iv,
+        };
         for p in 0..tab.chart.panes.len() {
             let ids: Vec<TvId> = tab.chart.panes[p].layers.iter().map(|l| l.id).collect();
             for id in ids {
-                tab.chart.recompute(id, &tab.candles, &ax);
+                tab.chart.recompute_with(id, &tab.candles, &ctx);
             }
         }
+        tab.chart.compare = cmp;
     }
 
     fn drain(&mut self, ctx: &egui::Context) {

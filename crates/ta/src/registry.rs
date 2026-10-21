@@ -1809,6 +1809,30 @@ pub fn compute(id: TvId, params: &Params, cd: &Candles, ax: &Anchors) -> Output 
     o
 }
 
+/// Inputs a study may need beyond its own symbol series: higher-timeframe
+/// candles (closed-only), session/week/month anchors, the visible index range
+/// for range-scoped studies, and an optional comparison symbol.
+pub struct StudyContext<'a> {
+    pub htfc: Option<&'a Candles>,
+    pub anchors: Anchors,
+    pub visible: Option<(usize, usize)>,
+    pub comparison: Option<&'a Candles>,
+    pub symbol: &'a str,
+    pub interval: &'a str,
+}
+
+/// Compute with an explicit input context (HTF/comparison/visible).
+#[must_use]
+pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext<'_>) -> Output {
+    let d = def(id);
+    let mut o = compute_id(id, params, d, cd, &ctx.anchors);
+    debug_assert_eq!(o.plots.len(), d.plots.len(), "plot count drift for {id:?}");
+    if o.plots.len() != d.plots.len() {
+        o.plots.truncate(d.plots.len().max(1));
+    }
+    o
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2097,6 +2121,63 @@ mod gold_misc {
             for (plot, w) in out.plots.iter().zip(want) {
                 approx(&plot.series, w, &format!("{id:?} {}", plot.title));
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod ctx_tests {
+    use super::{Anchors, Params, StudyContext, TvId, compute, compute_with};
+    use crate::{Bar, Candles};
+
+    fn hourly(days: usize) -> Candles {
+        let mut bars = Vec::new();
+        for d in 0..days {
+            for h in 0..24 {
+                bars.push(Bar {
+                    t: (d as i64) * 86_400 + (h as i64) * 3600,
+                    o: 100.0 + d as f64 + h as f64 * 0.1,
+                    h: 101.0 + d as f64 + h as f64 * 0.1,
+                    l: 99.0 + d as f64 + h as f64 * 0.1,
+                    c: 100.5 + d as f64 + h as f64 * 0.15,
+                    v: 10.0 + (h % 5) as f64,
+                });
+            }
+        }
+        Candles::from_bars(&bars)
+    }
+
+    #[test]
+    fn vwap_session_anchors() {
+        let cd = hourly(3);
+        let ax = Anchors::from_ts(&cd.t);
+        let out = compute(TvId::Vwap, &Params::default(), &cd, &ax);
+        let hl3 = |i: usize| (cd.h[i] + cd.l[i] + cd.c[i]) / 3.0;
+        // day anchor resets: first bar of a session equals that bar's hl3
+        assert!((out.plots[0].series[0] - hl3(0)).abs() < 1e-12);
+        assert!((out.plots[0].series[24] - hl3(24)).abs() < 1e-12);
+        assert!((out.plots[0].series[48] - hl3(48)).abs() < 1e-12);
+        // mid-session the anchor accumulates, diverging from hl3
+        assert!((out.plots[0].series[25] - hl3(25)).abs() > 1e-9);
+    }
+
+    #[test]
+    fn compute_with_default_ctx_matches_compute() {
+        let cd = hourly(2);
+        let ax = Anchors::from_ts(&cd.t);
+        let ctx = StudyContext {
+            htfc: None,
+            anchors: ax.clone(),
+            visible: None,
+            comparison: None,
+            symbol: "TEST",
+            interval: "1h",
+        };
+        let a = compute(TvId::Vwap, &Params::default(), &cd, &ax);
+        let b = compute_with(TvId::Vwap, &Params::default(), &cd, &ctx);
+        assert_eq!(a.plots.len(), b.plots.len());
+        for (x, y) in a.plots.iter().zip(&b.plots) {
+            assert_eq!(x.series, y.series, "{}", x.title);
         }
     }
 }

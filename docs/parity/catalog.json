@@ -3212,9 +3212,15 @@
    "tickview_id": "Vwap",
    "name": "VWAP",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::ctx_tests::vwap_session_anchors",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
