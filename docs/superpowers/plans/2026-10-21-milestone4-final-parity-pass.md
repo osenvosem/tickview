@@ -33,9 +33,9 @@
 **Files:**
 - Modify: `main` (merge commit)
 
-- [ ] **Step 1:** `git checkout main && git merge --no-ff feat/m3-study-catalog -m "Merge branch 'feat/m3-study-catalog': milestone 3 study catalog parity"` (merge-tree dry-run already shows 0 conflicts).
-- [ ] **Step 2:** `cargo test --workspace` → PASS (343 + M2-era tests); `cargo clippy --workspace --all-targets` → 0 warnings.
-- [ ] **Step 3:** `cargo fmt --all` (no-op expected) && `git diff --check` clean; commit any residue.
+- [x] **Step 1:** `git checkout main && git merge --no-ff feat/m3-study-catalog -m "Merge branch 'feat/m3-study-catalog': milestone 3 study catalog parity"` (merge-tree dry-run already shows 0 conflicts).
+- [x] **Step 2:** `cargo test --workspace` → PASS (343 + M2-era tests); `cargo clippy --workspace --all-targets` → 0 warnings.
+- [x] **Step 3:** `cargo fmt --all` (no-op expected) && `git diff --check` clean; commit any residue.
 
 ### Task 2: Evidence index + regenerated status
 
@@ -43,34 +43,34 @@
 - Create: `docs/evidence/INDEX.md`
 - Modify: `docs/parity/STATUS.md` (generated)
 
-- [ ] **Step 1:** Write `docs/evidence/INDEX.md`: table of every file under `docs/evidence/` (and `docs/evidence/tv/`, `tv/studies/` count) with a one-line description each, plus a "how to regenerate" footer (`xtask parity --write`, `research/studies/gen_goldens.py`, `research/studies/build_catalog.py`).
-- [ ] **Step 2:** `cargo run -q -p xtask -- parity --write && cargo run -q -p xtask -- parity` → "parity manifest is valid"; STATUS shows drawings 84 verified/3 excluded and studies 83 verified/1 excluded, zero missing/in-progress.
-- [ ] **Step 3:** Commit — `git add docs/evidence docs/parity && git commit -m "docs: evidence index and regenerated parity status"`.
+- [x] **Step 1:** Write `docs/evidence/INDEX.md`: table of every file under `docs/evidence/` (and `docs/evidence/tv/`, `tv/studies/` count) with a one-line description each, plus a "how to regenerate" footer (`xtask parity --write`, `research/studies/gen_goldens.py`, `research/studies/build_catalog.py`).
+- [x] **Step 2:** `cargo run -q -p xtask -- parity --write && cargo run -q -p xtask -- parity` → "parity manifest is valid"; STATUS shows drawings 84 verified/3 excluded and studies 83 verified/1 excluded, zero missing/in-progress.
+- [x] **Step 3:** Commit — `git add docs/evidence docs/parity && git commit -m "docs: evidence index and regenerated parity status"`.
 
 ### Task 3: Fresh visual QA set on integrated main
 
 **Files:**
 - Create: `docs/screenshots/parity/{iconsheet,gannf,toolbar,trend,studiesprice,studiesvol,studiesosc,studieshtf}-{dark,light}.png` (regenerated)
 
-- [ ] **Step 1:** `cargo build -q -p tickview`; for each scene × theme: warm pass (no snapshot) then capture pass with isolated `TICKVIEW_CONFIG_DIR`; kill any leftover process between runs.
-- [ ] **Step 2:** Visually verify each image: bars + studies/overlays rendered, no SYNCING-empty frame, `studieshtf-*` shows comparison line + correlation curve in −1..1, toolbar shows selected-object bar, iconsheet shows the full icon grid.
+- [x] **Step 1:** `cargo build -q -p tickview`; for each scene × theme: warm pass (no snapshot) then capture pass with isolated `TICKVIEW_CONFIG_DIR`; kill any leftover process between runs.
+- [x] **Step 2:** Visually verify each image: bars + studies/overlays rendered, no SYNCING-empty frame, `studieshtf-*` shows comparison line + correlation curve in −1..1, toolbar shows selected-object bar, iconsheet shows the full icon grid.
 
 ### Task 4: Final side-by-side review doc
 
 **Files:**
 - Create: `docs/parity/final-review.md`
 
-- [ ] **Step 1:** Write `final-review.md`: one section per review area (drawing UI + selection toolbar, icon set, Gann fan geometry, representative studies — price/volume/oscillator/HTF-correlation), each citing the screenshot pair and the TV reference evidence file (`docs/evidence/tv/gann-fan.md`, `drawings-*.md`, `studies-catalog-notes.md`, `docs/evidence/tv-studies-defaults.json`), with an explicit verdict line (match / deviation + reason).
-- [ ] **Step 2:** Commit — `git add docs/screenshots/parity docs/parity/final-review.md && git commit -m "docs: milestone 4 final side-by-side parity review"`.
+- [x] **Step 1:** Write `final-review.md`: one section per review area (drawing UI + selection toolbar, icon set, Gann fan geometry, representative studies — price/volume/oscillator/HTF-correlation), each citing the screenshot pair and the TV reference evidence file (`docs/evidence/tv/gann-fan.md`, `drawings-*.md`, `studies-catalog-notes.md`, `docs/evidence/tv-studies-defaults.json`), with an explicit verdict line (match / deviation + reason).
+- [x] **Step 2:** Commit — `git add docs/screenshots/parity docs/parity/final-review.md && git commit -m "docs: milestone 4 final side-by-side parity review"`.
 
 ### Task 5: Final gate + acceptance checklist
 
 **Files:**
 - Modify: `README.md` (M4-complete wording, final test count)
 
-- [ ] **Step 1:** `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` — all clean; record exact test count.
-- [ ] **Step 2:** README: replace "Milestone 3 covers/complete" tail with Milestone 4-complete paragraph + acceptance checklist result (manifest totals, gates, review doc path); update test count lines.
-- [ ] **Step 3:** `cargo run -q -p xtask -- parity` still valid; commit — `git commit -am "docs: milestone 4 complete — parity program final pass"`.
+- [x] **Step 1:** `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` — all clean; record exact test count.
+- [x] **Step 2:** README: replace "Milestone 3 covers/complete" tail with Milestone 4-complete paragraph + acceptance checklist result (manifest totals, gates, review doc path); update test count lines.
+- [x] **Step 3:** `cargo run -q -p xtask -- parity` still valid; commit — `git commit -am "docs: milestone 4 complete — parity program final pass"`.
 
 ---
 
