@@ -3127,6 +3127,11 @@ impl TickView {
                     };
                     let out = drawing_toolbar::show(ui, p, &mut self.tabs[ti].toolbar, &model);
                     self.tabs[ti].chart.popup_rect = Some(out.exclusion_rect);
+                    self.tabs[ti].chart.hover_block =
+                        Some(match self.tabs[ti].chart.hover_block {
+                            Some(prev) => prev.union(out.exclusion_rect),
+                            None => out.exclusion_rect,
+                        });
                     self.apply_toolbar_actions(out.actions, ui.ctx());
                 } else {
                     self.tabs[ti].chart.popup_rect = None;

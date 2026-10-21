@@ -72,6 +72,9 @@ pub struct ChartState {
     pub drawings_hidden: bool,
     /// Last screen rect of the floating drawing toolbar; clicks there are not chart clicks.
     pub popup_rect: Option<Rect>,
+    /// Screen rect of an open app overlay (tool flyout, utility menu, emoji
+    /// picker); wheel/keyboard pan is ignored while the pointer is inside.
+    pub hover_block: Option<Rect>,
     /// Price range override from rectangle zoom (price space).
     pub price_zoom: Option<(f64, f64)>,
     /// Live rectangle-zoom selection in screen space.
@@ -144,6 +147,7 @@ impl ChartState {
             locked: false,
             drawings_hidden: false,
             popup_rect: None,
+            hover_block: None,
             price_zoom: None,
             zoom_sel: None,
             marquee: None,
@@ -1148,7 +1152,7 @@ fn handle_input(
     let scroll = ctx.input(|i| i.smooth_scroll_delta);
     let over = ctx
         .input(|i| i.pointer.hover_pos())
-        .is_some_and(|p| resp.rect.contains(p));
+        .is_some_and(|p| resp.rect.contains(p) && !st.hover_block.is_some_and(|r| r.contains(p)));
     if over {
         if (zoom - 1.0).abs() > 1e-4 {
             if let Some(mx) = ctx.input(|i| i.pointer.hover_pos()).map(|p| p.x) {
@@ -1166,7 +1170,7 @@ fn handle_input(
 
     // Keyboard nudge only while the chart is hovered, so text fields keep
     // their arrow keys.
-    if resp.hovered() {
+    if resp.hovered() && !st.hover_block.is_some_and(|r| pointer.is_some_and(|p| r.contains(p))) {
         let step = st.view.spacing * 2.0;
         if ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft)) {
             st.view.pan(step);
@@ -2055,6 +2059,37 @@ mod tests {
         st.popup_rect = Some(Rect::from_center_size(pos, Vec2::new(120.0, 44.0)));
         click(&ctx, &mut st, &cd, pos);
         assert!(st.selection.primary().is_none());
+    }
+
+    #[test]
+    fn hover_block_stops_wheel_pan_under_the_pointer() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        let wheel = |dx: f32| egui::Event::MouseWheel {
+            unit: egui::MouseWheelUnit::Point,
+            delta: Vec2::new(dx, 0.0),
+            phase: egui::TouchPhase::Move,
+            source: egui::MouseWheelSource::Unknown,
+            modifiers: egui::Modifiers::default(),
+        };
+
+        let free_pos = Pos2::new(450.0, 350.0);
+        frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(free_pos)]);
+        let before = st.view.right_offset;
+        frame(&ctx, &mut st, &cd, vec![wheel(-40.0)]);
+        assert_ne!(st.view.right_offset, before, "wheel pans over the chart");
+
+        st.hover_block = Some(Rect::from_min_max(Pos2::new(60.0, 40.0), Pos2::new(360.0, 680.0)));
+        let blocked_pos = Pos2::new(200.0, 350.0);
+        frame(&ctx, &mut st, &cd, vec![egui::Event::PointerMoved(blocked_pos)]);
+        let before = st.view.right_offset;
+        frame(&ctx, &mut st, &cd, vec![wheel(-40.0)]);
+        assert_eq!(
+            st.view.right_offset, before,
+            "wheel over an open overlay must not pan the chart"
+        );
     }
 
     #[test]

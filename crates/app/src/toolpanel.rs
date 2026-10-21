@@ -612,6 +612,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             });
         });
     let rail_rect = rail.response.rect;
+    app.tabs[app.active].chart.hover_block = None;
     ui.painter().vline(
         rail_rect.right() - 0.5,
         rail_rect.y_range(),
@@ -632,6 +633,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             app.tool_panel.close_overlays();
             return;
         }
+        app.tabs[app.active].chart.hover_block = Some(rect);
         draw_utility_menu(ui, app, p, menu, rect, &items);
         return;
     }
@@ -652,6 +654,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
         app.tool_panel.close_overlays();
         return;
     }
+    app.tabs[app.active].chart.hover_block = Some(rect);
     draw_flyout(ui, app, p, group, rect);
 }
 
@@ -1050,7 +1053,7 @@ fn section_rule(ui: &mut egui::Ui, p: &Palette) {
     let (rect, _) =
         ui.allocate_exact_size(vec2(ui.available_width(), FLYOUT_DIVIDER_H), Sense::hover());
     ui.painter().hline(
-        rect.x_range(),
+        (rect.left() - FLYOUT_PAD)..=(rect.right() + FLYOUT_PAD),
         rect.center().y,
         Stroke::new(1.0, p.menu_divider),
     );
