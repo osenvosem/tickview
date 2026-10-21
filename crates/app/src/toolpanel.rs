@@ -221,6 +221,7 @@ pub const GROUPS: &[ToolGroup] = &[
                     Tool::PriceLabel,
                     Tool::Signpost,
                     Tool::FlagMark,
+                    Tool::Image,
                 ],
             ),
             ("CONTENT", &[Tool::Post, Tool::Idea]),
@@ -530,6 +531,7 @@ const FLYOUT_STAR_RIGHT: f32 = 4.0;
 const UTILITY_W: f32 = 216.0;
 const UTILITY_ROW_H: f32 = 32.0;
 const UTILITY_PAD: f32 = 6.0;
+const UTILITY_SEP_H: f32 = 13.0;
 
 /// Emoji picker geometry (TradingView-style panel: search, tabs, grouped grid).
 const PICKER_W: f32 = 460.0;
@@ -881,7 +883,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.tool_panel.toggle_utility(UtilityMenu::Lock, lock.rect);
                 } else if lock.main_clicked {
                     app.tool_panel.close_overlays();
-                    app.set_drawings_locked(!locked);
+                    app.set_all_locked(!locked);
                 }
 
                 let hidden = app.tabs[app.active].drawings_hidden;
@@ -959,7 +961,21 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             return;
         };
         let items = utility_items(menu, app);
-        let height = UTILITY_PAD * 2.0 + items.len() as f32 * UTILITY_ROW_H;
+        let body: f32 = items
+            .iter()
+            .map(|item| match item {
+                UtilityItem::Row { selector, .. } => {
+                    if *selector {
+                        UTILITY_ROW_H + 8.0
+                    } else {
+                        UTILITY_ROW_H
+                    }
+                }
+                UtilityItem::Sep => UTILITY_SEP_H,
+                UtilityItem::Check { .. } => UTILITY_ROW_H,
+            })
+            .sum();
+        let height = UTILITY_PAD * 2.0 + body;
         let rect = popup_rect_for(anchor, UTILITY_W, height, content);
         let scrims = popover_scrims(rect, rail_rect, content);
         if scrim_clicked(ui, &scrims) {
@@ -1268,6 +1284,10 @@ fn flyout_height(group: usize) -> f32 {
         }
         height += FLYOUT_HEADER_H + tools.len() as f32 * FLYOUT_ROW_H;
     }
+    if group == 0 {
+        // Eraser divider + values-tooltip divider and row (TV cursors menu).
+        height += FLYOUT_DIVIDER_H * 2.0 + UTILITY_ROW_H;
+    }
     height
 }
 
@@ -1363,17 +1383,57 @@ fn draw_flyout(ui: &egui::Ui, app: &mut TickView, p: &Palette, group: usize, rec
 fn flyout_contents(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, group: usize) {
     let mut first = true;
     let mut row_index = 0usize;
+    let cursors = group == 0;
     for (title, tools) in GROUPS[group].sections {
         if !first {
             section_rule(ui, p);
         }
         section_header(ui, p, title);
         for tool in *tools {
+            // TV separates Eraser from the cursor modes.
+            if cursors && *tool == Tool::Eraser {
+                section_rule(ui, p);
+            }
             flyout_row(ui, app, p, *tool, row_index);
             row_index += 1;
         }
         first = false;
     }
+    if cursors {
+        section_rule(ui, p);
+        values_tooltip_row(ui, app, p);
+    }
+}
+
+/// TV: "Values tooltip on long press" checkbox row under the cursors.
+fn values_tooltip_row(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
+    let (row, resp) =
+        ui.allocate_exact_size(vec2(ui.available_width(), UTILITY_ROW_H), Sense::click());
+    if resp.hovered() {
+        ui.painter().rect_filled(row, 4.0, p.menu_hover);
+    }
+    if app.values_tooltip_enabled() {
+        Icon::Check.paint(
+            ui.painter(),
+            Rect::from_center_size(
+                Pos2::new(row.left() + 12.0, row.center().y),
+                vec2(16.0, 16.0),
+            ),
+            p.menu_text,
+            1.4,
+        );
+    }
+    ui.painter().text(
+        Pos2::new(row.left() + 28.0, row.center().y),
+        Align2::LEFT_CENTER,
+        "Values tooltip on long press",
+        font_regular(13.0),
+        p.menu_text,
+    );
+    if resp.clicked() {
+        app.toggle_values_tooltip();
+    }
+    let _ = resp.on_hover_cursor(CursorIcon::PointingHand);
 }
 
 fn section_header(ui: &mut egui::Ui, p: &Palette, title: &str) {
@@ -1480,36 +1540,70 @@ fn flyout_row(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, tool: Tool, ro
         .on_hover_text(tool.label());
 }
 
-fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<(&'static str, bool)> {
+/// One row in a rail utility menus (TV `PopupMenu` parity).
+enum UtilityItem {
+    Row {
+        label: String,
+        selected: bool,
+        /// Selector rows (TV magnet modes) render taller, like flyout rows.
+        selector: bool,
+    },
+    Sep,
+    Check {
+        label: &'static str,
+        checked: bool,
+    },
+}
+
+fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<UtilityItem> {
+    let row = |label: &str, selected: bool| UtilityItem::Row {
+        label: label.to_owned(),
+        selected,
+        selector: false,
+    };
+    let t = &app.tabs[app.active];
     match menu {
         UtilityMenu::Magnet => vec![
-            ("Weak magnet", app.magnet && !app.magnet_strong),
-            ("Strong magnet", app.magnet && app.magnet_strong),
-            (
-                "Snap to indicators",
-                app.magnet && app.magnet_snap_indicators,
-            ),
+            UtilityItem::Row {
+                label: "Weak magnet".into(),
+                selected: app.magnet && !app.magnet_strong,
+                selector: true,
+            },
+            UtilityItem::Row {
+                label: "Strong magnet".into(),
+                selected: app.magnet && app.magnet_strong,
+                selector: true,
+            },
+            UtilityItem::Sep,
+            UtilityItem::Check {
+                label: "Snap to indicators",
+                checked: app.magnet && app.magnet_snap_indicators,
+            },
         ],
-        UtilityMenu::Lock => vec![("Lock all drawings", app.tabs[app.active].locked)],
+        UtilityMenu::Lock => vec![
+            row("Lock drawings", t.locked),
+            row("Lock indicators", t.indicators_locked),
+            row("Lock all", t.locked && t.indicators_locked),
+        ],
         UtilityMenu::Hide => vec![
-            ("Hide all drawings", app.tabs[app.active].drawings_hidden),
-            ("Show all drawings", !app.tabs[app.active].drawings_hidden),
-            (
-                "Hide all indicators",
-                app.tabs[app.active].indicators_hidden,
-            ),
-            (
-                "Show all indicators",
-                !app.tabs[app.active].indicators_hidden,
-            ),
-            ("Hide positions and orders", false),
-            ("Show positions and orders", false),
+            row("Hide drawings", t.drawings_hidden),
+            row("Hide indicators", t.indicators_hidden),
+            row("Hide all", t.drawings_hidden && t.indicators_hidden),
         ],
-        UtilityMenu::Remove => vec![
-            ("Remove all drawings", false),
-            ("Remove all indicators", false),
-            ("Remove all", false),
-        ],
+        UtilityMenu::Remove => {
+            let d = app.drawings_count();
+            let n = app.indicator_count();
+            vec![
+                row(&format!("Remove {d} drawings"), false),
+                row(&format!("Remove {n} indicators"), false),
+                row(&format!("Remove {d} drawings & {n} indicators"), false),
+                UtilityItem::Sep,
+                UtilityItem::Check {
+                    label: "Always remove locked drawings",
+                    checked: app.always_remove_locked(),
+                },
+            ]
+        }
     }
 }
 
@@ -1519,7 +1613,7 @@ fn draw_utility_menu(
     p: &Palette,
     menu: UtilityMenu,
     rect: Rect,
-    items: &[(&'static str, bool)],
+    items: &[UtilityItem],
 ) {
     egui::Area::new(egui::Id::unique(("tickview-tool-utility", menu)))
         .order(egui::Order::Foreground)
@@ -1542,59 +1636,143 @@ fn draw_utility_menu(
                 .inner_margin(Margin::same(UTILITY_PAD as i8))
                 .show(ui, |ui| {
                     ui.set_width(rect.width() - UTILITY_PAD * 2.0);
-                    for (i, (label, selected)) in items.iter().enumerate() {
-                        let (row, resp) = ui.allocate_exact_size(
-                            vec2(ui.available_width(), UTILITY_ROW_H),
-                            Sense::click(),
-                        );
-                        let hovered = resp.hovered();
-                        let clicked = resp.clicked();
-                        let _ = resp.on_hover_cursor(CursorIcon::PointingHand);
-                        if hovered || *selected {
-                            ui.painter().rect_filled(row, 4.0, p.menu_hover);
-                        }
-                        if *selected {
-                            Icon::Check.paint(
-                                ui.painter(),
-                                Rect::from_center_size(
-                                    Pos2::new(row.left() + 12.0, row.center().y),
-                                    vec2(16.0, 16.0),
-                                ),
-                                p.menu_text,
-                                1.4,
-                            );
-                        }
-                        ui.painter().text(
-                            Pos2::new(row.left() + 28.0, row.center().y),
-                            Align2::LEFT_CENTER,
-                            *label,
-                            font_regular(13.0),
-                            p.menu_text,
-                        );
-                        if clicked {
-                            match (menu, i) {
-                                (UtilityMenu::Magnet, 0) => app.set_magnet_strength(false),
-                                (UtilityMenu::Magnet, 1) => app.set_magnet_strength(true),
-                                (UtilityMenu::Magnet, 2) => {
-                                    app.toggle_magnet_snap_indicators();
-                                }
-                                (UtilityMenu::Lock, 0) => app.set_drawings_locked(true),
-                                (UtilityMenu::Hide, 0) => app.set_drawings_hidden(true),
-                                (UtilityMenu::Hide, 1) => app.set_drawings_hidden(false),
-                                (UtilityMenu::Hide, 2) => app.set_indicators_hidden(true),
-                                (UtilityMenu::Hide, 3) => app.set_indicators_hidden(false),
-                                // No trading module: positions/orders share study visibility.
-                                (UtilityMenu::Hide, 4) => app.set_indicators_hidden(true),
-                                (UtilityMenu::Hide, 5) => app.set_indicators_hidden(false),
-                                (UtilityMenu::Remove, 0) => app.remove_all_drawings(),
-                                (UtilityMenu::Remove, 1) => app.remove_all_indicators(),
-                                (UtilityMenu::Remove, 2) => {
-                                    app.remove_all_drawings();
-                                    app.remove_all_indicators();
-                                }
-                                _ => {}
+                    let mut row_i = 0usize;
+                    for item in items {
+                        match item {
+                            UtilityItem::Sep => {
+                                let (sr, _) = ui.allocate_exact_size(
+                                    vec2(ui.available_width(), UTILITY_SEP_H),
+                                    Sense::hover(),
+                                );
+                                ui.painter().hline(
+                                    (sr.left() - UTILITY_PAD)..=(sr.right() + UTILITY_PAD),
+                                    sr.center().y,
+                                    Stroke::new(1.0, p.menu_divider),
+                                );
                             }
-                            app.tool_panel.close_overlays();
+                            UtilityItem::Check { label, checked } => {
+                                let (row, resp) = ui.allocate_exact_size(
+                                    vec2(ui.available_width(), UTILITY_ROW_H),
+                                    Sense::click(),
+                                );
+                                if resp.hovered() {
+                                    ui.painter().rect_filled(row, 4.0, p.menu_hover);
+                                }
+                                if *checked {
+                                    Icon::Check.paint(
+                                        ui.painter(),
+                                        Rect::from_center_size(
+                                            Pos2::new(row.left() + 12.0, row.center().y),
+                                            vec2(16.0, 16.0),
+                                        ),
+                                        p.menu_text,
+                                        1.4,
+                                    );
+                                }
+                                ui.painter().text(
+                                    Pos2::new(row.left() + 28.0, row.center().y),
+                                    Align2::LEFT_CENTER,
+                                    *label,
+                                    font_regular(13.0),
+                                    p.menu_text,
+                                );
+                                if resp.clicked() {
+                                    match menu {
+                                        UtilityMenu::Magnet => app.toggle_magnet_snap_indicators(),
+                                        UtilityMenu::Remove => {
+                                            app.toggle_always_remove_locked();
+                                        }
+                                        _ => {}
+                                    }
+                                    app.tool_panel.close_overlays();
+                                }
+                                let _ = resp.on_hover_cursor(CursorIcon::PointingHand);
+                            }
+                            UtilityItem::Row {
+                                label,
+                                selected,
+                                selector,
+                            } => {
+                                let h = if *selector {
+                                    UTILITY_ROW_H + 8.0
+                                } else {
+                                    UTILITY_ROW_H
+                                };
+                                let (row, resp) = ui.allocate_exact_size(
+                                    vec2(ui.available_width(), h),
+                                    Sense::click(),
+                                );
+                                let hovered = resp.hovered();
+                                let clicked = resp.clicked();
+                                let _ = resp.on_hover_cursor(CursorIcon::PointingHand);
+                                if hovered || *selected {
+                                    ui.painter().rect_filled(row, 4.0, p.menu_hover);
+                                }
+                                if *selected {
+                                    Icon::Check.paint(
+                                        ui.painter(),
+                                        Rect::from_center_size(
+                                            Pos2::new(row.left() + 12.0, row.center().y),
+                                            vec2(16.0, 16.0),
+                                        ),
+                                        p.menu_text,
+                                        1.4,
+                                    );
+                                }
+                                ui.painter().text(
+                                    Pos2::new(row.left() + 28.0, row.center().y),
+                                    Align2::LEFT_CENTER,
+                                    label.as_str(),
+                                    font_regular(13.0),
+                                    p.menu_text,
+                                );
+                                if clicked {
+                                    match (menu, row_i) {
+                                        (UtilityMenu::Magnet, 0) => app.set_magnet_strength(false),
+                                        (UtilityMenu::Magnet, 1) => app.set_magnet_strength(true),
+                                        (UtilityMenu::Lock, 0) => {
+                                            let on = app.tabs[app.active].locked;
+                                            app.set_drawings_locked(!on);
+                                        }
+                                        (UtilityMenu::Lock, 1) => {
+                                            let on = app.tabs[app.active].indicators_locked;
+                                            app.set_indicators_locked(!on);
+                                        }
+                                        (UtilityMenu::Lock, 2) => {
+                                            let on = {
+                                                let t = &app.tabs[app.active];
+                                                t.locked && t.indicators_locked
+                                            };
+                                            app.set_all_locked(!on);
+                                        }
+                                        (UtilityMenu::Hide, 0) => {
+                                            let on = app.tabs[app.active].drawings_hidden;
+                                            app.set_drawings_hidden(!on);
+                                        }
+                                        (UtilityMenu::Hide, 1) => {
+                                            let on = app.tabs[app.active].indicators_hidden;
+                                            app.set_indicators_hidden(!on);
+                                        }
+                                        (UtilityMenu::Hide, 2) => {
+                                            let on = {
+                                                let t = &app.tabs[app.active];
+                                                t.drawings_hidden && t.indicators_hidden
+                                            };
+                                            app.set_drawings_hidden(!on);
+                                            app.set_indicators_hidden(!on);
+                                        }
+                                        (UtilityMenu::Remove, 0) => app.remove_all_drawings(),
+                                        (UtilityMenu::Remove, 1) => app.remove_all_indicators(),
+                                        (UtilityMenu::Remove, 2) => {
+                                            app.remove_all_drawings();
+                                            app.remove_all_indicators();
+                                        }
+                                        _ => {}
+                                    }
+                                    app.tool_panel.close_overlays();
+                                }
+                                row_i += 1;
+                            }
                         }
                     }
                 });
@@ -2071,7 +2249,8 @@ mod tests {
 
     #[test]
     fn flyout_height_matches_tv_row_header_and_divider_rhythm() {
-        let cursors = 12.0 + 24.0 + 6.0 * 40.0;
+        // Six cursor rows plus the Eraser divider, tooltip divider and row.
+        let cursors = 12.0 + 24.0 + 6.0 * 40.0 + 2.0 * 13.0 + 32.0;
         assert!((flyout_height(0) - cursors).abs() < 0.01);
         let trend =
             12.0 + (24.0 + 9.0 * 40.0) + 13.0 + (24.0 + 4.0 * 40.0) + 13.0 + (24.0 + 4.0 * 40.0);

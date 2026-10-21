@@ -1803,11 +1803,10 @@
    "icon": "image",
    "anchors": 2,
    "interaction": "two-point",
-   "status": "excluded",
-   "tests": [],
-   "evidence": [],
-   "notes": "",
-   "exclusion_reason": "media object: out of scope per spec §4"
+   "status": "verified",
+   "tests": ["tickchart/tests/drawing_e2e.rs::image_two_point_and_file_attach", "tickchart/tests/drawing_e2e.rs::image_file_attach_roundtrip", "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog", "app/src/toolpanel.rs::rail_matches_tradingviews_eight_drawing_groups"],
+   "evidence": ["research/tradingview-left-toolbar.md", "docs/screenshots/parity/image-dark.png"],
+   "notes": ""
   },
   {
    "kind": "drawing",

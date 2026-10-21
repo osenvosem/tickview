@@ -138,6 +138,9 @@ pub struct SavedTab {
     /// Study layers hidden via the Hide drawings menu.
     #[serde(default)]
     pub indicators_hidden: bool,
+    /// Study layers are locked against mouse editing (TV parity).
+    #[serde(default)]
+    pub indicators_locked: bool,
     /// Optional compare overlay symbol.
     #[serde(default)]
     pub compare: Option<Symbol>,
@@ -191,6 +194,12 @@ pub struct SavedConfig {
     /// Drawing tools starred in the grouped tool panel.
     #[serde(default)]
     pub drawing_favorites: Vec<Tool>,
+    /// Show the values tooltip after the cursor rests on a bar (TV parity).
+    #[serde(default = "default_true")]
+    pub values_tooltip_long_press: bool,
+    /// Remove-all also deletes locked drawings (TV parity toggle).
+    #[serde(default)]
+    pub always_remove_locked: bool,
 
     // ---- v1 compatibility ----
     #[serde(default)]
@@ -220,6 +229,8 @@ impl Default for SavedConfig {
             study_templates: Vec::new(),
             stream: None,
             drawing_favorites: Vec::new(),
+            values_tooltip_long_press: true,
+            always_remove_locked: false,
             symbol: None,
             interval: String::new(),
             chart_type: 0,
@@ -261,6 +272,7 @@ impl SavedConfig {
                     drawings_locked: false,
                     drawings_hidden: false,
                     indicators_hidden: false,
+                    indicators_locked: false,
                     drawings: BTreeMap::new(),
                     indicators: Vec::new(),
                     compare: None,
@@ -373,6 +385,7 @@ mod tests {
             drawings_locked: false,
             drawings_hidden: false,
             indicators_hidden: false,
+            indicators_locked: false,
             drawings: BTreeMap::new(),
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
@@ -418,6 +431,7 @@ mod tests {
                 drawings_locked: false,
                 drawings_hidden: false,
                 indicators_hidden: false,
+                indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -513,6 +527,7 @@ mod tests {
                 drawings_locked: true,
                 drawings_hidden: true,
                 indicators_hidden: false,
+                indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -549,6 +564,7 @@ mod tests {
                 drawings_locked: false,
                 drawings_hidden: false,
                 indicators_hidden: false,
+                indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -579,6 +595,7 @@ mod tests {
                 drawings_locked: false,
                 drawings_hidden: false,
                 indicators_hidden: false,
+                indicators_locked: false,
                 drawings: BTreeMap::new(),
                 indicators: Vec::new(),
                 compare: Some(Symbol::new(
@@ -618,6 +635,7 @@ mod tests {
             drawings_locked: false,
             drawings_hidden: false,
             indicators_hidden: false,
+            indicators_locked: false,
             drawings: BTreeMap::new(),
             indicators: Vec::new(),
             compare: None,

@@ -51,6 +51,34 @@ pub struct ReplayState {
     pub playing: bool,
 }
 
+/// Texture cache for Image drawings (TextureHandle is not Debug).
+#[derive(Clone, Default)]
+pub struct ImageTextures(BTreeMap<String, egui::TextureHandle>);
+
+impl std::fmt::Debug for ImageTextures {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map()
+            .entries(self.0.keys().map(|path| (path, &"<texture>")))
+            .finish()
+    }
+}
+
+impl ImageTextures {
+    #[must_use]
+    pub fn contains_key(&self, path: &str) -> bool {
+        self.0.contains_key(path)
+    }
+
+    #[must_use]
+    pub fn get(&self, path: &str) -> Option<&egui::TextureHandle> {
+        self.0.get(path)
+    }
+
+    pub fn insert(&mut self, path: String, tex: egui::TextureHandle) {
+        self.0.insert(path, tex);
+    }
+}
+
 /// Top-level widget state.
 #[derive(Clone, Debug)]
 pub struct ChartState {
@@ -100,11 +128,26 @@ pub struct ChartState {
     crosshair_pos: Option<Pos2>,
     drag_pane: Option<usize>,
     drag_drawing: Option<DrawingDrag>,
+    /// Reshaping drag: (drawing id, anchor slot) when an endpoint handle of
+    /// the single selected drawing was pressed (TV anchor editing).
+    drag_anchor: Option<(u64, usize)>,
+    /// Last open-path anchor click (pos, time) for double-click finish.
+    last_anchor_click: Option<(egui::Pos2, f64)>,
+    /// Show the OHLC values tooltip after the pointer rests (TV parity).
+    pub values_tooltip: bool,
+    /// Indicator panes and legends ignore mouse editing (TV lock indicators).
+    pub indicators_locked: bool,
+    /// (position, time) when the pointer became still, for long-press.
+    hover_still: Option<(Pos2, f64)>,
+    /// Decoded textures for Image drawings, keyed by file path.
+    pub images: ImageTextures,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct DrawingDrag {
-    id: u64,
+    /// Drawings that move together: the pressed object plus the rest of the
+    /// multi-selection (TradingView drags the whole selected group).
+    ids: Vec<u64>,
     last: Anchor,
 }
 
@@ -168,6 +211,19 @@ impl ChartState {
             crosshair_pos: None,
             drag_pane: None,
             drag_drawing: None,
+            drag_anchor: None,
+            last_anchor_click: None,
+            values_tooltip: true,
+            indicators_locked: false,
+            images: ImageTextures::default(),
+            hover_still: None,
+        }
+    }
+
+    /// Attach (or replace) the source file of an Image drawing (TV).
+    pub fn set_image_path(&mut self, id: u64, path: String) {
+        if let Some(d) = self.drawings.iter_mut().find(|d| d.id == id) {
+            d.image_path = Some(path);
         }
     }
 
@@ -209,6 +265,7 @@ impl ChartState {
         self.selection.clear();
         self.marquee = None;
         self.drag_drawing = None;
+        self.drag_anchor = None;
     }
 
     /// Hide the current symbol's drawings and restore the target symbol's set.
@@ -224,6 +281,7 @@ impl ChartState {
         self.selection.clear();
         self.marquee = None;
         self.drag_drawing = None;
+        self.drag_anchor = None;
         self.symbol = symbol;
     }
 
@@ -643,7 +701,26 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         &pal,
         font_sm.clone(),
         &st.interval,
+        &st.images,
     );
+    // Decode Image files once so paintings stay allocation-free per frame.
+    let image_paths: Vec<String> = st
+        .drawings
+        .iter()
+        .filter(|d| d.kind == drawings::DrawingKind::Image)
+        .filter_map(|d| d.image_path.clone())
+        .collect();
+    for path in image_paths {
+        if st.images.contains_key(&path) {
+            continue;
+        }
+        if let Some(img) = load_rgba_image(&path) {
+            let tex = ui
+                .ctx()
+                .load_texture(path.clone(), img, egui::TextureOptions::LINEAR);
+            st.images.insert(path, tex);
+        }
+    }
     // Demonstration mode dims everything except a spotlight circle.
     if st.tools.tool == drawings::DrawTool::Demonstration
         && let Some(pos) = ui
@@ -786,6 +863,72 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Color32::WHITE,
             );
         }
+        // Values tooltip after the pointer rests (TV long-press parity).
+        let now = ui.input(|i| i.time);
+        if st.values_tooltip
+            && !st.tools.tool.is_tool()
+            && !st.drawings_hidden
+            && st.hover.is_some_and(|_| {
+                st.hover_still
+                    .is_some_and(|(p0, t0)| now - t0 >= 0.5 && p0.distance(pos) <= 3.0)
+            })
+        {
+            let i = st.hover.unwrap_or(0);
+            let chg = cd.c[i] - cd.o[i];
+            let pct = if cd.o[i] != 0.0 {
+                chg / cd.o[i] * 100.0
+            } else {
+                0.0
+            };
+            let dir = if chg >= 0.0 { pal.up } else { pal.down };
+            let line1 = timeaxis::fmt_dt(cd.t[i]);
+            let line2 = format!(
+                "O {}  H {}  L {}  C {}",
+                fmt_price(cd.o[i]),
+                fmt_price(cd.h[i]),
+                fmt_price(cd.l[i]),
+                fmt_price(cd.c[i])
+            );
+            let line3 = format!("{chg:+.2} ({pct:+.2}%)  VOL {}", fmt_price(cd.v[i]));
+            let bw = 200.0f32;
+            let bh = 56.0f32;
+            let mut br =
+                Rect::from_min_size(Pos2::new(pos.x + 14.0, pos.y + 14.0), Vec2::new(bw, bh));
+            if br.max.x > plot.max.x {
+                br = br.translate(Vec2::new(pos.x - 14.0 - bw, 0.0));
+            }
+            if br.max.y > plot.max.y {
+                br = br.translate(Vec2::new(0.0, pos.y - 14.0 - bh));
+            }
+            p.rect_filled(br, CornerRadius::same(4), pal.bg);
+            p.rect_stroke(
+                br,
+                CornerRadius::same(4),
+                Stroke::new(1.0, pal.crosshair),
+                egui::StrokeKind::Inside,
+            );
+            p.text(
+                Pos2::new(br.min.x + 8.0, br.min.y + 7.0),
+                Align2::LEFT_TOP,
+                line1,
+                font_sm.clone(),
+                pal.text,
+            );
+            p.text(
+                Pos2::new(br.min.x + 8.0, br.min.y + 22.0),
+                Align2::LEFT_TOP,
+                line2,
+                font.clone(),
+                pal.text,
+            );
+            p.text(
+                Pos2::new(br.min.x + 8.0, br.min.y + 38.0),
+                Align2::LEFT_TOP,
+                line3,
+                font.clone(),
+                dir,
+            );
+        }
     }
 
     // Legends (overlaid labels; clicking a name toggles the indicator).
@@ -872,7 +1015,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Pos2::new(x + 8.0 + 7.0 * (name.len() + val.len()) as f32, y + 14.0),
             );
             let resp = ui.interact(tr, ui.scope_id().with(("legend", pi, l.id)), Sense::click());
-            if resp.clicked() {
+            if resp.clicked() && !st.indicators_locked {
                 toggled.push((pi, l.id));
             }
             p.text(
@@ -909,14 +1052,33 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     if !resp.hovered() {
         st.hover = None;
         st.crosshair_pos = None;
+        st.hover_still = None;
     } else if let Some(pos) = resp.interact_pointer_pos().or_else(|| resp.hover_pos()) {
         st.crosshair_pos = Some(Pos2::new(
             pos.x.clamp(plot.min.x, plot.max.x),
             pos.y.clamp(plot.min.y, plot.max.y),
         ));
         st.hover = st.view.index_at(pos.x);
+        // Track a resting pointer for the long-press values tooltip (TV).
+        let now = ui.input(|i| i.time);
+        match st.hover_still {
+            Some((p0, _)) if p0.distance(pos) <= 3.0 => {}
+            _ => st.hover_still = Some((pos, now)),
+        }
     }
     ev
+}
+
+/// Decode a local image file into an RGBA color image (Image tool support).
+fn load_rgba_image(path: &str) -> Option<egui::ColorImage> {
+    let bytes = std::fs::read(path).ok()?;
+    let img = image::load_from_memory(&bytes).ok()?;
+    let rgba = img.to_rgba8();
+    let (w, h) = rgba.dimensions();
+    Some(egui::ColorImage::from_rgba_unmultiplied(
+        [w as usize, h as usize],
+        rgba.as_raw(),
+    ))
 }
 
 /// Visible study values at `pos` for magnet snapping, when enabled.
@@ -947,6 +1109,7 @@ fn handle_input(
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
     let primary_pressed = ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary));
+    let add_mod = ctx.input(|i| i.modifiers.command);
     if !primary_pressed && !resp.clicked() {
         st.selected_from_press = None;
         st.suppress_empty_click = false;
@@ -999,6 +1162,7 @@ fn handle_input(
             st.tools.cancel();
             st.selection.clear();
             st.drag_drawing = None;
+            st.drag_anchor = None;
             st.zoom_sel = None;
             st.marquee = None;
             st.price_zoom = None;
@@ -1015,6 +1179,7 @@ fn handle_input(
     if resp.drag_started() {
         st.drag_pane = None;
         st.drag_drawing = None;
+        st.drag_anchor = None;
         let shift_press = st.zoom_pending;
         if let Some(pos) = press
             && price_rect.contains(pos)
@@ -1044,31 +1209,67 @@ fn handle_input(
             {
                 y += (plot_h * pane.height_frac).max(40.0);
                 if (pos.y - y).abs() <= SEP_HIT {
-                    st.drag_pane = Some(i);
+                    // Locking indicators freezes the study-area split too (TV).
+                    if !(st.indicators_locked && i >= 1) {
+                        st.drag_pane = Some(i);
+                    }
                     break;
                 }
             }
             if st.drag_pane.is_none() && !st.locked && price_rect.contains(pos) {
-                if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
-                    if st.selection.multi() {
-                        st.selection.toggle(id);
+                let handle_hit =
+                    if st.selection.len() == 1 && st.tools.draft.is_none() && !st.drawings_hidden {
+                        let id = *st.selection.ids().iter().next().unwrap();
+                        st.drawings
+                            .iter()
+                            .find(|d| d.id == id && !d.locked)
+                            .and_then(|d| {
+                                let map = |a: Anchor| {
+                                    let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
+                                    Pos2::new(st.view.x_of(i), ax.y_of(a.price))
+                                };
+                                drawings::handle_slot(&d.screen_points(&map), pos, 6.0)
+                                    .map(|slot| (id, slot))
+                            })
                     } else {
-                        st.selection.select(id);
-                    }
-                    st.selected_from_press = Some(id);
-                    let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
-                    if draggable
-                        && let Some(anchor) = drawings::anchor_at_with_snap_values(
-                            cd,
-                            &st.view,
-                            ax,
-                            pos,
-                            st.magnet,
-                            if st.magnet_strong { 24.0 } else { 8.0 },
-                            magnet_snap_values(st, pos).as_deref(),
-                        )
-                    {
-                        st.drag_drawing = Some(DrawingDrag { id, last: anchor });
+                        None
+                    };
+                if handle_hit.is_some() {
+                    st.drag_anchor = handle_hit;
+                } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
+                    let anchor = drawings::anchor_at_with_snap_values(
+                        cd,
+                        &st.view,
+                        ax,
+                        pos,
+                        st.magnet,
+                        if st.magnet_strong { 24.0 } else { 8.0 },
+                        magnet_snap_values(st, pos).as_deref(),
+                    );
+                    if st.selection.multi() && st.selection.contains(id) {
+                        // TV: dragging any member of a multi-selection moves the group.
+                        st.selected_from_press = Some(id);
+                        let ids: Vec<u64> = st.selection.ids().iter().copied().collect();
+                        let any_draggable = ids
+                            .iter()
+                            .any(|did| st.drawings.iter().any(|d| d.id == *did && !d.locked));
+                        if any_draggable && let Some(anchor) = anchor {
+                            st.drag_drawing = Some(DrawingDrag { ids, last: anchor });
+                        }
+                    } else {
+                        if st.selection.multi() {
+                            st.selection.toggle(id);
+                        } else {
+                            st.selection.select(id);
+                        }
+                        st.selected_from_press = Some(id);
+                        let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
+                        if draggable && let Some(anchor) = anchor {
+                            st.drag_drawing = Some(DrawingDrag {
+                                ids: vec![id],
+                                last: anchor,
+                            });
+                        }
                     }
                 } else if st.selection.multi() {
                     st.marquee = Some((pos, pos));
@@ -1086,6 +1287,24 @@ fn handle_input(
                     pos.y.clamp(price_rect.min.y, price_rect.max.y),
                 );
             }
+        } else if let Some((id, slot)) = st.drag_anchor {
+            // TV: dragging a selected drawing's anchor handle reshapes it.
+            if let Some(pos) = pointer
+                && price_rect.contains(pos)
+                && let Some(anchor) = drawings::anchor_at_with_snap_values(
+                    cd,
+                    &st.view,
+                    ax,
+                    pos,
+                    st.magnet,
+                    if st.magnet_strong { 24.0 } else { 8.0 },
+                    drag_snap.as_deref(),
+                )
+                && let Some(d) = st.drawings.iter_mut().find(|d| d.id == id && !d.locked)
+                && drawings::set_anchor(d, slot, anchor)
+            {
+                ev.changed = true;
+            }
         } else if let Some(drag) = &mut st.drag_drawing {
             if let Some(pos) = pointer
                 && price_rect.contains(pos)
@@ -1100,12 +1319,15 @@ fn handle_input(
                 )
             {
                 let last = drag.last;
-                if let Some(d) = st.drawings.iter_mut().find(|d| d.id == drag.id)
-                    && drawings::move_drawing(d, last, anchor, cd)
-                {
-                    drag.last = anchor;
-                    ev.changed = true;
+                let ids = drag.ids.clone();
+                for id in ids {
+                    if let Some(d) = st.drawings.iter_mut().find(|d| d.id == id && !d.locked)
+                        && drawings::move_drawing(d, last, anchor, cd)
+                    {
+                        ev.changed = true;
+                    }
                 }
+                drag.last = anchor;
             }
         } else if drawing_tool
             && st.tools.tool.kind().is_some_and(|kind| kind.is_drag())
@@ -1138,6 +1360,7 @@ fn handle_input(
     if resp.drag_stopped() || (!resp.dragged() && resp.changed()) {
         st.drag_pane = None;
         st.drag_drawing = None;
+        st.drag_anchor = None;
         if let Some((a, b)) = st.zoom_sel.take() {
             let sel = Rect::from_two_pos(a, b);
             if sel.width() >= 8.0 && sel.height() >= 8.0 {
@@ -1213,6 +1436,14 @@ fn handle_input(
                 if st.magnet_strong { 24.0 } else { 8.0 },
                 magnet_snap_values(st, pos).as_deref(),
             ) {
+                let dbl = {
+                    let now = ctx.input(|i| i.time);
+                    let hit = st
+                        .last_anchor_click
+                        .is_some_and(|(p, t)| (now - t) <= 0.35 && p.distance(pos) <= 6.0);
+                    st.last_anchor_click = Some((pos, now));
+                    hit
+                };
                 if st.tools.tool == crate::drawings::DrawTool::Measure {
                     st.tools.measure_click(anchor);
                 } else if let Some(drawing) = st.tools.click(anchor) {
@@ -1220,20 +1451,40 @@ fn handle_input(
                     st.drawings.push(drawing);
                     ev.changed = true;
                     ev.drawing_completed = true;
+                } else if dbl
+                    && st
+                        .tools
+                        .draft
+                        .as_ref()
+                        .is_some_and(|draft| draft.kind.is_open_path())
+                {
+                    // egui's click counter misses synthetic input; TV finishes
+                    // open paths on a second press at the same spot.
+                    st.last_anchor_click = None;
+                    if let Some(drawing) = st.tools.finish_open_path() {
+                        st.selection.select(drawing.id);
+                        st.drawings.push(drawing);
+                        ev.changed = true;
+                        ev.drawing_completed = true;
+                    }
                 }
             }
-        } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
-            if st.selected_from_press != Some(id) {
-                if st.selection.multi() {
-                    st.selection.toggle(id);
-                } else {
-                    st.selection.select(id);
-                }
+        } else if !st.locked
+            && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
+        {
+            if add_mod {
+                // TV: ⌘/Ctrl+click toggles objects into a multi-selection.
+                st.selection.set_multi(true);
+                st.selection.toggle(id);
+            } else {
+                st.selection.select(id);
+                st.selection.set_multi(false);
             }
         } else if st.suppress_empty_click {
             st.suppress_empty_click = false;
         } else {
             st.selection.clear();
+            st.selection.set_multi(false);
         }
         st.selected_from_press = None;
         st.suppress_empty_click = false;
@@ -1288,6 +1539,22 @@ fn handle_input(
             .hover_block
             .is_some_and(|r| pointer.is_some_and(|p| r.contains(p)))
     {
+        let select_all = ctx.input(|i| {
+            i.modifiers.command && (i.key_pressed(egui::Key::A) || i.key_pressed(egui::Key::I))
+        });
+        if select_all && !st.locked {
+            let ids: Vec<u64> = st
+                .drawings
+                .iter()
+                .filter(|d| d.visible_on(&st.interval) && !d.hidden)
+                .map(|d| d.id)
+                .collect();
+            if !ids.is_empty() {
+                st.selection.extend(ids);
+                st.selection.set_multi(true);
+                ev.changed = true;
+            }
+        }
         let step = st.view.spacing * 2.0;
         if ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft)) {
             st.view.pan(step);
@@ -1304,7 +1571,7 @@ fn handle_input(
         && let Some(pos) = pointer
         && price_rect.contains(pos)
     {
-        if st.drag_drawing.is_some() {
+        if st.drag_drawing.is_some() || st.drag_anchor.is_some() {
             ctx.set_cursor_icon(egui::CursorIcon::Grabbing);
         } else if hit_drawing(st, cd, ax, pos, price_rect).is_some() {
             ctx.set_cursor_icon(egui::CursorIcon::PointingHand);
@@ -1362,6 +1629,11 @@ fn hit_drawing(
     pos: Pos2,
     price_rect: Rect,
 ) -> Option<u64> {
+    // TV: hidden drawings (globally, per object, or magic mode) are not
+    // interactive.
+    if st.drawings_hidden || st.tools.tool == crate::drawings::DrawTool::Performance {
+        return None;
+    }
     let map = |a: Anchor| {
         let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
         Pos2::new(st.view.x_of(i), ax.y_of(a.price))
@@ -1369,7 +1641,7 @@ fn hit_drawing(
     st.drawings
         .iter()
         .rev()
-        .filter(|d| d.visible_on(&st.interval))
+        .filter(|d| d.visible_on(&st.interval) && !d.hidden)
         .find(|d| {
             if d.kind == crate::drawings::DrawingKind::GannFan {
                 drawings::gann_fan_hit(d, pos, map, &st.view, ax, price_rect)
@@ -2091,12 +2363,52 @@ mod tests {
         let y1 = find_click_y(&ctx, &mut st, &cd, x, 1).expect("hit first HLine");
         st.selection.clear();
 
+        // TV: plain click selects; ⌘/Ctrl+click toggles a second object in.
         click(&ctx, &mut st, &cd, Pos2::new(x, y1));
-        click(&ctx, &mut st, &cd, Pos2::new(x, y2));
+        click_mod(&ctx, &mut st, &cd, Pos2::new(x, y2));
         assert!(st.selection.contains(1));
         assert!(st.selection.contains(2));
     }
 
+    /// Click with the ⌘/Ctrl modifier (multi-select toggle). egui 0.37
+    /// tracks `InputState::modifiers` only via `ModifiersChanged` events.
+    fn click_mod(ctx: &egui::Context, st: &mut ChartState, cd: &Candles, pos: Pos2) -> ChartEvent {
+        let modifiers = egui::Modifiers {
+            command: true,
+            ..Default::default()
+        };
+        frame(ctx, st, cd, vec![egui::Event::ModifiersChanged(modifiers)]);
+        frame(ctx, st, cd, vec![egui::Event::PointerMoved(pos)]);
+        frame(
+            ctx,
+            st,
+            cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers,
+            }],
+        );
+        let ev = frame(
+            ctx,
+            st,
+            cd,
+            vec![egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers,
+            }],
+        );
+        frame(
+            ctx,
+            st,
+            cd,
+            vec![egui::Event::ModifiersChanged(egui::Modifiers::default())],
+        );
+        ev
+    }
     #[test]
     fn marquee_selects_intersecting_drawings() {
         let ctx = egui::Context::default();

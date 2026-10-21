@@ -85,6 +85,7 @@ pub enum Icon {
     PriceLabel,
     Signpost,
     FlagMark,
+    Image,
     AnchoredVwap,
     VolumeProfileFixed,
     VolumeProfileAnchored,
@@ -242,6 +243,7 @@ impl Icon {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::Image,
         Self::AnchoredVwap,
         Self::VolumeProfileFixed,
         Self::VolumeProfileAnchored,
@@ -399,6 +401,7 @@ impl Icon {
             Self::PriceLabel => "price-label",
             Self::Signpost => "signpost",
             Self::FlagMark => "flag-mark",
+            Self::Image => "framed-picture",
             Self::AnchoredVwap => "anchored-vwap",
             Self::VolumeProfileFixed => "volume-profile-fixed",
             Self::VolumeProfileAnchored => "volume-profile-anchored",
@@ -1043,6 +1046,17 @@ impl Icon {
                 line(6.0, 21.0, 6.0, 3.0);
                 path(&[(6.0, 4.0), (18.0, 7.0), (6.0, 10.0)]);
             }
+            Self::Image => {
+                round_rect(4.0, 5.0, 20.0, 18.0, 1.0);
+                dot(9.0, 10.0, 1.6);
+                path(&[
+                    (6.0, 19.0),
+                    (11.0, 13.0),
+                    (15.0, 16.0),
+                    (18.0, 12.0),
+                    (22.0, 19.0),
+                ]);
+            }
             Self::AnchoredVwap => {
                 dot(4.0, 18.0, 1.8);
                 path(&[(4.0, 18.0), (10.0, 12.0), (15.0, 9.0), (21.0, 7.0)]);
@@ -1677,7 +1691,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 152);
+        assert_eq!(Icon::ALL.len(), 153);
     }
 
     #[test]

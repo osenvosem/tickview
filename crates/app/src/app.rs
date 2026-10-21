@@ -107,6 +107,8 @@ pub struct Tab {
     pub drawings_hidden: bool,
     /// Study layers hidden on this tab.
     pub indicators_hidden: bool,
+    /// Study layers are locked against mouse editing (TV lock indicators).
+    pub indicators_locked: bool,
     pub toolbar: drawing_toolbar::ToolbarState,
 }
 
@@ -137,6 +139,7 @@ impl Tab {
             locked: false,
             drawings_hidden: false,
             indicators_hidden: false,
+            indicators_locked: false,
             toolbar: drawing_toolbar::ToolbarState::default(),
         }
     }
@@ -232,6 +235,7 @@ pub enum Tool {
     PriceLabel,
     Signpost,
     FlagMark,
+    Image,
     AnchoredVwap,
     VolumeProfileFixed,
     VolumeProfileAnchored,
@@ -333,6 +337,7 @@ impl Tool {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::Image,
         Self::AnchoredVwap,
         Self::VolumeProfileFixed,
         Self::VolumeProfileAnchored,
@@ -434,6 +439,7 @@ impl Tool {
             Self::PriceLabel => Icon::PriceLabel,
             Self::Signpost => Icon::Signpost,
             Self::FlagMark => Icon::FlagMark,
+            Self::Image => Icon::Image,
             Self::AnchoredVwap => Icon::AnchoredVwap,
             Self::VolumeProfileFixed => Icon::VolumeProfileFixed,
             Self::VolumeProfileAnchored => Icon::VolumeProfileAnchored,
@@ -536,6 +542,7 @@ impl Tool {
             Self::PriceLabel => "Price label",
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
+            Self::Image => "Image",
             Self::AnchoredVwap => "Anchored VWAP",
             Self::VolumeProfileFixed => "Fixed Range Volume Profile",
             Self::VolumeProfileAnchored => "Anchored Volume Profile",
@@ -678,6 +685,7 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::PriceLabel => DrawTool::PriceLabel,
         Tool::Signpost => DrawTool::Signpost,
         Tool::FlagMark => DrawTool::FlagMark,
+        Tool::Image => DrawTool::Image,
         Tool::AnchoredVwap => DrawTool::AnchoredVwap,
         Tool::VolumeProfileFixed => DrawTool::VolumeProfileFixed,
         Tool::VolumeProfileAnchored => DrawTool::VolumeProfileAnchored,
@@ -792,6 +800,8 @@ pub struct TickView {
     next_poll: Instant,
     next_watch: Instant,
     dirty_drawings: bool,
+    /// Image drawing awaiting a file selection after the first drag (TV).
+    image_pending: Option<u64>,
     save_at: Instant,
     stream_tx: Option<Sender<Msg>>,
     stream_shutdown: Arc<std::sync::atomic::AtomicBool>,
@@ -818,6 +828,7 @@ pub struct TickView {
     pending_vprofile: bool,
     pending_barghost: bool,
     pending_table: bool,
+    pending_image: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1052,6 +1063,9 @@ impl TickView {
                 tab.chart.locked = tab.locked;
                 tab.drawings_hidden = saved.drawings_hidden;
                 tab.chart.drawings_hidden = tab.drawings_hidden;
+                tab.indicators_locked = saved.indicators_locked;
+                tab.chart.indicators_locked = saved.indicators_locked;
+                tab.chart.values_tooltip = cfg.values_tooltip_long_press;
                 tab.compare_symbol = saved.compare.clone();
                 tabs.push(tab);
                 next_tab_id += 1;
@@ -1122,6 +1136,7 @@ impl TickView {
             next_poll: Instant::now() + Duration::from_secs(5),
             next_watch: Instant::now(),
             dirty_drawings: false,
+            image_pending: None,
             save_at: Instant::now(),
             pending_phase4: false,
             pending_zoomrect: false,
@@ -1140,6 +1155,7 @@ impl TickView {
             pending_vprofile: false,
             pending_barghost: false,
             pending_table: false,
+            pending_image: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1242,6 +1258,7 @@ impl TickView {
                 "vprofile" => me.pending_vprofile = true,
                 "barghost" => me.pending_barghost = true,
                 "table" => me.pending_table = true,
+                "image" => me.pending_image = true,
                 "replay" => me.pending_replay = true,
                 "studiesprice" | "studiesvol" | "studiesosc" | "studieshtf" => {
                     me.pending_studies = Some(scene.clone());
@@ -2405,6 +2422,24 @@ impl TickView {
                                 if self.pending_table && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_table(ti);
                                 }
+                                if self.pending_image && self.tabs[ti].candles.t.len() >= 60 {
+                                    self.pending_image = false;
+                                    let cd = &self.tabs[ti].candles;
+                                    let a = tickchart::Anchor {
+                                        t: cd.t[40],
+                                        price: cd.h[40],
+                                    };
+                                    let b = tickchart::Anchor {
+                                        t: cd.t[52],
+                                        price: cd.l[52],
+                                    };
+                                    self.tabs[ti].chart.drawings.push(tickchart::Drawing::new(
+                                        991,
+                                        tickchart::DrawingKind::Image,
+                                        a,
+                                        b,
+                                    ));
+                                }
                                 if self.pending_studies.is_some()
                                     && self.tabs[ti].candles.t.len() >= 122
                                 {
@@ -2800,6 +2835,7 @@ impl TickView {
                     drawings_locked: tab.locked,
                     drawings_hidden: tab.drawings_hidden,
                     indicators_hidden: tab.indicators_hidden,
+                    indicators_locked: tab.indicators_locked,
                     compare: tab.compare_symbol.clone(),
                 }
             })
@@ -2926,6 +2962,7 @@ impl TickView {
             || self.pending_vprofile
             || self.pending_barghost
             || self.pending_table
+            || self.pending_image
             || self.pending_studies.is_some()
             || (self.data_frames < self.snap_after_data + 120
                 && self
@@ -3081,7 +3118,7 @@ impl TickView {
         let tab = &mut self.tabs[self.active];
         if tab.chart.selection.is_empty() {
             let locked = tab.chart.locked;
-            self.set_drawings_locked(!locked);
+            self.set_all_locked(!locked);
             return;
         }
         let ids: Vec<u64> = tab.chart.selection.ids().iter().copied().collect();
@@ -3174,13 +3211,79 @@ impl TickView {
     }
 
     pub(crate) fn remove_all_drawings(&mut self) {
+        let keep_locked = !self.cfg.always_remove_locked;
         let tab = &mut self.tabs[self.active];
-        tab.chart.drawings.clear();
+        let had_locked = tab.chart.drawings.iter().any(|d| d.locked);
+        if keep_locked {
+            tab.chart.drawings.retain(|d| d.locked);
+        } else {
+            tab.chart.drawings.clear();
+        }
         tab.chart.tools.cancel();
         self.dirty_drawings = true;
         self.save_at = Instant::now() + Duration::from_millis(350);
         self.persist();
-        self.toast("All drawings removed");
+        if keep_locked && had_locked {
+            self.toast("Locked drawings kept");
+        } else {
+            self.toast("All drawings removed");
+        }
+    }
+
+    /// TV: Lock indicators row in the lock options menu.
+    pub(crate) fn set_indicators_locked(&mut self, locked: bool) {
+        let tab = &mut self.tabs[self.active];
+        tab.indicators_locked = locked;
+        tab.chart.indicators_locked = locked;
+        self.persist();
+    }
+
+    /// TV: the main lock button locks drawings and indicators together.
+    pub(crate) fn set_all_locked(&mut self, locked: bool) {
+        self.set_drawings_locked(locked);
+        self.set_indicators_locked(locked);
+    }
+
+    /// TV: Values tooltip on long press (cursors menu toggle).
+    pub(crate) fn toggle_values_tooltip(&mut self) {
+        self.cfg.values_tooltip_long_press = !self.cfg.values_tooltip_long_press;
+        let on = self.cfg.values_tooltip_long_press;
+        for tab in &mut self.tabs {
+            tab.chart.values_tooltip = on;
+        }
+        self.persist();
+    }
+
+    /// TV: Always remove locked drawings (remove options toggle).
+    pub(crate) fn toggle_always_remove_locked(&mut self) {
+        self.cfg.always_remove_locked = !self.cfg.always_remove_locked;
+        self.persist();
+    }
+
+    /// Live counts for the Remove options menu labels (TV).
+    #[must_use]
+    pub(crate) fn drawings_count(&self) -> usize {
+        self.tabs[self.active].chart.drawings.len()
+    }
+
+    #[must_use]
+    pub(crate) fn indicator_count(&self) -> usize {
+        self.tabs[self.active]
+            .chart
+            .panes
+            .iter()
+            .map(|pane| pane.layers.len())
+            .sum()
+    }
+
+    #[must_use]
+    pub(crate) fn values_tooltip_enabled(&self) -> bool {
+        self.cfg.values_tooltip_long_press
+    }
+
+    #[must_use]
+    pub(crate) fn always_remove_locked(&self) -> bool {
+        self.cfg.always_remove_locked
     }
 
     pub(crate) fn zoom_in(&mut self) {
@@ -3270,6 +3373,17 @@ impl TickView {
                 tab.chart.drawings_hidden = tab.drawings_hidden;
                 let ev: ChartEvent = tickchart::chart_ui(ui, &mut tab.chart, &tab.candles);
                 reset_tool = ev.drawing_completed && !keep_drawing;
+                if ev.drawing_completed {
+                    // TV opens the file picker right after placing an image.
+                    self.image_pending = tab
+                        .chart
+                        .drawings
+                        .last()
+                        .filter(|d| {
+                            d.kind == tickchart::DrawingKind::Image && d.image_path.is_none()
+                        })
+                        .map(|d| d.id);
+                }
                 if ev.changed {
                     self.dirty_drawings = true;
                     self.save_at = Instant::now() + Duration::from_millis(350);
@@ -3348,6 +3462,20 @@ impl TickView {
             });
         if reset_tool {
             self.select_tool(Tool::Cursor);
+        }
+        if let Some(id) = self.image_pending.take() {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("Image", &["png", "jpg", "jpeg", "gif", "webp"])
+                .pick_file()
+            {
+                let ti = self.active;
+                self.tabs[ti]
+                    .chart
+                    .set_image_path(id, path.display().to_string());
+                self.dirty_drawings = true;
+                self.save_at = Instant::now() + Duration::from_millis(350);
+                self.persist();
+            }
         }
     }
 

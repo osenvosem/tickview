@@ -736,7 +736,7 @@ mod tests {
     }
 
     #[test]
-    fn tv_catalog_has_92_ids_and_two_excluded() {
+    fn tv_catalog_has_92_ids_and_one_excluded() {
         let path = workspace_root().join("docs/evidence/tv/drawings-catalog.json");
         let json = std::fs::read_to_string(path).expect("TV drawing catalog exists");
         let catalog = parse_tv_catalog(&json).expect("TV catalog parses");
@@ -750,7 +750,7 @@ mod tests {
             .filter(|tool| tool.scope == "excluded")
             .collect();
         let excluded_ids: Vec<&str> = excluded.iter().map(|tool| tool.tv_id.as_str()).collect();
-        assert_eq!(excluded_ids, ["LineToolImage", "arrow"]);
+        assert_eq!(excluded_ids, ["arrow"]);
         assert!(
             excluded.iter().all(|tool| !tool
                 .exclusion_reason
@@ -871,7 +871,7 @@ mod tests {
         let kinds_src = std::fs::read_to_string(root.join("crates/tickchart/src/drawings.rs"))
             .expect("drawings.rs");
         let kinds = parse_kind_variants(&kinds_src);
-        assert_eq!(kinds.len(), 90, "kind parse drift");
+        assert_eq!(kinds.len(), 91, "kind parse drift");
         let errors = validate_full(&catalog, &tv, &kinds, &|candidate| {
             root.join(candidate).exists()
         });

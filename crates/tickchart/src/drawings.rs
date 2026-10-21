@@ -10,6 +10,7 @@ use ta::Candles;
 
 use crate::barfmt::fmt_price;
 use crate::bars::View;
+use crate::chart::ImageTextures;
 use crate::painter::Palette;
 use crate::priceaxis::PriceAxis;
 
@@ -110,6 +111,7 @@ pub enum DrawingKind {
     Post,
     Idea,
     Emoji,
+    Image,
     // Cursor modes that behave like tools (milestone 5).
     Dot,
     Demonstration,
@@ -205,6 +207,7 @@ impl DrawingKind {
         Self::Post,
         Self::Idea,
         Self::Emoji,
+        Self::Image,
         Self::Dot,
         Self::Demonstration,
         Self::Performance,
@@ -300,6 +303,7 @@ impl DrawingKind {
             Self::Post => "Post",
             Self::Idea => "Idea",
             Self::Emoji => "Emoji",
+            Self::Image => "Image",
             Self::Dot => "Dot",
             Self::Demonstration => "Demonstration",
             Self::Performance => "Magic",
@@ -336,6 +340,7 @@ impl DrawingKind {
             | Self::Demonstration
             | Self::Performance => 1,
             Self::FixedRangeVolumeProfile => 2,
+            Self::Image => 2,
             Self::AnchoredVolumeProfile => 1,
             Self::BarsPattern => 2,
             Self::GhostFeed => 2,
@@ -553,6 +558,7 @@ pub enum DrawTool {
     Post,
     Idea,
     Emoji,
+    Image,
     // Cursor-mode tools and rail toggles (milestone 5).
     Dot,
     Demonstration,
@@ -654,6 +660,7 @@ impl DrawTool {
         Self::Post,
         Self::Idea,
         Self::Emoji,
+        Self::Image,
         Self::Dot,
         Self::Demonstration,
         Self::Performance,
@@ -755,6 +762,7 @@ impl DrawTool {
             Self::Post => "Post",
             Self::Idea => "Idea",
             Self::Emoji => "Emoji",
+            Self::Image => "Image",
             Self::Dot => "Dot",
             Self::Demonstration => "Demonstration",
             Self::Performance => "Magic",
@@ -854,6 +862,7 @@ impl DrawTool {
             Self::Post => Some(DrawingKind::Post),
             Self::Idea => Some(DrawingKind::Idea),
             Self::Emoji => Some(DrawingKind::Emoji),
+            Self::Image => Some(DrawingKind::Image),
             Self::Dot => Some(DrawingKind::Dot),
             Self::Demonstration => Some(DrawingKind::Demonstration),
             Self::Performance => Some(DrawingKind::Performance),
@@ -864,7 +873,10 @@ impl DrawTool {
     /// Tools that place or measure something on the chart.
     #[must_use]
     pub fn is_tool(self) -> bool {
-        !matches!(self, Self::Cursor | Self::Crosshair)
+        !matches!(
+            self,
+            Self::Cursor | Self::Crosshair | Self::Dot | Self::Demonstration | Self::Performance
+        )
     }
 }
 
@@ -1385,6 +1397,9 @@ pub struct Drawing {
     /// Per-object editing lock; global lock still overrides interaction.
     #[serde(default, skip_serializing_if = "is_false")]
     pub locked: bool,
+    /// Local file path for the Image tool (TV LineToolImage).
+    #[serde(default)]
+    pub image_path: Option<String>,
 }
 
 /// Regression channel band multiplier default.
@@ -1456,6 +1471,7 @@ impl Drawing {
             hidden: false,
             visible_intervals: None,
             locked: false,
+            image_path: None,
         }
     }
 
@@ -1475,6 +1491,7 @@ impl Drawing {
             hidden: false,
             visible_intervals: None,
             locked: false,
+            image_path: None,
         }
     }
 
@@ -1715,6 +1732,9 @@ impl Drawing {
             DrawingKind::Emoji => {
                 p.distance(a) <= emoji_size_px(f32::from(self.style.width)) * 0.5 + 4.0
             }
+            DrawingKind::Image => Rect::from_min_max(a.min(b), a.max(b))
+                .expand(TOL)
+                .contains(p),
             DrawingKind::FibChannel
             | DrawingKind::FibTimeZone
             | DrawingKind::FibTime
@@ -2178,6 +2198,7 @@ pub fn paint(
     pal: &Palette,
     font: FontId,
     interval: &str,
+    tex: &ImageTextures,
 ) {
     let p = painter.with_clip_rect(plot);
     for d in drawings {
@@ -2195,6 +2216,7 @@ pub fn paint(
             plot,
             pal,
             font.clone(),
+            tex,
         );
     }
     if let Some(draft) = draft {
@@ -2216,8 +2238,21 @@ pub fn paint(
             hidden: false,
             visible_intervals: None,
             locked: false,
+            image_path: None,
         };
-        draw_one(&p, &d, true, true, cd, view, axis, plot, pal, font.clone());
+        draw_one(
+            &p,
+            &d,
+            true,
+            true,
+            cd,
+            view,
+            axis,
+            plot,
+            pal,
+            font.clone(),
+            tex,
+        );
     }
     if let Some(measure) = measure {
         draw_measure(&p, measure, cd, view, axis, plot, pal, font);
@@ -2236,6 +2271,7 @@ fn draw_one(
     plot: Rect,
     pal: &Palette,
     font: FontId,
+    tex: &ImageTextures,
 ) {
     let map_opt = |anchor: Anchor| anchor_pos(anchor, cd, view, axis);
     let (Some(pa), Some(pb)) = (map_opt(d.a), map_opt(d.b)) else {
@@ -2254,6 +2290,34 @@ fn draw_one(
         |opacity: u8| Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), opacity);
 
     match d.kind {
+        DrawingKind::Image => {
+            let rect = Rect::from_min_max(pa.min(pb), pa.max(pb));
+            let uv = Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0));
+            let painted = d.image_path.as_ref().is_some_and(|path| {
+                if let Some(t) = tex.get(path) {
+                    p.add(egui::Shape::image(t.id(), rect, uv, Color32::WHITE));
+                    true
+                } else {
+                    false
+                }
+            });
+            if !painted {
+                p.rect_filled(rect, 0.0, pal.grid);
+                p.text(
+                    rect.center(),
+                    Align2::CENTER_CENTER,
+                    "Image",
+                    font.clone(),
+                    pal.text,
+                );
+            }
+            p.rect_stroke(
+                rect,
+                egui::CornerRadius::ZERO,
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+        }
         // Cursor-mode kinds never become drawings; arms keep the match total.
         DrawingKind::Demonstration | DrawingKind::Performance => {}
         DrawingKind::Dot => {
@@ -3132,21 +3196,37 @@ fn draw_one(
 }
 
 fn paint_line(p: &Painter, a: Pos2, b: Pos2, stroke: Stroke, dash: Option<(f32, f32)>) {
-    if let Some((dash_length, gap_length)) = dash {
-        p.extend(Shape::dashed_line(&[a, b], stroke, dash_length, gap_length));
-    } else {
-        p.line_segment([a, b], stroke);
+    if !(a.x.is_finite() && a.y.is_finite() && b.x.is_finite() && b.y.is_finite())
+        || (b - a).length() > 20_000.0
+    {
+        return;
+    }
+    match dash {
+        Some((dash_length, gap_length)) if dash_length > 0.0 && gap_length > 0.0 => {
+            p.extend(Shape::dashed_line(&[a, b], stroke, dash_length, gap_length));
+        }
+        _ => {
+            let _ = p.line_segment([a, b], stroke);
+        }
     }
 }
 
 fn paint_polyline(p: &Painter, points: &[Pos2], stroke: Stroke, dash: Option<(f32, f32)>) {
-    if points.len() < 2 {
+    let pts: Vec<Pos2> = points
+        .iter()
+        .copied()
+        .filter(|q| q.x.is_finite() && q.y.is_finite())
+        .collect();
+    if pts.len() < 2 || pts.windows(2).any(|w| (w[1] - w[0]).length() > 20_000.0) {
         return;
     }
-    if let Some((dash_length, gap_length)) = dash {
-        p.extend(Shape::dashed_line(points, stroke, dash_length, gap_length));
-    } else {
-        p.add(Shape::line(points.to_vec(), stroke));
+    match dash {
+        Some((dash_length, gap_length)) if dash_length > 0.0 && gap_length > 0.0 => {
+            p.extend(Shape::dashed_line(&pts, stroke, dash_length, gap_length));
+        }
+        _ => {
+            let _ = p.add(Shape::line(pts, stroke));
+        }
     }
 }
 
@@ -3214,7 +3294,13 @@ fn cubic_points(a: Pos2, c1: Pos2, c2: Pos2, b: Pos2, steps: usize) -> Vec<Pos2>
 
 fn circle_through_three(a: Pos2, b: Pos2, c: Pos2) -> Option<(Pos2, f32)> {
     let d = 2.0 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
-    if d.abs() < 1e-4 {
+    // Relative collinearity test: near-collinear clicks must not produce a
+    // planet-sized circle whose dash tessellation explodes before clipping.
+    let scale = [a.x, a.y, b.x, b.y, c.x, c.y]
+        .iter()
+        .map(|v| v.abs())
+        .fold(1.0f32, f32::max);
+    if !(d.is_finite()) || d.abs() < 1e-6 * scale * scale {
         return None;
     }
     let a2 = a.x * a.x + a.y * a.y;
@@ -3223,7 +3309,11 @@ fn circle_through_three(a: Pos2, b: Pos2, c: Pos2) -> Option<(Pos2, f32)> {
     let ux = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d;
     let uy = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d;
     let center = Pos2::new(ux, uy);
-    Some((center, center.distance(a)))
+    let radius = center.distance(a);
+    if !(ux.is_finite()) || !(uy.is_finite()) || !(radius.is_finite()) || radius > 100_000.0 {
+        return None;
+    }
+    Some((center, radius))
 }
 
 fn arc_points(a: Pos2, b: Pos2, through: Pos2) -> Vec<Pos2> {
@@ -4719,7 +4809,14 @@ mod tests {
             );
             assert_eq!(
                 t.is_tool(),
-                !matches!(t, DrawTool::Cursor | DrawTool::Crosshair),
+                !matches!(
+                    t,
+                    DrawTool::Cursor
+                        | DrawTool::Crosshair
+                        | DrawTool::Dot
+                        | DrawTool::Demonstration
+                        | DrawTool::Performance
+                ),
                 "{t:?}"
             );
         }
@@ -5444,5 +5541,48 @@ mod tests {
             rays.iter()
                 .all(|r| r.start == Pos2::new(view.x_of(50), axis.y_of(a.price)))
         );
+    }
+}
+
+/// Slot of the anchor point under `pos` within radius `r`, or None.
+/// Slot order: 0=a, 1=b, 2=c, 3+ = `extra` vertex in stored order.
+#[must_use]
+pub fn handle_slot(points: &[Pos2], pos: Pos2, r: f32) -> Option<usize> {
+    points
+        .iter()
+        .enumerate()
+        .filter(|(_, q)| q.distance(pos) <= r)
+        .min_by(|(_, a), (_, b)| a.distance(pos).total_cmp(&b.distance(pos)))
+        .map(|(i, _)| i)
+}
+
+/// Move the anchor at `slot`; false when the slot does not exist on `d`.
+pub fn set_anchor(d: &mut Drawing, slot: usize, anchor: Anchor) -> bool {
+    match slot {
+        0 => {
+            d.a = anchor;
+            true
+        }
+        1 => {
+            d.b = anchor;
+            true
+        }
+        2 => {
+            if d.c.is_some() {
+                d.c = Some(anchor);
+                true
+            } else {
+                false
+            }
+        }
+        i => {
+            let j = i - 3;
+            if j < d.extra.len() {
+                d.extra[j] = anchor;
+                true
+            } else {
+                false
+            }
+        }
     }
 }

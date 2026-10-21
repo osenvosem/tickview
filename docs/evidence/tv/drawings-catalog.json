@@ -937,8 +937,8 @@
       "shortcut": null,
       "anchors": 2,
       "interaction": "two-point",
-      "scope": "excluded",
-      "exclusion_reason": "media object: out of scope per spec §4"
+      "scope": "in-scope",
+      "exclusion_reason": null
     },
     {
       "tv_id": "LineToolTweet",
