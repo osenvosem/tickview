@@ -235,6 +235,15 @@ pub enum Tool {
     BarsPattern,
     GhostFeed,
     Table,
+    Post,
+    Idea,
+    Emoji,
+    // Cursor modes and rail toggles (milestone 5).
+    Dot,
+    Demonstration,
+    Performance,
+    Magnet,
+    Lock,
 }
 
 impl Tool {
@@ -327,6 +336,14 @@ impl Tool {
         Self::BarsPattern,
         Self::GhostFeed,
         Self::Table,
+        Self::Post,
+        Self::Idea,
+        Self::Emoji,
+        Self::Dot,
+        Self::Demonstration,
+        Self::Performance,
+        Self::Magnet,
+        Self::Lock,
     ];
 
     #[must_use]
@@ -420,6 +437,14 @@ impl Tool {
             Self::BarsPattern => Icon::BarsPattern,
             Self::GhostFeed => Icon::GhostFeed,
             Self::Table => Icon::TableGrid,
+            Self::Post => Icon::Post,
+            Self::Idea => Icon::Idea,
+            Self::Emoji => Icon::Icons,
+            Self::Dot => Icon::Dot,
+            Self::Demonstration => Icon::Demonstration,
+            Self::Performance => Icon::Magic,
+            Self::Magnet => Icon::Magnet,
+            Self::Lock => Icon::Lock,
         }
     }
 
@@ -514,6 +539,14 @@ impl Tool {
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
             Self::Table => "Table",
+            Self::Post => "Post",
+            Self::Idea => "Idea",
+            Self::Emoji => "Icon",
+            Self::Dot => "Dot",
+            Self::Demonstration => "Demonstration",
+            Self::Performance => "Magic",
+            Self::Magnet => "Magnet",
+            Self::Lock => "Lock",
         }
     }
 
@@ -648,6 +681,14 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::BarsPattern => DrawTool::BarsPattern,
         Tool::GhostFeed => DrawTool::GhostFeed,
         Tool::Table => DrawTool::Table,
+        Tool::Post => DrawTool::Post,
+        Tool::Idea => DrawTool::Idea,
+        Tool::Emoji => DrawTool::Emoji,
+        Tool::Dot => DrawTool::Dot,
+        Tool::Demonstration => DrawTool::Demonstration,
+        Tool::Performance => DrawTool::Performance,
+        Tool::Magnet => DrawTool::Magnet,
+        Tool::Lock => DrawTool::Lock,
     }
 }
 
@@ -760,6 +801,8 @@ pub struct TickView {
     pending_gannf: bool,
     pending_toolbar: bool,
     pending_trend: bool,
+    pending_flyout_group: Option<usize>,
+    pending_emojipicker: bool,
     pending_gannfib: bool,
     pending_patterns: bool,
     pending_forecast: bool,
@@ -1078,6 +1121,8 @@ impl TickView {
             pending_gannf: false,
             pending_toolbar: false,
             pending_trend: false,
+            pending_flyout_group: None,
+            pending_emojipicker: false,
             pending_gannfib: false,
             pending_patterns: false,
             pending_forecast: false,
@@ -1176,6 +1221,11 @@ impl TickView {
                 "gannf" => me.pending_gannf = true,
                 "toolbar" => me.pending_toolbar = true,
                 "trend" => me.pending_trend = true,
+                "flyouttrend" => me.pending_flyout_group = Some(1),
+                "flyoutcursors" => me.pending_flyout_group = Some(0),
+                "flyoutfc" => me.pending_flyout_group = Some(4),
+                "flyoutannot" => me.pending_flyout_group = Some(6),
+                "emojipicker" => me.pending_emojipicker = true,
                 "gannfib" => me.pending_gannfib = true,
                 "patterns" => me.pending_patterns = true,
                 "forecast" => me.pending_forecast = true,
@@ -1914,6 +1964,55 @@ impl TickView {
         }
     }
 
+    /// `TICKVIEW_SCENE=flyoutannot`: Post + Idea cards for CONTENT review.
+    fn seed_content(&mut self, ti: usize) {
+        let (lo, hi) = self.price_span(ti);
+        let span = hi - lo;
+        let n = self.tabs[ti].candles.t.len();
+        let ts = |k: usize| self.tabs[ti].candles.t[k];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let mut post = Drawing::new(
+            9151,
+            DrawingKind::Post,
+            a(ts(n - 90), lo + span * 0.55),
+            a(ts(n - 90), lo + span * 0.55),
+        );
+        post.style = tickchart::kind_defaults(DrawingKind::Post);
+        post.style.text = "Earnings beat estimates".into();
+        let mut idea = Drawing::new(
+            9152,
+            DrawingKind::Idea,
+            a(ts(n - 50), lo + span * 0.75),
+            a(ts(n - 50), lo + span * 0.75),
+        );
+        idea.style = tickchart::kind_defaults(DrawingKind::Idea);
+        idea.style.text = "Bullish structure holding".into();
+        self.tabs[ti].chart.drawings.push(post);
+        self.tabs[ti].chart.drawings.push(idea);
+    }
+
+    /// `TICKVIEW_SCENE=emojipicker`: one placed emoji next to the picker.
+    fn seed_emoji(&mut self, ti: usize) {
+        let (lo, hi) = self.price_span(ti);
+        let span = hi - lo;
+        let n = self.tabs[ti].candles.t.len();
+        let mut dot = Drawing::new(
+            9153,
+            DrawingKind::Emoji,
+            Anchor {
+                t: self.tabs[ti].candles.t[n - 70],
+                price: lo + span * 0.30,
+            },
+            Anchor {
+                t: self.tabs[ti].candles.t[n - 70],
+                price: lo + span * 0.30,
+            },
+        );
+        dot.style = tickchart::kind_defaults(DrawingKind::Emoji);
+        dot.style.text = "\u{1f642}".into();
+        self.tabs[ti].chart.drawings.push(dot);
+    }
+
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
     fn seed_toolbar(&mut self, ti: usize) {
@@ -2246,6 +2345,22 @@ impl TickView {
                                 if self.pending_toolbar && self.tabs[ti].candles.t.len() >= 10 {
                                     self.seed_toolbar(ti);
                                     self.pending_toolbar = false;
+                                }
+                                if let Some(g) = self.pending_flyout_group.take()
+                                    && self.tabs[ti].candles.t.len() >= 10
+                                {
+                                    if g == 6 {
+                                        self.seed_content(ti);
+                                    }
+                                    self.tool_panel.open_group(g);
+                                }
+                                if self.pending_emojipicker && self.tabs[ti].candles.t.len() >= 10 {
+                                    self.seed_emoji(ti);
+                                    self.tool_panel.toggle_picker(egui::Rect::from_min_size(
+                                        egui::pos2(crate::theme::space::RAIL_W, 120.0),
+                                        egui::vec2(38.0, 38.0),
+                                    ));
+                                    self.pending_emojipicker = false;
                                 }
                                 if self.pending_trend && self.tabs[ti].candles.t.len() >= 60 {
                                     self.seed_trend(ti);
@@ -2776,6 +2891,8 @@ impl TickView {
             || self.pending_zoomrect
             || self.pending_gannf
             || self.pending_toolbar
+            || self.pending_flyout_group.is_some()
+            || self.pending_emojipicker
             || self.pending_trend
             || self.pending_gannfib
             || self.pending_patterns
@@ -2920,9 +3037,42 @@ impl TickView {
 
     /// Select a drawing tool and remember it as its group's last-used tool.
     pub(crate) fn select_tool(&mut self, tool: Tool) {
+        match tool {
+            Tool::Magnet => {
+                self.toggle_magnet();
+                return;
+            }
+            Tool::Lock => {
+                self.toggle_selection_lock();
+                return;
+            }
+            _ => {}
+        }
         self.tool = tool;
         self.tool_panel.activate(tool);
         self.tool_panel.close_overlays();
+    }
+
+    /// Lock rail button: lock/unlock the selected drawings; with no
+    pub(crate) fn toggle_selection_lock(&mut self) {
+        let tab = &mut self.tabs[self.active];
+        if tab.chart.selection.is_empty() {
+            let locked = tab.chart.locked;
+            self.set_drawings_locked(!locked);
+            return;
+        }
+        let ids: Vec<u64> = tab.chart.selection.ids().iter().copied().collect();
+        let any_unlocked = tab
+            .chart
+            .drawings
+            .iter()
+            .any(|d| ids.contains(&d.id) && !d.locked);
+        for d in &mut tab.chart.drawings {
+            if ids.contains(&d.id) {
+                d.locked = any_unlocked;
+            }
+        }
+        self.persist();
     }
 
     pub(crate) fn toggle_magnet(&mut self) {
@@ -3127,6 +3277,10 @@ impl TickView {
                     };
                     let out = drawing_toolbar::show(ui, p, &mut self.tabs[ti].toolbar, &model);
                     self.tabs[ti].chart.popup_rect = Some(out.exclusion_rect);
+                    self.tabs[ti].chart.hover_block = Some(match self.tabs[ti].chart.hover_block {
+                        Some(prev) => prev.union(out.exclusion_rect),
+                        None => out.exclusion_rect,
+                    });
                     self.apply_toolbar_actions(out.actions, ui.ctx());
                 } else {
                     self.tabs[ti].chart.popup_rect = None;
@@ -4188,6 +4342,10 @@ mod tests {
             menu.push(*tool);
         }
         for tool in Tool::ALL {
+            // Magnet/Lock live on the rail as persistent toggle buttons.
+            if matches!(tool, Tool::Magnet | Tool::Lock) {
+                continue;
+            }
             assert!(menu.contains(tool), "{tool:?} has no rail slot");
         }
         let path = concat!(
@@ -4203,7 +4361,14 @@ mod tests {
             .filter(|e| e["status"].as_str() == Some("verified"))
             .filter_map(|e| e["tickview_id"].as_str().map(str::to_owned))
             .collect();
-        let cursor_modes = [Tool::Cursor, Tool::Crosshair, Tool::Eraser, Tool::Measure];
+        let cursor_modes = [
+            Tool::Cursor,
+            Tool::Crosshair,
+            Tool::Eraser,
+            Tool::Measure,
+            Tool::Magnet,
+            Tool::Lock,
+        ];
         for tool in Tool::ALL {
             match draw_tool(*tool).kind() {
                 Some(kind) => assert!(

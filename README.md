@@ -189,4 +189,19 @@ functional top-right selected-object bar pinned by tests; no dead menu items
 smokes), `cargo clippy --workspace --all-targets` and `git diff --check` all
 clean; side-by-side verdicts in `docs/parity/final-review.md`.
 
+Milestone 5 (tool-panel containment, content, icons) is complete: flyouts
+and utility menus block chart hover/pan/zoom under the pointer and their
+section dividers run edge-to-edge; the forecasting group now orders
+VOLUME-BASED before MEASURERS and the annotation group gains a CONTENT
+subcategory with Post (`LineToolTweet`) and Idea (`LineToolIdea`) cards; the
+eighth rail group Icons opens a 354 px emoji picker (8 categories × 24
+monochrome Noto Emoji glyphs) placing `Emoji` drawings; the Cursors group
+gains Dot, Demonstration and Magic (TV performance) modes — dot placement,
+spotlight dimming and drawing-hiding respectively — with the rail Magnet and
+Lock buttons wired to weak/strong snapping and selection locking. Manifest:
+92 TV ids, 90 drawings verified, 2 excluded (`LineToolImage`, duplicate
+arrow cursor). QA: dark/light captures for
+`TICKVIEW_SCENE=flyouttrend|flyoutfc|flyoutannot|emojipicker|flyoutcursors`
+in `docs/screenshots/parity/`.
+
 `PARITY.md` tracks the shell surface and the 83-study indicator matrix.

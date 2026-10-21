@@ -106,6 +106,14 @@ pub enum DrawingKind {
     BarsPattern,
     GhostFeed,
     Table,
+    // Content cards and emoji (milestone 5).
+    Post,
+    Idea,
+    Emoji,
+    // Cursor modes that behave like tools (milestone 5).
+    Dot,
+    Demonstration,
+    Performance,
 }
 
 impl DrawingKind {
@@ -194,6 +202,12 @@ impl DrawingKind {
         Self::BarsPattern,
         Self::GhostFeed,
         Self::Table,
+        Self::Post,
+        Self::Idea,
+        Self::Emoji,
+        Self::Dot,
+        Self::Demonstration,
+        Self::Performance,
     ];
 
     #[must_use]
@@ -283,6 +297,12 @@ impl DrawingKind {
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
             Self::Table => "Table",
+            Self::Post => "Post",
+            Self::Idea => "Idea",
+            Self::Emoji => "Emoji",
+            Self::Dot => "Dot",
+            Self::Demonstration => "Demonstration",
+            Self::Performance => "Magic",
         }
     }
 
@@ -308,7 +328,13 @@ impl DrawingKind {
             | Self::PriceLabel
             | Self::Signpost
             | Self::FlagMark
-            | Self::AnchoredVwap => 1,
+            | Self::AnchoredVwap
+            | Self::Post
+            | Self::Idea
+            | Self::Emoji
+            | Self::Dot
+            | Self::Demonstration
+            | Self::Performance => 1,
             Self::FixedRangeVolumeProfile => 2,
             Self::AnchoredVolumeProfile => 1,
             Self::BarsPattern => 2,
@@ -524,6 +550,15 @@ pub enum DrawTool {
     BarsPattern,
     GhostFeed,
     Table,
+    Post,
+    Idea,
+    Emoji,
+    // Cursor-mode tools and rail toggles (milestone 5).
+    Dot,
+    Demonstration,
+    Performance,
+    Magnet,
+    Lock,
 }
 
 impl DrawTool {
@@ -616,6 +651,14 @@ impl DrawTool {
         Self::BarsPattern,
         Self::GhostFeed,
         Self::Table,
+        Self::Post,
+        Self::Idea,
+        Self::Emoji,
+        Self::Dot,
+        Self::Demonstration,
+        Self::Performance,
+        Self::Magnet,
+        Self::Lock,
     ];
 
     #[must_use]
@@ -709,6 +752,14 @@ impl DrawTool {
             Self::BarsPattern => "Bars pattern",
             Self::GhostFeed => "Ghost feed",
             Self::Table => "Table",
+            Self::Post => "Post",
+            Self::Idea => "Idea",
+            Self::Emoji => "Emoji",
+            Self::Dot => "Dot",
+            Self::Demonstration => "Demonstration",
+            Self::Performance => "Magic",
+            Self::Magnet => "Magnet",
+            Self::Lock => "Lock",
         }
     }
 
@@ -800,6 +851,13 @@ impl DrawTool {
             Self::BarsPattern => Some(DrawingKind::BarsPattern),
             Self::GhostFeed => Some(DrawingKind::GhostFeed),
             Self::Table => Some(DrawingKind::Table),
+            Self::Post => Some(DrawingKind::Post),
+            Self::Idea => Some(DrawingKind::Idea),
+            Self::Emoji => Some(DrawingKind::Emoji),
+            Self::Dot => Some(DrawingKind::Dot),
+            Self::Demonstration => Some(DrawingKind::Demonstration),
+            Self::Performance => Some(DrawingKind::Performance),
+            Self::Magnet | Self::Lock => None,
         }
     }
 
@@ -928,6 +986,8 @@ pub struct DrawingToolState {
     pub draft: Option<Draft>,
     pub measure: Option<Measure>,
     next_id: u64,
+    /// Text the app wants the next finished drawing to carry (emoji picker).
+    pub pending_text: Option<String>,
 }
 
 impl Default for DrawingToolState {
@@ -936,6 +996,7 @@ impl Default for DrawingToolState {
             tool: DrawTool::Cursor,
             draft: None,
             measure: None,
+            pending_text: None,
             next_id: 1,
         }
     }
@@ -967,6 +1028,9 @@ impl DrawingToolState {
 
     /// Handle a click at `anchor`; returns a completed drawing.
     pub fn click(&mut self, anchor: Anchor) -> Option<Drawing> {
+        if matches!(self.tool, DrawTool::Demonstration | DrawTool::Performance) {
+            return None;
+        }
         let kind = self.tool.kind()?;
         if let Some(draft) = &mut self.draft {
             match draft.count {
@@ -1013,6 +1077,9 @@ impl DrawingToolState {
         };
         d.extra = draft.extra;
         d.style = kind_defaults(draft.kind);
+        if let Some(text) = self.pending_text.take() {
+            d.style.text = text;
+        }
         Some(d)
     }
 
@@ -1469,6 +1536,11 @@ impl Drawing {
                 .contains(p);
         }
         const TOL: f32 = 6.0;
+        if self.kind == DrawingKind::Dot {
+            let c = map(self.a);
+            let r = 3.0 + f32::from(self.style.width) * 1.5;
+            return (p - c).length() <= r + TOL;
+        }
         if self.kind.is_pattern()
             || matches!(
                 self.kind,
@@ -1639,6 +1711,10 @@ impl Drawing {
             }
             DrawingKind::Arrow => distance_to_segment(p, a, b) <= TOL || p.distance(b) <= 10.0,
             DrawingKind::Note => note_rect(a, &self.style.text).contains(p),
+            DrawingKind::Post | DrawingKind::Idea => card_rect(a, &self.style.text).contains(p),
+            DrawingKind::Emoji => {
+                p.distance(a) <= emoji_size_px(f32::from(self.style.width)) * 0.5 + 4.0
+            }
             DrawingKind::FibChannel
             | DrawingKind::FibTimeZone
             | DrawingKind::FibTime
@@ -2031,6 +2107,20 @@ pub fn note_rect(anchor: Pos2, text: &str) -> Rect {
     )
 }
 
+/// Card rect for `Post`/`Idea` content drawings anchored at its top-left.
+#[must_use]
+pub fn card_rect(anchor: Pos2, text: &str) -> Rect {
+    let width = (7.0 * text.chars().count() as f32 + 24.0).clamp(200.0, 260.0);
+    let height = if text.contains('\n') { 76.0 } else { 64.0 };
+    Rect::from_min_max(anchor, Pos2::new(anchor.x + width, anchor.y + height))
+}
+
+/// Painted glyph size for an emoji drawing, scaled by the style width (1-8).
+#[must_use]
+pub fn emoji_size_px(width: f32) -> f32 {
+    16.0 + width.clamp(1.0, 8.0) * 4.0
+}
+
 /// Seven Fibonacci extension levels projected from `c` as `(ratio, price)`.
 #[must_use]
 pub fn fib_ext_levels(a: f64, b: f64, c: f64) -> [(f32, f32); 7] {
@@ -2154,6 +2244,11 @@ fn draw_one(
         |opacity: u8| Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), opacity);
 
     match d.kind {
+        // Cursor-mode kinds never become drawings; arms keep the match total.
+        DrawingKind::Demonstration | DrawingKind::Performance => {}
+        DrawingKind::Dot => {
+            p.circle_filled(pa, 3.0 + width * 1.5, color);
+        }
         DrawingKind::TrendLine => paint_line(p, pa, pb, stroke, dash),
         DrawingKind::Ray => {
             if let Some((origin, end)) = d.ray_geometry(map, plot) {
@@ -2923,6 +3018,77 @@ fn draw_one(
                     color,
                 );
             }
+        }
+        DrawingKind::Post => {
+            let rect = card_rect(pa, &d.style.text);
+            p.rect_filled(rect, 8.0, pal.bg);
+            p.rect_stroke(rect, 8.0, stroke, egui::StrokeKind::Inside);
+            let avatar_r = 10.0;
+            p.circle_filled(
+                Pos2::new(rect.min.x + 12.0 + avatar_r, rect.min.y + 12.0 + avatar_r),
+                avatar_r,
+                color,
+            );
+            let head = d.style.text.lines().next().unwrap_or("Post");
+            p.text(
+                Pos2::new(rect.min.x + 12.0 + avatar_r * 2.0 + 8.0, rect.min.y + 22.0),
+                Align2::LEFT_CENTER,
+                head,
+                FontId::proportional(12.0),
+                color,
+            );
+            if let Some(body) = d.style.text.lines().nth(1) {
+                p.text(
+                    Pos2::new(rect.min.x + 12.0, rect.min.y + 46.0),
+                    Align2::LEFT_CENTER,
+                    body,
+                    FontId::proportional(11.0),
+                    pal.text,
+                );
+            }
+        }
+        DrawingKind::Idea => {
+            let rect = card_rect(pa, &d.style.text);
+            p.rect_filled(rect, 8.0, pal.bg);
+            p.rect_stroke(rect, 8.0, stroke, egui::StrokeKind::Inside);
+            let title = d.style.text.lines().next().unwrap_or("Idea");
+            p.text(
+                Pos2::new(rect.min.x + 12.0, rect.min.y + 20.0),
+                Align2::LEFT_CENTER,
+                title,
+                FontId::proportional(12.0),
+                color,
+            );
+            if let Some(body) = d.style.text.lines().nth(1) {
+                p.text(
+                    Pos2::new(rect.min.x + 12.0, rect.min.y + 40.0),
+                    Align2::LEFT_CENTER,
+                    body,
+                    FontId::proportional(11.0),
+                    pal.text,
+                );
+            }
+            p.text(
+                Pos2::new(rect.min.x + 12.0, rect.max.y - 12.0),
+                Align2::LEFT_CENTER,
+                "CHART IDEA",
+                FontId::proportional(9.0),
+                pal.text,
+            );
+        }
+        DrawingKind::Emoji => {
+            let glyph = if d.style.text.is_empty() {
+                "🙂"
+            } else {
+                &d.style.text
+            };
+            p.text(
+                pa,
+                Align2::CENTER_CENTER,
+                glyph,
+                FontId::proportional(emoji_size_px(f32::from(d.style.width))),
+                color,
+            );
         }
     }
 
@@ -4445,7 +4611,12 @@ mod tests {
                 t.kind().is_none(),
                 matches!(
                     t,
-                    DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure | DrawTool::Eraser
+                    DrawTool::Cursor
+                        | DrawTool::Crosshair
+                        | DrawTool::Measure
+                        | DrawTool::Eraser
+                        | DrawTool::Magnet
+                        | DrawTool::Lock
                 ),
                 "{t:?}"
             );
@@ -4795,7 +4966,12 @@ mod tests {
         for tool in DrawTool::ALL {
             if matches!(
                 tool,
-                DrawTool::Cursor | DrawTool::Crosshair | DrawTool::Measure | DrawTool::Eraser
+                DrawTool::Cursor
+                    | DrawTool::Crosshair
+                    | DrawTool::Measure
+                    | DrawTool::Eraser
+                    | DrawTool::Magnet
+                    | DrawTool::Lock
             ) {
                 assert!(tool.kind().is_none(), "{tool:?} should not place a drawing");
             } else {

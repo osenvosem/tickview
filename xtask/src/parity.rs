@@ -736,22 +736,21 @@ mod tests {
     }
 
     #[test]
-    fn tv_catalog_has_87_ids_and_three_excluded() {
+    fn tv_catalog_has_92_ids_and_two_excluded() {
         let path = workspace_root().join("docs/evidence/tv/drawings-catalog.json");
         let json = std::fs::read_to_string(path).expect("TV drawing catalog exists");
         let catalog = parse_tv_catalog(&json).expect("TV catalog parses");
-        // TV annotation group is 13 rows (11 text/notes incl. Image + 2 content): total 87.
-        assert_eq!(catalog.tools.len(), 87);
+        // 87 LineTools + FontIcon + 4 cursor rows; milestone 5 brought
+        // Post/Idea in scope, leaving Image (media) and the duplicate arrow
+        // cursor excluded.
+        assert_eq!(catalog.tools.len(), 92);
         let excluded: Vec<&TvTool> = catalog
             .tools
             .iter()
             .filter(|tool| tool.scope == "excluded")
             .collect();
         let excluded_ids: Vec<&str> = excluded.iter().map(|tool| tool.tv_id.as_str()).collect();
-        assert_eq!(
-            excluded_ids,
-            ["LineToolImage", "LineToolTweet", "LineToolIdea"]
-        );
+        assert_eq!(excluded_ids, ["LineToolImage", "arrow"]);
         assert!(
             excluded.iter().all(|tool| !tool
                 .exclusion_reason
@@ -872,7 +871,7 @@ mod tests {
         let kinds_src = std::fs::read_to_string(root.join("crates/tickchart/src/drawings.rs"))
             .expect("drawings.rs");
         let kinds = parse_kind_variants(&kinds_src);
-        assert_eq!(kinds.len(), 84, "kind parse drift");
+        assert_eq!(kinds.len(), 90, "kind parse drift");
         let errors = validate_full(&catalog, &tv, &kinds, &|candidate| {
             root.join(candidate).exists()
         });

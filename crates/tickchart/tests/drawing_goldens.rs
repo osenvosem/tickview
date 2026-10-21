@@ -9,7 +9,9 @@
 use egui::{Pos2, Rect, Vec2};
 use ta::Candles;
 use tickchart::bars::View;
-use tickchart::drawings::{anchor_pos, gann_fan_hit, measure_summary, note_rect, reg_band_hit};
+use tickchart::drawings::{
+    anchor_pos, card_rect, emoji_size_px, gann_fan_hit, measure_summary, note_rect, reg_band_hit,
+};
 use tickchart::priceaxis::PriceAxis;
 use tickchart::{Anchor, Drawing, DrawingKind};
 
@@ -1775,6 +1777,10 @@ fn every_kind_has_geometry_and_hit_case() {
     let map =
         |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
     for (n, kind) in DrawingKind::ALL.iter().copied().enumerate() {
+        // Cursor-mode kinds are interaction modes, never drawings.
+        if matches!(kind, DrawingKind::Demonstration | DrawingKind::Performance) {
+            continue;
+        }
         let i = 40 + n % 100;
         let a = an(&sc, i, 100.0);
         let b = if kind.points() >= 2 {
@@ -1947,4 +1953,86 @@ fn every_kind_serde_round_trips() {
         assert_eq!(back.grid, d.grid, "{kind:?}: grid drift");
         assert_eq!(back.cells, d.cells, "{kind:?}: cells drift");
     }
+}
+
+#[test]
+fn post_and_idea_cards_anchor_hit_and_serde() {
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    assert_eq!(DrawingKind::Post.points(), 1);
+    assert_eq!(DrawingKind::Idea.points(), 1);
+
+    let card = card_rect(Pos2::new(10.0, 20.0), "Trader");
+    assert!(card.width() >= 200.0 && card.width() <= 260.0);
+    assert_eq!(card.height(), 64.0);
+    let tall = card_rect(Pos2::new(10.0, 20.0), "Trader\nsecond line");
+    assert!(tall.height() > card.height());
+
+    for kind in [DrawingKind::Post, DrawingKind::Idea] {
+        let mut d = Drawing::new(901, kind, an(&sc, 50, 105.0), an(&sc, 50, 105.0));
+        d.style.text = "Trader\nBullish continuation".into();
+        let r = card_rect(map(d.a), &d.style.text);
+        assert!(d.hit(r.center(), map, PLOT), "{kind:?}: card center misses");
+        assert!(
+            !d.hit(r.max + Vec2::new(40.0, 40.0), map, PLOT),
+            "{kind:?}: far point hits"
+        );
+        let json = serde_json::to_string(&d).expect("serialize");
+        let back: Drawing = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.kind, kind);
+        assert_eq!(back.style.text, d.style.text);
+    }
+}
+
+#[test]
+fn emoji_glyph_scales_with_style_width_and_round_trips() {
+    assert_eq!(emoji_size_px(1.0), 20.0);
+    assert_eq!(emoji_size_px(8.0), 48.0);
+    assert_eq!(emoji_size_px(0.0), 20.0, "clamped low");
+    assert_eq!(emoji_size_px(12.0), 48.0, "clamped high");
+
+    let sc = scene(false);
+    let map =
+        |q: Anchor| anchor_pos(q, &sc.cd, &sc.view, &sc.axis).unwrap_or(Pos2::new(-1.0e4, -1.0e4));
+    let mut d = Drawing::new(
+        902,
+        DrawingKind::Emoji,
+        an(&sc, 50, 105.0),
+        an(&sc, 50, 105.0),
+    );
+    d.style.text = "🙂".into();
+    let pa = map(d.a);
+    assert!(
+        d.hit(pa + Vec2::new(5.0, 0.0), map, PLOT),
+        "near glyph misses"
+    );
+    assert!(
+        !d.hit(pa + Vec2::new(60.0, 0.0), map, PLOT),
+        "far glyph hits"
+    );
+    let json = serde_json::to_string(&d).expect("serialize");
+    let back: Drawing = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(back.kind, DrawingKind::Emoji);
+    assert_eq!(back.style.text, "🙂");
+}
+
+#[test]
+fn cursor_modes_place_no_drawings_except_dot() {
+    use tickchart::drawings::{DrawTool, DrawingToolState};
+    let anchor = Anchor {
+        t: 1_700_000_000,
+        price: 100.0,
+    };
+    let mut state = DrawingToolState::default();
+    state.set_tool(DrawTool::Demonstration);
+    assert!(
+        state.click(anchor).is_none(),
+        "demonstration places no drawing"
+    );
+    state.set_tool(DrawTool::Performance);
+    assert!(state.click(anchor).is_none(), "magic places no drawing");
+    state.set_tool(DrawTool::Dot);
+    let dot = state.click(anchor).expect("dot tool places a dot");
+    assert_eq!(dot.kind, DrawingKind::Dot);
 }

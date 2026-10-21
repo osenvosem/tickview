@@ -10,15 +10,19 @@
 
 ## Scope decisions
 
-- The manifest tracks `LineTool*` drawing tools only. The Cursors group ids
-  (`cursor`, `dot`, `arrow`, `demonstration`, `performance`, `eraser`) are
-  interaction modes, not drawings: they create no persisted object, so they
-  are not catalog rows. TickView's select/crosshair/eraser tools remain
-  tracked as UI behavior, not manifest entries.
-- The Icons group is the emoji/sticker picker (`dataMenuQaId="emojipicker-menu"`),
-  a media object picker excluded by spec §4.
-- `LineToolImage`, `LineToolTweet` (Post), `LineToolIdea` are media/social
-  content objects: excluded with reasons, never rendered as rail rows.
+- The manifest tracks `LineTool*` drawing tools plus the cursor modes that
+  place or change chart state: `dot` (single-click marker), `demonstration`
+  (spotlight dim) and `performance` (hide drawings while active) are
+  in-scope rows with 1 anchor each. `cursor` and `eraser` remain UI behavior
+  tracked outside the manifest; `arrow` is excluded as a duplicate of the
+  pointer cursor (TickView `Cursor`).
+- The Icons group (`dataMenuQaId="emojipicker-menu"`) is implemented as the
+  emoji picker: `FontIcon` catalog row, `Tool::Emoji`, 8 categories × 24
+  monochrome Noto Emoji glyphs; picked emoji are placed as `Emoji` drawings
+  carrying the char in `style.text`.
+- `LineToolImage` stays excluded (media object, spec §4). `LineToolTweet`
+  (Post) and `LineToolIdea` are in scope since milestone 5: card-style
+  annotation drawings with authored text, rendered in the CONTENT subcategory.
 
 ## Known anchor uncertainties (resolve against live TV in the owning family audit)
 
