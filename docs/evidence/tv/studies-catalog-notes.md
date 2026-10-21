@@ -88,3 +88,25 @@ disagree, the bundle value is used and the conflict is recorded here:
 - `LinReg` stddev multiplier was 1.0; wire `upper diviation = 2` → fixed to 2.0.
 - `Supertrend` and `EMA Ribbons` have no wire row; defaults follow TV docs (ATR 10 / factor 3; ribbon 8..169 Fibonacci set) — open questions.
 - `Vwap` goldens deferred to session-anchor work (T9); `Pivots` needs day-aggregation evidence — both stay in-progress.
+
+## Final catalog audit findings (T14)
+
+- All 83 registry studies are `verified` in `docs/parity/catalog.json`;
+  Advance/Decline is the single exclusion (external index feed, spec §4).
+- Defaults: every registry id now has an evidence row in
+  `docs/evidence/tv-studies-defaults.json`; `tv_defaults` compares all
+  numeric/boolean params against the `studies_metadata` wire payload.
+- Wave additions audited against per-study metadata under
+  `docs/evidence/tv/studies/`: DMI (14/14), Fisher (9), Know Sure Thing
+  (10/15/20/30 ROC + 10/10/10/15 SMA + signal 9), Price Oscillator
+  (12/26/9 EMA), Relative Volatility Index (10/10), SMI Ergodic (20/5),
+  Volatility Stop (20/2.0), Williams Fractals (2/2), ZigZag (deviation 5,
+  depth 10), Correlation Coefficient (20), Rank Correlation Index (10).
+- The earlier Know-Sure-Thing open question is resolved: the wire row is
+  KST-shaped (not mislabeled), and TV's KST weights its four ROC legs
+  1..4 — Rust `oscs::kst` fixed accordingly and regolden.
+- SMI Ergodic: bundle values 20/5 win over docs 10/3/3 (TV ships 20/5;
+  docs lag). ZigZag depth 10 per bundle.
+- Correlation studies use the active comparison series in place of TV's
+  literal `GOOG` default; without a comparison they render as an empty
+  (all-NaN) pane rather than guessing a second symbol.

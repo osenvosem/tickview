@@ -13,8 +13,8 @@ full web platform.
 | Symbol search | Done | ⌘K, keyboard navigation, curated offline index, remote refresh |
 | Intervals | Partial | 1m, 5m, 15m, 1H, 4H, 1D, 1W, 1M; no seconds or tick bars |
 | Chart styles | Done | Candles, hollow candles, bars, columns, line, area, baseline, Heikin Ashi |
-| Indicator browser and settings | Partial | 66 studies, per-param editor, persistent; no Pine/custom studies |
-| Study default audit | Done | 42 studies' numeric/bool defaults pinned against TradingView Desktop 3.4.1.8194 `studies_metadata` wire payload (`docs/evidence/tv-studies-defaults.json`); audit fixed 11 drifts: VWMA length 20, Keltner mult 1, Stoch %K smoothing 3, CMO 9, KST 10/10/10/15 + signal 9, TRIX 18, HV 10; enum inputs recorded for review |
+| Indicator browser and settings | Partial | 83 studies, per-param editor, persistent; no Pine/custom studies |
+| Study default audit | Done | all 83 studies' numeric/bool defaults pinned against TradingView Desktop 3.4.1.8194 `studies_metadata` wire payload (`docs/evidence/tv-studies-defaults.json`); audit fixed 11 drifts: VWMA length 20, Keltner mult 1, Stoch %K smoothing 3, CMO 9, KST 10/10/10/15 + signal 9, TRIX 18, HV 10; weighted-KST drift found and fixed in M3; enum inputs recorded for review |
 | Right watchlist | Partial | Add/remove, filter, selection, quote change bars, context menu; no sections or sparklines |
 | Alerts | Partial | Price crossing above/below, polling, persisted; no sounds or notifications |
 | Drawing tools | Done | 88 rail tools across seven TV groups: cursors/cross/eraser, trend lines/channels/four pitchforks, 11 Fibonacci + 4 Gann tools, six chart patterns, five Elliott waves, three cycle tools, long/short/position forecast, sector, price/date ranges, brush/highlighter, rectangles/circle/triangle/path/polyline/arc/curve/double curve, arrows, notes/callouts/comments/pins/signposts/flags, plain text, anchored VWAP, fixed-range and anchored volume profiles, bars pattern, ghost feed, editable table; select/move/delete, top-right selected-object bar (style/width/color/settings, lock, hide, z-order, clone/copy/paste, interval visibility, delete) with multi-select and marquee, remove-all, keep-drawing, weak/strong magnet, per-symbol persistence; shift-drag rectangle zoom, Esc resets. Parity manifest: all 84 in-scope drawings `verified`, 3 excluded (`docs/parity/STATUS.md`). Deferred: crosshair-rectangle modifier, brush/pitchfork auto-styles beyond color/width/line |
@@ -29,25 +29,34 @@ full web platform.
 | Broker execution / paper trading | Non-goal | Charting workstation scope |
 | Pine Script / cloud sync / social | Non-goal | Charting workstation scope |
 
-## Studies (66)
+## Studies (83 verified, 1 excluded)
 
 | Study | id | Pane |
 |---|---|---|
 | %B | `PercentB` | separate |
 | Accelerator Oscillator | `Accelerator` | separate |
 | Accumulation/Distribution | `AccumulationDistribution` | volume |
+| Advance/Decline | — | — |
 | Alligator | `Alligator` | price |
 | Arnaud Legoux Moving Average | `Alma` | price |
+| Aroon | `Aroon` | separate |
 | Average Directional Index (ADX) | `Adx` | separate |
+| Average True Range | `Atr` | separate |
 | Awesome Oscillator | `AwesomeOscillator` | separate |
 | Bias | `Bias` | separate |
 | Bollinger Bands | `BollingerBands` | price |
+| Bollinger Bands Width | `BollingerBandsWidth` | separate |
 | Chaikin Money Flow | `ChaikinMoneyFlow` | volume |
 | Chaikin Oscillator | `ChaikinOscillator` | volume |
 | Chaikin Volatility | `ChaikinVolatility` | separate |
 | Chande Momentum Oscillator | `Cmo` | separate |
+| Chandelier Exit | `ChandelierExit` | price |
+| Choppiness Index | `ChoppinessIndex` | separate |
 | Commodity Channel Index (CCI) | `Cci` | separate |
+| Connors RSI | `ConnorsRsi` | separate |
+| Correlation Coefficient | `CorrelationCoeff` | separate |
 | Detrended Price Oscillator | `Dpo` | separate |
+| Directional Movement | `Dmi` | separate |
 | Donchian Channels | `DonchianChannels` | price |
 | Double EMA | `Dema` | price |
 | Ease of Movement | `EaseOfMovement` | volume |
@@ -56,6 +65,7 @@ full web platform.
 | EMA Ribbons | `EmaRibbons` | price |
 | Envelope | `Envelope` | price |
 | Exponential Moving Average | `Ema` | price |
+| Fisher Transform | `FisherTransform` | separate |
 | Garman-Klass Volatility | `GarmanKlassVolatility` | separate |
 | Historical Volatility | `HistoricalVolatility` | separate |
 | Hull Moving Average | `Hma` | price |
@@ -63,6 +73,7 @@ full web platform.
 | Kaufman Adaptive Moving Average | `Kama` | price |
 | Keltner Channels | `KeltnerChannels` | price |
 | Klinger Volume Oscillator | `Klinger` | volume |
+| Know Sure Thing | `KnowSureThing` | separate |
 | KST Oscillator | `Kst` | separate |
 | Least Squares Moving Average | `Lsma` | price |
 | Linear Regression | `LinReg` | price |
@@ -74,13 +85,17 @@ full web platform.
 | Parabolic SAR | `Psar` | price |
 | Parkinson Volatility | `ParkinsonVolatility` | separate |
 | Pivot Points Standard | `Pivots` | price |
+| Price Oscillator | `PriceOscillator` | separate |
 | PVI & DVI | `PviDvi` | volume |
+| Rank Correlation Index | `RankCorrelationIndex` | separate |
 | Rate of Change (ROC) | `Roc` | separate |
 | Relative Strength Index (RSI) | `Rsi` | separate |
 | Relative Vigor Index (RVI) | `Rvi` | separate |
+| Relative Volatility Index | `RelativeVolatilityIndex` | separate |
 | ROC Volume | `RateOfChangeVol` | volume |
 | Rogers-Satchell Volatility | `RogersSatchellVolatility` | separate |
 | Simple Moving Average | `Sma` | price |
+| SMI Ergodic Indicator/Oscillator | `SmiErgodic` | separate |
 | Smoothed Moving Average | `Rma` | price |
 | Stochastic | `Stochastic` | separate |
 | Stochastic RSI | `StochasticRsi` | separate |
@@ -89,6 +104,7 @@ full web platform.
 | TRIX | `Trix` | separate |
 | True Strength Index (TSI) | `Tsi` | separate |
 | Ultimate Oscillator | `UltimateOscillator` | separate |
+| Volatility Stop | `VolatilityStop` | price |
 | Volume Oscillator | `VolumeOscillator` | volume |
 | Volume Price Trend | `VolumePriceTrend` | volume |
 | Volume Ratio | `VolumeRatio` | volume |
@@ -97,6 +113,15 @@ full web platform.
 | VWAP | `Vwap` | price |
 | Weighted Moving Average | `Wma` | price |
 | Williams %R | `WilliamsR` | separate |
+| Williams Fractal | `WilliamsFractals` | price |
 | Z-Score | `ZScore` | separate |
 | Zero-Lag EMA | `Zlema` | price |
+| Zig Zag | `ZigZag` | price |
+
 Pane: price = overlay on candles, volume = volume pane, separate = dedicated pane.
+
+This table mirrors the machine-readable manifest `docs/parity/catalog.json`
+(same registry + `cargo run -p xtask -- parity` output in
+`docs/parity/STATUS.md`); hand-written status claims are not authoritative.
+Advance/Decline is excluded: market-breadth needs an external index feed
+(spec §4).

@@ -38,10 +38,10 @@
 - Create: `docs/evidence/tv/studies-catalog-notes.md`
 - Create: `docs/evidence/tv/studies/` (copied per-study meta JSON)
 
-- [ ] **Step 1:** Write `research/studies/build_catalog.py`: merge the 58 files in `research/studies/meta/*.json` (scriptIdPart, name, metaInfo defaults/panes) with the 66-row wire payload `docs/evidence/tv-studies-defaults.json`; emit `docs/evidence/tv/studies-catalog.json` rows `{tv_id, name, pane, scope, exclusion_reason}` covering: 66 existing wire ids (`in-scope`), the 17 missing ids from the dedup table below (`in-scope`), and `STD;Advance_Decline_Ratio_Bars` (`excluded`, reason "market-breadth study requires an external index feed; out of scope per spec §4"). Dedup rule: TV meta ids that describe an existing wire study (`STD;EMA` = Ema, `STD;Williams_Alligator` = Alligator, `STD;Bollinger_Bands_B` = PercentB, etc.) collapse onto the existing row, never duplicate. Copy each referenced meta file to `docs/evidence/tv/studies/<safe_id>.json`.
-- [ ] **Step 2:** Run `python3 research/studies/build_catalog.py`; verify row count = 84, exactly 1 excluded, no duplicate `tv_id`.
-- [ ] **Step 3:** Write `studies-catalog-notes.md`: sources (wire `all_studies_metadata` hash from `tv-live-re` evidence, per-study meta fetch, `fetch_report.json` failures), the dedup table (meta id → wire id), scope decisions (breadth excluded; comparison studies in scope; strategies/fundamentals/social excluded per §4), and defaults-source precedence per id.
-- [ ] **Step 4:** Commit — `git add docs/evidence/tv research/studies/build_catalog.py && git commit -m "docs: extract TV built-in study catalog evidence"`.
+- [x] **Step 1:** Write `research/studies/build_catalog.py`: merge the 58 files in `research/studies/meta/*.json` (scriptIdPart, name, metaInfo defaults/panes) with the 66-row wire payload `docs/evidence/tv-studies-defaults.json`; emit `docs/evidence/tv/studies-catalog.json` rows `{tv_id, name, pane, scope, exclusion_reason}` covering: 66 existing wire ids (`in-scope`), the 17 missing ids from the dedup table below (`in-scope`), and `STD;Advance_Decline_Ratio_Bars` (`excluded`, reason "market-breadth study requires an external index feed; out of scope per spec §4"). Dedup rule: TV meta ids that describe an existing wire study (`STD;EMA` = Ema, `STD;Williams_Alligator` = Alligator, `STD;Bollinger_Bands_B` = PercentB, etc.) collapse onto the existing row, never duplicate. Copy each referenced meta file to `docs/evidence/tv/studies/<safe_id>.json`.
+- [x] **Step 2:** Run `python3 research/studies/build_catalog.py`; verify row count = 84, exactly 1 excluded, no duplicate `tv_id`.
+- [x] **Step 3:** Write `studies-catalog-notes.md`: sources (wire `all_studies_metadata` hash from `tv-live-re` evidence, per-study meta fetch, `fetch_report.json` failures), the dedup table (meta id → wire id), scope decisions (breadth excluded; comparison studies in scope; strategies/fundamentals/social excluded per §4), and defaults-source precedence per id.
+- [x] **Step 4:** Commit — `git add docs/evidence/tv research/studies/build_catalog.py && git commit -m "docs: extract TV built-in study catalog evidence"`.
 
 **Missing-study dedup table (drives tasks 10–13):** new TickView `TvId`s ← TV `scriptIdPart`: `Aroon`←`STD;Aroon`, `Atr`←`STD;Average_True_Range`, `BollingerBandsWidth`←`STD;Bollinger_Bands_Width`, `ChandelierExit`←`STD;Chandelier_Exit`, `ChoppinessIndex`←`STD;Choppiness_Index`, `ConnorsRsi`←`STD;Connors_RSI`, `Dmi`←`STD;DMI`, `FisherTransform`←`STD;Fisher_Transform`, `KnowSureThing`←`STD;Know_Sure_Thing`, `PriceOscillator`←`STD;Price_Oscillator`, `RelativeVolatilityIndex`←`STD;Relative_Volatility_Index`, `SmiErgodic`←`STD;SMI_Ergodic_Indicator_Oscillator`, `VolatilityStop`←`STD;Volatility_Stop`, `WilliamsFractals`←`STD;Whilliams_Fractals`, `ZigZag`←`STD;Zig_Zag`, `CorrelationCoeff`←`STD;Correlation_Coeff`, `RankCorrelationIndex`←`STD;Rank_Correlation_Index`.
 
@@ -50,11 +50,11 @@
 **Files:**
 - Modify: `xtask/src/parity.rs`
 
-- [ ] **Step 1: Failing tests** — `every_study_variant_without_entry_is_error` (kinds `["Rsi","Aroon"]`, entry only for Rsi → error names `Aroon`); `study_in_scope_tv_id_without_entry_is_error`; `study_excluded_must_have_reason`; `verified_study_needs_coverage` (1 test + 0 evidence → error; 2 tests + 1 evidence → clean); `study_meta_matches_def` (given meta row pane=separate for Rsi but def pane=price → error; hlines mismatch → error).
-- [ ] **Step 2:** `cargo test -p xtask` → FAIL.
-- [ ] **Step 3: Implement** `validate_studies(catalog_json, tv_json, ids: &[String], metas: &serde_json::Value, defs: &impl Fn(&str) -> Option<(String, Vec<f64>)>) -> Vec<String>` implementing the rules above plus duplicate-id checks; wire `run()` to load `studies-catalog.json`, `ta` ids, and defs. Keep drawing rules untouched.
-- [ ] **Step 4:** `cargo test -p xtask` → PASS (real manifest still valid: studies empty allowed until task 3 seeds entries — gate `study variants` rule on non-empty studies list).
-- [ ] **Step 5:** Commit — `git add xtask/src/parity.rs && git commit -m "feat: validate study manifest against TV catalog"`
+- [x] **Step 1: Failing tests** — `every_study_variant_without_entry_is_error` (kinds `["Rsi","Aroon"]`, entry only for Rsi → error names `Aroon`); `study_in_scope_tv_id_without_entry_is_error`; `study_excluded_must_have_reason`; `verified_study_needs_coverage` (1 test + 0 evidence → error; 2 tests + 1 evidence → clean); `study_meta_matches_def` (given meta row pane=separate for Rsi but def pane=price → error; hlines mismatch → error).
+- [x] **Step 2:** `cargo test -p xtask` → FAIL.
+- [x] **Step 3: Implement** `validate_studies(catalog_json, tv_json, ids: &[String], metas: &serde_json::Value, defs: &impl Fn(&str) -> Option<(String, Vec<f64>)>) -> Vec<String>` implementing the rules above plus duplicate-id checks; wire `run()` to load `studies-catalog.json`, `ta` ids, and defs. Keep drawing rules untouched.
+- [x] **Step 4:** `cargo test -p xtask` → PASS (real manifest still valid: studies empty allowed until task 3 seeds entries — gate `study variants` rule on non-empty studies list).
+- [x] **Step 5:** Commit — `git add xtask/src/parity.rs && git commit -m "feat: validate study manifest against TV catalog"`
 
 ### Task 3: Seed study manifest entries
 
@@ -62,9 +62,9 @@
 - Modify: `docs/parity/catalog.json`
 - Modify: `docs/parity/STATUS.md` (generated)
 
-- [ ] **Step 1:** Write `research/studies/seed_manifest.py`: for each row of `studies-catalog.json` emit a study entry `{kind:"study", tv_id, tickview_id, name, pane, status:"in-progress"|"excluded", tests:[], evidence:[], notes:""}`; `tickview_id` = dedup-table name or existing camel id; excluded row carries the reason.
-- [ ] **Step 2:** Run it; `cargo run -q -p xtask -- parity --write` → STATUS shows `Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total)`; `cargo run -q -p xtask -- parity` → valid.
-- [ ] **Step 3:** Commit — `git add docs/parity && git commit -m "feat: seed study manifest from TV catalog"`.
+- [x] **Step 1:** Write `research/studies/seed_manifest.py`: for each row of `studies-catalog.json` emit a study entry `{kind:"study", tv_id, tickview_id, name, pane, status:"in-progress"|"excluded", tests:[], evidence:[], notes:""}`; `tickview_id` = dedup-table name or existing camel id; excluded row carries the reason.
+- [x] **Step 2:** Run it; `cargo run -q -p xtask -- parity --write` → STATUS shows `Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total)`; `cargo run -q -p xtask -- parity` → valid.
+- [x] **Step 3:** Commit — `git add docs/parity && git commit -m "feat: seed study manifest from TV catalog"`.
 
 ### Task 4: Moving-average family goldens + audit
 
@@ -74,11 +74,11 @@
 - Create: `research/studies/gen_goldens.py` (reference generator, committed)
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Extend `gen_goldens.py` (reference formulas in plain Python vs the shared fixture `research/studies/fixture.py` — port the existing `candles()` fixture used by `gold_oscs.rs`; if the fixture lives only in Rust, emit a CSV once and load it) to emit full-series goldens for `Sma, Ema, Wma, Hma, Dema, Tema, Zlema, Rma, Vwma, Lsma, Alma, Kama, EmaRibbons` (3 plot series) with TV defaults (lengths per `tv-studies-defaults.json`). Write `gold_mis.rs` consts `SMA, EMA, …, RIBBON_E8, RIBBON_E21, RIBBON_E34, RIBBON_E55, RIBBON_E89, RIBBON_E144, RIBBON_E250` as applicable.
-- [ ] **Step 2:** Add `#[cfg(test)] mod gold_ma` in `registry.rs`: `ma_goldens_match_compute` — compute each id at defaults, assert full series vs consts with `1e-9` and NaN-prefix equality; `ma_plots_match_meta` — plot count/title/style vs meta.
-- [ ] **Step 3:** `cargo test -p ta` → PASS.
-- [ ] **Step 4:** Flip the 13 MA entries to `verified` (tests: `registry::tests::ma_goldens_match_compute`, `registry::tests::ma_plots_match_meta`, `tv_defaults::registry_defaults_match_tv_wire`; evidence: `docs/evidence/tv/studies/STD_<id>.json` where present else `docs/evidence/tv-studies-defaults.json`); `cargo run -q -p xtask -- parity --write`.
-- [ ] **Step 5:** Commit — `git add crates/ta research/studies/gen_goldens.py docs/parity && git commit -m "test: moving average goldens vs python reference"`.
+- [x] **Step 1:** Extend `gen_goldens.py` (reference formulas in plain Python vs the shared fixture `research/studies/fixture.py` — port the existing `candles()` fixture used by `gold_oscs.rs`; if the fixture lives only in Rust, emit a CSV once and load it) to emit full-series goldens for `Sma, Ema, Wma, Hma, Dema, Tema, Zlema, Rma, Vwma, Lsma, Alma, Kama, EmaRibbons` (3 plot series) with TV defaults (lengths per `tv-studies-defaults.json`). Write `gold_mis.rs` consts `SMA, EMA, …, RIBBON_E8, RIBBON_E21, RIBBON_E34, RIBBON_E55, RIBBON_E89, RIBBON_E144, RIBBON_E250` as applicable.
+- [x] **Step 2:** Add `#[cfg(test)] mod gold_ma` in `registry.rs`: `ma_goldens_match_compute` — compute each id at defaults, assert full series vs consts with `1e-9` and NaN-prefix equality; `ma_plots_match_meta` — plot count/title/style vs meta.
+- [x] **Step 3:** `cargo test -p ta` → PASS.
+- [x] **Step 4:** Flip the 13 MA entries to `verified` (tests: `registry::tests::ma_goldens_match_compute`, `registry::tests::ma_plots_match_meta`, `tv_defaults::registry_defaults_match_tv_wire`; evidence: `docs/evidence/tv/studies/STD_<id>.json` where present else `docs/evidence/tv-studies-defaults.json`); `cargo run -q -p xtask -- parity --write`.
+- [x] **Step 5:** Commit — `git add crates/ta research/studies/gen_goldens.py docs/parity && git commit -m "test: moving average goldens vs python reference"`.
 
 ### Task 5: Price-overlay study audit (Psar, Supertrend, Ichimoku, Alligator, BollingerBands, PercentB, Keltner, Donchian, Envelope, LinReg, Pivots)
 
@@ -86,10 +86,10 @@
 - Modify: `crates/ta/src/registry.rs` (or extend existing `gold_tc.rs` usage)
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Add `overlay_goldens_match_compute` covering the 11 ids against existing consts (PSAR, SUPERTREND, ICHI_*, ALLIG_*, BB_*, KC_*, DON_*, ENV_*, LRC/LRU/LRL, PIV_*); assert NaN-prefix equality + `1e-9` tail tolerance; add `overlay_hlines_and_panes_match_meta` (e.g. Ichimoku pane=price, PercentB hlines include 0/1… per meta).
-- [ ] **Step 2:** `cargo test -p ta` → PASS (fix any drift found — drift fixes count as audit findings; note them in `studies-catalog-notes.md`).
-- [ ] **Step 3:** Flip 11 entries verified (golden + meta + defaults tests, meta evidence files); regenerate STATUS.
-- [ ] **Step 4:** Commit — `… && git commit -m "test: price overlay study audit goldens"`.
+- [x] **Step 1:** Add `overlay_goldens_match_compute` covering the 11 ids against existing consts (PSAR, SUPERTREND, ICHI_*, ALLIG_*, BB_*, KC_*, DON_*, ENV_*, LRC/LRU/LRL, PIV_*); assert NaN-prefix equality + `1e-9` tail tolerance; add `overlay_hlines_and_panes_match_meta` (e.g. Ichimoku pane=price, PercentB hlines include 0/1… per meta).
+- [x] **Step 2:** `cargo test -p ta` → PASS (fix any drift found — drift fixes count as audit findings; note them in `studies-catalog-notes.md`).
+- [x] **Step 3:** Flip 11 entries verified (golden + meta + defaults tests, meta evidence files); regenerate STATUS.
+- [x] **Step 4:** Commit — `… && git commit -m "test: price overlay study audit goldens"`.
 
 ### Task 6: Volume-pane study audit (12 ids)
 
@@ -97,9 +97,9 @@
 - Modify: `crates/ta/src/vols.rs` / `registry.rs` tests
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Add `volume_goldens_match_compute` for `Obv, AccumulationDistribution, ChaikinMoneyFlow, MoneyFlowIndex, VolumePriceTrend, Klinger, PviDvi, EaseOfMovement, MassIndex, VolumeRatio, ElderForce, VolumeOscillator` vs consts (AD, CHAOS, MFAM, MFI, VPT, KVO(+SIG), PVI/DVI(+MA), EOM(+RAW), MASS(+SIGNAL), VR, EFI; add `VOSC` const via `gen_goldens.py`). Include degenerate cases: zero-volume fixture slice → no panic, reference-matching NaN/zero; flat-price EOM zero-denominator path.
-- [ ] **Step 2:** `cargo test -p ta` → PASS; flip 12 verified; STATUS regen.
-- [ ] **Step 3:** Commit — `… && git commit -m "test: volume pane study audit goldens"`.
+- [x] **Step 1:** Add `volume_goldens_match_compute` for `Obv, AccumulationDistribution, ChaikinMoneyFlow, MoneyFlowIndex, VolumePriceTrend, Klinger, PviDvi, EaseOfMovement, MassIndex, VolumeRatio, ElderForce, VolumeOscillator` vs consts (AD, CHAOS, MFAM, MFI, VPT, KVO(+SIG), PVI/DVI(+MA), EOM(+RAW), MASS(+SIGNAL), VR, EFI; add `VOSC` const via `gen_goldens.py`). Include degenerate cases: zero-volume fixture slice → no panic, reference-matching NaN/zero; flat-price EOM zero-denominator path.
+- [x] **Step 2:** `cargo test -p ta` → PASS; flip 12 verified; STATUS regen.
+- [x] **Step 3:** Commit — `… && git commit -m "test: volume pane study audit goldens"`.
 
 ### Task 7: Oscillator audit part 1 (Rsi, Macd, Stochastic, StochasticRsi, Cmo, WilliamsR, Cci, Adx, AwesomeOscillator, Accelerator, UltimateOscillator, Kst)
 
@@ -107,9 +107,9 @@
 - Modify: `crates/ta/src/registry.rs` tests (goldens exist: RSI…KST consts)
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Add `osc_goldens_a_match_compute` (the 12 ids vs existing consts, NaN-prefix + tolerance; Accelerator vs `AC`, include hlines/meta assertions `osc_meta_a_match`).
-- [ ] **Step 2:** `cargo test -p ta` → PASS; flip 12 verified; STATUS regen.
-- [ ] **Step 3:** Commit — `… && git commit -m "test: oscillator audit part 1 goldens"`.
+- [x] **Step 1:** Add `osc_goldens_a_match_compute` (the 12 ids vs existing consts, NaN-prefix + tolerance; Accelerator vs `AC`, include hlines/meta assertions `osc_meta_a_match`).
+- [x] **Step 2:** `cargo test -p ta` → PASS; flip 12 verified; STATUS regen.
+- [x] **Step 3:** Commit — `… && git commit -m "test: oscillator audit part 1 goldens"`.
 
 ### Task 8: Oscillator audit part 2 (Tsi, Rvi, Trix, Dpo, Bias, ZScore, Momentum, Roc, RateOfChangeVol, ElderRay, ChaikinOscillator, HistoricalVolatility, ParkinsonVolatility, GarmanKlassVolatility, RogersSatchellVolatility, ChaikinVolatility, Vortex)
 
@@ -118,9 +118,9 @@
 - Modify: `crates/ta/src/gold_mis.rs` (new consts `BIAS, ZSCORE, MOMENTUM, ROC, ROCV, ELDER_BULL, ELDER_BEAR, ELDER_SUPPLY`)
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Extend `gen_goldens.py` with the 4 uncovered series (Bias, ZScore, Momentum family, ElderRay pair); add `osc_goldens_b_match_compute` + `osc_meta_b_match` covering all 17 ids vs consts (TSI, TSI_SIG, RVI, TRIX(+SIG), DPO, CHAIKIN_VOL, HV, PARKINSON, GARMAN, ROGERS, VORTEX_P/M, AC, + new consts).
-- [ ] **Step 2:** `cargo test -p ta` → PASS; flip 17 verified; STATUS regen.
-- [ ] **Step 3:** Commit — `… && git commit -m "test: oscillator and volatility audit goldens"`.
+- [x] **Step 1:** Extend `gen_goldens.py` with the 4 uncovered series (Bias, ZScore, Momentum family, ElderRay pair); add `osc_goldens_b_match_compute` + `osc_meta_b_match` covering all 17 ids vs consts (TSI, TSI_SIG, RVI, TRIX(+SIG), DPO, CHAIKIN_VOL, HV, PARKINSON, GARMAN, ROGERS, VORTEX_P/M, AC, + new consts).
+- [x] **Step 2:** `cargo test -p ta` → PASS; flip 17 verified; STATUS regen.
+- [x] **Step 3:** Commit — `… && git commit -m "test: oscillator and volatility audit goldens"`.
 
 ### Task 9: StudyContext — HTF/session/visible/comparison plumbing
 
@@ -129,11 +129,11 @@
 - Modify: `crates/ta/src/series.rs` (resampler)
 - Modify: `crates/app/src/app.rs` (build context; pass comparison series + visible range)
 
-- [ ] **Step 1: Failing tests** — `resample_closed_htf_no_lookahead`: from a synthetic 1m series, `series::resample(&cd, 3600)` emits only hour buckets whose last minute bar is present; prefix invariance `resample(c[..k]) == resample(c)[..m]` for all closed boundaries; `vwap_session_anchors`: `compute_with(Vwap, …)` resets at day/week/month anchor changes; `compute` still delegates (existing tests unchanged).
-- [ ] **Step 2:** `cargo test -p ta` → FAIL.
-- [ ] **Step 3:** Implement `pub struct StudyContext<'a> { pub htfc: Option<&'a Candles>, pub anchors: Anchors, pub visible: Option<(usize, usize)>, pub comparison: Option<&'a Candles>, pub symbol: &'static str, pub interval: &'static str }` + `pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext) -> Output`; `compute` constructs a default ctx (anchors from `Anchors::from_ts`). `series::resample(candles, secs) -> Candles` (open/high/low/close/volume bucketed, closed buckets only). App: build ctx per compute call from tab state (comparison-aligned candles when overlay active; visible index range from view; symbol/interval strings).
-- [ ] **Step 4:** `cargo test -p ta && cargo test -p tickview` → PASS.
-- [ ] **Step 5:** Commit — `… && git commit -m "feat: study input context with closed-HTF resampler"`.
+- [x] **Step 1: Failing tests** — `resample_closed_htf_no_lookahead`: from a synthetic 1m series, `series::resample(&cd, 3600)` emits only hour buckets whose last minute bar is present; prefix invariance `resample(c[..k]) == resample(c)[..m]` for all closed boundaries; `vwap_session_anchors`: `compute_with(Vwap, …)` resets at day/week/month anchor changes; `compute` still delegates (existing tests unchanged).
+- [x] **Step 2:** `cargo test -p ta` → FAIL.
+- [x] **Step 3:** Implement `pub struct StudyContext<'a> { pub htfc: Option<&'a Candles>, pub anchors: Anchors, pub visible: Option<(usize, usize)>, pub comparison: Option<&'a Candles>, pub symbol: &'static str, pub interval: &'static str }` + `pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext) -> Output`; `compute` constructs a default ctx (anchors from `Anchors::from_ts`). `series::resample(candles, secs) -> Candles` (open/high/low/close/volume bucketed, closed buckets only). App: build ctx per compute call from tab state (comparison-aligned candles when overlay active; visible index range from view; symbol/interval strings).
+- [x] **Step 4:** `cargo test -p ta && cargo test -p tickview` → PASS.
+- [x] **Step 5:** Commit — `… && git commit -m "feat: study input context with closed-HTF resampler"`.
 
 ### Task 10: New studies wave 1a (Aroon, Atr, BollingerBandsWidth, ChandelierExit, ChoppinessIndex, ConnorsRsi)
 
@@ -142,29 +142,29 @@
 - Modify: `crates/ta/src/gold_mis.rs`, `research/studies/gen_goldens.py`
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1:** Extend `gen_goldens.py` with reference formulas (TV docs): Aroon(25) up/down; ATR(14) RMA-smoothed TR (TV default smoothing RMA); BB Width `(upper-lower)/basis` (20, 2.0); Chandelier Exit 22-period, mult 3.0 (long: HH−ATR·mult, plus short line optional per meta — match meta plot count); Choppiness Index 14 (`100·log10(SUM(TR,14)/(Highest−Lowest))/log10(period)`); Connors RSI = mean(RSI(3), RSI(2) rank-percentile, RSI(100)) with 7-EMA. Defaults: meta `studies-catalog.json`/`meta` files where readable, else TV docs; record sources in notes.
-- [ ] **Step 2:** Write failing goldens `new_wave_a_goldens_match_compute` + defs/pane assertions; run → FAIL.
-- [ ] **Step 3:** Implement variants + `Def` entries (pane/scale/hlines/plots per meta) + compute arms; degenerate guards (zero denominators → NaN).
-- [ ] **Step 4:** `cargo test -p ta` → PASS; flip 6 verified; STATUS regen.
-- [ ] **Step 5:** Commit — `… && git commit -m "feat: aroon atr bb-width chandelier choppiness connors studies"`.
+- [x] **Step 1:** Extend `gen_goldens.py` with reference formulas (TV docs): Aroon(25) up/down; ATR(14) RMA-smoothed TR (TV default smoothing RMA); BB Width `(upper-lower)/basis` (20, 2.0); Chandelier Exit 22-period, mult 3.0 (long: HH−ATR·mult, plus short line optional per meta — match meta plot count); Choppiness Index 14 (`100·log10(SUM(TR,14)/(Highest−Lowest))/log10(period)`); Connors RSI = mean(RSI(3), RSI(2) rank-percentile, RSI(100)) with 7-EMA. Defaults: meta `studies-catalog.json`/`meta` files where readable, else TV docs; record sources in notes.
+- [x] **Step 2:** Write failing goldens `new_wave_a_goldens_match_compute` + defs/pane assertions; run → FAIL.
+- [x] **Step 3:** Implement variants + `Def` entries (pane/scale/hlines/plots per meta) + compute arms; degenerate guards (zero denominators → NaN).
+- [x] **Step 4:** `cargo test -p ta` → PASS; flip 6 verified; STATUS regen.
+- [x] **Step 5:** Commit — `… && git commit -m "feat: aroon atr bb-width chandelier choppiness connors studies"`.
 
 ### Task 11: New studies wave 1b (Dmi, FisherTransform, KnowSureThing, PriceOscillator, RelativeVolatilityIndex, SmiErgodic)
 
 **Files:** same set as task 10
-- [ ] **Step 1:** Reference formulas in `gen_goldens.py`: DMI 14 (+DI/−DI/ADX, TV smoothing RMA); Fisher Transform 9 (0.33·(2·(c−ll)/(hh−ll)−1), tanh accumulation, +trigger 1); Know Sure Thing 25/2 (100·ROC of 2-period SMA of 100·ROC/high-low-normalized…use TV doc formula exactly); Price Oscillator 10/10 (`100·(fast−slow)/slow`); Relative Volatility Index 14/10 (stdev-weighted RSI variant); SMI Ergodic 10/3/3 (+signal 3).
-- [ ] **Step 2:** Failing `new_wave_b_goldens_match_compute`; run → FAIL.
-- [ ] **Step 3:** Implement 6 variants + defs + compute arms.
-- [ ] **Step 4:** `cargo test -p ta` → PASS; flip 6 verified; STATUS regen.
-- [ ] **Step 5:** Commit — `… && git commit -m "feat: dmi fisher kst-adjacent oscillator studies wave 1b"`.
+- [x] **Step 1:** Reference formulas in `gen_goldens.py`: DMI 14 (+DI/−DI/ADX, TV smoothing RMA); Fisher Transform 9 (0.33·(2·(c−ll)/(hh−ll)−1), tanh accumulation, +trigger 1); Know Sure Thing 25/2 (100·ROC of 2-period SMA of 100·ROC/high-low-normalized…use TV doc formula exactly); Price Oscillator 10/10 (`100·(fast−slow)/slow`); Relative Volatility Index 14/10 (stdev-weighted RSI variant); SMI Ergodic 10/3/3 (+signal 3).
+- [x] **Step 2:** Failing `new_wave_b_goldens_match_compute`; run → FAIL.
+- [x] **Step 3:** Implement 6 variants + defs + compute arms.
+- [x] **Step 4:** `cargo test -p ta` → PASS; flip 6 verified; STATUS regen.
+- [x] **Step 5:** Commit — `… && git commit -m "feat: dmi fisher kst-adjacent oscillator studies wave 1b"`.
 
 ### Task 12: New studies wave 1c (VolatilityStop, WilliamsFractals, ZigZag) + no-lookahead pins
 
 **Files:** same set as task 10
-- [ ] **Step 1:** `gen_goldens.py`: Volatility Stop 10/2.0 (trailing band, trend-flip logic); Williams Fractals (2/2, confirmed 2 bars later, NaN elsewhere); ZigZag (deviation 5, depth 5, deviation 3 per TV defaults — pin actual defaults from meta if present).
-- [ ] **Step 2:** Failing `new_wave_c_goldens_match_compute` + `fractal_and_zigzag_no_lookahead`: for every prefix length, confirmed points equal the prefix's output prefix (repaint only in the open segment); run → FAIL.
-- [ ] **Step 3:** Implement (fractal arrays carry NaN at unconfirmed bars; ZigZag segments only between confirmed pivots).
-- [ ] **Step 4:** `cargo test -p ta` → PASS; flip 3 verified; STATUS regen.
-- [ ] **Step 5:** Commit — `… && git commit -m "feat: volatility stop, fractals, zigzag studies with lookahead guards"`.
+- [x] **Step 1:** `gen_goldens.py`: Volatility Stop 10/2.0 (trailing band, trend-flip logic); Williams Fractals (2/2, confirmed 2 bars later, NaN elsewhere); ZigZag (deviation 5, depth 5, deviation 3 per TV defaults — pin actual defaults from meta if present).
+- [x] **Step 2:** Failing `new_wave_c_goldens_match_compute` + `fractal_and_zigzag_no_lookahead`: for every prefix length, confirmed points equal the prefix's output prefix (repaint only in the open segment); run → FAIL.
+- [x] **Step 3:** Implement (fractal arrays carry NaN at unconfirmed bars; ZigZag segments only between confirmed pivots).
+- [x] **Step 4:** `cargo test -p ta` → PASS; flip 3 verified; STATUS regen.
+- [x] **Step 5:** Commit — `… && git commit -m "feat: volatility stop, fractals, zigzag studies with lookahead guards"`.
 
 ### Task 13: Comparison studies (CorrelationCoeff, RankCorrelationIndex)
 
@@ -173,11 +173,11 @@
 - Modify: `crates/app/src/app.rs` (ctx already carries comparison from task 9)
 - Modify: `docs/parity/catalog.json`, `docs/parity/STATUS.md`
 
-- [ ] **Step 1: Failing tests** — `correlation_matches_python_reference` (golden const; constant-comparison input → NaN, never panic; perfect correlation → 1.0); `rank_correlation_is_spearman` (rank-transform then Pearson vs const); `correlation_without_comparison_is_all_nan`.
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Implement rolling Pearson (window default 50/60 per meta) on `cd.c` vs aligned `ctx.comparison.c`; Rank variant: average-dense ranks then Pearson. App passes timestamp-aligned comparison candles (reuse compare-overlay alignment).
-- [ ] **Step 4:** `cargo test -p ta && cargo test -p tickview` → PASS; flip 2 verified; STATUS regen.
-- [ ] **Step 5:** Commit — `… && git commit -m "feat: correlation studies via comparison input context"`.
+- [x] **Step 1: Failing tests** — `correlation_matches_python_reference` (golden const; constant-comparison input → NaN, never panic; perfect correlation → 1.0); `rank_correlation_is_spearman` (rank-transform then Pearson vs const); `correlation_without_comparison_is_all_nan`.
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3:** Implement rolling Pearson (window default 50/60 per meta) on `cd.c` vs aligned `ctx.comparison.c`; Rank variant: average-dense ranks then Pearson. App passes timestamp-aligned comparison candles (reuse compare-overlay alignment).
+- [x] **Step 4:** `cargo test -p ta && cargo test -p tickview` → PASS; flip 2 verified; STATUS regen.
+- [x] **Step 5:** Commit — `… && git commit -m "feat: correlation studies via comparison input context"`.
 
 ### Task 14: Whole-enum sweeps, visual QA, docs, final gate
 
@@ -187,12 +187,12 @@
 - Modify: `README.md`, `PARITY.md`, `docs/parity/STATUS.md`
 - Create: `docs/screenshots/parity/studies-*.png`
 
-- [ ] **Step 1: Sweeps** — `every_study_has_golden_defaults_and_meta_coverage` (83 ids: golden test id present in a registry-computed allowlist, defaults pinned via tv_defaults evidence row present, meta pane/scale/hlines match Def); `every_study_short_history_is_all_nan` (compute each id with a 3-bar fixture → no panic, no inf); `every_study_id_in_catalog_verified` (reads manifest; all 83 verified + 1 excluded); app `every_study_is_addable_and_in_catalog` (indicator dialog lists all 83; each maps to a verified entry).
-- [ ] **Step 2:** `cargo test --workspace` → PASS.
-- [ ] **Step 3:** Visual QA: new scenes `studiesprice` (price overlays incl. Chandelier/VolStop/Fractals/ZigZag), `studiesvol` (volume pane incl. VPT/KVO), `studiesosc` (separate panes incl. Aroon/Choppiness/Connors/SMI), `studieshtf` (session VWAP + comparison correlation) — dark+light at 1440×900 via `TICKVIEW_SCENE`/`TICKVIEW_THEME`/`TICKVIEW_SNAPSHOT`; verify legend, pane placement, and hlines; close every process.
-- [ ] **Step 4:** Docs: README → "Milestone 3 complete" wording + new test count; PARITY studies line → 83 verified / 1 excluded + generated-from-manifest note; STATUS regen; spec-parity `docs/evidence/tv/studies-catalog-notes.md` final audit-findings section.
-- [ ] **Step 5:** Final gate — `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` clean.
-- [ ] **Step 6:** Commit — `git add -A && git commit -m "feat: complete milestone 3 study catalog parity"`.
+- [x] **Step 1: Sweeps** — `every_study_has_golden_defaults_and_meta_coverage` (83 ids: golden test id present in a registry-computed allowlist, defaults pinned via tv_defaults evidence row present, meta pane/scale/hlines match Def); `every_study_short_history_is_all_nan` (compute each id with a 3-bar fixture → no panic, no inf); `every_study_id_in_catalog_verified` (reads manifest; all 83 verified + 1 excluded); app `every_study_is_addable_and_in_catalog` (indicator dialog lists all 83; each maps to a verified entry).
+- [x] **Step 2:** `cargo test --workspace` → PASS.
+- [x] **Step 3:** Visual QA: new scenes `studiesprice` (price overlays incl. Chandelier/VolStop/Fractals/ZigZag), `studiesvol` (volume pane incl. VPT/KVO), `studiesosc` (separate panes incl. Aroon/Choppiness/Connors/SMI), `studieshtf` (session VWAP + comparison correlation) — dark+light at 1440×900 via `TICKVIEW_SCENE`/`TICKVIEW_THEME`/`TICKVIEW_SNAPSHOT`; verify legend, pane placement, and hlines; close every process.
+- [x] **Step 4:** Docs: README → "Milestone 3 complete" wording + new test count; PARITY studies line → 83 verified / 1 excluded + generated-from-manifest note; STATUS regen; spec-parity `docs/evidence/tv/studies-catalog-notes.md` final audit-findings section.
+- [x] **Step 5:** Final gate — `cargo fmt --all && cargo test --workspace && cargo clippy --workspace --all-targets && git diff --check` clean.
+- [x] **Step 6:** Commit — `git add -A && git commit -m "feat: complete milestone 3 study catalog parity"`.
 
 ---
 

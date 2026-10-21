@@ -766,6 +766,7 @@ pub struct TickView {
     pending_shapes: bool,
     pending_annot: bool,
     pending_vwap: bool,
+    pending_studies: Option<String>,
     pending_vprofile: bool,
     pending_barghost: bool,
     pending_table: bool,
@@ -1083,6 +1084,7 @@ impl TickView {
             pending_shapes: false,
             pending_annot: false,
             pending_vwap: false,
+            pending_studies: None,
             pending_vprofile: false,
             pending_barghost: false,
             pending_table: false,
@@ -1184,6 +1186,9 @@ impl TickView {
                 "barghost" => me.pending_barghost = true,
                 "table" => me.pending_table = true,
                 "replay" => me.pending_replay = true,
+                "studiesprice" | "studiesvol" | "studiesosc" | "studieshtf" => {
+                    me.pending_studies = Some(scene.clone());
+                }
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -1864,6 +1869,51 @@ impl TickView {
         self.tabs[ti].chart.selection.select(9931);
     }
 
+    /// `TICKVIEW_SCENE=studies*`: seed a representative study set per pane
+    /// family for visual QA (`studiesprice`, `studiesvol`, `studiesosc`,
+    /// `studieshtf`). The HTF scene also opens a comparison symbol so the
+    /// correlation study has a second series.
+    fn seed_studies(&mut self, ti: usize, scene: &str) {
+        let ids: &[TvId] = match scene {
+            "studiesprice" => &[
+                TvId::BollingerBands,
+                TvId::Supertrend,
+                TvId::Psar,
+                TvId::ChandelierExit,
+                TvId::VolatilityStop,
+                TvId::WilliamsFractals,
+                TvId::ZigZag,
+            ],
+            "studiesvol" => &[
+                TvId::Obv,
+                TvId::AccumulationDistribution,
+                TvId::ChaikinMoneyFlow,
+                TvId::VolumePriceTrend,
+                TvId::Klinger,
+                TvId::VolumeOscillator,
+            ],
+            "studiesosc" => &[
+                TvId::Rsi,
+                TvId::Macd,
+                TvId::Stochastic,
+                TvId::Aroon,
+                TvId::ChoppinessIndex,
+                TvId::ConnorsRsi,
+                TvId::SmiErgodic,
+                TvId::AwesomeOscillator,
+            ],
+            _ => &[TvId::Vwap, TvId::CorrelationCoeff],
+        };
+        for id in ids {
+            self.add_indicator(ti, *id, Params::with_defaults(def(*id)));
+        }
+        if scene == "studieshtf" {
+            let iv = self.tabs[ti].interval;
+            let sym = Symbol::new("MSFT", "NASDAQ", marketdata::SymbolKind::Stock, "USD");
+            self.request_compare(ti, sym, iv);
+        }
+    }
+
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
     /// multi mode, for top-right toolbar review.
     fn seed_toolbar(&mut self, ti: usize) {
@@ -2227,6 +2277,12 @@ impl TickView {
                                 if self.pending_table && self.tabs[ti].candles.t.len() >= 122 {
                                     self.seed_table(ti);
                                 }
+                                if self.pending_studies.is_some()
+                                    && self.tabs[ti].candles.t.len() >= 122
+                                {
+                                    let sc = self.pending_studies.take().unwrap_or_default();
+                                    self.seed_studies(ti, &sc);
+                                }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
                                     self.enter_replay();
@@ -2287,6 +2343,10 @@ impl TickView {
                                 sym.ticker.clone(),
                                 Candles::from_bars(&bars),
                             ));
+                            // Correlation studies consume the comparison
+                            // series through StudyContext; refresh them now
+                            // that the second symbol has arrived.
+                            self.recompute(ti);
                             if !cached {
                                 self.toast(format!("Comparing with {}", sym.ticker));
                             }
@@ -2725,10 +2785,25 @@ impl TickView {
             || self.pending_vwap
             || self.pending_vprofile
             || self.pending_barghost
-            || self.pending_table;
-        let ready = (self.data_frames >= self.snap_after_data && !seeding)
-            || self.frames >= self.snap_after_data + timeout_frames;
-        if self.snap.is_none() || self.snap_requested || !ready {
+            || self.pending_table
+            || self.pending_studies.is_some()
+            || (self.data_frames < self.snap_after_data + 120
+                && self
+                    .tabs
+                    .iter()
+                    .any(|t| t.compare_symbol.is_some() && t.chart.compare.is_none()));
+        let data_ready = self.data_frames >= self.snap_after_data;
+        let ready =
+            data_ready && (!seeding || self.frames >= self.snap_after_data + timeout_frames);
+        if self.snap.is_none() || self.snap_requested {
+            return;
+        }
+        if !ready {
+            if data_ready {
+                // Data is in; keep the clock alive while a late comparison
+                // series (or its failure) resolves, so the bounded wait ends.
+                ctx.request_repaint_after(std::time::Duration::from_millis(100));
+            }
             return;
         }
         let Some(path) = self.snap.clone() else {

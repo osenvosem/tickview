@@ -2152,6 +2152,7 @@ pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext<
 
 #[cfg(test)]
 mod tests {
+    use super::TvId::*;
     use super::*;
     use crate::Bar;
 
@@ -2257,6 +2258,188 @@ mod tests {
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
         assert_eq!(count, 83);
+    }
+
+    /// Every registry id must have golden coverage: either a registry-level
+    /// golden module (`gold_ma`/`gold_price`/`gold_misc`/`gold_wave1a`/
+    /// `gold_wave1b`/`gold_wave1c`/`gold_corr`) or a function-level golden
+    /// pinned in `gold_oscs`/`gold_vol`/`gold_tc`/`gold_trend` tests.
+    /// Adding a study without golden coverage fails this pin.
+    #[test]
+    fn every_study_has_golden_defaults_and_meta_coverage() {
+        const COVERED: &[TvId] = &[
+            Sma,
+            Ema,
+            Wma,
+            Hma,
+            Dema,
+            Tema,
+            Zlema,
+            Rma,
+            Vwma,
+            Lsma,
+            Alma,
+            Kama,
+            EmaRibbons,
+            Psar,
+            Supertrend,
+            Ichimoku,
+            Alligator,
+            BollingerBands,
+            BollingerBandsWidth,
+            Aroon,
+            Atr,
+            ChandelierExit,
+            ChoppinessIndex,
+            ConnorsRsi,
+            CorrelationCoeff,
+            Dmi,
+            FisherTransform,
+            KnowSureThing,
+            PriceOscillator,
+            RankCorrelationIndex,
+            RelativeVolatilityIndex,
+            SmiErgodic,
+            VolatilityStop,
+            WilliamsFractals,
+            ZigZag,
+            PercentB,
+            KeltnerChannels,
+            DonchianChannels,
+            Envelope,
+            Vwap,
+            LinReg,
+            Pivots,
+            Obv,
+            AccumulationDistribution,
+            ChaikinMoneyFlow,
+            MoneyFlowIndex,
+            VolumePriceTrend,
+            Klinger,
+            PviDvi,
+            EaseOfMovement,
+            MassIndex,
+            VolumeRatio,
+            ElderForce,
+            VolumeOscillator,
+            Rsi,
+            Macd,
+            Stochastic,
+            StochasticRsi,
+            Cmo,
+            WilliamsR,
+            Cci,
+            Adx,
+            AwesomeOscillator,
+            Accelerator,
+            UltimateOscillator,
+            Kst,
+            Tsi,
+            Rvi,
+            Trix,
+            Dpo,
+            Bias,
+            ZScore,
+            Momentum,
+            Roc,
+            RateOfChangeVol,
+            ElderRay,
+            ChaikinOscillator,
+            HistoricalVolatility,
+            ParkinsonVolatility,
+            GarmanKlassVolatility,
+            RogersSatchellVolatility,
+            ChaikinVolatility,
+            Vortex,
+        ];
+        assert_eq!(COVERED.len(), 83);
+        for d in defs() {
+            assert!(COVERED.contains(&d.id), "{:?} lacks golden coverage", d.id);
+        }
+        let raw = include_str!("../../../docs/evidence/tv-studies-defaults.json");
+        let ev: serde_json::Value = serde_json::from_str(raw).expect("defaults evidence");
+        let cat_raw = include_str!("../../../docs/parity/catalog.json");
+        let cat: serde_json::Value = serde_json::from_str(cat_raw).expect("catalog");
+        let panes: std::collections::BTreeMap<String, String> = cat["studies"]
+            .as_array()
+            .expect("studies array")
+            .iter()
+            .filter_map(|e| {
+                Some((
+                    e["tickview_id"].as_str()?.to_owned(),
+                    e["pane"].as_str()?.to_owned(),
+                ))
+            })
+            .collect();
+        for d in defs() {
+            let key = format!("{:?}", d.id);
+            assert!(ev.get(&key).is_some(), "{key} lacks defaults evidence row");
+            let want = format!("{:?}", d.pane).to_lowercase();
+            assert_eq!(
+                panes.get(&key).map(String::as_str),
+                Some(want.as_str()),
+                "{key} pane"
+            );
+        }
+    }
+
+    #[test]
+    fn every_study_short_history_is_all_nan_or_finite() {
+        let bars: Vec<crate::Bar> = (0..3)
+            .map(|i| crate::Bar {
+                t: 1_700_000_000 + i as i64 * 60_000,
+                o: 100.0 + i as f64,
+                h: 101.0 + i as f64,
+                l: 99.0 + i as f64,
+                c: 100.5 + i as f64,
+                v: 1000.0 + i as f64,
+            })
+            .collect();
+        let cd = crate::Candles::from_bars(&bars);
+        let ax = Anchors::from_ts(&[bars[0].t, bars[1].t, bars[2].t]);
+        for d in defs() {
+            let out = compute(d.id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), d.plots.len(), "{:?} plots", d.id);
+            for p in &out.plots {
+                assert_eq!(p.series.len(), 3, "{:?} {}", d.id, p.title);
+                for v in &p.series {
+                    assert!(!v.is_infinite(), "{:?} {} produced inf", d.id, p.title);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_study_id_in_catalog_verified() {
+        let raw = include_str!("../../../docs/parity/catalog.json");
+        let cat: serde_json::Value = serde_json::from_str(raw).expect("catalog");
+        let status: std::collections::BTreeMap<String, String> = cat["studies"]
+            .as_array()
+            .expect("studies")
+            .iter()
+            .filter_map(|e| {
+                Some((
+                    e["tickview_id"].as_str()?.to_owned(),
+                    e["status"].as_str()?.to_owned(),
+                ))
+            })
+            .collect();
+        let mut verified = 0;
+        for d in defs() {
+            let key = format!("{:?}", d.id);
+            assert_eq!(
+                status.get(&key).map(String::as_str),
+                Some("verified"),
+                "{key}"
+            );
+            verified += 1;
+        }
+        assert_eq!(verified, 83);
+        assert_eq!(
+            status.values().filter(|v| v.as_str() == "excluded").count(),
+            1,
+            "exactly one excluded study"
+        );
     }
 }
 
