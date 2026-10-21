@@ -1993,20 +1993,26 @@ impl TickView {
 
     /// `TICKVIEW_SCENE=emojipicker`: one placed emoji next to the picker.
     fn seed_emoji(&mut self, ti: usize) {
-        let (lo, hi) = self.price_span(ti);
-        let span = hi - lo;
+        // Anchor inside the visible view: the price axis auto-fits the visible
+        // window, so a full-history span fraction can land below the plot.
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
         let n = self.tabs[ti].candles.t.len();
+        let (vs, ve) = if ve > vs + 2 { (vs, ve) } else { (0, n) };
+        let cd = &self.tabs[ti].candles;
+        let vlo = cd.l[vs..ve].iter().cloned().fold(f64::INFINITY, f64::min);
+        let vhi = cd.h[vs..ve]
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
+        let span = (vhi - vlo).max(1e-6);
+        let idx = ((vs + ve) / 2).min(n.saturating_sub(1));
+        let t = cd.t[idx];
+        let price = vlo + span * 0.75;
         let mut dot = Drawing::new(
             9153,
             DrawingKind::Emoji,
-            Anchor {
-                t: self.tabs[ti].candles.t[n - 70],
-                price: lo + span * 0.30,
-            },
-            Anchor {
-                t: self.tabs[ti].candles.t[n - 70],
-                price: lo + span * 0.30,
-            },
+            Anchor { t, price },
+            Anchor { t, price },
         );
         dot.style = tickchart::kind_defaults(DrawingKind::Emoji);
         dot.style.text = "\u{1f642}".into();
