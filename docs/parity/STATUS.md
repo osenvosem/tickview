@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
+Studies: 45 verified, 38 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -102,15 +102,15 @@ Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
 | Name | TradingView id | TickView id | Icon | Status |
 |---|---|---|---|---|
 | Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | verified |
-| Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | in-progress |
+| Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | verified |
 | Bollinger Bands | `BB@tv` | `BollingerBands` | `` | verified |
 | %B | `BollingerBandsR@tv` | `PercentB` | `` | in-progress |
-| Commodity Channel Index (CCI) | `CCI@tv` | `Cci` | `` | in-progress |
+| Commodity Channel Index (CCI) | `CCI@tv` | `Cci` | `` | verified |
 | Chaikin Oscillator | `ChaikinOscillator@tv` | `ChaikinOscillator` | `` | verified |
-| Chande Momentum Oscillator | `chandeMO@tv` | `Cmo` | `` | in-progress |
+| Chande Momentum Oscillator | `chandeMO@tv` | `Cmo` | `` | verified |
 | Chaikin Money Flow | `CMF@tv` | `ChaikinMoneyFlow` | `` | verified |
 | Detrended Price Oscillator | `DetrendedPriceOscillator@tv` | `Dpo` | `` | in-progress |
-| Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | in-progress |
+| Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | verified |
 | Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | verified |
 | Double EMA | `DoubleEMA@tv` | `Dema` | `` | verified |
 | Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | verified |
@@ -122,7 +122,7 @@ Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
 | Keltner Channels | `KLTNR@tv` | `KeltnerChannels` | `` | verified |
 | KST Oscillator | `KST@tv` | `Kst` | `` | in-progress |
 | Linear Regression | `LinearRegression@tv` | `LinReg` | `` | verified |
-| MACD | `MACD@tv` | `Macd` | `` | in-progress |
+| MACD | `MACD@tv` | `Macd` | `` | verified |
 | Exponential Moving Average | `MAExp@tv` | `Ema` | `` | verified |
 | Simple Moving Average | `MASimple@tv` | `Sma` | `` | verified |
 | Volume Weighted Moving Average | `MAVolumeWeighted@tv` | `Vwma` | `` | verified |
@@ -133,7 +133,7 @@ Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
 | Volume Price Trend | `PriceVolumeTrend@tv` | `VolumePriceTrend` | `` | verified |
 | Parabolic SAR | `PSAR@tv` | `Psar` | `` | verified |
 | Rate of Change (ROC) | `ROC@tv` | `Roc` | `` | in-progress |
-| Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | in-progress |
+| Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | verified |
 | Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | in-progress |
 | Advance/Decline | `STD;Advance_Decline_Ratio_Bars` | `` | `` | excluded |
 | Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | verified |
@@ -176,13 +176,13 @@ Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
 | Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | in-progress |
 | Zero-Lag EMA | `STD;Zlema` | `Zlema` | `` | verified |
 | Z-Score | `STD;ZScore` | `ZScore` | `` | in-progress |
-| Stochastic | `Stochastic@tv` | `Stochastic` | `` | in-progress |
-| Stochastic RSI | `StochasticRSI@tv` | `StochasticRsi` | `` | in-progress |
+| Stochastic | `Stochastic@tv` | `Stochastic` | `` | verified |
+| Stochastic RSI | `StochasticRSI@tv` | `StochasticRsi` | `` | verified |
 | Triple EMA | `TripleEMA@tv` | `Tema` | `` | verified |
 | TRIX | `Trix@tv` | `Trix` | `` | in-progress |
-| Ultimate Oscillator | `UltimateOsc@tv` | `UltimateOscillator` | `` | in-progress |
+| Ultimate Oscillator | `UltimateOsc@tv` | `UltimateOscillator` | `` | verified |
 | Relative Vigor Index (RVI) | `VigorIndex@tv` | `Rvi` | `` | in-progress |
 | VWAP | `VWAP@tv` | `Vwap` | `` | in-progress |
-| Williams %R | `WilliamR@tv` | `WilliamsR` | `` | in-progress |
+| Williams %R | `WilliamR@tv` | `WilliamsR` | `` | verified |
 | Alligator | `WilliamsAlligator@tv` | `Alligator` | `` | verified |
 

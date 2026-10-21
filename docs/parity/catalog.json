@@ -1865,9 +1865,15 @@
    "tickview_id": "AwesomeOscillator",
    "name": "Awesome Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -1907,9 +1913,15 @@
    "tickview_id": "Cci",
    "name": "Commodity Channel Index (CCI)",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -1937,9 +1949,15 @@
    "tickview_id": "Cmo",
    "name": "Chande Momentum Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -1979,9 +1997,15 @@
    "tickview_id": "Adx",
    "name": "Average Directional Index (ADX)",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2179,9 +2203,15 @@
    "tickview_id": "Macd",
    "name": "MACD",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2357,9 +2387,15 @@
    "tickview_id": "Rsi",
    "name": "Relative Strength Index (RSI)",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2959,9 +2995,15 @@
    "tickview_id": "Stochastic",
    "name": "Stochastic",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2971,9 +3013,15 @@
    "tickview_id": "StochasticRsi",
    "name": "Stochastic RSI",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -3014,9 +3062,15 @@
    "tickview_id": "UltimateOscillator",
    "name": "Ultimate Oscillator",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -3050,9 +3104,15 @@
    "tickview_id": "WilliamsR",
    "name": "Williams %R",
    "pane": "separate",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
