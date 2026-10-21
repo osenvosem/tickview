@@ -1212,11 +1212,12 @@ fn rail_utility(
     }
 }
 
-/// Splits rail sections. The rule occupies one full row pitch, so it sits
-/// exactly midway between the buttons above and below — the rail keeps one
-/// uniform icon-to-icon margin everywhere.
+/// Splits rail sections without adding any margin: it allocates zero
+/// height and draws the rule at the row boundary, centered in the small
+/// gap between the pills, so icon-to-icon spacing across a divider equals
+/// the spacing everywhere else in the rail.
 fn rail_divider(ui: &mut egui::Ui, p: &Palette) {
-    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, space::ROW_H), Sense::hover());
+    let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, 0.0), Sense::hover());
     ui.painter().hline(
         rect.x_range().shrink(8.0),
         rect.center().y,
