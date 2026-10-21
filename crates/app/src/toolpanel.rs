@@ -663,7 +663,13 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                                 .request_repaint_after(SELECT_DELAY + Duration::from_millis(8));
                         }
                     }
-                    rail_divider(ui, p);
+                    // No rule above the Icons group (TV keeps it flush).
+                    if GROUPS
+                        .get(group_index + 1)
+                        .is_none_or(|next| next.name != "Icons")
+                    {
+                        rail_divider(ui, p);
+                    }
                 }
 
                 if !ui.ctx().input(|i| i.pointer.any_down()) {
