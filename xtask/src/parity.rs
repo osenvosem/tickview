@@ -124,7 +124,16 @@ pub fn parse_tv_catalog(json: &str) -> Result<TvCatalog, String> {
 /// Parse `DrawingKind` variant names from the tickchart source text.
 #[must_use]
 pub fn parse_kind_variants(src: &str) -> Vec<String> {
-    let head = "pub enum DrawingKind {";
+    parse_enum_variants(src, "pub enum DrawingKind {")
+}
+
+/// Parse `TvId` variant names from the ta registry source text.
+#[must_use]
+pub fn parse_tv_ids(src: &str) -> Vec<String> {
+    parse_enum_variants(src, "pub enum TvId {")
+}
+
+fn parse_enum_variants(src: &str, head: &str) -> Vec<String> {
     let Some(start) = src.find(head) else {
         return Vec::new();
     };
@@ -137,6 +146,154 @@ pub fn parse_kind_variants(src: &str) -> Vec<String> {
         .map(|line| line.trim_end_matches(',').to_owned())
         .filter(|name| name.chars().next().is_some_and(|c| c.is_ascii_uppercase()))
         .collect()
+}
+
+/// One row of the extracted TV study catalog
+/// (`docs/evidence/tv/studies-catalog.json`).
+#[derive(serde::Deserialize)]
+pub struct TvStudy {
+    pub tv_id: String,
+    #[allow(dead_code)]
+    pub name: String,
+    #[allow(dead_code)]
+    pub tickview_id: Option<String>,
+    pub scope: String,
+    #[allow(dead_code)]
+    pub exclusion_reason: Option<String>,
+    #[allow(dead_code)]
+    pub default_inputs: serde_json::Value,
+    pub is_price_study: Option<bool>,
+    #[allow(dead_code)]
+    pub source: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct TvStudiesCatalog {
+    #[allow(dead_code)]
+    pub schema_version: u32,
+    #[allow(dead_code)]
+    pub source: serde_json::Value,
+    pub tools: Vec<TvStudy>,
+}
+
+/// Parse the extracted TV study catalog JSON.
+///
+/// # Errors
+/// Returns a message when the JSON does not match the catalog shape.
+pub fn parse_tv_studies(json: &str) -> Result<TvStudiesCatalog, String> {
+    serde_json::from_str(json).map_err(|error| format!("invalid TV studies catalog JSON: {error}"))
+}
+
+/// Study-side validation: implemented-id coverage, TV-catalog coverage,
+/// verified coverage (>=2 tests, >=1 evidence), and pane consistency against
+/// the bundle's `is_price_study`. Coverage rules are skipped while the
+/// manifest carries no study entries (pre-M3 manifests stay valid).
+#[must_use]
+pub fn validate_studies(
+    catalog_json: &str,
+    tv_studies_json: &str,
+    ids: &[String],
+    evidence_exists: &impl Fn(&str) -> bool,
+) -> Vec<String> {
+    let mut errors = validate_str(catalog_json, evidence_exists);
+    let Ok(catalog) = serde_json::from_str::<Catalog>(catalog_json) else {
+        return errors;
+    };
+    if catalog.studies.is_empty() {
+        return errors;
+    }
+    let tv = match parse_tv_studies(tv_studies_json) {
+        Ok(tv) => tv,
+        Err(error) => {
+            errors.push(error);
+            return errors;
+        }
+    };
+
+    let tickview_ids: HashSet<&str> = catalog
+        .studies
+        .iter()
+        .map(|entry| entry.tickview_id.as_str())
+        .collect();
+    for id in ids {
+        if !tickview_ids.contains(id.as_str()) {
+            errors.push(format!("implemented study {id} has no manifest entry"));
+        }
+    }
+
+    let manifest_tv_ids: HashSet<&str> = catalog
+        .studies
+        .iter()
+        .map(|entry| entry.tv_id.as_str())
+        .collect();
+    for tool in &tv.tools {
+        match tool.scope.as_str() {
+            "in-scope" => {
+                if !manifest_tv_ids.contains(tool.tv_id.as_str()) {
+                    errors.push(format!(
+                        "in-scope TV study {} has no manifest entry",
+                        tool.tv_id
+                    ));
+                }
+            }
+            "excluded" => match catalog.studies.iter().find(|e| e.tv_id == tool.tv_id) {
+                Some(entry) if entry.status == "excluded" => {}
+                Some(_) => {
+                    errors.push(format!(
+                        "TV study {} is excluded but not excluded",
+                        tool.tv_id
+                    ));
+                }
+                None => {
+                    errors.push(format!(
+                        "excluded TV study {} has no manifest entry",
+                        tool.tv_id
+                    ));
+                }
+            },
+            other => errors.push(format!("{}: unknown scope {other:?}", tool.tv_id)),
+        }
+    }
+
+    let tv_catalog_ids: HashSet<&str> = tv.tools.iter().map(|tool| tool.tv_id.as_str()).collect();
+    for entry in &catalog.studies {
+        if !tv_catalog_ids.contains(entry.tv_id.as_str()) {
+            errors.push(format!("{}: tv_id not in TV studies catalog", entry.tv_id));
+        }
+    }
+
+    for entry in &catalog.studies {
+        if entry.status == "verified" {
+            if entry.tests.len() < 2 {
+                errors.push(format!("{}: verified studies need >=2 tests", entry.tv_id));
+            }
+            if entry.evidence.is_empty() {
+                errors.push(format!("{}: verified studies need evidence", entry.tv_id));
+            }
+        }
+    }
+
+    for tool in &tv.tools {
+        let Some(is_price) = tool.is_price_study else {
+            continue;
+        };
+        let Some(entry) = catalog.studies.iter().find(|e| e.tv_id == tool.tv_id) else {
+            continue;
+        };
+        if is_price && entry.pane != "price" {
+            errors.push(format!(
+                "{}: pane {:?} but TV marks it a price study",
+                entry.tv_id, entry.pane
+            ));
+        }
+        if !is_price && entry.pane == "price" {
+            errors.push(format!(
+                "{}: pane price but TV marks it non-price",
+                entry.tv_id
+            ));
+        }
+    }
+    errors
 }
 
 /// Full validation: structural rules plus TV-catalog coverage, implemented-kind
@@ -401,6 +558,30 @@ pub fn run(args: &[String]) -> i32 {
     let errors = validate_full(&json, &tv_json, &kinds, &|candidate| {
         root.join(candidate).exists() || Path::new(candidate).exists()
     });
+    let tv_studies_path = root.join("docs/evidence/tv/studies-catalog.json");
+    let tv_studies_json = match std::fs::read_to_string(&tv_studies_path) {
+        Ok(tv) => tv,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", tv_studies_path.display());
+            return 1;
+        }
+    };
+    let registry_path = root.join("crates/ta/src/registry.rs");
+    let registry_src = match std::fs::read_to_string(&registry_path) {
+        Ok(src) => src,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", registry_path.display());
+            return 1;
+        }
+    };
+    let study_ids = parse_tv_ids(&registry_src);
+    let mut errors = errors;
+    errors.extend(validate_studies(
+        &json,
+        &tv_studies_json,
+        &study_ids,
+        &|candidate| root.join(candidate).exists() || Path::new(candidate).exists(),
+    ));
     if !errors.is_empty() {
         for error in &errors {
             eprintln!("parity: {error}");
@@ -431,7 +612,8 @@ pub fn run(args: &[String]) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::{
-        TvTool, parse_kind_variants, parse_tv_catalog, validate_full, validate_str, workspace_root,
+        TvTool, parse_kind_variants, parse_tv_catalog, parse_tv_ids, validate_full, validate_str,
+        validate_studies, workspace_root,
     };
 
     /// Only the Gann evidence path "exists" in tests.
@@ -695,5 +877,136 @@ mod tests {
             root.join(candidate).exists()
         });
         assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    fn tv_studies(rows: &str) -> String {
+        format!(
+            r#"{{"schema_version":1,"source":{{"target":"3.4.1","wire":"w","meta_dir":"m"}},
+              "tools":[{rows}]}}"#
+        )
+    }
+
+    fn with_study(fragment: &str) -> String {
+        format!(
+            r#"{{"schema_version":1,"source":{{"app_version":"3.4.1","captured":"2026-10-20"}},
+              "drawings":[],"studies":[{fragment}]}}"#
+        )
+    }
+
+    const RSIS: &str = r#"{
+        "kind":"study","tv_id":"RSI@tv-basicstudies","tickview_id":"Rsi",
+        "name":"Relative Strength Index (RSI)","pane":"separate","status":"verified",
+        "tests":["a::rsi_golden","b::rsi_defaults"],"evidence":["docs/evidence/tv/studies/x.json"],
+        "notes":""}"#;
+
+    const TV_RSI: &str = r#"{
+        "tv_id":"RSI@tv-basicstudies","name":"Relative Strength Index (RSI)",
+        "tickview_id":"Rsi","scope":"in-scope","exclusion_reason":null,
+        "default_inputs":{"in_0":14},"is_price_study":false,"source":"wire"}"#;
+
+    #[test]
+    fn every_study_variant_without_entry_is_error() {
+        let ids = ["Rsi".to_owned(), "Aroon".to_owned()];
+        let errors = validate_studies(&with_study(RSIS), &tv_studies(TV_RSI), &ids, &|_| true);
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("Aroon") && e.contains("no manifest entry")),
+            "{errors:#?}"
+        );
+    }
+
+    #[test]
+    fn study_in_scope_tv_id_without_entry_is_error() {
+        let ids = ["Rsi".to_owned()];
+        let extra = r#"{
+            "tv_id":"STD;Aroon","name":"Aroon","tickview_id":null,"scope":"in-scope",
+            "exclusion_reason":null,"default_inputs":{},"is_price_study":false,"source":"meta"}"#;
+        let errors = validate_studies(
+            &with_study(RSIS),
+            &tv_studies(&format!("{TV_RSI},{extra}")),
+            &ids,
+            &|_| true,
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("STD;Aroon") && e.contains("no manifest entry")),
+            "{errors:#?}"
+        );
+    }
+
+    #[test]
+    fn study_excluded_must_have_reason() {
+        let entry = r#"{
+            "kind":"study","tv_id":"STD;Advance_Decline_Ratio_Bars",
+            "tickview_id":"AdvanceDecline","name":"Advance/Decline",
+            "pane":"separate","status":"excluded","tests":[],"evidence":[],"notes":""}"#;
+        let tv = r#"{
+            "tv_id":"STD;Advance_Decline_Ratio_Bars","name":"Advance/Decline",
+            "tickview_id":null,"scope":"excluded","exclusion_reason":"breadth",
+            "default_inputs":{},"is_price_study":false,"source":"meta"}"#;
+        let errors = validate_studies(&with_study(entry), &tv_studies(tv), &[], &|_| true);
+        assert!(errors.iter().any(|e| e.contains("reason")), "{errors:#?}");
+    }
+
+    #[test]
+    fn verified_study_needs_coverage() {
+        let thin = r#"{
+            "kind":"study","tv_id":"RSI@tv-basicstudies","tickview_id":"Rsi",
+            "name":"RSI","pane":"separate","status":"verified",
+            "tests":["only::one"],"evidence":[],"notes":""}"#;
+        let errors = validate_studies(
+            &with_study(thin),
+            &tv_studies(TV_RSI),
+            &["Rsi".to_owned()],
+            &|_| true,
+        );
+        assert!(errors.iter().any(|e| e.contains("tests")), "{errors:#?}");
+        assert!(errors.iter().any(|e| e.contains("evidence")), "{errors:#?}");
+        assert!(
+            validate_studies(
+                &with_study(RSIS),
+                &tv_studies(TV_RSI),
+                &["Rsi".to_owned()],
+                &|_| true
+            )
+            .is_empty()
+        );
+    }
+
+    #[test]
+    fn study_pane_drift_is_error() {
+        let entry = r#"{
+            "kind":"study","tv_id":"RSI@tv-basicstudies","tickview_id":"Rsi",
+            "name":"RSI","pane":"price","status":"verified",
+            "tests":["a::x","b::y"],"evidence":["docs/evidence/tv/studies/x.json"],"notes":""}"#;
+        let errors = validate_studies(
+            &with_study(entry),
+            &tv_studies(TV_RSI),
+            &["Rsi".to_owned()],
+            &|_| true,
+        );
+        assert!(errors.iter().any(|e| e.contains("pane")), "{errors:#?}");
+    }
+
+    #[test]
+    fn empty_studies_list_skips_coverage_rules() {
+        assert!(
+            validate_studies(
+                r#"{"schema_version":1,"source":{"app_version":"3.4.1","captured":"x"},
+               "drawings":[],"studies":[]}"#,
+                &tv_studies(TV_RSI),
+                &["Rsi".to_owned()],
+                &|_| true
+            )
+            .is_empty()
+        );
+    }
+
+    #[test]
+    fn parse_tv_ids_finds_variants() {
+        let src = "#[derive(Clone, Copy)]\npub enum TvId {\n    Sma,\n    Ema,\n    // note\n    Rsi,\n}\n";
+        assert_eq!(parse_tv_ids(src), ["Sma", "Ema", "Rsi"]);
     }
 }
