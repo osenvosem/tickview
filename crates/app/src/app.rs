@@ -162,6 +162,7 @@ pub enum Tool {
     FibExt,
     Arrow,
     Text,
+    Note,
     Measure,
     Brush,
     Pitchfork,
@@ -228,6 +229,12 @@ pub enum Tool {
     PriceLabel,
     Signpost,
     FlagMark,
+    AnchoredVwap,
+    VolumeProfileFixed,
+    VolumeProfileAnchored,
+    BarsPattern,
+    GhostFeed,
+    Table,
 }
 
 impl Tool {
@@ -247,6 +254,7 @@ impl Tool {
         Self::FibExt,
         Self::Arrow,
         Self::Text,
+        Self::Note,
         Self::Measure,
         Self::Brush,
         Self::Pitchfork,
@@ -313,6 +321,12 @@ impl Tool {
         Self::PriceLabel,
         Self::Signpost,
         Self::FlagMark,
+        Self::AnchoredVwap,
+        Self::VolumeProfileFixed,
+        Self::VolumeProfileAnchored,
+        Self::BarsPattern,
+        Self::GhostFeed,
+        Self::Table,
     ];
 
     #[must_use]
@@ -333,6 +347,7 @@ impl Tool {
             Self::FibExt => Icon::FibExt,
             Self::Arrow => Icon::Arrow,
             Self::Text => Icon::Text,
+            Self::Note => Icon::Note,
             Self::Measure => Icon::Measure,
             Self::Brush => Icon::Brush,
             Self::Pitchfork => Icon::Pitchfork,
@@ -399,6 +414,12 @@ impl Tool {
             Self::PriceLabel => Icon::PriceLabel,
             Self::Signpost => Icon::Signpost,
             Self::FlagMark => Icon::FlagMark,
+            Self::AnchoredVwap => Icon::AnchoredVwap,
+            Self::VolumeProfileFixed => Icon::VolumeProfileFixed,
+            Self::VolumeProfileAnchored => Icon::VolumeProfileAnchored,
+            Self::BarsPattern => Icon::BarsPattern,
+            Self::GhostFeed => Icon::GhostFeed,
+            Self::Table => Icon::TableGrid,
         }
     }
 
@@ -419,7 +440,8 @@ impl Tool {
             Self::Fib => "Fib retracement",
             Self::FibExt => "Trend-based fib extension",
             Self::Arrow => "Arrow",
-            Self::Text => "Note",
+            Self::Text => "Text",
+            Self::Note => "Note",
             Self::Measure => "Measure",
             Self::Brush => "Brush",
             Self::Pitchfork => "Pitchfork",
@@ -486,6 +508,12 @@ impl Tool {
             Self::PriceLabel => "Price label",
             Self::Signpost => "Signpost",
             Self::FlagMark => "Flag mark",
+            Self::AnchoredVwap => "Anchored VWAP",
+            Self::VolumeProfileFixed => "Fixed Range Volume Profile",
+            Self::VolumeProfileAnchored => "Anchored Volume Profile",
+            Self::BarsPattern => "Bars pattern",
+            Self::GhostFeed => "Ghost feed",
+            Self::Table => "Table",
         }
     }
 
@@ -546,7 +574,8 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::Fib => DrawTool::Fib,
         Tool::FibExt => DrawTool::FibExt,
         Tool::Arrow => DrawTool::Arrow,
-        Tool::Text => DrawTool::Note,
+        Tool::Text => DrawTool::Text,
+        Tool::Note => DrawTool::Note,
         Tool::Measure => DrawTool::Measure,
         Tool::Brush => DrawTool::Brush,
         Tool::Pitchfork => DrawTool::Pitchfork,
@@ -613,6 +642,12 @@ fn draw_tool(tool: Tool) -> DrawTool {
         Tool::PriceLabel => DrawTool::PriceLabel,
         Tool::Signpost => DrawTool::Signpost,
         Tool::FlagMark => DrawTool::FlagMark,
+        Tool::AnchoredVwap => DrawTool::AnchoredVwap,
+        Tool::VolumeProfileFixed => DrawTool::VolumeProfileFixed,
+        Tool::VolumeProfileAnchored => DrawTool::VolumeProfileAnchored,
+        Tool::BarsPattern => DrawTool::BarsPattern,
+        Tool::GhostFeed => DrawTool::GhostFeed,
+        Tool::Table => DrawTool::Table,
     }
 }
 
@@ -724,6 +759,16 @@ pub struct TickView {
     pending_zoomrect: bool,
     pending_gannf: bool,
     pending_toolbar: bool,
+    pending_trend: bool,
+    pending_gannfib: bool,
+    pending_patterns: bool,
+    pending_forecast: bool,
+    pending_shapes: bool,
+    pending_annot: bool,
+    pending_vwap: bool,
+    pending_vprofile: bool,
+    pending_barghost: bool,
+    pending_table: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1031,6 +1076,16 @@ impl TickView {
             pending_zoomrect: false,
             pending_gannf: false,
             pending_toolbar: false,
+            pending_trend: false,
+            pending_gannfib: false,
+            pending_patterns: false,
+            pending_forecast: false,
+            pending_shapes: false,
+            pending_annot: false,
+            pending_vwap: false,
+            pending_vprofile: false,
+            pending_barghost: false,
+            pending_table: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1118,6 +1173,16 @@ impl TickView {
                 "zoomrect" => me.pending_zoomrect = true,
                 "gannf" => me.pending_gannf = true,
                 "toolbar" => me.pending_toolbar = true,
+                "trend" => me.pending_trend = true,
+                "gannfib" => me.pending_gannfib = true,
+                "patterns" => me.pending_patterns = true,
+                "forecast" => me.pending_forecast = true,
+                "shapes" => me.pending_shapes = true,
+                "annot" => me.pending_annot = true,
+                "vwap" => me.pending_vwap = true,
+                "vprofile" => me.pending_vprofile = true,
+                "barghost" => me.pending_barghost = true,
+                "table" => me.pending_table = true,
                 "replay" => me.pending_replay = true,
                 "editor" => {
                     me.indicators_open = false;
@@ -1238,6 +1303,565 @@ impl TickView {
         let tab = &mut self.tabs[ti];
         tab.chart.drawings.push(fan);
         tab.chart.selection.select(9201);
+    }
+
+    /// `TICKVIEW_SCENE=trend`: one representative of each trend-family kind
+    /// for geometry review against TV reference crops.
+    fn seed_trend(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 16).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(60);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 60..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 60)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        type SeedSpec = (
+            u64,
+            DrawingKind,
+            (usize, f64),
+            (usize, f64),
+            Option<(usize, f64)>,
+        );
+        let specs: [SeedSpec; 10] = [
+            (
+                9301,
+                DrawingKind::TrendLine,
+                (n - 60, p(0.30)),
+                (n - 25, p(0.55)),
+                None,
+            ),
+            (
+                9302,
+                DrawingKind::Channel,
+                (n - 60, p(0.26)),
+                (n - 28, p(0.38)),
+                Some((n - 44, p(0.52))),
+            ),
+            (
+                9303,
+                DrawingKind::FlatChannel,
+                (n - 60, p(0.18)),
+                (n - 26, p(0.28)),
+                Some((n - 43, p(0.42))),
+            ),
+            (
+                9304,
+                DrawingKind::Pitchfork,
+                (n - 60, p(0.55)),
+                (n - 45, p(0.82)),
+                Some((n - 20, p(0.74))),
+            ),
+            (
+                9305,
+                DrawingKind::ModifiedSchiffPitchfork,
+                (n - 58, p(0.86)),
+                (n - 40, p(0.98)),
+                Some((n - 15, p(0.94))),
+            ),
+            (
+                9306,
+                DrawingKind::InsidePitchfork,
+                (n - 55, p(0.06)),
+                (n - 40, p(0.28)),
+                Some((n - 18, p(0.20))),
+            ),
+            (
+                9307,
+                DrawingKind::CrossLine,
+                (n - 35, p(0.62)),
+                (n - 35, p(0.62)),
+                None,
+            ),
+            (
+                9308,
+                DrawingKind::Ray,
+                (n - 50, p(0.12)),
+                (n - 44, p(0.20)),
+                None,
+            ),
+            (
+                9309,
+                DrawingKind::HLine,
+                (n - 30, p(0.68)),
+                (n - 30, p(0.68)),
+                None,
+            ),
+            (
+                9310,
+                DrawingKind::RegTrend,
+                (n - 58, p(0.34)),
+                (n - 10, p(0.48)),
+                None,
+            ),
+        ];
+        for (id, kind, a0, b0, c0) in specs {
+            let mut d = match c0 {
+                Some((ct, cp)) => Drawing::with_c(
+                    id,
+                    kind,
+                    a(ts(a0.0), a0.1),
+                    a(ts(b0.0), b0.1),
+                    a(ts(ct), cp),
+                ),
+                None => Drawing::new(id, kind, a(ts(a0.0), a0.1), a(ts(b0.0), b0.1)),
+            };
+            d.style = tickchart::kind_defaults(kind);
+            self.tabs[ti].chart.drawings.push(d);
+        }
+    }
+    /// `TICKVIEW_SCENE=gannfib`: Fib retracement (selected), Fib channel and
+    /// Gann fan over the recent visible window, for Gann/Fib review captures.
+    fn seed_gannfib(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 110).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(110);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 110..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 110)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        type SeedSpec = (
+            u64,
+            DrawingKind,
+            (usize, f64),
+            (usize, f64),
+            Option<(usize, f64)>,
+        );
+        let specs: [SeedSpec; 3] = [
+            (
+                9401,
+                DrawingKind::Fib,
+                (n - 100, p(0.30)),
+                (n - 30, p(0.72)),
+                None,
+            ),
+            (
+                9402,
+                DrawingKind::FibChannel,
+                (n - 90, p(0.22)),
+                (n - 35, p(0.40)),
+                Some((n - 60, p(0.66))),
+            ),
+            (
+                9403,
+                DrawingKind::GannFan,
+                (n - 105, p(0.12)),
+                (n - 45, p(0.58)),
+                None,
+            ),
+        ];
+        for (id, kind, a0, b0, c0) in specs {
+            let mut d = match c0 {
+                Some((ct, cp)) => Drawing::with_c(
+                    id,
+                    kind,
+                    a(ts(a0.0), a0.1),
+                    a(ts(b0.0), b0.1),
+                    a(ts(ct), cp),
+                ),
+                None => Drawing::new(id, kind, a(ts(a0.0), a0.1), a(ts(b0.0), b0.1)),
+            };
+            d.style = tickchart::kind_defaults(kind);
+            self.tabs[ti].chart.drawings.push(d);
+        }
+        self.tabs[ti].chart.selection.select(9401);
+    }
+    /// `TICKVIEW_SCENE=patterns`: selected XABCD, Elliott impulse and sine
+    /// line over the recent visible window, for pattern-family review.
+    fn seed_patterns(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 120).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(120);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 120..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 120)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        let mk = |id: u64, kind: DrawingKind, pts: &[(usize, f64)]| -> Drawing {
+            let mut d = Drawing::new(
+                id,
+                kind,
+                a(ts(pts[0].0), pts[0].1),
+                a(ts(pts[1].0), pts[1].1),
+            );
+            if pts.len() >= 3 {
+                d.c = Some(a(ts(pts[2].0), pts[2].1));
+            }
+            d.extra = pts.iter().skip(3).map(|&(i, pr)| a(ts(i), pr)).collect();
+            d.style = tickchart::kind_defaults(kind);
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(
+                9501,
+                DrawingKind::Xabcd,
+                &[
+                    (n - 110, p(0.30)),
+                    (n - 85, p(0.72)),
+                    (n - 62, p(0.48)),
+                    (n - 40, p(0.80)),
+                    (n - 18, p(0.55)),
+                ],
+            ),
+            mk(
+                9502,
+                DrawingKind::ElliottImpulse,
+                &[
+                    (n - 115, p(0.08)),
+                    (n - 95, p(0.42)),
+                    (n - 78, p(0.28)),
+                    (n - 58, p(0.66)),
+                    (n - 40, p(0.50)),
+                    (n - 22, p(0.90)),
+                ],
+            ),
+            mk(
+                9503,
+                DrawingKind::SineLine,
+                &[(n - 100, p(0.14)), (n - 30, p(0.24)), (n - 65, p(0.36))],
+            ),
+        ]);
+        self.tabs[ti].chart.selection.select(9501);
+    }
+    /// `TICKVIEW_SCENE=forecast`: long position, sector wedge and both range
+    /// measurers over the recent visible window, for family review.
+    fn seed_forecast(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 120).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(120);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 120..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 120)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        let mut long = Drawing::new(
+            9601,
+            DrawingKind::LongPosition,
+            a(ts(n - 100), p(0.30)),
+            a(ts(n - 60), p(0.55)),
+        );
+        long.c = Some(a(ts(n - 60), p(0.15)));
+        long.style = tickchart::kind_defaults(DrawingKind::LongPosition);
+        let mut sector = Drawing::new(
+            9602,
+            DrawingKind::Sector,
+            a(ts(n - 90), p(0.62)),
+            a(ts(n - 30), p(0.74)),
+        );
+        sector.c = Some(a(ts(n - 30), p(0.54)));
+        sector.style = tickchart::kind_defaults(DrawingKind::Sector);
+        let mut pr = Drawing::new(
+            9603,
+            DrawingKind::PriceRange,
+            a(ts(n - 80), p(0.86)),
+            a(ts(n - 45), p(0.96)),
+        );
+        pr.style = tickchart::kind_defaults(DrawingKind::PriceRange);
+        let mut dr = Drawing::new(
+            9604,
+            DrawingKind::DatePriceRange,
+            a(ts(n - 70), p(0.05)),
+            a(ts(n - 35), p(0.12)),
+        );
+        dr.style = tickchart::kind_defaults(DrawingKind::DatePriceRange);
+        self.tabs[ti].chart.drawings.extend([long, sector, pr, dr]);
+        self.tabs[ti].chart.selection.select(9601);
+    }
+    /// `TICKVIEW_SCENE=shapes`: representative geometric shapes over the recent
+    /// visible window, for shapes-family review.
+    fn seed_shapes(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let total = self.tabs[ti].candles.t.len();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let n = (ve - 2).max(vs + 120).min(total);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let w0 = n.saturating_sub(120);
+            let lo = cd.l[w0..n].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[w0..n]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[n - 120..n].to_vec();
+        let ts = |k: usize| tv[k - (n - 120)];
+        let a = |t: i64, price: f64| Anchor { t, price };
+        let p = |f: f64| lo + span * f;
+        let mk = |id: u64, kind: DrawingKind, pts: &[(usize, f64)]| -> Drawing {
+            let mut d = Drawing::new(
+                id,
+                kind,
+                a(ts(pts[0].0), pts[0].1),
+                a(ts(pts[1].0), pts[1].1),
+            );
+            if pts.len() >= 3 {
+                d.c = Some(a(ts(pts[2].0), pts[2].1));
+            }
+            d.extra = pts.iter().skip(3).map(|&(i, pr)| a(ts(i), pr)).collect();
+            d.style = tickchart::kind_defaults(kind);
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(
+                9701,
+                DrawingKind::Rect,
+                &[(n - 110, p(0.70)), (n - 70, p(0.88))],
+            ),
+            mk(
+                9702,
+                DrawingKind::Circle,
+                &[(n - 60, p(0.66)), (n - 25, p(0.86))],
+            ),
+            mk(
+                9703,
+                DrawingKind::TriangleShape,
+                &[(n - 105, p(0.30)), (n - 80, p(0.52)), (n - 55, p(0.28))],
+            ),
+            mk(
+                9704,
+                DrawingKind::Arrow,
+                &[(n - 95, p(0.10)), (n - 55, p(0.26))],
+            ),
+            mk(
+                9705,
+                DrawingKind::Curve,
+                &[(n - 45, p(0.30)), (n - 10, p(0.34)), (n - 28, p(0.48))],
+            ),
+            mk(
+                9706,
+                DrawingKind::Polyline,
+                &[
+                    (n - 115, p(0.44)),
+                    (n - 100, p(0.58)),
+                    (n - 85, p(0.46)),
+                    (n - 70, p(0.60)),
+                ],
+            ),
+            mk(
+                9707,
+                DrawingKind::Brush,
+                &[
+                    (n - 50, p(0.06)),
+                    (n - 42, p(0.12)),
+                    (n - 34, p(0.08)),
+                    (n - 26, p(0.16)),
+                    (n - 18, p(0.10)),
+                ],
+            ),
+        ]);
+        self.tabs[ti].chart.selection.select(9701);
+    }
+    /// `TICKVIEW_SCENE=annot`: plain text, note bubble, price note and pin over
+    /// the recent visible window, for annotation-family review.
+    fn seed_annot(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let (lo, hi) = {
+            let cd = &self.tabs[ti].candles;
+            let lo = cd.l[vs..ve].iter().copied().fold(f64::INFINITY, f64::min);
+            let hi = cd.h[vs..ve]
+                .iter()
+                .copied()
+                .fold(f64::NEG_INFINITY, f64::max);
+            (lo, hi)
+        };
+        let span = hi - lo;
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let p = |f: f64| lo + span * f;
+        let mk = |id: u64, kind: DrawingKind, fx: f64, f: f64, text: &str| -> Drawing {
+            let i = (vs as f64 + w as f64 * fx).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+            let a = Anchor {
+                t: tv[i - vs],
+                price: p(f),
+            };
+            let mut d = Drawing::new(id, kind, a, a);
+            d.style = tickchart::kind_defaults(kind);
+            d.style.text = text.to_owned();
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9801, DrawingKind::Text, 0.12, 0.92, "breakout watch"),
+            mk(
+                9802,
+                DrawingKind::Note,
+                0.38,
+                0.72,
+                "volume spike; expect retest",
+            ),
+            mk(9803, DrawingKind::PriceNote, 0.58, 0.55, "key level"),
+            mk(9804, DrawingKind::Pin, 0.74, 0.30, ""),
+        ]);
+        self.tabs[ti].chart.selection.select(9802);
+    }
+    /// `TICKVIEW_SCENE=vwap`: anchored VWAP from the left of the visible
+    /// window, for data-derived-tool review.
+    fn seed_vwap(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, _) = self.tabs[ti].chart.view.visible();
+        let i = vs + 2;
+        let price = self.tabs[ti].candles.c[i];
+        let a = Anchor {
+            t: self.tabs[ti].candles.t[i],
+            price,
+        };
+        let mut d = Drawing::new(9901, DrawingKind::AnchoredVwap, a, a);
+        d.style = tickchart::kind_defaults(DrawingKind::AnchoredVwap);
+        self.tabs[ti].chart.drawings.push(d);
+        self.tabs[ti].chart.selection.select(9901);
+    }
+    /// `TICKVIEW_SCENE=vprofile`: a fixed-range profile over ~two thirds of
+    /// the visible window plus an anchored profile, for volume-tool review.
+    fn seed_vprofile(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let mk = |id: u64, kind: DrawingKind, f0: f64, f1: f64| -> Drawing {
+            let a = Anchor {
+                t: tv[idx(f0) - vs],
+                price: cv[idx(f0) - vs],
+            };
+            let b = Anchor {
+                t: tv[idx(f1) - vs],
+                price: cv[idx(f1) - vs],
+            };
+            let mut d = Drawing::new(id, kind, a, b);
+            d.style = tickchart::kind_defaults(kind);
+            d
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9911, DrawingKind::FixedRangeVolumeProfile, 0.02, 0.4),
+            mk(9912, DrawingKind::AnchoredVolumeProfile, 0.62, 0.62),
+        ]);
+        self.tabs[ti].chart.selection.select(9911);
+    }
+    /// `TICKVIEW_SCENE=barghost`: bars pattern over an early window with a
+    /// shifted ghost copy, plus a ghost feed of the visible series, for
+    /// pattern-tool review.
+    fn seed_barghost(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let mk = |id: u64, kind: DrawingKind, f0: f64, f1: f64, db: i64, dp: f64| -> Drawing {
+            let a = Anchor {
+                t: tv[idx(f0) - vs],
+                price: cv[idx(f0) - vs],
+            };
+            let b = Anchor {
+                t: tv[idx(f1) - vs],
+                price: cv[idx(f1) - vs],
+            };
+            let mut d = Drawing::new(id, kind, a, b);
+            d.style = tickchart::kind_defaults(kind);
+            d.extra.push(Anchor { t: db, price: dp });
+            d
+        };
+        let span = {
+            let hi = cv.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+            let lo = cv.iter().copied().fold(f64::INFINITY, f64::min);
+            hi - lo
+        };
+        self.tabs[ti].chart.drawings.extend([
+            mk(9921, DrawingKind::BarsPattern, 0.05, 0.35, 25, span * 0.08),
+            mk(9922, DrawingKind::GhostFeed, 0.5, 0.78, -18, -span * 0.05),
+        ]);
+        self.tabs[ti].chart.selection.select(9921);
+    }
+    /// `TICKVIEW_SCENE=table`: a 3x3 table with sample cells, selected, for
+    /// table-tool review.
+    fn seed_table(&mut self, ti: usize) {
+        self.tabs[ti].chart.drawings.clear();
+        let (vs, ve) = self.tabs[ti].chart.view.visible();
+        let w = ve.saturating_sub(vs).max(12);
+        let tv: Vec<i64> = self.tabs[ti].candles.t[vs..ve].to_vec();
+        let cv: Vec<f64> = self.tabs[ti].candles.c[vs..ve].to_vec();
+        let idx =
+            |f: f64| (vs as f64 + w as f64 * f).clamp(vs as f64 + 1.0, ve as f64 - 3.0) as usize;
+        let hi = cv.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let lo = cv.iter().copied().fold(f64::INFINITY, f64::min);
+        let span = hi - lo;
+        let a = Anchor {
+            t: tv[idx(0.15) - vs],
+            price: lo + span * 0.75,
+        };
+        let b = Anchor {
+            t: tv[idx(0.45) - vs],
+            price: lo + span * 0.45,
+        };
+        let mut d = Drawing::new(9931, DrawingKind::Table, a, b);
+        d.style = tickchart::kind_defaults(DrawingKind::Table);
+        d.grid = Some(tickchart::default_grid());
+        d.cells = [
+            "RSI",
+            "61.4",
+            "overbought",
+            "MACD",
+            "-120",
+            "bearish",
+            "Vol",
+            "2.1x",
+            "rising",
+        ]
+        .iter()
+        .map(|s| (*s).to_owned())
+        .collect();
+        self.tabs[ti].chart.drawings.push(d);
+        self.tabs[ti].chart.selection.select(9931);
     }
 
     /// `TICKVIEW_SCENE=toolbar`: three drawings with the first two selected in
@@ -1558,6 +2182,36 @@ impl TickView {
                                 if self.pending_toolbar && self.tabs[ti].candles.t.len() >= 10 {
                                     self.seed_toolbar(ti);
                                     self.pending_toolbar = false;
+                                }
+                                if self.pending_trend && self.tabs[ti].candles.t.len() >= 60 {
+                                    self.seed_trend(ti);
+                                }
+                                if self.pending_gannfib && self.tabs[ti].candles.t.len() >= 112 {
+                                    self.seed_gannfib(ti);
+                                }
+                                if self.pending_patterns && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_patterns(ti);
+                                }
+                                if self.pending_forecast && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_forecast(ti);
+                                }
+                                if self.pending_shapes && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_shapes(ti);
+                                }
+                                if self.pending_annot && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_annot(ti);
+                                }
+                                if self.pending_vwap && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_vwap(ti);
+                                }
+                                if self.pending_vprofile && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_vprofile(ti);
+                                }
+                                if self.pending_barghost && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_barghost(ti);
+                                }
+                                if self.pending_table && self.tabs[ti].candles.t.len() >= 122 {
+                                    self.seed_table(ti);
                                 }
                                 if self.pending_replay && self.tabs[ti].candles.t.len() >= 10 {
                                     self.pending_replay = false;
@@ -2047,7 +2701,17 @@ impl TickView {
         let seeding = self.pending_phase4
             || self.pending_zoomrect
             || self.pending_gannf
-            || self.pending_toolbar;
+            || self.pending_toolbar
+            || self.pending_trend
+            || self.pending_gannfib
+            || self.pending_patterns
+            || self.pending_forecast
+            || self.pending_shapes
+            || self.pending_annot
+            || self.pending_vwap
+            || self.pending_vprofile
+            || self.pending_barghost
+            || self.pending_table;
         let ready = (self.data_frames >= self.snap_after_data && !seeding)
             || self.frames >= self.snap_after_data + timeout_frames;
         if self.snap.is_none() || self.snap_requested || !ready {
@@ -3412,8 +4076,56 @@ mod tests {
                 assert_ne!(mapped, DrawTool::Cursor, "{tool:?} is not wired");
             }
         }
-        assert_eq!(draw_tool(Tool::Text), DrawTool::Note);
+        assert_eq!(draw_tool(Tool::Text), DrawTool::Text);
+        assert_eq!(draw_tool(Tool::Note), DrawTool::Note);
         assert_eq!(draw_tool(Tool::Measure), DrawTool::Measure);
+    }
+
+    #[test]
+    fn every_tool_is_wired_and_in_catalog() {
+        use crate::toolpanel::{GROUPS, SINGLES};
+        let mut menu: Vec<Tool> = Vec::new();
+        for group in GROUPS {
+            for (_, tools) in group.sections {
+                for tool in *tools {
+                    assert!(!menu.contains(tool), "{tool:?} listed twice in the rail");
+                    menu.push(*tool);
+                }
+            }
+        }
+        for tool in SINGLES {
+            assert!(!menu.contains(tool), "{tool:?} listed twice in the rail");
+            menu.push(*tool);
+        }
+        for tool in Tool::ALL {
+            assert!(menu.contains(tool), "{tool:?} has no rail slot");
+        }
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../docs/parity/catalog.json"
+        );
+        let text = std::fs::read_to_string(path).expect("catalog.json");
+        let doc: serde_json::Value = serde_json::from_str(&text).expect("catalog json");
+        let verified: std::collections::HashSet<String> = doc["drawings"]
+            .as_array()
+            .expect("drawings array")
+            .iter()
+            .filter(|e| e["status"].as_str() == Some("verified"))
+            .filter_map(|e| e["tickview_id"].as_str().map(str::to_owned))
+            .collect();
+        let cursor_modes = [Tool::Cursor, Tool::Crosshair, Tool::Eraser, Tool::Measure];
+        for tool in Tool::ALL {
+            match draw_tool(*tool).kind() {
+                Some(kind) => assert!(
+                    verified.contains(&format!("{kind:?}")),
+                    "{tool:?}: kind {kind:?} is not a verified catalog entry"
+                ),
+                None => assert!(
+                    cursor_modes.contains(tool),
+                    "{tool:?} places no drawing but is not a cursor mode"
+                ),
+            }
+        }
     }
 
     #[test]
