@@ -2792,8 +2792,8 @@ impl TickView {
                     .tabs
                     .iter()
                     .any(|t| t.compare_symbol.is_some() && t.chart.compare.is_none()));
-        let data_ready = self.data_frames >= self.snap_after_data
-            && !self.tabs[self.active].loading;
+        let data_ready =
+            self.data_frames >= self.snap_after_data && !self.tabs[self.active].loading;
         let ready =
             data_ready && (!seeding || self.frames >= self.snap_after_data + timeout_frames);
         if self.snap.is_none() || self.snap_requested {

@@ -175,5 +175,18 @@ pin coverage, short-history safety and manifest consistency. Visual QA:
 dark/light 1440×900 captures for
 `TICKVIEW_SCENE=studiesprice|studiesvol|studiesosc|studieshtf` in
 `docs/screenshots/parity/`.
+Milestone 4 (final parity pass) is complete: milestones 1–3 are integrated
+on `main`, `docs/evidence/INDEX.md` indexes all reference material, and the
+whole dark/light QA set was regenerated on the integrated tree (settled
+POLLING frames only — the snapshot hook now waits for data). Acceptance
+(spec §15): manifest totals 87 drawings (84 verified, 3 excluded with
+reasons) and 84 studies (83 verified, 1 excluded with reason), zero
+missing/in-progress; every drawing tool has a unique original icon; Gann fan
+ratio geometry verified linear+log; pointer/grabbing cursors and the
+functional top-right selected-object bar pinned by tests; no dead menu items
+(`every_tool_is_wired_and_in_catalog`, `every_study_is_addable_and_in_catalog`);
+`cargo fmt --all`, `cargo test --workspace` (343 tests, 6 ignored live
+smokes), `cargo clippy --workspace --all-targets` and `git diff --check` all
+clean; side-by-side verdicts in `docs/parity/final-review.md`.
 
 `PARITY.md` tracks the shell surface and the 83-study indicator matrix.
