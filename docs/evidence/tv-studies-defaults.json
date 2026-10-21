@@ -504,5 +504,9 @@
  "Zlema": {
   "missing": true,
   "name": "Zero-Lag EMA"
+ },
+ "BollingerBandsWidth": {
+  "missing": true,
+  "name": "Bollinger Bands Width"
  }
 }

@@ -48,6 +48,7 @@ pub enum TvId {
     Ichimoku,
     Alligator,
     BollingerBands,
+    BollingerBandsWidth,
     PercentB,
     KeltnerChannels,
     DonchianChannels,
@@ -657,6 +658,18 @@ const DEFS_PRICE: &[Def] = &[
             fp!("mult", "StdDev", 2.0, 0.1, 10.0, 0.1),
         ],
         plots: &[pl!("%B", PURPLE)],
+    },
+    Def {
+        id: TvId::BollingerBandsWidth,
+        tv_name: "Bollinger Bands Width",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("length", "Length", 20, 1, 5000),
+            fp!("mult", "StdDev", 2.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Width", BLUE)],
     },
     Def {
         id: TvId::KeltnerChannels,
@@ -1436,6 +1449,12 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
         TvId::PercentB => out(vec![
             channels::bollinger(&src, p.i(defn, "length"), p.f(defn, "mult")).percent_b,
         ]),
+        TvId::BollingerBandsWidth => out(vec![channels::bollinger(
+            &src,
+            p.i(defn, "length"),
+            p.f(defn, "mult"),
+        )
+        .band_width]),
         TvId::KeltnerChannels => {
             let len = p.i(defn, "length");
             let mult = p.f(defn, "mult");
@@ -1939,7 +1958,7 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 66);
+        assert_eq!(count, 67);
     }
 }
 
