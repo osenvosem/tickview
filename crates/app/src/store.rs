@@ -135,6 +135,9 @@ pub struct SavedTab {
     /// Drawings are hidden on the chart.
     #[serde(default)]
     pub drawings_hidden: bool,
+    /// Study layers hidden via the Hide drawings menu.
+    #[serde(default)]
+    pub indicators_hidden: bool,
     /// Optional compare overlay symbol.
     #[serde(default)]
     pub compare: Option<Symbol>,
@@ -173,6 +176,9 @@ pub struct SavedConfig {
     /// Strong magnet mode uses a wider OHLC snap radius.
     #[serde(default)]
     pub magnet_strong: bool,
+    /// Magnet snaps to visible indicator values too (TV parity).
+    #[serde(default)]
+    pub magnet_snap_indicators: bool,
     /// Keep the drawing tool selected after completing an object.
     #[serde(default)]
     pub keep_drawing: bool,
@@ -209,6 +215,7 @@ impl Default for SavedConfig {
             show_watchlist: true,
             magnet: true,
             magnet_strong: false,
+            magnet_snap_indicators: false,
             keep_drawing: false,
             study_templates: Vec::new(),
             stream: None,
@@ -253,6 +260,7 @@ impl SavedConfig {
                     spacing: 8.0,
                     drawings_locked: false,
                     drawings_hidden: false,
+                    indicators_hidden: false,
                     drawings: BTreeMap::new(),
                     indicators: Vec::new(),
                     compare: None,
@@ -364,6 +372,7 @@ mod tests {
             spacing: 8.0,
             drawings_locked: false,
             drawings_hidden: false,
+            indicators_hidden: false,
             drawings: BTreeMap::new(),
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
@@ -408,6 +417,7 @@ mod tests {
                 spacing: 8.0,
                 drawings_locked: false,
                 drawings_hidden: false,
+                indicators_hidden: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -502,6 +512,7 @@ mod tests {
                 spacing: 8.0,
                 drawings_locked: true,
                 drawings_hidden: true,
+                indicators_hidden: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -537,6 +548,7 @@ mod tests {
                 spacing: 8.0,
                 drawings_locked: false,
                 drawings_hidden: false,
+                indicators_hidden: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
                 compare: None,
@@ -566,6 +578,7 @@ mod tests {
                 spacing: 8.0,
                 drawings_locked: false,
                 drawings_hidden: false,
+                indicators_hidden: false,
                 drawings: BTreeMap::new(),
                 indicators: Vec::new(),
                 compare: Some(Symbol::new(
@@ -604,6 +617,7 @@ mod tests {
             spacing: 8.0,
             drawings_locked: false,
             drawings_hidden: false,
+            indicators_hidden: false,
             drawings: BTreeMap::new(),
             indicators: Vec::new(),
             compare: None,

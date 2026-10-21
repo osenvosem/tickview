@@ -75,6 +75,11 @@ pub struct ChartState {
     /// Screen rect of an open app overlay (tool flyout, utility menu, emoji
     /// picker); wheel/keyboard pan is ignored while the pointer is inside.
     pub hover_block: Option<Rect>,
+    /// Magnet also snaps to visible study overlay values (TV "Snap to
+    /// indicators").
+    pub magnet_snap_indicators: bool,
+    /// Volume pane visibility (Hide positions and orders).
+    pub volume_pane_hidden: bool,
     /// Price range override from rectangle zoom (price space).
     pub price_zoom: Option<(f64, f64)>,
     /// Live rectangle-zoom selection in screen space.
@@ -148,6 +153,8 @@ impl ChartState {
             drawings_hidden: false,
             popup_rect: None,
             hover_block: None,
+            magnet_snap_indicators: false,
+            volume_pane_hidden: false,
             price_zoom: None,
             zoom_sel: None,
             marquee: None,
@@ -265,6 +272,23 @@ impl ChartState {
         removed
     }
 
+    /// Remove every study layer; returns how many were removed.
+    pub fn remove_all_indicators(&mut self) -> usize {
+        let mut n = 0;
+        for p in &mut self.panes {
+            let before = p.layers.len();
+            p.layers.clear();
+            n += before - p.layers.len();
+        }
+        let panes_before = self.panes.len();
+        self.panes
+            .retain(|p| matches!(p.kind, PaneKind::Price | PaneKind::Volume));
+        if self.panes.len() != panes_before {
+            self.relayout_default();
+        }
+        n
+    }
+
     pub fn set_visible(&mut self, id: TvId, vis: bool) {
         for p in &mut self.panes {
             for l in &mut p.layers {
@@ -273,6 +297,39 @@ impl ChartState {
                 }
             }
         }
+    }
+
+    /// Show or hide every study layer (Hide/Show all indicators).
+    pub fn set_all_layers_visible(&mut self, vis: bool) {
+        for p in &mut self.panes {
+            for l in &mut p.layers {
+                l.visible = vis;
+            }
+        }
+    }
+
+    /// Values of visible study layers at candle `i` for magnet snapping.
+    #[must_use]
+    pub fn snap_values_at(&self, i: usize) -> Vec<f64> {
+        let mut out = Vec::new();
+        for p in &self.panes {
+            for l in &p.layers {
+                if !l.visible {
+                    continue;
+                }
+                for plot in &l.data.plots {
+                    if plot.default_hidden {
+                        continue;
+                    }
+                    if let Some(v) = plot.series.get(i)
+                        && v.is_finite()
+                    {
+                        out.push(*v);
+                    }
+                }
+            }
+        }
+        out
     }
 
     /// Recompute cached series for one indicator (params changed).
@@ -862,6 +919,15 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     ev
 }
 
+/// Visible study values at `pos` for magnet snapping, when enabled.
+fn magnet_snap_values(st: &ChartState, pos: Pos2) -> Option<Vec<f64>> {
+    if st.magnet && st.magnet_snap_indicators {
+        st.view.index_at(pos.x).map(|i| st.snap_values_at(i))
+    } else {
+        None
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn handle_input(
     ctx: &egui::Context,
@@ -909,13 +975,14 @@ fn handle_input(
         && (st.tools.draft.is_some() || st.tools.measure.is_some())
         && let Some(pos) = pointer
         && in_price
-        && let Some(anchor) = drawings::anchor_at_with_tolerance(
+        && let Some(anchor) = drawings::anchor_at_with_snap_values(
             cd,
             &st.view,
             ax,
             pos,
             st.magnet,
             if st.magnet_strong { 24.0 } else { 8.0 },
+            magnet_snap_values(st, pos).as_deref(),
         )
     {
         st.tools.update_draft(anchor);
@@ -991,13 +1058,14 @@ fn handle_input(
                     st.selected_from_press = Some(id);
                     let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
                     if draggable
-                        && let Some(anchor) = drawings::anchor_at_with_tolerance(
+                        && let Some(anchor) = drawings::anchor_at_with_snap_values(
                             cd,
                             &st.view,
                             ax,
                             pos,
                             st.magnet,
                             if st.magnet_strong { 24.0 } else { 8.0 },
+                            magnet_snap_values(st, pos).as_deref(),
                         )
                     {
                         st.drag_drawing = Some(DrawingDrag { id, last: anchor });
@@ -1010,6 +1078,7 @@ fn handle_input(
     }
 
     if resp.dragged() {
+        let drag_snap = magnet_snap_values(st, pointer.unwrap_or(Pos2::new(0.0, 0.0)));
         if let Some(sel) = &mut st.zoom_sel {
             if let Some(pos) = pointer {
                 sel.1 = Pos2::new(
@@ -1020,13 +1089,14 @@ fn handle_input(
         } else if let Some(drag) = &mut st.drag_drawing {
             if let Some(pos) = pointer
                 && price_rect.contains(pos)
-                && let Some(anchor) = drawings::anchor_at_with_tolerance(
+                && let Some(anchor) = drawings::anchor_at_with_snap_values(
                     cd,
                     &st.view,
                     ax,
                     pos,
                     st.magnet,
                     if st.magnet_strong { 24.0 } else { 8.0 },
+                    drag_snap.as_deref(),
                 )
             {
                 let last = drag.last;
@@ -1134,13 +1204,14 @@ fn handle_input(
                 }
             } else if st.tools.tool.kind().is_some_and(|kind| kind.is_drag()) {
                 st.tools.cancel();
-            } else if let Some(anchor) = drawings::anchor_at_with_tolerance(
+            } else if let Some(anchor) = drawings::anchor_at_with_snap_values(
                 cd,
                 &st.view,
                 ax,
                 pos,
                 st.magnet,
                 if st.magnet_strong { 24.0 } else { 8.0 },
+                magnet_snap_values(st, pos).as_deref(),
             ) {
                 if st.tools.tool == crate::drawings::DrawTool::Measure {
                     st.tools.measure_click(anchor);
@@ -2404,4 +2475,48 @@ mod tests {
         assert_eq!(replay_delay_ms(64.0), 15);
         assert_eq!(replay_delay_ms(500.0), 15);
     }
+}
+
+#[test]
+fn hide_show_and_remove_all_indicators() {
+    let bars: Vec<ta::Bar> = (0..40)
+        .map(|i| ta::Bar {
+            t: i as i64 * 60,
+            o: 100.0 + i as f64,
+            h: 101.0 + i as f64,
+            l: 99.0 + i as f64,
+            c: 100.5 + i as f64,
+            v: 10.0,
+        })
+        .collect();
+    let cd = Candles::from_bars(&bars);
+    let ax = Anchors::from_ts(&cd.t);
+    let mut st = ChartState::new("T".to_string(), "1D");
+    st.add_indicator(&cd, &ax, TvId::Sma, Params::with_defaults(def(TvId::Sma)));
+    st.add_indicator(&cd, &ax, TvId::Ema, Params::with_defaults(def(TvId::Ema)));
+    assert_eq!(
+        st.panes.iter().map(|p| p.layers.len()).sum::<usize>(),
+        2,
+        "both studies attached"
+    );
+    st.set_all_layers_visible(false);
+    assert!(
+        st.panes
+            .iter()
+            .flat_map(|p| p.layers.iter())
+            .all(|l| !l.visible)
+    );
+    st.set_all_layers_visible(true);
+    assert!(
+        st.panes
+            .iter()
+            .flat_map(|p| p.layers.iter())
+            .all(|l| l.visible)
+    );
+    assert_eq!(st.remove_all_indicators(), 2);
+    assert!(
+        st.panes
+            .iter()
+            .all(|p| matches!(p.kind, PaneKind::Price | PaneKind::Volume))
+    );
 }

@@ -4120,6 +4120,44 @@ pub fn anchor_at_with_tolerance(
     Some(Anchor { t: cd.t[i], price })
 }
 
+/// Anchor with extra magnet candidates (visible study values at the
+/// anchor index) consulted alongside OHLC.
+#[must_use]
+pub fn anchor_at_with_snap_values(
+    cd: &Candles,
+    view: &View,
+    axis: &PriceAxis,
+    pos: Pos2,
+    magnet: bool,
+    tolerance: f32,
+    snap_values: Option<&[f64]>,
+) -> Option<Anchor> {
+    let i = view.index_at(pos.x)?;
+    let price = axis.price_of(pos.y);
+    let price = if magnet {
+        let mut candidates: Vec<f64> = vec![cd.o[i], cd.h[i], cd.l[i], cd.c[i]];
+        if let Some(vs) = snap_values {
+            candidates.extend_from_slice(vs);
+        }
+        let mut best = price;
+        let mut best_d = tolerance.max(0.0);
+        for candidate in candidates {
+            if !candidate.is_finite() {
+                continue;
+            }
+            let d = (axis.y_of(candidate) - pos.y).abs();
+            if d <= best_d {
+                best = candidate;
+                best_d = d;
+            }
+        }
+        best
+    } else {
+        price
+    };
+    Some(Anchor { t: cd.t[i], price })
+}
+
 /// Snap to the closest OHLC value when its screen y is within 8 px.
 #[must_use]
 pub fn snap_price(price: f64, ohlc: [f64; 4], pointer_y: f32, y_of: impl Fn(f64) -> f32) -> f64 {
@@ -4281,6 +4319,45 @@ fn distance_to_rect_edge(p: Pos2, r: Rect) -> f32 {
             .min((r.max.y - p.y).abs())
     } else {
         Pos2::new(inside_x, inside_y).distance(p)
+    }
+}
+
+#[cfg(test)]
+mod snap_tests {
+    use super::*;
+    use ta::{Bar, Candles};
+
+    #[test]
+    fn magnet_snaps_to_study_value_within_tolerance() {
+        let cd = Candles::from_bars(&[Bar {
+            t: 0,
+            o: 100.0,
+            h: 101.0,
+            l: 99.0,
+            c: 100.5,
+            v: 1.0,
+        }]);
+        let view = View::new(100.0, 1);
+        let axis = PriceAxis {
+            min: 0.0,
+            max: 200.0,
+            log: false,
+            height_px: 100.0,
+            y_offset: 0.0,
+        };
+        // y=51 maps to price 98; the study value 98.5 sits 0.5 px away.
+        let pos = Pos2::new(76.0, 51.0);
+        let a = anchor_at_with_snap_values(&cd, &view, &axis, pos, true, 8.0, Some(&[98.5]))
+            .expect("anchor");
+        assert_eq!(a.price, 98.5);
+        // Without study candidates the nearest OHLC is the low at 99.
+        let b =
+            anchor_at_with_snap_values(&cd, &view, &axis, pos, true, 8.0, None).expect("anchor");
+        assert_eq!(b.price, 99.0);
+        // Magnet off keeps the raw cursor price.
+        let c = anchor_at_with_snap_values(&cd, &view, &axis, pos, false, 8.0, Some(&[98.5]))
+            .expect("anchor");
+        assert!((c.price - 98.0).abs() < 1e-9);
     }
 }
 

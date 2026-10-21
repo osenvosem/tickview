@@ -822,7 +822,8 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.tool_panel.end_press();
                 }
 
-                rail_divider(ui, p);
+                // Below Icons; Measure is the first button below.
+                rail_divider(ui, p, 1);
                 for tool in SINGLES {
                     if rail_single(ui, p, tool.icon(), app.tool == *tool, tool.label()) {
                         app.select_tool(*tool);
@@ -833,7 +834,8 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.zoom_in();
                 }
 
-                rail_divider(ui, p);
+                // Below Zoom in; Keep drawing is the third button.
+                rail_divider(ui, p, 3);
                 let magnet = rail_utility(
                     ui,
                     p,
@@ -841,6 +843,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.magnet,
                     app.tool_panel.utility() == Some(UtilityMenu::Magnet),
                     "Magnet mode",
+                    false,
                 );
                 if magnet.arrow_clicked {
                     app.tool_panel
@@ -857,6 +860,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.keep_drawing,
                     false,
                     "Keep drawing",
+                    true,
                 );
                 if keep.main_clicked {
                     app.tool_panel.close_overlays();
@@ -867,10 +871,11 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 let lock = rail_utility(
                     ui,
                     p,
-                    Icon::Lock,
+                    if locked { Icon::Lock } else { Icon::LockOpen },
                     locked,
                     app.tool_panel.utility() == Some(UtilityMenu::Lock),
                     "Lock drawings",
+                    false,
                 );
                 if lock.arrow_clicked {
                     app.tool_panel.toggle_utility(UtilityMenu::Lock, lock.rect);
@@ -887,6 +892,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     hidden,
                     app.tool_panel.utility() == Some(UtilityMenu::Hide),
                     "Hide drawings",
+                    false,
                 );
                 if hide.arrow_clicked {
                     app.tool_panel.toggle_utility(UtilityMenu::Hide, hide.rect);
@@ -895,7 +901,8 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.set_drawings_hidden(!hidden);
                 }
 
-                rail_divider(ui, p);
+                // Below Hide drawings; Remove drawings is the first button.
+                rail_divider(ui, p, 1);
                 let remove = rail_utility(
                     ui,
                     p,
@@ -903,6 +910,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     false,
                     app.tool_panel.utility() == Some(UtilityMenu::Remove),
                     "Remove drawings",
+                    false,
                 );
                 if remove.arrow_clicked {
                     app.tool_panel
@@ -1122,10 +1130,12 @@ fn rail_utility(
     active: bool,
     open: bool,
     tip: &str,
+    no_caret: bool,
 ) -> RailHit {
     let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, space::ROW_H), Sense::hover());
+    let arrow_w = if no_caret { 0.0 } else { ARROW_W };
     let arrow_rect = Rect::from_min_max(
-        Pos2::new(rect.right() - ARROW_W, rect.top() + 2.0),
+        Pos2::new(rect.right() - arrow_w, rect.top() + 2.0),
         Pos2::new(rect.right(), rect.bottom() - 2.0),
     );
     let main_rect = Rect::from_min_max(rect.min, Pos2::new(arrow_rect.left(), rect.bottom()));
@@ -1162,11 +1172,14 @@ fn rail_utility(
     }
     icon.paint(
         ui.painter(),
-        Rect::from_center_size(rect.center(), Vec2::splat(RAIL_ICON)),
+        Rect::from_center_size(
+            Pos2::new((rect.min.x + arrow_rect.min.x) / 2.0, rect.center().y),
+            Vec2::splat(RAIL_ICON),
+        ),
         color,
         1.45,
     );
-    if hovered || open {
+    if !no_caret && (hovered || open) {
         if hovered {
             ui.painter()
                 .rect_filled(arrow_rect.shrink2(vec2(1.0, 2.0)), 4.0, p.rail_active);
@@ -1188,9 +1201,11 @@ fn rail_utility(
     let _ = main
         .on_hover_cursor(CursorIcon::PointingHand)
         .on_hover_text(tip);
-    let _ = arrow
-        .on_hover_cursor(CursorIcon::PointingHand)
-        .on_hover_text(format!("{tip} options"));
+    if !no_caret {
+        let _ = arrow
+            .on_hover_cursor(CursorIcon::PointingHand)
+            .on_hover_text(format!("{tip} options"));
+    }
     RailHit {
         rect,
         main_clicked,
@@ -1200,8 +1215,12 @@ fn rail_utility(
     }
 }
 
-fn rail_divider(ui: &mut egui::Ui, p: &Palette) {
-    ui.add_space(GROUP_PAD);
+/// Splits rail sections. `above_count` is the number of buttons that sit
+/// directly above the rule (TV sizes the gap to the first/last button of
+/// the section the rule belongs to).
+fn rail_divider(ui: &mut egui::Ui, p: &Palette, above_count: usize) {
+    let gap = (space::ROW_H * above_count as f32 / 2.0).max(GROUP_PAD);
+    ui.add_space(gap);
     let (rect, _) = ui.allocate_exact_size(vec2(space::RAIL_W, 1.0), Sense::hover());
     ui.painter().hline(
         rect.x_range().shrink(8.0),
@@ -1471,16 +1490,31 @@ fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<(&'static str, bool)>
         UtilityMenu::Magnet => vec![
             ("Weak magnet", app.magnet && !app.magnet_strong),
             ("Strong magnet", app.magnet && app.magnet_strong),
+            (
+                "Snap to indicators",
+                app.magnet && app.magnet_snap_indicators,
+            ),
         ],
-        UtilityMenu::Lock => vec![
-            ("Lock all drawings", app.tabs[app.active].locked),
-            ("Unlock all drawings", !app.tabs[app.active].locked),
-        ],
+        UtilityMenu::Lock => vec![("Lock all drawings", app.tabs[app.active].locked)],
         UtilityMenu::Hide => vec![
             ("Hide all drawings", app.tabs[app.active].drawings_hidden),
             ("Show all drawings", !app.tabs[app.active].drawings_hidden),
+            (
+                "Hide all indicators",
+                app.tabs[app.active].indicators_hidden,
+            ),
+            (
+                "Show all indicators",
+                !app.tabs[app.active].indicators_hidden,
+            ),
+            ("Hide positions and orders", false),
+            ("Show positions and orders", false),
         ],
-        UtilityMenu::Remove => vec![("Remove all drawings", false)],
+        UtilityMenu::Remove => vec![
+            ("Remove all drawings", false),
+            ("Remove all indicators", false),
+            ("Remove all", false),
+        ],
     }
 }
 
@@ -1546,11 +1580,23 @@ fn draw_utility_menu(
                             match (menu, i) {
                                 (UtilityMenu::Magnet, 0) => app.set_magnet_strength(false),
                                 (UtilityMenu::Magnet, 1) => app.set_magnet_strength(true),
+                                (UtilityMenu::Magnet, 2) => {
+                                    app.toggle_magnet_snap_indicators();
+                                }
                                 (UtilityMenu::Lock, 0) => app.set_drawings_locked(true),
-                                (UtilityMenu::Lock, 1) => app.set_drawings_locked(false),
                                 (UtilityMenu::Hide, 0) => app.set_drawings_hidden(true),
                                 (UtilityMenu::Hide, 1) => app.set_drawings_hidden(false),
+                                (UtilityMenu::Hide, 2) => app.set_indicators_hidden(true),
+                                (UtilityMenu::Hide, 3) => app.set_indicators_hidden(false),
+                                // No trading module: positions/orders share study visibility.
+                                (UtilityMenu::Hide, 4) => app.set_indicators_hidden(true),
+                                (UtilityMenu::Hide, 5) => app.set_indicators_hidden(false),
                                 (UtilityMenu::Remove, 0) => app.remove_all_drawings(),
+                                (UtilityMenu::Remove, 1) => app.remove_all_indicators(),
+                                (UtilityMenu::Remove, 2) => {
+                                    app.remove_all_drawings();
+                                    app.remove_all_indicators();
+                                }
                                 _ => {}
                             }
                             app.tool_panel.close_overlays();

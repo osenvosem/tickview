@@ -105,6 +105,8 @@ pub struct Tab {
     pub locked: bool,
     /// Drawings are hidden on this tab.
     pub drawings_hidden: bool,
+    /// Study layers hidden on this tab.
+    pub indicators_hidden: bool,
     pub toolbar: drawing_toolbar::ToolbarState,
 }
 
@@ -134,6 +136,7 @@ impl Tab {
             compare_symbol: None,
             locked: false,
             drawings_hidden: false,
+            indicators_hidden: false,
             toolbar: drawing_toolbar::ToolbarState::default(),
         }
     }
@@ -774,6 +777,8 @@ pub struct TickView {
     pub(crate) tool_panel: PanelState,
     pub magnet: bool,
     pub magnet_strong: bool,
+    /// Magnet snaps to visible study overlay values as well as OHLC.
+    pub magnet_snap_indicators: bool,
     pub keep_drawing: bool,
     pub show_watchlist: bool,
 
@@ -1104,6 +1109,7 @@ impl TickView {
             tool_panel: PanelState::with_favorites(cfg.drawing_favorites.clone()),
             magnet: cfg.magnet,
             magnet_strong: cfg.magnet_strong,
+            magnet_snap_indicators: false,
             keep_drawing: cfg.keep_drawing,
             show_watchlist: cfg.show_watchlist,
             snap,
@@ -2671,8 +2677,12 @@ impl TickView {
         let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
         let pending = std::mem::take(&mut self.tabs[ti].pending);
         let tab = &mut self.tabs[ti];
+        let hidden = tab.indicators_hidden;
         for (id, params) in pending {
             tab.chart.add_indicator(&tab.candles, &ax, id, params);
+            if hidden {
+                tab.chart.set_visible(id, false);
+            }
         }
     }
 
@@ -2789,6 +2799,7 @@ impl TickView {
                     drawings: tab.chart.drawings_by_symbol(),
                     drawings_locked: tab.locked,
                     drawings_hidden: tab.drawings_hidden,
+                    indicators_hidden: tab.indicators_hidden,
                     compare: tab.compare_symbol.clone(),
                 }
             })
@@ -2807,6 +2818,7 @@ impl TickView {
             }
         }
         tab.chart.set_visible(id, !vis);
+        tab.indicators_hidden = false;
         self.persist();
     }
 
@@ -2823,6 +2835,9 @@ impl TickView {
             let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
             let tab = &mut self.tabs[ti];
             tab.chart.add_indicator(&tab.candles, &ax, id, params);
+            if tab.indicators_hidden {
+                tab.chart.set_visible(id, false);
+            }
         }
         self.persist();
     }
@@ -2849,6 +2864,7 @@ impl TickView {
         for id in current {
             let _ = self.tabs[ti].chart.remove_indicator(id);
         }
+        self.tabs[ti].indicators_hidden = false;
         let mut applied = 0usize;
         for ind in &tpl.indicators {
             if let Some((id, params)) = ind.to_params() {
@@ -3087,17 +3103,53 @@ impl TickView {
         if !self.magnet {
             self.magnet_strong = false;
         }
+        let ti = self.active;
+        self.tabs[ti].chart.magnet_snap_indicators = self.magnet_snap_indicators;
+        self.cfg.magnet_snap_indicators = self.magnet_snap_indicators;
+        self.persist();
+    }
+
+    /// TV: Magnet -> Snap to indicators.
+    pub(crate) fn toggle_magnet_snap_indicators(&mut self) {
+        self.magnet_snap_indicators = !self.magnet_snap_indicators;
+        self.magnet = true;
+        let ti = self.active;
+        self.tabs[ti].chart.magnet_snap_indicators = self.magnet_snap_indicators;
         self.persist();
     }
 
     pub(crate) fn set_magnet_strength(&mut self, strong: bool) {
         self.magnet = true;
         self.magnet_strong = strong;
+        let ti = self.active;
+        self.tabs[ti].chart.magnet_snap_indicators = self.magnet_snap_indicators;
+        self.cfg.magnet_snap_indicators = self.magnet_snap_indicators;
         self.persist();
     }
 
     pub(crate) fn toggle_keep_drawing(&mut self) {
         self.keep_drawing = !self.keep_drawing;
+        self.persist();
+    }
+
+    /// TV: Hide all indicators / Show all indicators.
+    pub(crate) fn set_indicators_hidden(&mut self, hidden: bool) {
+        let ti = self.active;
+        self.tabs[ti].indicators_hidden = hidden;
+        self.tabs[ti].chart.set_all_layers_visible(!hidden);
+        self.tabs[ti].chart.volume_pane_hidden = hidden;
+        self.persist();
+    }
+
+    /// TV: Remove indicators… — delete every study on this tab.
+    pub(crate) fn remove_all_indicators(&mut self) {
+        let ti = self.active;
+        let n = self.tabs[ti].chart.remove_all_indicators();
+        self.tabs[ti].indicators_hidden = false;
+        self.tabs[ti].pending.clear();
+        if n > 0 {
+            self.toast(format!("Removed {n} indicators"));
+        }
         self.persist();
     }
 

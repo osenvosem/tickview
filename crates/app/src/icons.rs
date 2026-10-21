@@ -131,6 +131,7 @@ pub enum Icon {
     Flag,
     Sector,
     Lock,
+    LockOpen,
     Unlock,
     Fullscreen,
     Download,
@@ -286,6 +287,7 @@ impl Icon {
         Self::Pin,
         Self::Flag,
         Self::Sector,
+        Self::LockOpen,
         Self::Lock,
         Self::Unlock,
         Self::Fullscreen,
@@ -443,6 +445,7 @@ impl Icon {
             Self::Flag => "flag",
             Self::Sector => "sector",
             Self::Lock => "lock",
+            Self::LockOpen => "lock-open",
             Self::Unlock => "unlock",
             Self::Fullscreen => "fullscreen",
             Self::Download => "download",
@@ -1096,16 +1099,15 @@ impl Icon {
                 path(&[(12.0, 5.0), (12.0, 19.0)]);
             }
             Self::Magnet => {
-                path(&[
-                    (5.0, 4.0),
-                    (5.0, 13.0),
-                    (5.8, 16.5),
-                    (8.0, 19.0),
-                    (12.0, 20.0),
-                ]);
-                path(&[(19.0, 4.0), (19.0, 13.0), (18.2, 16.5), (16.0, 19.0)]);
-                line(5.0, 4.0, 9.0, 4.0);
-                line(15.0, 4.0, 19.0, 4.0);
+                // Horseshoe: outer arc, inner arc, pole feet.
+                arc(12.0, 13.0, 8.0, std::f32::consts::PI, std::f32::consts::TAU);
+                arc(12.0, 13.0, 4.5, std::f32::consts::PI, std::f32::consts::TAU);
+                line(4.0, 13.0, 7.5, 13.0);
+                line(16.5, 13.0, 20.0, 13.0);
+                line(4.0, 13.0, 4.0, 16.5);
+                line(7.5, 13.0, 7.5, 16.5);
+                line(16.5, 13.0, 16.5, 16.5);
+                line(20.0, 13.0, 20.0, 16.5);
             }
             Self::Search => {
                 circle(10.5, 10.5, 6.0);
@@ -1400,6 +1402,10 @@ impl Icon {
                 round_rect(5.0, 10.0, 19.0, 21.0, 2.0);
                 arc(12.0, 10.0, 4.5, std::f32::consts::PI, std::f32::consts::TAU);
             }
+            Self::LockOpen => {
+                round_rect(5.0, 10.0, 19.0, 21.0, 2.0);
+                arc(12.0, 10.0, 4.5, std::f32::consts::PI, 4.9);
+            }
             Self::Unlock => {
                 round_rect(5.0, 10.0, 19.0, 21.0, 2.0);
                 arc(12.0, 10.0, 4.5, std::f32::consts::PI, 5.3);
@@ -1666,7 +1672,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 151);
+        assert_eq!(Icon::ALL.len(), 152);
     }
 
     #[test]
