@@ -405,6 +405,29 @@ def main():
         "AG_JAW": ag[0], "AG_TEETH": ag[1], "AG_LIPS": ag[2],
         "ICHI_C": ic[0], "ICHI_B": ic[1], "ICHI_SA": ic[2], "ICHI_SB": ic[3],
     })
+    e13 = ema(src, 13)
+    mom = [float("nan")] * N
+    for i in range(10, N):
+        mom[i] = closes[i] - closes[i - 10]
+    roc = [float("nan")] * N
+    for i in range(9, N):
+        roc[i] = closes[i] - closes[i - 9]
+    zs = [float("nan")] * N
+    sm = sma(src, 20)
+    for i in range(19, N):
+        w = src[i - 19:i + 1]
+        if all(FIN(x) for x in w):
+            zs[i] = (src[i] - sm[i]) / stdev_pop(w)
+    bias = [float("nan")] * N
+    sm50 = sma(src, 50)
+    for i in range(49, N):
+        if FIN(sm50[i]):
+            bias[i] = (src[i] / sm50[i] - 1.0) * 100.0
+    series.update({
+        "MOM": mom, "ROC": roc, "ZSCORE": zs, "BIAS": bias,
+        "ER_BULL": [h - m if FIN(m) else float("nan") for h, m in zip(highs, e13)],
+        "ER_BEAR": [l - m if FIN(m) else float("nan") for l, m in zip(lows, e13)],
+    })
 
     out.append(f"    pub(super) const FIX_T: [i64; {N}] = [{', '.join(map(str, t))}];\n")
     for name, arr in (("FIX_O", opens), ("FIX_H", highs), ("FIX_C", closes), ("FIX_L", lows)):

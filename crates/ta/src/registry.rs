@@ -2071,3 +2071,32 @@ mod gold_price {
         );
     }
 }
+
+#[cfg(test)]
+mod gold_misc {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn misc_oscillators_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 5] = [
+            (TvId::Momentum, &[&MOM]),
+            (TvId::Roc, &[&ROC]),
+            (TvId::ZScore, &[&ZSCORE]),
+            (TvId::Bias, &[&BIAS]),
+            (TvId::ElderRay, &[&ER_BULL, &ER_BEAR]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+}
