@@ -760,9 +760,6 @@ fn picker_rows(query: &str) -> (Vec<GridRow>, Vec<f32>) {
 /// Draw the grouped rail and, when open, its floating selector.
 pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     let now = Instant::now();
-    if let Some(tool) = app.tool_panel.take_due_select(now) {
-        app.select_tool(tool);
-    }
 
     let mut group_rects = [Rect::NOTHING; GROUPS.len()];
     let rail = egui::Panel::left("tickview-tools")
