@@ -506,7 +506,9 @@ fn hidden_globals_and_objects_are_not_interactive() {
 }
 
 #[test]
-fn locked_canvas_blocks_create_select_and_move() {
+fn locked_canvas_selects_and_creates_but_never_moves() {
+    // TV "Lock drawings": everything stays selectable, nothing moves; new
+    // drawings are still allowed.
     let mut h = Harness::new(DrawTool::HLine);
     let p = h.pt(120, 150.0);
     h.click(p);
@@ -514,20 +516,22 @@ fn locked_canvas_blocks_create_select_and_move() {
     assert_eq!(h.st.drawings.len(), 1);
 
     h.st.locked = true;
-    // New clicks cannot create.
+    // New drawings can still be created on a locked canvas.
+    h.st.tools.set_tool(DrawTool::HLine);
     h.click(h.pt(160, 170.0));
-    assert_eq!(h.st.drawings.len(), 1);
-    // Existing drawings cannot be selected.
+    assert_eq!(h.st.drawings.len(), 2, "creation blocked while locked");
+    // Existing drawings stay selectable.
+    h.st.tools.set_tool(DrawTool::Cursor);
     h.click(p);
-    assert!(h.st.selection.is_empty(), "locked canvas allowed select");
+    assert!(
+        h.st.selection.contains(h.st.drawings[0].id),
+        "locked canvas blocked select"
+    );
     // Dragging changes nothing.
     let before = h.st.drawings[0].a.price;
     let moved = h.pt(120, 160.0);
     h.drag(p, moved);
     assert!((h.st.drawings[0].a.price - before).abs() < 1e-9);
-    h.st.locked = false;
-    h.click(p);
-    assert!(h.st.selection.contains(h.st.drawings[0].id));
 }
 
 #[test]
@@ -940,4 +944,59 @@ fn selected_anchor_drag_moves_only_that_anchor() {
         h.st.drawings[0].b.price != b_price,
         "anchor B unchanged ({b_price})"
     );
+}
+
+#[test]
+fn press_drag_release_completes_two_point_tools() {
+    // TV: lines, channels, fibs and shapes are drawn by press-drag-release;
+    // the release places anchor two. TickView once only accepted click-click,
+    // so real trackpad drags silently produced nothing.
+    for tool in [
+        DrawTool::TrendLine,
+        DrawTool::Channel,
+        DrawTool::Fib,
+        DrawTool::Rect,
+    ] {
+        let mut h = Harness::new(tool);
+        let (lo, hi) = h.lo_hi();
+        let span = hi - lo;
+        let a = h.pt(h.cd.len() - 50, lo + span * 0.7);
+        let b = h.pt(h.cd.len() - 20, lo + span * 0.3);
+        let ev = h.drag(a, b);
+        let pts = tool.kind().unwrap().points();
+        if pts == 2 {
+            assert!(ev.drawing_completed, "{tool:?}: drag did not complete");
+            assert_eq!(h.st.drawings.len(), 1, "{tool:?}: drag created nothing");
+            let d = &h.st.drawings[0];
+            assert_eq!(d.kind, tool.kind().unwrap(), "{tool:?}: wrong kind");
+            assert!(h.st.selection.contains(d.id), "{tool:?}: not selected");
+            assert!(h.st.tools.draft.is_none(), "{tool:?}: draft left open");
+        } else {
+            // Three-anchor tools (channels, trend-based fibs) take the first
+            // two anchors from the drag and wait for the third by click.
+            assert!(h.st.tools.draft.is_some(), "{tool:?}: draft not kept");
+        }
+    }
+}
+
+#[test]
+fn drag_does_not_disturb_click_placement() {
+    // Single-point tools still create on click; a click-click draft still
+    // completes on its second click.
+    let mut h = Harness::new(DrawTool::HLine);
+    let (lo, hi) = h.lo_hi();
+    let p = h.pt(h.cd.len() - 30, lo + (hi - lo) * 0.4);
+    assert!(h.click(p).drawing_completed);
+    assert_eq!(h.st.drawings.len(), 1);
+
+    let mut h = Harness::new(DrawTool::TrendLine);
+    let (lo, hi) = h.lo_hi();
+    let span = hi - lo;
+    let a = h.pt(h.cd.len() - 50, lo + span * 0.6);
+    let b = h.pt(h.cd.len() - 20, lo + span * 0.2);
+    assert!(!h.click(a).drawing_completed);
+    assert!(h.st.tools.draft.is_some());
+    let ev = h.click(b);
+    assert!(ev.drawing_completed, "click-click regression");
+    assert_eq!(h.st.drawings.len(), 1);
 }

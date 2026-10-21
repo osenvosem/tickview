@@ -114,6 +114,8 @@ pub struct ChartState {
     pub zoom_sel: Option<(Pos2, Pos2)>,
     /// Live multi-select marquee in screen space.
     pub marquee: Option<(Pos2, Pos2)>,
+    /// Press-drag-release drafted a multi-point tool this gesture (TV).
+    pub drag_drafted: bool,
     /// Toolbar-driven screen-space movement applied to the selection next frame.
     pending_toolbar_move: Vec2,
     /// A marquee just completed, so its release should not clear the selection.
@@ -201,6 +203,7 @@ impl ChartState {
             price_zoom: None,
             zoom_sel: None,
             marquee: None,
+            drag_drafted: false,
             pending_toolbar_move: Vec2::ZERO,
             suppress_empty_click: false,
             selected_from_press: None,
@@ -1104,7 +1107,7 @@ fn handle_input(
     let pointer = resp.interact_pointer_pos().or_else(|| resp.hover_pos());
     let press = ctx.input(|i| i.pointer.press_origin()).or(pointer);
     let in_price = pointer.is_some_and(|p| price_rect.contains(p));
-    let drawing_tool = st.tools.tool.is_tool() && !st.locked;
+    let drawing_tool = st.tools.tool.is_tool();
     let over_popup = st
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
@@ -1134,8 +1137,7 @@ fn handle_input(
     }
 
     // Live preview of the second/third anchor.
-    if !st.locked
-        && (st.tools.draft.is_some() || st.tools.measure.is_some())
+    if (st.tools.draft.is_some() || st.tools.measure.is_some())
         && let Some(pos) = pointer
         && in_price
         && let Some(anchor) = drawings::anchor_at_with_snap_values(
@@ -1193,6 +1195,16 @@ fn handle_input(
                 && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
             {
                 st.tools.begin_freehand(kind, anchor);
+            } else if drawing_tool
+                && st.tools.draft.is_none()
+                && let Some(kind) = st.tools.tool.kind()
+                && kind.points() >= 2
+                && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
+            {
+                // TV: press-drag-release drafts multi-point tools; the
+                // pressed point is anchor one, the release is anchor two.
+                st.tools.click(anchor);
+                st.drag_drafted = true;
             }
         }
         if !over_popup
@@ -1216,24 +1228,27 @@ fn handle_input(
                     break;
                 }
             }
-            if st.drag_pane.is_none() && !st.locked && price_rect.contains(pos) {
-                let handle_hit =
-                    if st.selection.len() == 1 && st.tools.draft.is_none() && !st.drawings_hidden {
-                        let id = *st.selection.ids().iter().next().unwrap();
-                        st.drawings
-                            .iter()
-                            .find(|d| d.id == id && !d.locked)
-                            .and_then(|d| {
-                                let map = |a: Anchor| {
-                                    let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
-                                    Pos2::new(st.view.x_of(i), ax.y_of(a.price))
-                                };
-                                drawings::handle_slot(&d.screen_points(&map), pos, 6.0)
-                                    .map(|slot| (id, slot))
-                            })
-                    } else {
-                        None
-                    };
+            if st.drag_pane.is_none() && price_rect.contains(pos) {
+                let handle_hit = if st.selection.len() == 1
+                    && st.tools.draft.is_none()
+                    && !st.drawings_hidden
+                    && !st.locked
+                {
+                    let id = *st.selection.ids().iter().next().unwrap();
+                    st.drawings
+                        .iter()
+                        .find(|d| d.id == id && !d.locked)
+                        .and_then(|d| {
+                            let map = |a: Anchor| {
+                                let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
+                                Pos2::new(st.view.x_of(i), ax.y_of(a.price))
+                            };
+                            drawings::handle_slot(&d.screen_points(&map), pos, 6.0)
+                                .map(|slot| (id, slot))
+                        })
+                } else {
+                    None
+                };
                 if handle_hit.is_some() {
                     st.drag_anchor = handle_hit;
                 } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
@@ -1250,9 +1265,10 @@ fn handle_input(
                         // TV: dragging any member of a multi-selection moves the group.
                         st.selected_from_press = Some(id);
                         let ids: Vec<u64> = st.selection.ids().iter().copied().collect();
-                        let any_draggable = ids
-                            .iter()
-                            .any(|did| st.drawings.iter().any(|d| d.id == *did && !d.locked));
+                        let any_draggable = !st.locked
+                            && ids
+                                .iter()
+                                .any(|did| st.drawings.iter().any(|d| d.id == *did && !d.locked));
                         if any_draggable && let Some(anchor) = anchor {
                             st.drag_drawing = Some(DrawingDrag { ids, last: anchor });
                         }
@@ -1263,7 +1279,8 @@ fn handle_input(
                             st.selection.select(id);
                         }
                         st.selected_from_press = Some(id);
-                        let draggable = st.drawings.iter().any(|d| d.id == id && !d.locked);
+                        let draggable =
+                            !st.locked && st.drawings.iter().any(|d| d.id == id && !d.locked);
                         if draggable && let Some(anchor) = anchor {
                             st.drag_drawing = Some(DrawingDrag {
                                 ids: vec![id],
@@ -1405,6 +1422,29 @@ fn handle_input(
                 ev.drawing_completed = true;
             }
         }
+        if std::mem::take(&mut st.drag_drafted)
+            && drawing_tool
+            && !st.tools.tool.kind().is_some_and(|kind| kind.is_drag())
+            && st.tools.draft.is_some()
+            && let Some(pos) = resp.interact_pointer_pos().or(pointer)
+            && price_rect.contains(pos)
+            && let Some(anchor) = drawings::anchor_at_with_snap_values(
+                cd,
+                &st.view,
+                ax,
+                pos,
+                st.magnet,
+                if st.magnet_strong { 24.0 } else { 8.0 },
+                magnet_snap_values(st, pos).as_deref(),
+            )
+        {
+            if let Some(drawing) = st.tools.click(anchor) {
+                st.selection.select(drawing.id);
+                st.drawings.push(drawing);
+                ev.changed = true;
+                ev.drawing_completed = true;
+            }
+        }
     }
 
     // Click: place a drawing, or select/deselect under the cursor.
@@ -1418,8 +1458,9 @@ fn handle_input(
             if st.tools.tool == crate::drawings::DrawTool::Eraser {
                 if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
                     let n = st.drawings.len();
+                    let protect = st.locked;
                     st.drawings
-                        .retain(|drawing| drawing.id != id || drawing.locked);
+                        .retain(|drawing| drawing.id != id || drawing.locked || protect);
                     if st.drawings.len() != n {
                         st.selection.retain(|selected| selected != id);
                         ev.changed = true;
@@ -1469,9 +1510,7 @@ fn handle_input(
                     }
                 }
             }
-        } else if !st.locked
-            && let Some(id) = hit_drawing(st, cd, ax, pos, price_rect)
-        {
+        } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
             if add_mod {
                 // TV: ⌘/Ctrl+click toggles objects into a multi-selection.
                 st.selection.set_multi(true);
@@ -1542,7 +1581,7 @@ fn handle_input(
         let select_all = ctx.input(|i| {
             i.modifiers.command && (i.key_pressed(egui::Key::A) || i.key_pressed(egui::Key::I))
         });
-        if select_all && !st.locked {
+        if select_all {
             let ids: Vec<u64> = st
                 .drawings
                 .iter()
@@ -1567,7 +1606,6 @@ fn handle_input(
     if resp.hovered()
         && !over_popup
         && !drawing_tool
-        && !st.locked
         && let Some(pos) = pointer
         && price_rect.contains(pos)
     {
@@ -2266,7 +2304,7 @@ mod tests {
     }
 
     #[test]
-    fn locked_chart_ignores_drawing_clicks_and_drags() {
+    fn locked_chart_creates_but_never_moves() {
         let ctx = egui::Context::default();
         let cd = ui_candles();
         let mut st = ChartState::new("AAPL", "1D");
@@ -2276,9 +2314,12 @@ mod tests {
         assert_eq!(st.drawings.len(), 1);
         let price = st.drawings[0].a.price;
 
+        // TV: locking protects existing drawings; new ones still place.
         st.locked = true;
-        click(&ctx, &mut st, &cd, Pos2::new(740.0, 300.0));
-        assert_eq!(st.drawings.len(), 1);
+        st.tools.set_tool(crate::drawings::DrawTool::HLine);
+        click(&ctx, &mut st, &cd, Pos2::new(800.0, 345.0));
+        assert_eq!(st.drawings.len(), 2);
+        let second = st.drawings[1].a.price;
 
         let modifiers = egui::Modifiers::default();
         let moved = pos + Vec2::new(0.0, 40.0);
@@ -2307,6 +2348,7 @@ mod tests {
             }],
         );
         assert!((st.drawings[0].a.price - price).abs() < 1e-9);
+        assert!((st.drawings[1].a.price - second).abs() < 1e-9);
     }
 
     fn find_click_y(
@@ -2686,7 +2728,7 @@ mod tests {
     }
 
     #[test]
-    fn brush_ignored_while_locked() {
+    fn brush_draws_while_locked() {
         let ctx = egui::Context::default();
         let cd = ui_candles();
         let mut st = ChartState::new("AAPL", "1D");
@@ -2700,7 +2742,8 @@ mod tests {
             Pos2::new(812.0, 300.0),
             egui::Modifiers::default(),
         );
-        assert!(st.drawings.is_empty());
+        // TV: lock protects existing objects; new brush strokes still land.
+        assert_eq!(st.drawings.len(), 1);
     }
 
     #[test]

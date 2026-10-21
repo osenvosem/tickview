@@ -886,8 +886,12 @@ fn paste_drawings(
 
 impl TickView {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        Self::new_with_ctx(&cc.egui_ctx)
+    }
+
+    /// Build against a bare `egui::Context` (headless QA driver).
+    pub fn new_with_ctx(ctx: &egui::Context) -> Self {
         tickchart::set_emoji_texture_resolver(crate::toolpanel::chart_emoji_texture);
-        let ctx = &cc.egui_ctx;
         let mut cfg = store::load();
         if let Ok(v) = std::env::var("TICKVIEW_THEME") {
             cfg.theme = match v.to_ascii_lowercase().as_str() {
