@@ -2,7 +2,7 @@
 
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
-Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
+Drawings: 90 verified, 0 in progress, 0 missing, 2 excluded (92 total).
 Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
@@ -94,8 +94,13 @@ Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 | Signpost | `LineToolSignpost` | `Signpost` | `signpost` | verified |
 | Flag mark | `LineToolFlagMark` | `FlagMark` | `flag-mark` | verified |
 | Image | `LineToolImage` | `Image` | `image` | excluded |
-| Post | `LineToolTweet` | `Post` | `post` | excluded |
-| Idea | `LineToolIdea` | `Idea` | `idea` | excluded |
+| Post | `LineToolTweet` | `Post` | `post` | verified |
+| Idea | `LineToolIdea` | `Idea` | `idea` | verified |
+| Icon | `FontIcon` | `Emoji` | `icons` | verified |
+| Dot | `dot` | `Dot` | `dot` | verified |
+| Demonstration | `demonstration` | `Demonstration` | `demonstration` | verified |
+| Magic | `performance` | `Performance` | `magic` | verified |
+| Arrow (cursor) | `arrow` | `ArrowCursor` | `cursor` | excluded |
 
 ## Studies
 

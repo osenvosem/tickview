@@ -282,6 +282,10 @@ pub fn install_fonts(ctx: &egui::Context) {
         "plex_mono_medium".into(),
         FontData::from_static(include_bytes!("../assets/fonts/IBMPlexMono-Medium.ttf")).into(),
     );
+    fonts.font_data.insert(
+        "noto_emoji".into(),
+        FontData::from_static(include_bytes!("../assets/fonts/NotoEmoji-Regular.ttf")).into(),
+    );
 
     fonts
         .families
@@ -290,16 +294,34 @@ pub fn install_fonts(ctx: &egui::Context) {
         .insert(0, "inter_regular".into());
     fonts
         .families
+        .entry(FontFamily::Proportional)
+        .or_default()
+        .push("noto_emoji".into());
+    fonts
+        .families
         .entry(FontFamily::Monospace)
         .or_default()
         .insert(0, "plex_mono_regular".into());
+    fonts
+        .families
+        .entry(FontFamily::Monospace)
+        .or_default()
+        .push("noto_emoji".into());
     fonts.families.insert(
         INTER_MEDIUM.clone(),
-        vec!["inter_medium".into(), "inter_regular".into()],
+        vec![
+            "inter_medium".into(),
+            "inter_regular".into(),
+            "noto_emoji".into(),
+        ],
     );
     fonts.families.insert(
         INTER_SEMIBOLD.clone(),
-        vec!["inter_semibold".into(), "inter_medium".into()],
+        vec![
+            "inter_semibold".into(),
+            "inter_medium".into(),
+            "noto_emoji".into(),
+        ],
     );
 
     ctx.set_fonts(fonts);

@@ -152,6 +152,12 @@ pub enum Icon {
     LayerBack,
     LayerForward,
     LayerBackward,
+    Post,
+    Idea,
+    Icons,
+    Dot,
+    Demonstration,
+    Magic,
 }
 
 #[allow(dead_code)]
@@ -302,6 +308,12 @@ impl Icon {
         Self::LayerBack,
         Self::LayerForward,
         Self::LayerBackward,
+        Self::Post,
+        Self::Idea,
+        Self::Icons,
+        Self::Dot,
+        Self::Demonstration,
+        Self::Magic,
     ];
 
     #[must_use]
@@ -452,6 +464,12 @@ impl Icon {
             Self::LayerBack => "layer-back",
             Self::LayerForward => "layer-forward",
             Self::LayerBackward => "layer-backward",
+            Self::Post => "post",
+            Self::Idea => "idea",
+            Self::Icons => "icons",
+            Self::Dot => "dot",
+            Self::Demonstration => "demonstration",
+            Self::Magic => "magic",
         }
     }
 
@@ -1559,6 +1577,69 @@ impl Icon {
                 line(5.0, 11.0, 19.0, 11.0);
                 path(&[(8.0, 14.0), (12.0, 18.0), (16.0, 14.0)]);
             }
+            Self::Post => {
+                path(&[
+                    (5.0, 5.0),
+                    (19.0, 5.0),
+                    (19.0, 19.0),
+                    (5.0, 19.0),
+                    (5.0, 5.0),
+                ]);
+                path(&[(8.0, 9.0), (8.5, 9.0)]);
+                line(11.0, 8.5, 17.0, 8.5);
+                line(7.5, 13.0, 16.5, 13.0);
+                line(7.5, 16.0, 13.0, 16.0);
+            }
+            Self::Idea => {
+                path(&[
+                    (9.0, 15.0),
+                    (7.5, 12.0),
+                    (8.5, 8.0),
+                    (12.0, 6.0),
+                    (15.5, 8.0),
+                    (16.5, 12.0),
+                    (15.0, 15.0),
+                ]);
+                line(10.0, 17.5, 14.0, 17.5);
+                line(10.5, 19.5, 13.5, 19.5);
+            }
+            Self::Icons => {
+                path(&[
+                    (12.0, 3.5),
+                    (16.0, 5.0),
+                    (18.5, 8.5),
+                    (18.5, 15.5),
+                    (16.0, 19.0),
+                    (8.0, 19.0),
+                    (5.5, 15.5),
+                    (5.5, 8.5),
+                    (8.0, 5.0),
+                    (12.0, 3.5),
+                ]);
+                line(9.5, 10.0, 9.6, 10.0);
+                line(14.4, 10.0, 14.5, 10.0);
+                path(&[(9.0, 14.0), (12.0, 16.5), (15.0, 14.0)]);
+            }
+            Self::Dot => {
+                dot(12.0, 12.0, 4.2);
+            }
+            Self::Demonstration => {
+                // Spotlight ring plus a sparkle, presenter-mode glyph.
+                circle(10.5, 13.5, 6.2);
+                dot(10.5, 13.5, 2.2);
+                line(15.2, 8.8, 18.2, 5.8);
+                line(17.6, 4.4, 19.4, 6.2);
+                line(19.4, 4.4, 17.6, 6.2);
+            }
+            Self::Magic => {
+                // Wand with two sparkles (TV "Magic" performance tool).
+                path(&[(4.8, 19.2), (14.2, 9.8)]);
+                line(12.6, 8.2, 15.8, 11.4);
+                line(17.4, 3.6, 17.4, 6.8);
+                line(15.8, 5.2, 19.0, 5.2);
+                line(19.8, 9.2, 19.8, 11.6);
+                line(18.6, 10.4, 21.0, 10.4);
+            }
         }
     }
 
@@ -1596,7 +1677,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 145);
+        assert_eq!(Icon::ALL.len(), 151);
     }
 
     #[test]

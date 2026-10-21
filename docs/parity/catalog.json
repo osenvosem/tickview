@@ -829,7 +829,7 @@
    "kind": "drawing",
    "tv_id": "LineToolElliottImpulse",
    "tickview_id": "ElliottImpulse",
-   "name": "Elliott impulse wave (1\u00b72\u00b73\u00b74\u00b75)",
+   "name": "Elliott impulse wave (1·2·3·4·5)",
    "group": "Patterns",
    "icon": "elliott-impulse",
    "anchors": 6,
@@ -850,7 +850,7 @@
    "kind": "drawing",
    "tv_id": "LineToolElliottCorrection",
    "tickview_id": "ElliottCorrection",
-   "name": "Elliott correction wave (A\u00b7B\u00b7C)",
+   "name": "Elliott correction wave (A·B·C)",
    "group": "Patterns",
    "icon": "elliott-correction",
    "anchors": 4,
@@ -871,7 +871,7 @@
    "kind": "drawing",
    "tv_id": "LineToolElliottTriangle",
    "tickview_id": "ElliottTriangle",
-   "name": "Elliott triangle wave (A\u00b7B\u00b7C\u00b7D\u00b7E)",
+   "name": "Elliott triangle wave (A·B·C·D·E)",
    "group": "Patterns",
    "icon": "elliott-triangle",
    "anchors": 6,
@@ -892,7 +892,7 @@
    "kind": "drawing",
    "tv_id": "LineToolElliottDoubleCombo",
    "tickview_id": "ElliottDoubleCombo",
-   "name": "Elliott double combo wave (W\u00b7X\u00b7Y)",
+   "name": "Elliott double combo wave (W·X·Y)",
    "group": "Patterns",
    "icon": "elliott-double-combo",
    "anchors": 4,
@@ -913,7 +913,7 @@
    "kind": "drawing",
    "tv_id": "LineToolElliottTripleCombo",
    "tickview_id": "ElliottTripleCombo",
-   "name": "Elliott triple combo wave (W\u00b7X\u00b7Y\u00b7X\u00b7Z)",
+   "name": "Elliott triple combo wave (W·X·Y·X·Z)",
    "group": "Patterns",
    "icon": "elliott-triple-combo",
    "anchors": 6,
@@ -1246,7 +1246,7 @@
     "docs/evidence/tv/drawings-forecast.md",
     "docs/screenshots/parity/forecast-dark.png"
    ],
-   "notes": "Label now p \u00b7 N bars per TV."
+   "notes": "Label now p · N bars per TV."
   },
   {
    "kind": "drawing",
@@ -1807,7 +1807,7 @@
    "tests": [],
    "evidence": [],
    "notes": "",
-   "exclusion_reason": "media object: out of scope per spec \u00a74"
+   "exclusion_reason": "media object: out of scope per spec §4"
   },
   {
    "kind": "drawing",
@@ -1818,11 +1818,18 @@
    "icon": "post",
    "anchors": 1,
    "interaction": "click",
-   "status": "excluded",
-   "tests": [],
-   "evidence": [],
-   "notes": "",
-   "exclusion_reason": "social content object: out of scope per spec \u00a74"
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::post_and_idea_cards_anchor_hit_and_serde",
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "app/src/app.rs::every_tool_is_wired_and_in_catalog"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Local content-card equivalent: author avatar + headline + body; social links out of scope offline.",
+   "exclusion_reason": ""
   },
   {
    "kind": "drawing",
@@ -1833,11 +1840,117 @@
    "icon": "idea",
    "anchors": 1,
    "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::post_and_idea_cards_anchor_hit_and_serde",
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "app/src/app.rs::every_tool_is_wired_and_in_catalog"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Local content-card equivalent: title + body + CHART IDEA badge; no external idea link offline.",
+   "exclusion_reason": ""
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "FontIcon",
+   "tickview_id": "Emoji",
+   "name": "Icon",
+   "group": "Icons",
+   "icon": "icons",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::emoji_glyph_scales_with_style_width_and_round_trips",
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "app/src/toolpanel.rs::emoji_picker_categories_are_unique_and_populated"
+   ],
+   "evidence": [
+    "research/tradingview-left-toolbar.md",
+    "docs/screenshots/parity/emojipicker-dark.png"
+   ],
+   "notes": "Emoji placement via the Icons picker (TV font-icon group); monochrome outline glyphs."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "dot",
+   "tickview_id": "Dot",
+   "name": "Dot",
+   "group": "Cursors",
+   "icon": "dot",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog",
+    "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
+   ],
+   "evidence": [
+    "research/tradingview-left-toolbar.md",
+    "docs/screenshots/parity/cursors-dark.png"
+   ],
+   "notes": "Single-click dot marker in the Cursors group."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "demonstration",
+   "tickview_id": "Demonstration",
+   "name": "Demonstration",
+   "group": "Cursors",
+   "icon": "demonstration",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog",
+    "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
+   ],
+   "evidence": [
+    "research/tradingview-left-toolbar.md",
+    "docs/screenshots/parity/cursors-dark.png"
+   ],
+   "notes": "Presenter mode: dims everything except a spotlight circle; places no drawings."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "performance",
+   "tickview_id": "Performance",
+   "name": "Magic",
+   "group": "Cursors",
+   "icon": "magic",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::every_kind_serde_round_trips",
+    "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog",
+    "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
+   ],
+   "evidence": [
+    "research/tradingview-left-toolbar.md",
+    "docs/screenshots/parity/cursors-dark.png"
+   ],
+   "notes": "TV Magic: hides all drawings while active; places no drawings."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "arrow",
+   "tickview_id": "ArrowCursor",
+   "name": "Arrow (cursor)",
+   "group": "Cursors",
+   "icon": "cursor",
+   "anchors": 1,
+   "interaction": "click",
    "status": "excluded",
    "tests": [],
    "evidence": [],
    "notes": "",
-   "exclusion_reason": "social idea object: out of scope per spec \u00a74"
+   "exclusion_reason": "duplicate of the pointer cursor; TickView Cursor covers it"
   }
  ],
  "studies": [
@@ -2469,7 +2582,7 @@
    "tests": [],
    "evidence": [],
    "notes": "",
-   "exclusion_reason": "market-breadth study requires an external index feed; out of scope per spec \u00a74"
+   "exclusion_reason": "market-breadth study requires an external index feed; out of scope per spec §4"
   },
   {
    "kind": "study",

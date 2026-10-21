@@ -1,15 +1,15 @@
 //! TradingView-style grouped drawing tool rail and floating selector.
 //!
-//! The rail mirrors TradingView's eight-group layout (the icon/emoji group is
-//! not a drawing catalog and is intentionally absent). Each group button
+//! The rail mirrors TradingView's eight-group layout. Each group button
 //! selects its remembered tool on a first click; once that tool is active the
 //! button opens a content-sized floating flyout. The 11 px arrow always opens
-//! or closes the flyout.
+//! or closes the flyout. The Icons group opens the emoji picker instead.
 
 use std::time::{Duration, Instant};
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, CursorIcon, Margin, Pos2, Rect, Sense, Stroke, Vec2, vec2,
+    self, Align2, Color32, CornerRadius, CursorIcon, FontId, Margin, Pos2, Rect, Sense, Stroke,
+    Vec2, vec2,
 };
 
 use crate::app::{TickView, Tool};
@@ -31,7 +31,17 @@ pub const GROUPS: &[ToolGroup] = &[
     ToolGroup {
         name: "Cursors",
         default: Tool::Crosshair,
-        sections: &[("CURSORS", &[Tool::Crosshair, Tool::Cursor, Tool::Eraser])],
+        sections: &[(
+            "CURSORS",
+            &[
+                Tool::Crosshair,
+                Tool::Dot,
+                Tool::Cursor,
+                Tool::Demonstration,
+                Tool::Performance,
+                Tool::Eraser,
+            ],
+        )],
     },
     ToolGroup {
         name: "Trend tools",
@@ -149,16 +159,16 @@ pub const GROUPS: &[ToolGroup] = &[
                 ],
             ),
             (
-                "MEASURERS",
-                &[Tool::PriceRange, Tool::DateRange, Tool::DatePriceRange],
-            ),
-            (
                 "VOLUME-BASED",
                 &[
                     Tool::AnchoredVwap,
                     Tool::VolumeProfileFixed,
                     Tool::VolumeProfileAnchored,
                 ],
+            ),
+            (
+                "MEASURERS",
+                &[Tool::PriceRange, Tool::DateRange, Tool::DatePriceRange],
             ),
         ],
     },
@@ -196,21 +206,29 @@ pub const GROUPS: &[ToolGroup] = &[
     ToolGroup {
         name: "Annotation tools",
         default: Tool::Text,
-        sections: &[(
-            "TEXT AND NOTES",
-            &[
-                Tool::Text,
-                Tool::Note,
-                Tool::PriceNote,
-                Tool::Pin,
-                Tool::Callout,
-                Tool::Table,
-                Tool::Comment,
-                Tool::PriceLabel,
-                Tool::Signpost,
-                Tool::FlagMark,
-            ],
-        )],
+        sections: &[
+            (
+                "TEXT AND NOTES",
+                &[
+                    Tool::Text,
+                    Tool::Note,
+                    Tool::PriceNote,
+                    Tool::Pin,
+                    Tool::Table,
+                    Tool::Callout,
+                    Tool::Comment,
+                    Tool::PriceLabel,
+                    Tool::Signpost,
+                    Tool::FlagMark,
+                ],
+            ),
+            ("CONTENT", &[Tool::Post, Tool::Idea]),
+        ],
+    },
+    ToolGroup {
+        name: "Icons",
+        default: Tool::Emoji,
+        sections: &[("ICONS", &[Tool::Emoji])],
     },
 ];
 
@@ -259,6 +277,9 @@ pub struct PanelState {
     flyout: Option<usize>,
     utility: Option<UtilityMenu>,
     utility_anchor: Option<Rect>,
+    picker_open: bool,
+    picker_anchor: Option<Rect>,
+    picker_tab: usize,
     last: [Tool; GROUPS.len()],
     favorites: Vec<Tool>,
     pending: Option<PendingSelect>,
@@ -275,6 +296,9 @@ impl Default for PanelState {
             flyout: None,
             utility: None,
             utility_anchor: None,
+            picker_open: false,
+            picker_anchor: None,
+            picker_tab: 0,
             last,
             favorites: Vec::new(),
             pending: None,
@@ -304,6 +328,8 @@ impl PanelState {
         self.flyout = group;
         self.utility = None;
         self.utility_anchor = None;
+        self.picker_open = false;
+        self.picker_anchor = None;
         self.pending = None;
     }
 
@@ -334,6 +360,8 @@ impl PanelState {
         self.utility = Some(menu);
         self.utility_anchor = Some(anchor);
         self.flyout = None;
+        self.picker_open = false;
+        self.picker_anchor = None;
         self.pending = None;
     }
 
@@ -345,10 +373,44 @@ impl PanelState {
         }
     }
 
+    #[must_use]
+    pub fn picker_open(&self) -> bool {
+        self.picker_open
+    }
+
+    #[must_use]
+    pub fn picker_anchor(&self) -> Option<Rect> {
+        self.picker_anchor
+    }
+
+    #[must_use]
+    pub fn picker_tab(&self) -> usize {
+        self.picker_tab
+    }
+
+    pub fn set_picker_tab(&mut self, tab: usize) {
+        self.picker_tab = tab;
+    }
+
+    pub fn toggle_picker(&mut self, anchor: Rect) {
+        if self.picker_open {
+            self.close_overlays();
+        } else {
+            self.picker_open = true;
+            self.picker_anchor = Some(anchor);
+            self.flyout = None;
+            self.utility = None;
+            self.utility_anchor = None;
+            self.pending = None;
+        }
+    }
+
     pub fn close_overlays(&mut self) {
         self.flyout = None;
         self.utility = None;
         self.utility_anchor = None;
+        self.picker_open = false;
+        self.picker_anchor = None;
         self.pending = None;
     }
 
@@ -457,6 +519,94 @@ const UTILITY_W: f32 = 216.0;
 const UTILITY_ROW_H: f32 = 32.0;
 const UTILITY_PAD: f32 = 6.0;
 
+/// Emoji picker geometry and data (TradingView font-icon panel equivalent).
+const PICKER_W: f32 = 354.0;
+const PICKER_H: f32 = 200.0;
+const PICKER_COLS: usize = 8;
+const PICKER_CELL: f32 = 38.0;
+const PICKER_GLYPH: f32 = 20.0;
+
+pub const EMOJI_CATEGORIES: [(&str, &[&str]); 8] = [
+    (
+        "Smileys",
+        &[
+            "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰",
+            "😍", "🤩", "😘", "😗", "😚", "😙", "😋", "😜", "🤪", "😎",
+        ],
+    ),
+    (
+        "Animals",
+        &[
+            "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸",
+            "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🐺", "🐗", "🐴",
+        ],
+    ),
+    (
+        "Food",
+        &[
+            "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭",
+            "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🥦", "🌽", "🌶", "🍄",
+        ],
+    ),
+    (
+        "Activity",
+        &[
+            "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🏓", "🏸", "🥅", "⛳",
+            "🏹", "🎣", "🥊", "🥋", "🎽", "🛹", "🎿", "⛸", "🥌", "🎯",
+        ],
+    ),
+    (
+        "Travel",
+        &[
+            "🚗", "🚕", "🚙", "🚌", "🚎", "🏎", "🚓", "🚑", "🚒", "🚚", "🚜", "✈", "🚀", "🛸", "⛵",
+            "🚤", "🛥", "🚢", "⚓", "🚁", "🛺", "🚂", "🚉", "🗺",
+        ],
+    ),
+    (
+        "Objects",
+        &[
+            "⌚", "📱", "💻", "⌨", "🖥", "🖨", "💡", "🔦", "🕯", "📚", "📖", "📔", "📒", "📝", "✏",
+            "📌", "📎", "📐", "📏", "🔒", "🔓", "🔑", "🔨", "🔧",
+        ],
+    ),
+    (
+        "Symbols",
+        &[
+            "❤", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣", "💕", "💞", "💓", "💗",
+            "💖", "💘", "💝", "➡", "⬅", "⬆", "⬇", "🔴", "🟢",
+        ],
+    ),
+    (
+        "Flags",
+        &[
+            "🏁",
+            "🚩",
+            "🎌",
+            "🏴",
+            "🏳",
+            "🏴‍☠️",
+            "🇺🇸",
+            "🇬🇧",
+            "🇩🇪",
+            "🇫🇷",
+            "🇮🇹",
+            "🇯🇵",
+            "🇨🇳",
+            "🇰🇷",
+            "🇷🇺",
+            "🇧🇷",
+            "🇨🇦",
+            "🇦🇺",
+            "🇮🇳",
+            "🇪🇸",
+            "🇳🇱",
+            "🇸🇪",
+            "🇳🇴",
+            "🇩🇰",
+        ],
+    ),
+];
+
 /// Draw the grouped rail and, when open, its floating selector.
 pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     let now = Instant::now();
@@ -493,7 +643,11 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     let long_press =
                         hit.main_down && app.tool_panel.long_press_due(group_index, now);
                     let consumed = app.tool_panel.press_consumed(group_index);
-                    if long_press {
+                    if group.name == "Icons" {
+                        if hit.main_clicked || hit.arrow_clicked {
+                            app.tool_panel.toggle_picker(hit.rect);
+                        }
+                    } else if long_press {
                         app.tool_panel.toggle_group(group_index);
                     } else if consumed {
                         // The long-press gesture already opened/closed the
@@ -620,6 +774,24 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     );
 
     let content = ui.ctx().content_rect();
+
+    if app.tool_panel.picker_open() {
+        let Some(anchor) = app.tool_panel.picker_anchor() else {
+            app.tool_panel.close_overlays();
+            return;
+        };
+        let width = PICKER_W.min(content.width() - 8.0);
+        let height = PICKER_H.min(content.height() - 8.0);
+        let rect = popup_rect_for(anchor, width, height, content);
+        let scrims = popover_scrims(rect, rail_rect, content);
+        if scrim_clicked(ui, &scrims) {
+            app.tool_panel.close_overlays();
+            return;
+        }
+        app.tabs[app.active].chart.hover_block = Some(rect);
+        draw_picker(ui, app, p, rect);
+        return;
+    }
     if let Some(menu) = app.tool_panel.utility() {
         let Some(anchor) = app.tool_panel.utility_anchor() else {
             app.tool_panel.close_overlays();
@@ -1235,8 +1407,92 @@ fn draw_utility_menu(
         });
 }
 
+fn draw_picker(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, rect: Rect) {
+    egui::Area::new(egui::Id::unique("tickview-emoji-picker"))
+        .order(egui::Order::Foreground)
+        .fade_in(false)
+        .movable(false)
+        .fixed_pos(rect.min)
+        .show(ui.ctx(), |ui| {
+            ui.spacing_mut().item_spacing = Vec2::ZERO;
+            egui::Frame::new()
+                .fill(p.menu_bg)
+                .corner_radius(CornerRadius::same(6))
+                .shadow(egui::epaint::Shadow {
+                    offset: [0, 2],
+                    blur: 4,
+                    spread: 0,
+                    color: Color32::from_black_alpha(110),
+                })
+                .inner_margin(Margin::same(FLYOUT_PAD as i8))
+                .show(ui, |ui| {
+                    ui.set_width(rect.width() - FLYOUT_PAD * 2.0);
+                    let active_tab = app.tool_panel.picker_tab();
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
+                        for (i, (name, _)) in EMOJI_CATEGORIES.iter().enumerate() {
+                            let active = i == active_tab;
+                            let resp = ui.add(
+                                egui::Button::new(egui::RichText::new(*name).size(11.0).color(
+                                    if active {
+                                        p.menu_text
+                                    } else {
+                                        p.menu_secondary
+                                    },
+                                ))
+                                .fill(if active { p.menu_active } else { p.menu_bg })
+                                .corner_radius(4.0),
+                            );
+                            if resp.clicked() {
+                                app.tool_panel.set_picker_tab(i);
+                            }
+                        }
+                    });
+                    ui.add_space(4.0);
+                    let tab = app.tool_panel.picker_tab();
+                    egui::ScrollArea::vertical()
+                        .id_salt("tickview-emoji-grid")
+                        .auto_shrink([false, false])
+                        .max_height(rect.height() - FLYOUT_PAD * 2.0 - 40.0)
+                        .show(ui, |ui| {
+                            for chunk in EMOJI_CATEGORIES[tab].1.chunks(PICKER_COLS) {
+                                ui.horizontal(|ui| {
+                                    for glyph in chunk {
+                                        let (cell, resp) = ui.allocate_exact_size(
+                                            Vec2::splat(PICKER_CELL),
+                                            Sense::click(),
+                                        );
+                                        if resp.hovered() {
+                                            ui.painter().rect_filled(
+                                                cell.shrink2(vec2(2.0, 2.0)),
+                                                6.0,
+                                                p.menu_hover,
+                                            );
+                                        }
+                                        ui.painter().text(
+                                            cell.center(),
+                                            Align2::CENTER_CENTER,
+                                            *glyph,
+                                            FontId::proportional(PICKER_GLYPH),
+                                            p.menu_text,
+                                        );
+                                        if resp.clicked() {
+                                            app.select_tool(Tool::Emoji);
+                                            app.tabs[app.active].chart.tools.pending_text =
+                                                Some((*glyph).to_owned());
+                                            app.tool_panel.close_overlays();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                });
+        });
+}
+
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use std::time::{Duration, Instant};
 
@@ -1249,6 +1505,8 @@ mod tests {
             }
         }
         seen.extend_from_slice(SINGLES);
+        // Magnet and Lock are always-on rail buttons, not flyout rows.
+        seen.extend_from_slice(&[Tool::Magnet, Tool::Lock]);
 
         for &tool in Tool::ALL {
             let count = seen.iter().filter(|t| **t == tool).count();
@@ -1258,7 +1516,7 @@ mod tests {
     }
 
     #[test]
-    fn rail_matches_tradingviews_seven_drawing_groups() {
+    fn rail_matches_tradingviews_eight_drawing_groups() {
         let names: Vec<&str> = GROUPS.iter().map(|group| group.name).collect();
         assert_eq!(
             names,
@@ -1270,10 +1528,12 @@ mod tests {
                 "Forecasting and measurement tools",
                 "Geometric shapes",
                 "Annotation tools",
+                "Icons",
             ]
         );
         assert_eq!(group_of(Tool::Xabcd), Some(3));
         assert_eq!(group_of(Tool::FibChannel), Some(2));
+        assert_eq!(group_of(Tool::Emoji), Some(7));
     }
 
     #[test]
@@ -1289,12 +1549,19 @@ mod tests {
         assert_eq!(headers(1), ["LINES", "CHANNELS", "PITCHFORKS"]);
         assert_eq!(headers(2), ["FIBONACCI", "GANN"]);
         assert_eq!(headers(3), ["CHART PATTERNS", "ELLIOTT WAVES", "CYCLES"]);
-        assert_eq!(headers(4), ["FORECASTING", "MEASURERS", "VOLUME-BASED"]);
+        assert_eq!(headers(4), ["FORECASTING", "VOLUME-BASED", "MEASURERS"]);
         assert_eq!(headers(5), ["BRUSHES", "ARROWS", "SHAPES"]);
-        assert_eq!(headers(6), ["TEXT AND NOTES"]);
+        assert_eq!(headers(6), ["TEXT AND NOTES", "CONTENT"]);
         assert_eq!(
             GROUPS[0].sections[0].1,
-            [Tool::Crosshair, Tool::Cursor, Tool::Eraser]
+            [
+                Tool::Crosshair,
+                Tool::Dot,
+                Tool::Cursor,
+                Tool::Demonstration,
+                Tool::Performance,
+                Tool::Eraser,
+            ]
         );
         assert_eq!(
             GROUPS[5].sections[1].1,
@@ -1305,6 +1572,37 @@ mod tests {
                 Tool::ArrowMarkDown
             ]
         );
+        assert_eq!(
+            GROUPS[6].sections[1].1,
+            [Tool::Post, Tool::Idea],
+            "CONTENT subcategory per TV annotation menu"
+        );
+    }
+
+    #[test]
+    fn emoji_picker_categories_are_unique_and_populated() {
+        assert_eq!(EMOJI_CATEGORIES.len(), 8);
+        let mut names = std::collections::HashSet::new();
+        for (name, glyphs) in EMOJI_CATEGORIES {
+            assert!(names.insert(name), "duplicate category {name}");
+            assert_eq!(glyphs.len(), 24, "{name} must carry a full page");
+            let unique: std::collections::HashSet<_> = glyphs.iter().collect();
+            assert_eq!(unique.len(), 24, "{name} has duplicate glyphs");
+        }
+    }
+
+    #[test]
+    fn picker_toggle_supersedes_flyout_and_closes() {
+        let anchor = Rect::from_min_size(Pos2::new(0.0, 100.0), Vec2::splat(38.0));
+        let mut state = PanelState::default();
+        state.open_group(1);
+        state.toggle_picker(anchor);
+        assert!(state.picker_open());
+        assert_eq!(state.flyout(), None);
+        assert_eq!(state.picker_anchor(), Some(anchor));
+        state.toggle_picker(anchor);
+        assert!(!state.picker_open());
+        assert_eq!(state.picker_anchor(), None);
     }
 
     #[test]
@@ -1393,7 +1691,7 @@ mod tests {
 
     #[test]
     fn flyout_height_matches_tv_row_header_and_divider_rhythm() {
-        let cursors = 12.0 + 24.0 + 3.0 * 40.0;
+        let cursors = 12.0 + 24.0 + 6.0 * 40.0;
         assert!((flyout_height(0) - cursors).abs() < 0.01);
         let trend =
             12.0 + (24.0 + 9.0 * 40.0) + 13.0 + (24.0 + 4.0 * 40.0) + 13.0 + (24.0 + 4.0 * 40.0);
