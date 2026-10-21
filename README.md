@@ -51,8 +51,8 @@ curated offline symbol index so search works before the network responds.
   Per-drawing hidden/locked/interval state persists with serde defaults, so
   older configs load unchanged. Drawings are stored by
   timestamp and persisted per symbol. Data-bound/media TV tools (volume
-  profiles, anchored VWAP, bars pattern, ghost feed, tables, images, posts,
-  ideas) and the emoji Icons group remain out of scope.
+  profiles, anchored VWAP, bars pattern, ghost feed, tables, images) remain
+  out of scope.
 - TradingView-style grouped tool rail: one button per tool family with a
   two-target hit area. A first click selects the group's remembered tool after
   the 175 ms double-click window; a second click, double-click, arrow click or
@@ -194,8 +194,11 @@ and utility menus block chart hover/pan/zoom under the pointer and their
 section dividers run edge-to-edge; the forecasting group now orders
 VOLUME-BASED before MEASURERS and the annotation group gains a CONTENT
 subcategory with Post (`LineToolTweet`) and Idea (`LineToolIdea`) cards; the
-eighth rail group Icons opens a 354 px emoji picker (8 categories × 24
-monochrome Noto Emoji glyphs) placing `Emoji` drawings; the Cursors group
+eighth rail group Icons opens a TradingView-style emoji picker (460×560 px:
+search field, eight OpenMoji category tabs, virtualized grouped grid of 1,584
+full-color OpenMoji SVGs with natural wheel scrolling and tab click-jumps)
+placing `Emoji` drawings, which render from the same SVG atlas on the chart;
+the Cursors group
 gains Dot, Demonstration and Magic (TV performance) modes — dot placement,
 spotlight dimming and drawing-hiding respectively — with the rail Magnet and
 Lock buttons wired to weak/strong snapping and selection locking. Manifest:

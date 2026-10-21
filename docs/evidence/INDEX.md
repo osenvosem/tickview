@@ -49,3 +49,8 @@ the written side-by-side review is `docs/parity/final-review.md`.
 - `python3 research/studies/build_catalog.py` — `docs/evidence/tv/studies-catalog.json`
 - `python3 research/studies/gen_goldens.py` — golden consts (`crates/ta/src/gold_*.rs`, `crates/tickchart/tests/drawing_goldens.rs` fixtures)
 - Screenshots: `TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_SCENE=<scene> TICKVIEW_THEME=<dark|light> TICKVIEW_SNAPSHOT=<path> ./target/debug/tickview`
+- `python3 scripts/gen_emoji_catalog.py` — `crates/app/assets/openmoji/catalog.json`
+  (+ copies the base-color SVGs it references) from an OpenMoji 17.0.0 checkout;
+  the picker grid and chart `Emoji` drawings render from these files. Interaction
+  proof: `docs/screenshots/parity/emojipicker-{scroll,search,tabjump}.png`
+  (CGEvent wheel/search/tab-click) and `emoji-chart.png` (SVG-textured drawing).
