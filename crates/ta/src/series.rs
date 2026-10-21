@@ -161,7 +161,7 @@ pub fn hma(src: &[f64], len: usize) -> Series {
         return nan_like(src);
     }
     let half = (len as f64).sqrt().round() as usize;
-    let short_len = ((len as f64) / 2.0).round() as usize;
+    let short_len = len / 2; // Pine: math.floor(length / 2)
     let short = wma(src, short_len.max(1));
     let long = wma(src, len);
     let d: Series = short.iter().zip(&long).map(|(s, l)| 2.0 * s - l).collect();

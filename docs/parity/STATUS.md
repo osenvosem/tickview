@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
+Studies: 13 verified, 70 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -112,21 +112,21 @@ Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
 | Detrended Price Oscillator | `DetrendedPriceOscillator@tv` | `Dpo` | `` | in-progress |
 | Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | in-progress |
 | Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | in-progress |
-| Double EMA | `DoubleEMA@tv` | `Dema` | `` | in-progress |
+| Double EMA | `DoubleEMA@tv` | `Dema` | `` | verified |
 | Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | in-progress |
 | Elder's Force Index | `EFI@tv` | `ElderForce` | `` | in-progress |
 | Envelope | `ENV@tv` | `Envelope` | `` | in-progress |
-| Hull Moving Average | `hullMA@tv` | `Hma` | `` | in-progress |
+| Hull Moving Average | `hullMA@tv` | `Hma` | `` | verified |
 | Historical Volatility | `HV@tv` | `HistoricalVolatility` | `` | in-progress |
 | Ichimoku Cloud | `IchimokuCloud@tv` | `Ichimoku` | `` | in-progress |
 | Keltner Channels | `KLTNR@tv` | `KeltnerChannels` | `` | in-progress |
 | KST Oscillator | `KST@tv` | `Kst` | `` | in-progress |
 | Linear Regression | `LinearRegression@tv` | `LinReg` | `` | in-progress |
 | MACD | `MACD@tv` | `Macd` | `` | in-progress |
-| Exponential Moving Average | `MAExp@tv` | `Ema` | `` | in-progress |
-| Simple Moving Average | `MASimple@tv` | `Sma` | `` | in-progress |
-| Volume Weighted Moving Average | `MAVolumeWeighted@tv` | `Vwma` | `` | in-progress |
-| Weighted Moving Average | `MAWeighted@tv` | `Wma` | `` | in-progress |
+| Exponential Moving Average | `MAExp@tv` | `Ema` | `` | verified |
+| Simple Moving Average | `MASimple@tv` | `Sma` | `` | verified |
+| Volume Weighted Moving Average | `MAVolumeWeighted@tv` | `Vwma` | `` | verified |
+| Weighted Moving Average | `MAWeighted@tv` | `Wma` | `` | verified |
 | Momentum | `MOM@tv` | `Momentum` | `` | in-progress |
 | On Balance Volume (OBV) | `OBV@tv` | `Obv` | `` | in-progress |
 | Pivot Points Standard | `PivotPointsStandard@tv` | `Pivots` | `` | in-progress |
@@ -136,7 +136,7 @@ Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
 | Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | in-progress |
 | Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | in-progress |
 | Advance/Decline | `STD;Advance_Decline_Ratio_Bars` | `` | `` | excluded |
-| Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | in-progress |
+| Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | verified |
 | Aroon | `STD;Aroon` | `Aroon` | `` | in-progress |
 | Average True Range | `STD;Average_True_Range` | `Atr` | `` | in-progress |
 | Bias | `STD;Bias` | `Bias` | `` | in-progress |
@@ -148,13 +148,13 @@ Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
 | Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | in-progress |
 | Directional Movement | `STD;DMI` | `Dmi` | `` | in-progress |
 | Elder-ray Index | `STD;ElderRay` | `ElderRay` | `` | in-progress |
-| EMA Ribbons | `STD;EmaRibbons` | `EmaRibbons` | `` | in-progress |
+| EMA Ribbons | `STD;EmaRibbons` | `EmaRibbons` | `` | verified |
 | Fisher Transform | `STD;Fisher_Transform` | `FisherTransform` | `` | in-progress |
 | Garman-Klass Volatility | `STD;GarmanKlassVolatility` | `GarmanKlassVolatility` | `` | in-progress |
-| Kaufman Adaptive Moving Average | `STD;Kama` | `Kama` | `` | in-progress |
+| Kaufman Adaptive Moving Average | `STD;Kama` | `Kama` | `` | verified |
 | Klinger Volume Oscillator | `STD;Klinger` | `Klinger` | `` | in-progress |
 | Know Sure Thing | `STD;Know_Sure_Thing` | `KnowSureThing` | `` | in-progress |
-| Least Squares Moving Average | `STD;Lsma` | `Lsma` | `` | in-progress |
+| Least Squares Moving Average | `STD;Lsma` | `Lsma` | `` | verified |
 | Mass Index | `STD;MassIndex` | `MassIndex` | `` | in-progress |
 | Money Flow Index | `STD;MoneyFlowIndex` | `MoneyFlowIndex` | `` | in-progress |
 | Parkinson Volatility | `STD;ParkinsonVolatility` | `ParkinsonVolatility` | `` | in-progress |
@@ -163,7 +163,7 @@ Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
 | Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | in-progress |
 | ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | in-progress |
 | Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | in-progress |
-| Smoothed Moving Average | `STD;Rma` | `Rma` | `` | in-progress |
+| Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |
 | Rogers-Satchell Volatility | `STD;RogersSatchellVolatility` | `RogersSatchellVolatility` | `` | in-progress |
 | SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | in-progress |
 | Supertrend | `STD;Supertrend` | `Supertrend` | `` | in-progress |
@@ -174,11 +174,11 @@ Studies: 0 verified, 83 in progress, 0 missing, 1 excluded (84 total).
 | Vortex | `STD;Vortex` | `Vortex` | `` | in-progress |
 | Williams Fractal | `STD;Whilliams_Fractals` | `WilliamsFractals` | `` | in-progress |
 | Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | in-progress |
-| Zero-Lag EMA | `STD;Zlema` | `Zlema` | `` | in-progress |
+| Zero-Lag EMA | `STD;Zlema` | `Zlema` | `` | verified |
 | Z-Score | `STD;ZScore` | `ZScore` | `` | in-progress |
 | Stochastic | `Stochastic@tv` | `Stochastic` | `` | in-progress |
 | Stochastic RSI | `StochasticRSI@tv` | `StochasticRsi` | `` | in-progress |
-| Triple EMA | `TripleEMA@tv` | `Tema` | `` | in-progress |
+| Triple EMA | `TripleEMA@tv` | `Tema` | `` | verified |
 | TRIX | `Trix@tv` | `Trix` | `` | in-progress |
 | Ultimate Oscillator | `UltimateOsc@tv` | `UltimateOscillator` | `` | in-progress |
 | Relative Vigor Index (RVI) | `VigorIndex@tv` | `Rvi` | `` | in-progress |

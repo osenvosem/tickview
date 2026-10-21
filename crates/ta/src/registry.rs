@@ -1918,3 +1918,113 @@ mod tests {
         assert_eq!(count, 66);
     }
 }
+
+#[cfg(test)]
+mod gold_ma {
+    use super::{Anchors, Params, TvId, compute};
+    use crate::{Bar, Candles};
+
+    include!("gold_mis.rs");
+
+    fn fixture2() -> Candles {
+        let bars: Vec<Bar> = FIX_T
+            .iter()
+            .enumerate()
+            .map(|(i, &ti)| Bar {
+                t: ti,
+                o: FIX_O[i],
+                h: FIX_H[i],
+                l: FIX_L[i],
+                c: FIX_C[i],
+                v: FIX_V[i],
+            })
+            .collect();
+        Candles::from_bars(&bars)
+    }
+
+    fn approx(got: &[f64], want: &[f64], what: &str) {
+        assert_eq!(got.len(), want.len(), "{what}: len");
+        for (i, (g, w)) in got.iter().zip(want).enumerate() {
+            if w.is_nan() {
+                assert!(g.is_nan(), "{what}[{i}]: expected NaN, got {g}");
+            } else {
+                assert!(
+                    (g - w).abs() <= 1e-9f64.max(w.abs() * 1e-9),
+                    "{what}[{i}]: {g} vs {w}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn ma_goldens_match_compute() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases = [
+            (TvId::Sma, &SMA[..]),
+            (TvId::Ema, &EMA[..]),
+            (TvId::Wma, &WMA[..]),
+            (TvId::Hma, &HMA[..]),
+            (TvId::Dema, &DEMA[..]),
+            (TvId::Tema, &TEMA[..]),
+            (TvId::Zlema, &ZLEMA[..]),
+            (TvId::Rma, &RMA[..]),
+            (TvId::Vwma, &VWMA[..]),
+            (TvId::Lsma, &LSMA[..]),
+            (TvId::Alma, &ALMA[..]),
+            (TvId::Kama, &KAMA[..]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), 1, "{id:?}: plots");
+            approx(&out.plots[0].series, want, &format!("{id:?}"));
+        }
+    }
+
+    #[test]
+    fn ribbon_goldens_match_compute() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let out = compute(TvId::EmaRibbons, &Params::default(), &cd, &ax);
+        let wants: [&[f64]; 8] = [
+            &RIBBON_E8,
+            &RIBBON_E13,
+            &RIBBON_E21,
+            &RIBBON_E34,
+            &RIBBON_E55,
+            &RIBBON_E89,
+            &RIBBON_E144,
+            &RIBBON_E169,
+        ];
+        assert_eq!(out.plots.len(), 8);
+        for (plot, want) in out.plots.iter().zip(wants) {
+            approx(&plot.series, want, plot.title);
+        }
+    }
+
+    #[test]
+    fn ma_plots_match_meta() {
+        let ids = [
+            TvId::Sma,
+            TvId::Ema,
+            TvId::Wma,
+            TvId::Hma,
+            TvId::Dema,
+            TvId::Tema,
+            TvId::Zlema,
+            TvId::Rma,
+            TvId::Vwma,
+            TvId::Lsma,
+            TvId::Alma,
+            TvId::Kama,
+        ];
+        for id in ids {
+            let d = super::def(id);
+            assert_eq!(d.plots.len(), 1, "{id:?}: one plot");
+            let key = if id == TvId::Kama { "er_len" } else { "length" };
+            assert!(d.params.iter().any(|p| p.key == key), "{id:?}: {key} param");
+        }
+        let ribbons = super::def(TvId::EmaRibbons);
+        assert_eq!(ribbons.plots.len(), 8, "ribbon plot count");
+    }
+}

@@ -1979,9 +1979,16 @@
    "tickview_id": "Dema",
    "name": "Double EMA",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2027,9 +2034,16 @@
    "tickview_id": "Hma",
    "name": "Hull Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2111,9 +2125,16 @@
    "tickview_id": "Ema",
    "name": "Exponential Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2123,9 +2144,16 @@
    "tickview_id": "Sma",
    "name": "Simple Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2135,9 +2163,16 @@
    "tickview_id": "Vwma",
    "name": "Volume Weighted Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2147,9 +2182,16 @@
    "tickview_id": "Wma",
    "name": "Weighted Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2267,9 +2309,16 @@
    "tickview_id": "Alma",
    "name": "Arnaud Legoux Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2411,9 +2460,17 @@
    "tickview_id": "EmaRibbons",
    "name": "EMA Ribbons",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ribbon_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2447,9 +2504,16 @@
    "tickview_id": "Kama",
    "name": "Kaufman Adaptive Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2483,9 +2547,16 @@
    "tickview_id": "Lsma",
    "name": "Least Squares Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2591,9 +2662,16 @@
    "tickview_id": "Rma",
    "name": "Smoothed Moving Average",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2723,9 +2801,16 @@
    "tickview_id": "Zlema",
    "name": "Zero-Lag EMA",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
@@ -2771,9 +2856,16 @@
    "tickview_id": "Tema",
    "name": "Triple EMA",
    "pane": "price",
-   "status": "in-progress",
-   "tests": [],
-   "evidence": [],
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
    "notes": "",
    "exclusion_reason": null
   },
