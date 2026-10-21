@@ -1,0 +1,251 @@
+{
+ "name": "Williams Alligator",
+ "scriptIdPart": "STD;Williams_Alligator",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 13,
+    "in_1": 8,
+    "in_2": 5,
+    "in_3": 8,
+    "in_4": 5,
+    "in_5": 3,
+    "in_6": "",
+    "in_7": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_8GEh4eFk+mPgT3sIPxAKBA==_+czAF9HIC7/PzL45wxon6mq5mkXSgBP7JhjxA4xmC0B7ZNAkT17tkvhp8xmZ114l7dV+mD7NJUx7dkIg45u0+LPZF5LLvoLSZPaT90+/vKzn2si7FGrhc3mpT3cAERHWQNxT7F8Dc/Dq681TrZfZqX1yPTn8UNTBN5tgvsrDybjQKw+PXC2xbVOYbRmLDiy416SpSqbZ/6Xp3WWotVnC1cHyyK++JE8pG4v6BUvUjvEyf/ObboQyuACXf7BbUjconlX6zRsaOkt+baZSOwocy0bJqmzPkMWeOo1NA7AlT3JUIvJbPOuNTOIuh7YzzeBOdB70oX8sB2WOY0y4EzdGlHrebqWgzD0zgccC+oVPojFP0IKe3QEYH/GZtD9fDgi8xp825jluFBUP49hbz+MgpdgFZc/6gI9QwD47SEvgcRvFAPhL8FPPXEYqtiHkhjjlnKCZ0SsvHziUBgnICnxVJAXwGN+G3mXoXY3ztgkRuL43X5AuMgSCnjh826FAdda5uP/Lvsh4qleG4pCu/ZUxfGVquKQDSAi27LH0icXogcjJJFQejjc4nPiKe0aNSDVlwReBTEX00EGmZY4DzcW8PVheRiyLpfVxh3yVuLt3ibhEXF8GHiQ75SNBjEnzKRJdkBOVA+axPOjiCfQeKD0HKMpDwv+0yjUZlgD3Co1+sX81GwxLvRjLcS7P56HC+OIRTcQItXagvBIIGjflq9YgbO8uyZM/qqv1jb7azA4N5ek40dRMZIqihyMaKi3boBbfigEwMcLADcsoXKZAJ4bZ52MTF8+1wSIeSoSEk8gAvl3LTZFilFSAOvjKEZCchuU0Pa4JHH3xMs+Ti9WKcD/lDMb3u7GCmE6yo+7yeIwwiOK+LBewQmV6OZYrYapXqnfQimQR84/ABNsf8fH2tOjKG0dncO7ppMdqtUscUdsqaIRGi9vIBEbBbf7bX/jEXNVD2GODPsyrUBffEq0="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_1": {
+     "color": "#E91E63",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": "#66BB6A",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Williams alligator",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;Williams_Alligator@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_8GEh4eFk+mPgT3sIPxAKBA==_+czAF9HIC7/PzL45wxon6mq5mkXSgBP7JhjxA4xmC0B7ZNAkT17tkvhp8xmZ114l7dV+mD7NJUx7dkIg45u0+LPZF5LLvoLSZPaT90+/vKzn2si7FGrhc3mpT3cAERHWQNxT7F8Dc/Dq681TrZfZqX1yPTn8UNTBN5tgvsrDybjQKw+PXC2xbVOYbRmLDiy416SpSqbZ/6Xp3WWotVnC1cHyyK++JE8pG4v6BUvUjvEyf/ObboQyuACXf7BbUjconlX6zRsaOkt+baZSOwocy0bJqmzPkMWeOo1NA7AlT3JUIvJbPOuNTOIuh7YzzeBOdB70oX8sB2WOY0y4EzdGlHrebqWgzD0zgccC+oVPojFP0IKe3QEYH/GZtD9fDgi8xp825jluFBUP49hbz+MgpdgFZc/6gI9QwD47SEvgcRvFAPhL8FPPXEYqtiHkhjjlnKCZ0SsvHziUBgnICnxVJAXwGN+G3mXoXY3ztgkRuL43X5AuMgSCnjh826FAdda5uP/Lvsh4qleG4pCu/ZUxfGVquKQDSAi27LH0icXogcjJJFQejjc4nPiKe0aNSDVlwReBTEX00EGmZY4DzcW8PVheRiyLpfVxh3yVuLt3ibhEXF8GHiQ75SNBjEnzKRJdkBOVA+axPOjiCfQeKD0HKMpDwv+0yjUZlgD3Co1+sX81GwxLvRjLcS7P56HC+OIRTcQItXagvBIIGjflq9YgbO8uyZM/qqv1jb7azA4N5ek40dRMZIqihyMaKi3boBbfigEwMcLADcsoXKZAJ4bZ52MTF8+1wSIeSoSEk8gAvl3LTZFilFSAOvjKEZCchuU0Pa4JHH3xMs+Ti9WKcD/lDMb3u7GCmE6yo+7yeIwwiOK+LBewQmV6OZYrYapXqnfQimQR84/ABNsf8fH2tOjKG0dncO7ppMdqtUscUdsqaIRGi9vIBEbBbf7bX/jEXNVD2GODPsyrUBffEq0=",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 13,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Jaw Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 8,
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Teeth Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 5,
+    "display": 4294967295,
+    "id": "in_2",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Lips Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 8,
+    "display": 4294967295,
+    "id": "in_3",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": -1000000000000,
+    "name": "Jaw Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 5,
+    "display": 4294967295,
+    "id": "in_4",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": -1000000000000,
+    "name": "Teeth Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 3,
+    "display": 4294967295,
+    "id": "in_5",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": -1000000000000,
+    "name": "Lips Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_6",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_7",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "21e8d894e680a468e753df84ea6fba40785535c2",
+   "version": "31.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "type": "line"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Williams_Alligator",
+  "shortDescription": "Alligator",
+  "stats": {
+   "plot": 3
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Jaw"
+   },
+   "plot_1": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Teeth"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Lips"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": [
+   "{\"message\":\"The function \\\"{functionName}\\\" should be called on each calculation for consistency. It is recommended to extract the call from the ternary operator or from the scope\",\"start\":{\"line\":5,\"column\":24},\"end\":{\"line\":5,\"column\":42},\"code\":\"CW10004\",\"ctx\":{\"functionName\":\"ta.sma\"}}"
+  ]
+ }
+}

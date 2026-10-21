@@ -1,0 +1,191 @@
+{
+ "name": "Chande Momentum Oscillator",
+ "scriptIdPart": "STD;Chande_Momentum_Oscillator",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "bands": [
+   {
+    "id": "hline_0",
+    "isHidden": false,
+    "name": "Zero Line"
+   }
+  ],
+  "behind_chart": true,
+  "defaults": {
+   "bands": [
+    {
+     "color": "#787B86",
+     "linestyle": 2,
+     "linewidth": 1,
+     "value": 0,
+     "visible": true
+    }
+   ],
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 9,
+    "in_1": "close",
+    "in_2": "",
+    "in_3": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_NEg8l0W6B6Fb8Xb9EIi7VA==_5jlQgENa72yf49VWFgvZgzW/xWoE0DtTNAYIrU+zeYOyKZtmTA4F5QKWOcynXcNAvRt4GG1hBTKQ44xoM1AUlgX30ayH9YLBkcXmYb7o/u4Yp4fy6UNf70PTF03NyhfP4yOiaT85QObAbmxCGLQFK3WWGxrvmSf3Pnrc2k22oMCNOECN2jv2+hOtOgH7E00Qql0bDiry05dfmUjd3lntIOYVsQxAZN4D5qbfbualv126OAuSa/+Xa8bHPFkct5U2qms7t2JLfMgJaT0PPC5ovjQwGTp9lWxzpXhf+fpdnvOeWQ6ZQCiCcZoAD4Lmn/jvacsnprRNrk3e6vln6H4BuphCWl2QA4pGqVSeO6cBK3YFYIsDhBzhzDfkMlME/71tN4HgP1+01XWzdnAoRrnw21vcbEWe2XtlWtuHksRUvWUmK5N2BCazuRGNoqy9zbj07k+T3oMgnqyApy0bZ0W3baSJ4wlJOBZKyyIwslrNFlWmDLSBd+S7FkXR7nT8EFSDmiyk5UliwBEZNEMCicDLV98iNqhg++gCwE3x3EsavGQk1e7zi9iFQl1OK7ihdbk3Kor27WHBhHOKKhghZ/24mOVLwKE/0LqQ9pdV9BIDqvckO33p54e3wH8TZLTX7q3a6N/b+wGpHp7CAyT4y9hW2Kh8VcYIAYi1lM+EcM//yYL2n84oNSYQgysL7oUU+QA0Csy1KndC9z+2U6Vt2T4/hpKIWyZL9QETHThU2+aam0Y440ClrYaQr9bB7xwJDVbnw4+j6U0+tK+zemPsJiY6LgC4X+QwAg4A54maZhEukih8cbGysu0iB1sxMXpZeAV2mgXAov6Szof3BohrWkkLijDbTK+bJeDd7VDX3V9Oaji03GxvTqDDgYq9YRr2ZcBBVPZxW+6CcAym91V9JTvTCdARBKOHKqsIvBxAROevbUskwXXNryQBk91O8Wgcj3dTwOYbpr8U2ehq5kpyHbfn2O9eTODFnMHHbXA="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Chande momentum oscillator",
+  "docs": "",
+  "format": {
+   "precision": 2,
+   "type": "price"
+  },
+  "id": "Script$STD;Chande_Momentum_Oscillator@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_NEg8l0W6B6Fb8Xb9EIi7VA==_5jlQgENa72yf49VWFgvZgzW/xWoE0DtTNAYIrU+zeYOyKZtmTA4F5QKWOcynXcNAvRt4GG1hBTKQ44xoM1AUlgX30ayH9YLBkcXmYb7o/u4Yp4fy6UNf70PTF03NyhfP4yOiaT85QObAbmxCGLQFK3WWGxrvmSf3Pnrc2k22oMCNOECN2jv2+hOtOgH7E00Qql0bDiry05dfmUjd3lntIOYVsQxAZN4D5qbfbualv126OAuSa/+Xa8bHPFkct5U2qms7t2JLfMgJaT0PPC5ovjQwGTp9lWxzpXhf+fpdnvOeWQ6ZQCiCcZoAD4Lmn/jvacsnprRNrk3e6vln6H4BuphCWl2QA4pGqVSeO6cBK3YFYIsDhBzhzDfkMlME/71tN4HgP1+01XWzdnAoRrnw21vcbEWe2XtlWtuHksRUvWUmK5N2BCazuRGNoqy9zbj07k+T3oMgnqyApy0bZ0W3baSJ4wlJOBZKyyIwslrNFlWmDLSBd+S7FkXR7nT8EFSDmiyk5UliwBEZNEMCicDLV98iNqhg++gCwE3x3EsavGQk1e7zi9iFQl1OK7ihdbk3Kor27WHBhHOKKhghZ/24mOVLwKE/0LqQ9pdV9BIDqvckO33p54e3wH8TZLTX7q3a6N/b+wGpHp7CAyT4y9hW2Kh8VcYIAYi1lM+EcM//yYL2n84oNSYQgysL7oUU+QA0Csy1KndC9z+2U6Vt2T4/hpKIWyZL9QETHThU2+aam0Y440ClrYaQr9bB7xwJDVbnw4+j6U0+tK+zemPsJiY6LgC4X+QwAg4A54maZhEukih8cbGysu0iB1sxMXpZeAV2mgXAov6Szof3BohrWkkLijDbTK+bJeDd7VDX3V9Oaji03GxvTqDDgYq9YRr2ZcBBVPZxW+6CcAym91V9JTvTCdARBKOHKqsIvBxAROevbUskwXXNryQBk91O8Wgcj3dTwOYbpr8U2ehq5kpyHbfn2O9eTODFnMHHbXA=",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 9,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": false,
+  "pine": {
+   "digest": "6ff1ee9b58f924047cf0f55bf723649e452c2a7b",
+   "version": "31.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Chande_Momentum_Oscillator",
+  "shortDescription": "ChandeMO",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Chande MO"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

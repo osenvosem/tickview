@@ -1,0 +1,354 @@
+{
+ "name": "Moving Average Exponential",
+ "scriptIdPart": "STD;EMA",
+ "metaInfo": {
+  "TVScriptMetaInfoExprs": {
+   "patchMap": {
+    "defaults.filledAreasStyle.fill_0.visible": "rm_8",
+    "defaults.styles.plot_1.display": "rm_2",
+    "defaults.styles.plot_2.display": "rm_6",
+    "defaults.styles.plot_3.display": "rm_6",
+    "filledAreasStyle.fill_0.isHidden": "rm_9",
+    "inputs.8.active": "rm_0",
+    "inputs.9.active": "rm_1",
+    "styles.plot_1.isHidden": "rm_3",
+    "styles.plot_2.isHidden": "rm_9",
+    "styles.plot_3.isHidden": "rm_9"
+   },
+   "tree": "//@version=6\nmaTypeInput=##input(defval='None',type='INPUT_STRING',##id='in_3')\nvar isBB=(maTypeInput=='SMA + Bollinger Bands')\n##root(root_metainfo,rm_0,##active('in_4',(maTypeInput!='None')),\"input&&bool\")\n##root(root_metainfo,rm_1,##active('in_5',isBB),\"input&&bool\")\nvar enableMA=(maTypeInput!='None')\n##root(root_metainfo,rm_2,(enableMA?display.all:display.none),\"cb&&input&&plot_display&&integer\",plot,display,'31_65_31_101')\n##root(root_metainfo,rm_3,(not enableMA),\"input&&bool\")\n##root(root_metainfo,rm_4,(isBB?display.all:display.none),\"cb&&input&&plot_display&&integer\",plot,display,'32_111_32_143')\n##root(root_metainfo,rm_5,(not isBB),\"input&&bool\")\n##root(root_metainfo,rm_6,(isBB?display.all:display.none),\"cb&&input&&plot_display&&integer\",plot,display,'33_111_33_143')\n##root(root_metainfo,rm_7,(not isBB),\"input&&bool\")\n##root(root_metainfo,rm_8,(isBB?display.all:display.none),\"cb&&input&&plot_simple_display&&bool\",fill,display,'34_130_34_162')\n##root(root_metainfo,rm_9,(not isBB),\"input&&bool\")\n"
+  },
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "filledAreasStyle": {
+    "fill_0": {
+     "color": "#2962ff",
+     "visible": false
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 9,
+    "in_1": "close",
+    "in_2": 0,
+    "in_3": "None",
+    "in_4": 14,
+    "in_5": 2,
+    "in_6": "",
+    "in_7": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_7kKNRm7iqps5f++2DdxZxQ==_kF7cj45ssfvv6xmAOhMPNd9NbF7J9eE2/zF8lERBRivz5218cR4WFsT/MYaL6w2fDx0RscqfzBSDZ29yvqSphGLpJGTrqGLsgwnPezb6Q8wgQg+zMKXquxrvVDr7nDdSDRGZHS5SeUG2ffl8FI5u0D5SySOj7bqk2sVsC7mUuadoV88rnH2aj6Ye4tC2YgfO1Q7uB3Fq5KdS1sSXNPfl7FzLWcQYwf86tpqmvrcP4mNfZhhCxoueNGP1iKk/Il8T66yNB9JsQT6GR15VsAb+hoLdPyW85zQGVR1/dt4c+BISMbWvm7OvxgtOCX0oqdml00tlnKKbvD7Z8xfwQLNEqVAiqYCdFNolCT3rCm8sSYPIiFkcQBH7wjj/yWL14FXU/5S76TL5peRJsdyT37WT+I6UA6FGokE3A3j6AbVvwIDVIjeZFxz7j0TKdND0hGSdhUGosu1P6yrlNZF+0JvCgV6zVRi3Qzpxs2i25HGOlMIQIcLNwhBdc3RKNEpm4nOIoe6HpEvml7iSqQXeW8bOoSXJRhiKOUU0T1QEw6e2PHU4iEJf5avc4aolkIj9GlbzQBPaxbjz+QLZR1fy1mHLqwUpuEzpjP0DSbzPlcMdV7cjAL0NvBRyXZs4zcZKzA3pdgoW3BUuUBMhvEKFingovEBP3Q3z41gGY1wRrZNHZR3hEAtRB3YQdQRcO29/OmFB8uzzwC2y72GrqeEuoGTpmWKgJioCjZqKAIsz0a46/2H2Hx3LOwCojvWWEHBbGT5ha3DkLWvJfX4kmkh50v35Td+GUtNXr7GAO/yH95yqdYQxYbKEne/lSAvnQCcztzLVPfz81PnYDruWjX/Z+NEB49t4j0ZBcDT2IhqZGPjdQ0UDsBMHRZ1Z8+nPLCtA/WNVzEsn8EJzpXiFpNrvAj59DP1saJZmHeWYU8bN/5kNEI8IrYY8AmrTYRd2xcovdcATRTog85dkEYwDtLBAl7Gsl13RGh6WnHi4CLq3JvjQl+NCZuUb+5YpNgS5BgxWi9jFiqAdNQjwBjR3F7YA7OHtBZ+hE/RuQ2DR57mOaDiTOSpXHqjx42D7KV2MpcNVsnOZFPCEeJyBfvdsQbMXLdeydCRZY03yBu9hDCuLKJR+znJc7S2Kp5a/32Mh5cOtRMGvyvy/Vpnu6MUlkwy00EnYptl08yHOyq2EOmuLT0irZTd2mklXqvG2gVwLikm9uMmWfb8sp32AFWafxixeQAbXtLTqJ3FcWpaLGNbNEEGDRnyQjX+Ft4hy+iVHjQGbhsl4FBlN6dycIu8A5c2GuDX5S7WF6BB351RhSukpRbBkaIL9QP6OtxSBTmyb70O60EA2Isq58OdjtmFrtOyjvvWt/B7sY+Q0G0uvsi2HGogybLiYDssYknbqxTST+PFV9AVeopn4OH0cD325Vg9LZcFQCGgKsCPQHrQLWKuUwY40fprBAW82pGBelu2O+OH4ljwTwW4="
+   },
+   "palettes": {
+    "palette_0": {
+     "colors": {
+      "0": {
+       "color": "rgba(76,175,80,0.1)",
+       "style": 0,
+       "width": 1
+      }
+     }
+    }
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962ff",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_1": {
+     "color": "#FDD835",
+     "display": 0,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": "#4CAF50",
+     "display": 0,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_3": {
+     "color": "#4CAF50",
+     "display": 0,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Exponential moving average",
+  "docs": "",
+  "filledAreas": [
+   {
+    "fillgaps": false,
+    "id": "fill_0",
+    "isHidden": false,
+    "objAId": "plot_2",
+    "objBId": "plot_3",
+    "palette": "palette_0",
+    "title": "Bollinger Bands Background Fill",
+    "type": "plot_plot"
+   }
+  ],
+  "filledAreasStyle": {
+   "fill_0": {
+    "isHidden": true
+   }
+  },
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;EMA@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_7kKNRm7iqps5f++2DdxZxQ==_kF7cj45ssfvv6xmAOhMPNd9NbF7J9eE2/zF8lERBRivz5218cR4WFsT/MYaL6w2fDx0RscqfzBSDZ29yvqSphGLpJGTrqGLsgwnPezb6Q8wgQg+zMKXquxrvVDr7nDdSDRGZHS5SeUG2ffl8FI5u0D5SySOj7bqk2sVsC7mUuadoV88rnH2aj6Ye4tC2YgfO1Q7uB3Fq5KdS1sSXNPfl7FzLWcQYwf86tpqmvrcP4mNfZhhCxoueNGP1iKk/Il8T66yNB9JsQT6GR15VsAb+hoLdPyW85zQGVR1/dt4c+BISMbWvm7OvxgtOCX0oqdml00tlnKKbvD7Z8xfwQLNEqVAiqYCdFNolCT3rCm8sSYPIiFkcQBH7wjj/yWL14FXU/5S76TL5peRJsdyT37WT+I6UA6FGokE3A3j6AbVvwIDVIjeZFxz7j0TKdND0hGSdhUGosu1P6yrlNZF+0JvCgV6zVRi3Qzpxs2i25HGOlMIQIcLNwhBdc3RKNEpm4nOIoe6HpEvml7iSqQXeW8bOoSXJRhiKOUU0T1QEw6e2PHU4iEJf5avc4aolkIj9GlbzQBPaxbjz+QLZR1fy1mHLqwUpuEzpjP0DSbzPlcMdV7cjAL0NvBRyXZs4zcZKzA3pdgoW3BUuUBMhvEKFingovEBP3Q3z41gGY1wRrZNHZR3hEAtRB3YQdQRcO29/OmFB8uzzwC2y72GrqeEuoGTpmWKgJioCjZqKAIsz0a46/2H2Hx3LOwCojvWWEHBbGT5ha3DkLWvJfX4kmkh50v35Td+GUtNXr7GAO/yH95yqdYQxYbKEne/lSAvnQCcztzLVPfz81PnYDruWjX/Z+NEB49t4j0ZBcDT2IhqZGPjdQ0UDsBMHRZ1Z8+nPLCtA/WNVzEsn8EJzpXiFpNrvAj59DP1saJZmHeWYU8bN/5kNEI8IrYY8AmrTYRd2xcovdcATRTog85dkEYwDtLBAl7Gsl13RGh6WnHi4CLq3JvjQl+NCZuUb+5YpNgS5BgxWi9jFiqAdNQjwBjR3F7YA7OHtBZ+hE/RuQ2DR57mOaDiTOSpXHqjx42D7KV2MpcNVsnOZFPCEeJyBfvdsQbMXLdeydCRZY03yBu9hDCuLKJR+znJc7S2Kp5a/32Mh5cOtRMGvyvy/Vpnu6MUlkwy00EnYptl08yHOyq2EOmuLT0irZTd2mklXqvG2gVwLikm9uMmWfb8sp32AFWafxixeQAbXtLTqJ3FcWpaLGNbNEEGDRnyQjX+Ft4hy+iVHjQGbhsl4FBlN6dycIu8A5c2GuDX5S7WF6BB351RhSukpRbBkaIL9QP6OtxSBTmyb70O60EA2Isq58OdjtmFrtOyjvvWt/B7sY+Q0G0uvsi2HGogybLiYDssYknbqxTST+PFV9AVeopn4OH0cD325Vg9LZcFQCGgKsCPQHrQLWKuUwY40fprBAW82pGBelu2O+OH4ljwTwW4=",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 9,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": 0,
+    "display": 0,
+    "id": "in_2",
+    "isFake": true,
+    "max": 500,
+    "min": -500,
+    "name": "Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "None",
+    "display": 0,
+    "group": "Smoothing",
+    "id": "in_3",
+    "isFake": true,
+    "name": "Type",
+    "options": [
+     "None",
+     "SMA",
+     "SMA + Bollinger Bands",
+     "EMA",
+     "SMMA (RMA)",
+     "WMA",
+     "VWMA"
+    ],
+    "type": "text"
+   },
+   {
+    "active": false,
+    "defval": 14,
+    "display": 0,
+    "group": "Smoothing",
+    "id": "in_4",
+    "isFake": true,
+    "name": "Length",
+    "type": "integer"
+   },
+   {
+    "active": false,
+    "defval": 2,
+    "display": 0,
+    "group": "Smoothing",
+    "id": "in_5",
+    "isFake": true,
+    "max": 50,
+    "min": 0.001,
+    "name": "BB StdDev",
+    "step": 0.5,
+    "tooltip": "Only applies when 'SMA + Bollinger Bands' is selected. Determines the distance between the SMA and the bands.",
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_6",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_7",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "palettes": {
+   "palette_0": {
+    "addDefaultColor": true,
+    "colors": {
+     "0": {
+      "name": "Color 0"
+     }
+    },
+    "valToIndex": {
+     "0": 0
+    }
+   }
+  },
+  "pine": {
+   "digest": "5b42f01ba054968ec6e7e8d6605db7362ccacd88",
+   "version": "38.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "type": "line"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   },
+   {
+    "id": "plot_3",
+    "type": "line"
+   },
+   {
+    "id": "plot_4",
+    "palette": "palette_0",
+    "target": "fill_0",
+    "type": "colorer"
+   }
+  ],
+  "scriptIdPart": "STD;EMA",
+  "shortDescription": "EMA",
+  "stats": {
+   "plot": 4
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "EMA"
+   },
+   "plot_1": {
+    "histogramBase": 0,
+    "isHidden": true,
+    "joinPoints": false,
+    "title": "EMA-based MA"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": true,
+    "joinPoints": false,
+    "title": "Upper Bollinger Band"
+   },
+   "plot_3": {
+    "histogramBase": 0,
+    "isHidden": true,
+    "joinPoints": false,
+    "title": "Lower Bollinger Band"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

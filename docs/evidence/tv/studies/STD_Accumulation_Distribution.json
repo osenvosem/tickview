@@ -1,0 +1,142 @@
+{
+ "name": "Accumulation/Distribution",
+ "scriptIdPart": "STD;Accumulation_Distribution",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": "",
+    "in_1": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_NpDZVkR1pN/V2hx+FuQy2A==_I8Qly3KvFbCYOM7pFBBSbAXInytl7SQnM62jbmaKl49IDMKr8eTjacMX3Bd6eWIAmzHVuqc35Yj8wsWhmufaC1bYv1WV9mqLJCSCaEFYWDdsDCkpUjEH1BSmwoa3U8/J15EvGOUbtXzdoyIgF8r+wY/y6pAkI6STjIT0/YM5xmCVPV3LEWSGma6svFMfzj5fgqKjYno/SDYMGFmVJh9Z44UPFkR1kysveGXn5o+mGo+bq8mF/HZ27skRetnbvJJtbLaGHU1GgTXyF/x/ztHfJuNK5ydWURJdc3DN6IuvDq7qyJBNXOR6FUhLIbG1Fk5A4xzDmS2ZvCMrJJSo/7lDGAA/6iE4HthJTdaxF5MRcq3cVOp7Lcj9Wg7yGIz7i5aYotEPB3bfwl54Kvda4iv+aB28HD3VDKy/8btMZ6H6/ujHmN4ETE0LHPjiCVAsjfdwANJIZzNhGeiHkZzI6MqJwAsUQjnBQutZLnCHsKi1jwbxsZo1+wq7/HiUOoQ+ax2TCzr/rFD7HwhWMHKONyUNBU8yKJ5QpLBJGymypspUDoC7nf8JrkX1tYTL6hqOpY0nhf4iWQxnOCyiHDy8yT4InmOkWAVy9Ch9E6C2ie/dj5+RVNpv97vdUDzCSSfPWojDJX0fLCpV331WOfUQP6Q2rCfoH/ndreJAM2ySiUGWdrfUiHxdURfvF2U4E2RrJUtF3GReoDaawZrSGy92s7DpSK3NrDj7uc0qhiYJ7QRg8ZGekPBuNgpNinHxfit8CViulrErK0vHIL7wZn9QQmDMp887MX5nFqCmPVxW2/OTBwANVLovO2sNiwhq61ZTYi47eTnGwJnGGL7H"
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#999915",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Accumulation/distribution",
+  "docs": "",
+  "format": {
+   "type": "volume"
+  },
+  "historyCalculationMayChange": true,
+  "id": "Script$STD;Accumulation_Distribution@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_NpDZVkR1pN/V2hx+FuQy2A==_I8Qly3KvFbCYOM7pFBBSbAXInytl7SQnM62jbmaKl49IDMKr8eTjacMX3Bd6eWIAmzHVuqc35Yj8wsWhmufaC1bYv1WV9mqLJCSCaEFYWDdsDCkpUjEH1BSmwoa3U8/J15EvGOUbtXzdoyIgF8r+wY/y6pAkI6STjIT0/YM5xmCVPV3LEWSGma6svFMfzj5fgqKjYno/SDYMGFmVJh9Z44UPFkR1kysveGXn5o+mGo+bq8mF/HZ27skRetnbvJJtbLaGHU1GgTXyF/x/ztHfJuNK5ydWURJdc3DN6IuvDq7qyJBNXOR6FUhLIbG1Fk5A4xzDmS2ZvCMrJJSo/7lDGAA/6iE4HthJTdaxF5MRcq3cVOp7Lcj9Wg7yGIz7i5aYotEPB3bfwl54Kvda4iv+aB28HD3VDKy/8btMZ6H6/ujHmN4ETE0LHPjiCVAsjfdwANJIZzNhGeiHkZzI6MqJwAsUQjnBQutZLnCHsKi1jwbxsZo1+wq7/HiUOoQ+ax2TCzr/rFD7HwhWMHKONyUNBU8yKJ5QpLBJGymypspUDoC7nf8JrkX1tYTL6hqOpY0nhf4iWQxnOCyiHDy8yT4InmOkWAVy9Ch9E6C2ie/dj5+RVNpv97vdUDzCSSfPWojDJX0fLCpV331WOfUQP6Q2rCfoH/ndreJAM2ySiUGWdrfUiHxdURfvF2U4E2RrJUtF3GReoDaawZrSGy92s7DpSK3NrDj7uc0qhiYJ7QRg8ZGekPBuNgpNinHxfit8CViulrErK0vHIL7wZn9QQmDMp887MX5nFqCmPVxW2/OTBwANVLovO2sNiwhq61ZTYi47eTnGwJnGGL7H",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_0",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_1",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": false,
+  "pine": {
+   "digest": "3d163aae279822511dd8b7eb5e389b9ac99d2d15",
+   "version": "30.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Accumulation_Distribution",
+  "shortDescription": "Accum/dist",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Accumulation/distribution"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

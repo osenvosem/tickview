@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
+Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -99,5 +99,90 @@ Studies: 0 verified, 0 in progress, 0 missing, 0 excluded (0 total).
 
 ## Studies
 
-_None yet._
+| Name | TradingView id | TickView id | Icon | Status |
+|---|---|---|---|---|
+| Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | verified |
+| Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | verified |
+| Bollinger Bands | `BB@tv` | `BollingerBands` | `` | verified |
+| %B | `BollingerBandsR@tv` | `PercentB` | `` | verified |
+| Commodity Channel Index (CCI) | `CCI@tv` | `Cci` | `` | verified |
+| Chaikin Oscillator | `ChaikinOscillator@tv` | `ChaikinOscillator` | `` | verified |
+| Chande Momentum Oscillator | `chandeMO@tv` | `Cmo` | `` | verified |
+| Chaikin Money Flow | `CMF@tv` | `ChaikinMoneyFlow` | `` | verified |
+| Detrended Price Oscillator | `DetrendedPriceOscillator@tv` | `Dpo` | `` | verified |
+| Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | verified |
+| Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | verified |
+| Double EMA | `DoubleEMA@tv` | `Dema` | `` | verified |
+| Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | verified |
+| Elder's Force Index | `EFI@tv` | `ElderForce` | `` | verified |
+| Envelope | `ENV@tv` | `Envelope` | `` | verified |
+| Hull Moving Average | `hullMA@tv` | `Hma` | `` | verified |
+| Historical Volatility | `HV@tv` | `HistoricalVolatility` | `` | verified |
+| Ichimoku Cloud | `IchimokuCloud@tv` | `Ichimoku` | `` | verified |
+| Keltner Channels | `KLTNR@tv` | `KeltnerChannels` | `` | verified |
+| KST Oscillator | `KST@tv` | `Kst` | `` | verified |
+| Linear Regression | `LinearRegression@tv` | `LinReg` | `` | verified |
+| MACD | `MACD@tv` | `Macd` | `` | verified |
+| Exponential Moving Average | `MAExp@tv` | `Ema` | `` | verified |
+| Simple Moving Average | `MASimple@tv` | `Sma` | `` | verified |
+| Volume Weighted Moving Average | `MAVolumeWeighted@tv` | `Vwma` | `` | verified |
+| Weighted Moving Average | `MAWeighted@tv` | `Wma` | `` | verified |
+| Momentum | `MOM@tv` | `Momentum` | `` | verified |
+| On Balance Volume (OBV) | `OBV@tv` | `Obv` | `` | verified |
+| Pivot Points Standard | `PivotPointsStandard@tv` | `Pivots` | `` | verified |
+| Volume Price Trend | `PriceVolumeTrend@tv` | `VolumePriceTrend` | `` | verified |
+| Parabolic SAR | `PSAR@tv` | `Psar` | `` | verified |
+| Rate of Change (ROC) | `ROC@tv` | `Roc` | `` | verified |
+| Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | verified |
+| Accelerator Oscillator | `STD;Accelerator` | `Accelerator` | `` | verified |
+| Advance/Decline | `STD;Advance_Decline_Ratio_Bars` | `` | `` | excluded |
+| Arnaud Legoux Moving Average | `STD;Alma` | `Alma` | `` | verified |
+| Aroon | `STD;Aroon` | `Aroon` | `` | verified |
+| Average True Range | `STD;Average_True_Range` | `Atr` | `` | verified |
+| Bias | `STD;Bias` | `Bias` | `` | verified |
+| Bollinger Bands Width | `STD;Bollinger_Bands_Width` | `BollingerBandsWidth` | `` | verified |
+| Chaikin Volatility | `STD;ChaikinVolatility` | `ChaikinVolatility` | `` | verified |
+| Chandelier Exit | `STD;Chandelier_Exit` | `ChandelierExit` | `` | verified |
+| Choppiness Index | `STD;Choppiness_Index` | `ChoppinessIndex` | `` | verified |
+| Connors RSI | `STD;Connors_RSI` | `ConnorsRsi` | `` | verified |
+| Correlation Coefficient | `STD;Correlation_Coeff` | `CorrelationCoeff` | `` | verified |
+| Directional Movement | `STD;DMI` | `Dmi` | `` | verified |
+| Elder-ray Index | `STD;ElderRay` | `ElderRay` | `` | verified |
+| EMA Ribbons | `STD;EmaRibbons` | `EmaRibbons` | `` | verified |
+| Fisher Transform | `STD;Fisher_Transform` | `FisherTransform` | `` | verified |
+| Garman-Klass Volatility | `STD;GarmanKlassVolatility` | `GarmanKlassVolatility` | `` | verified |
+| Kaufman Adaptive Moving Average | `STD;Kama` | `Kama` | `` | verified |
+| Klinger Volume Oscillator | `STD;Klinger` | `Klinger` | `` | verified |
+| Know Sure Thing | `STD;Know_Sure_Thing` | `KnowSureThing` | `` | verified |
+| Least Squares Moving Average | `STD;Lsma` | `Lsma` | `` | verified |
+| Mass Index | `STD;MassIndex` | `MassIndex` | `` | verified |
+| Money Flow Index | `STD;MoneyFlowIndex` | `MoneyFlowIndex` | `` | verified |
+| Parkinson Volatility | `STD;ParkinsonVolatility` | `ParkinsonVolatility` | `` | verified |
+| Price Oscillator | `STD;Price_Oscillator` | `PriceOscillator` | `` | verified |
+| PVI & DVI | `STD;PviDvi` | `PviDvi` | `` | verified |
+| Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | verified |
+| ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | verified |
+| Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | verified |
+| Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |
+| Rogers-Satchell Volatility | `STD;RogersSatchellVolatility` | `RogersSatchellVolatility` | `` | verified |
+| SMI Ergodic Indicator/Oscillator | `STD;SMI_Ergodic_Indicator_Oscillator` | `SmiErgodic` | `` | verified |
+| Supertrend | `STD;Supertrend` | `Supertrend` | `` | verified |
+| True Strength Index (TSI) | `STD;Tsi` | `Tsi` | `` | verified |
+| Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | verified |
+| Volume Oscillator | `STD;VolumeOscillator` | `VolumeOscillator` | `` | verified |
+| Volume Ratio | `STD;VolumeRatio` | `VolumeRatio` | `` | verified |
+| Vortex | `STD;Vortex` | `Vortex` | `` | verified |
+| Williams Fractal | `STD;Whilliams_Fractals` | `WilliamsFractals` | `` | verified |
+| Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | verified |
+| Zero-Lag EMA | `STD;Zlema` | `Zlema` | `` | verified |
+| Z-Score | `STD;ZScore` | `ZScore` | `` | verified |
+| Stochastic | `Stochastic@tv` | `Stochastic` | `` | verified |
+| Stochastic RSI | `StochasticRSI@tv` | `StochasticRsi` | `` | verified |
+| Triple EMA | `TripleEMA@tv` | `Tema` | `` | verified |
+| TRIX | `Trix@tv` | `Trix` | `` | verified |
+| Ultimate Oscillator | `UltimateOsc@tv` | `UltimateOscillator` | `` | verified |
+| Relative Vigor Index (RVI) | `VigorIndex@tv` | `Rvi` | `` | verified |
+| VWAP | `VWAP@tv` | `Vwap` | `` | verified |
+| Williams %R | `WilliamR@tv` | `WilliamsR` | `` | verified |
+| Alligator | `WilliamsAlligator@tv` | `Alligator` | `` | verified |
 

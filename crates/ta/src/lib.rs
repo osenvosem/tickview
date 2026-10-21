@@ -11,8 +11,8 @@ pub mod oscs;
 pub mod rating;
 pub mod registry;
 pub use registry::{
-    Anchors, Def, Output, Pane, Params, PlotData, PlotStyle, Scale, TvId, compute, def, defs,
-    source_series,
+    Anchors, Def, Output, Pane, Params, PlotData, PlotStyle, Scale, StudyContext, TvId, compute,
+    compute_with, def, defs, source_series,
 };
 pub mod series;
 pub mod trends;

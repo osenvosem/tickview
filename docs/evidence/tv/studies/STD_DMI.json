@@ -1,0 +1,204 @@
+{
+ "name": "Directional Movement",
+ "scriptIdPart": "STD;DMI",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 14,
+    "in_1": 14,
+    "in_2": "",
+    "in_3": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_BVgxmhp9Il8hPa7O7h/btA==_ODYGw81CAisEqtns/t6zI/G49+CGlr/49GW+jFSU7iAVh2ardAP2/Dxpv4UT5j/CqD/UFXeqqef86FTSlVQT/gg8BnDiOIG9zqtFOik5tuN1hhFdb08NPhAmoKBitgqEsvOu/v+j/iAWyBWx5Jt6OpRF3iQerXycZDeqNOh8h2KR8H52qOYXlVYjahgVgW6HmKEj+cuxoKwjkG0pxIAFs84xpjNbIfSqsZG/0zf0x7LpIYMHDQSzP6p3YRv9ob6xL1DBHChNIbuKb1uMHvbdlH4/oAs+2ltG21+SuCkIyLOonRKYOydF1Du8Xsa0esPMpqM5QOhRBSqdW4vNNJgDLDTe2IkluC3+PN60o0bAevke3Hy27KN4PJf4fZ5T7HojHOfiYQN+rIYHQcq+xKWtdTFO7QaT5EbTX7zbmJxgF5JHah45Et4P/+XYNQ5yct1jXXYsrp/ReNhiXlGvQb0Ybl+J62uO6Z1kD/q3rUopLHDwY78w7kLxEwCiMV4jbIcSWx3UEa21g53P7EDPXh9gK0wDIr62/gB92uQao9eGT4REgW3Tlo6XlZn4P9n8yaEifLMsOHT/VVQiZMWem7L0gw3yRXoMSACMG6bdfVJncLTe91BeObVUMj5OM8/KKUnEIRTnTwA59OUtEVOnO7ZZfZC6LWJ7UzYlJ5hNpUGMCFM9Q8f15EemTTDsYNmRGP9DFHMC6EywSxAFJPdbKd2FIxJVXVejX9gpen6QAFzWmkmPtjoIKCZbTmod2JdjFnh4PZzcAs/mIY7ww9ZFidVcNhNhDXejH8DDae6Ifyfn7Uu2b+XU68bfW8LcO1ibAjk9gZ9M3dyyEhIAj5lI1wESm+sM7Af2Cy+J3jcmufe84mRpnrr4uocjdq9Uu13t8y/r5Gc3JxE1PK94rjePNjBdrm0Xs/zWJ+AX+hk1EzwZXrunh3kadw=="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#F50057",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_1": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": "#FF6D00",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Directional movement index",
+  "docs": "",
+  "format": {
+   "precision": 4,
+   "type": "price"
+  },
+  "id": "Script$STD;DMI@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_BVgxmhp9Il8hPa7O7h/btA==_ODYGw81CAisEqtns/t6zI/G49+CGlr/49GW+jFSU7iAVh2ardAP2/Dxpv4UT5j/CqD/UFXeqqef86FTSlVQT/gg8BnDiOIG9zqtFOik5tuN1hhFdb08NPhAmoKBitgqEsvOu/v+j/iAWyBWx5Jt6OpRF3iQerXycZDeqNOh8h2KR8H52qOYXlVYjahgVgW6HmKEj+cuxoKwjkG0pxIAFs84xpjNbIfSqsZG/0zf0x7LpIYMHDQSzP6p3YRv9ob6xL1DBHChNIbuKb1uMHvbdlH4/oAs+2ltG21+SuCkIyLOonRKYOydF1Du8Xsa0esPMpqM5QOhRBSqdW4vNNJgDLDTe2IkluC3+PN60o0bAevke3Hy27KN4PJf4fZ5T7HojHOfiYQN+rIYHQcq+xKWtdTFO7QaT5EbTX7zbmJxgF5JHah45Et4P/+XYNQ5yct1jXXYsrp/ReNhiXlGvQb0Ybl+J62uO6Z1kD/q3rUopLHDwY78w7kLxEwCiMV4jbIcSWx3UEa21g53P7EDPXh9gK0wDIr62/gB92uQao9eGT4REgW3Tlo6XlZn4P9n8yaEifLMsOHT/VVQiZMWem7L0gw3yRXoMSACMG6bdfVJncLTe91BeObVUMj5OM8/KKUnEIRTnTwA59OUtEVOnO7ZZfZC6LWJ7UzYlJ5hNpUGMCFM9Q8f15EemTTDsYNmRGP9DFHMC6EywSxAFJPdbKd2FIxJVXVejX9gpen6QAFzWmkmPtjoIKCZbTmod2JdjFnh4PZzcAs/mIY7ww9ZFidVcNhNhDXejH8DDae6Ifyfn7Uu2b+XU68bfW8LcO1ibAjk9gZ9M3dyyEhIAj5lI1wESm+sM7Af2Cy+J3jcmufe84mRpnrr4uocjdq9Uu13t8y/r5Gc3JxE1PK94rjePNjBdrm0Xs/zWJ+AX+hk1EzwZXrunh3kadw==",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 14,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "ADX Smoothing",
+    "tooltip": "The time period to be used in calculating the ADX which has a smoothing component.",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 14,
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "DI Length",
+    "tooltip": "The time period to be used in calculating the DI (Directional Indicator).",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": false,
+  "pine": {
+   "digest": "3fe7d268db2058f395eff931fbf387f86b7e401e",
+   "version": "34.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "type": "line"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;DMI",
+  "shortDescription": "DMI",
+  "stats": {
+   "plot": 3
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "ADX"
+   },
+   "plot_1": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "+DI"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "-DI"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

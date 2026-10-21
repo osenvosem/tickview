@@ -504,5 +504,141 @@
  "Zlema": {
   "missing": true,
   "name": "Zero-Lag EMA"
+ },
+ "BollingerBandsWidth": {
+  "missing": true,
+  "name": "Bollinger Bands Width"
+ },
+ "Aroon": {
+  "wire_id": "STD;Aroon",
+  "inputs": {
+   "period": 14
+  },
+  "name": "Aroon"
+ },
+ "Atr": {
+  "wire_id": "STD;Average_True_Range",
+  "inputs": {
+   "length": 14
+  },
+  "name": "Average True Range"
+ },
+ "ChandelierExit": {
+  "wire_id": "STD;Chandelier_Exit",
+  "inputs": {
+   "period": 22,
+   "atr_len": 22,
+   "mult": 3
+  },
+  "name": "Chandelier Exit"
+ },
+ "ChoppinessIndex": {
+  "wire_id": "STD;Choppiness_Index",
+  "inputs": {
+   "length": 14
+  },
+  "name": "Choppiness Index"
+ },
+ "ConnorsRsi": {
+  "wire_id": "STD;Connors_RSI",
+  "inputs": {
+   "fast": 3,
+   "rank_len": 2,
+   "slow": 100
+  },
+  "name": "Connors RSI"
+ },
+ "Dmi": {
+  "wire_id": "STD;DMI",
+  "inputs": {
+   "di_len": 14,
+   "adx_sm": 14
+  },
+  "name": "Directional Movement Index"
+ },
+ "FisherTransform": {
+  "wire_id": "STD;Fisher_Transform",
+  "inputs": {
+   "length": 9
+  },
+  "name": "Fisher Transform"
+ },
+ "KnowSureThing": {
+  "wire_id": "STD;Know_Sure_Thing",
+  "inputs": {
+   "roc1": 10,
+   "roc2": 15,
+   "roc3": 20,
+   "roc4": 30,
+   "sma1": 10,
+   "sma2": 10,
+   "sma3": 10,
+   "sma4": 15,
+   "sig": 9
+  },
+  "name": "Know Sure Thing"
+ },
+ "PriceOscillator": {
+  "wire_id": "STD;Price_Oscillator",
+  "inputs": {
+   "fast": 12,
+   "slow": 26,
+   "sig": 9
+  },
+  "name": "Price Oscillator"
+ },
+ "RelativeVolatilityIndex": {
+  "wire_id": "STD;Relative_Volatility_Index",
+  "inputs": {
+   "length": 10,
+   "smooth": 10
+  },
+  "name": "Relative Volatility Index"
+ },
+ "SmiErgodic": {
+  "wire_id": "STD;SMI_Ergodic_Indicator_Oscillator",
+  "inputs": {
+   "length": 20,
+   "sig": 5
+  },
+  "name": "SMI Ergodic Indicator/Oscillator"
+ },
+ "VolatilityStop": {
+  "wire_id": "STD;Volatility_Stop",
+  "inputs": {
+   "length": 20,
+   "mult": 2.0
+  },
+  "name": "Volatility Stop"
+ },
+ "WilliamsFractals": {
+  "wire_id": "STD;Williams_Fractals",
+  "inputs": {
+   "left": 2,
+   "right": 2
+  },
+  "name": "Williams Fractals"
+ },
+ "ZigZag": {
+  "wire_id": "STD;ZigZag",
+  "inputs": {
+   "deviation": 5.0,
+   "depth": 10
+  },
+  "name": "Zig Zag"
+ },
+ "CorrelationCoeff": {
+  "wire_id": "STD;Correlation_Coeff",
+  "inputs": {
+   "length": 20
+  },
+  "name": "Correlation Coefficient"
+ },
+ "RankCorrelationIndex": {
+  "wire_id": "STD;Rank_Correlation_Index",
+  "inputs": {
+   "length": 10
+  },
+  "name": "Rank Correlation Index"
  }
 }

@@ -390,5 +390,18 @@ mod tests {
         approx(&accelerated_oscillator(&ao, 5), &AC, "ac");
         approx(&volume_ratio(&c, &v, 26), &VR, "vr");
         approx(&elder_force(&c, &v, 13), &EFI, "efi");
+        let f = crate::series::sma(&v, 5);
+        let s = crate::series::sma(&v, 20);
+        let vo: Vec<f64> = (0..40)
+            .map(|i| {
+                if f[i].is_finite() && s[i].is_finite() {
+                    (f[i] / s[i] - 1.0) * 100.0
+                } else {
+                    f64::NAN
+                }
+            })
+            .collect();
+        approx(&vo, &VO, "vo");
+        approx(&crate::series::roc(&v, 9, true), &RCVOL, "rcvol");
     }
 }

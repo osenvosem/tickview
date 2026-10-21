@@ -1,0 +1,228 @@
+{
+ "name": "Choppiness Index",
+ "scriptIdPart": "STD;Choppiness_Index",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "bands": [
+   {
+    "id": "hline_0",
+    "isHidden": false,
+    "name": "Upper Band"
+   },
+   {
+    "id": "hline_1",
+    "isHidden": false,
+    "name": "Middle Band"
+   },
+   {
+    "id": "hline_2",
+    "isHidden": false,
+    "name": "Lower Band"
+   }
+  ],
+  "behind_chart": true,
+  "defaults": {
+   "bands": [
+    {
+     "color": "#787B86",
+     "linestyle": 2,
+     "linewidth": 1,
+     "value": 61.8,
+     "visible": true
+    },
+    {
+     "color": "rgba(120,123,134,0.5)",
+     "linestyle": 2,
+     "linewidth": 1,
+     "value": 50,
+     "visible": true
+    },
+    {
+     "color": "#787B86",
+     "linestyle": 2,
+     "linewidth": 1,
+     "value": 38.2,
+     "visible": true
+    }
+   ],
+   "filledAreasStyle": {
+    "fill_0": {
+     "color": "rgba(33,150,243,0.1)",
+     "visible": true
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 14,
+    "in_1": 0,
+    "in_2": "",
+    "in_3": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_l0DMdI8GsFkSfGS1rKSMNQ==_gEt5uURj/vdyYPJeNcywADI349QfibmmKpWZzT3igByzgAdzyCE9SAd9J3gynO8ElOw9Tr+qONRvoxhMxLmzgheq+9ukz3lo2Uo0EALhBBIvzlwkWriC/jyNByJqZXA+yadn99bF40n/5Bp7/nAz7rewjJY152V4ortDSVEtneHrvymvuT3JVwpQjyaJ39B3oCPROabzw2k3bh3Uu38RoRZQBb7D66rP2F5xKuuFvCnIChtlbjS+PR/hU+gL9K5tx+R7ZK2IVA9RNaJzSFW4lb+wMchsTzL7CknKRD0zH6iwDWvt4z3CQ7rZje1MjMRHd0QayIOW3gma5yCopWsDovkN+VoQqUdq3g/9X4kIAzL8Uv0MgIYmSRTG2yPzrsVG/UCKcZ2vJfOQIy9e8z0BKxSqyKOKMZQFPaUG7+MUyeQdOtrOXiAFICoH49kAaUaN20p8qQtxrT87klz59hztUyW4TAyXE0T6z6jU+ep1L/7yjcahHsbiVstCXRpxzfifKG8rXff0pzEZLDd8mekxzW4Drqvh9i4ZjQa2tEU+lzHJZlNWQyxJpqnl1ju6fxXPhoz1Kiar02RKOHtoWc87vFwbo2KoQQgc+vNrRaaE4rjR4u53lq35MxXCNCHAftbdfys+bxsFPmq02vWHOLMM1cqHSZz+Mg=="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Choppiness index",
+  "docs": "",
+  "filledAreas": [
+   {
+    "fillgaps": false,
+    "id": "fill_0",
+    "isHidden": false,
+    "objAId": "hline_0",
+    "objBId": "hline_2",
+    "title": "Background",
+    "type": "hline_hline"
+   }
+  ],
+  "filledAreasStyle": {
+   "fill_0": {
+    "isHidden": false
+   }
+  },
+  "format": {
+   "precision": 2,
+   "type": "price"
+  },
+  "id": "Script$STD;Choppiness_Index@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_l0DMdI8GsFkSfGS1rKSMNQ==_gEt5uURj/vdyYPJeNcywADI349QfibmmKpWZzT3igByzgAdzyCE9SAd9J3gynO8ElOw9Tr+qONRvoxhMxLmzgheq+9ukz3lo2Uo0EALhBBIvzlwkWriC/jyNByJqZXA+yadn99bF40n/5Bp7/nAz7rewjJY152V4ortDSVEtneHrvymvuT3JVwpQjyaJ39B3oCPROabzw2k3bh3Uu38RoRZQBb7D66rP2F5xKuuFvCnIChtlbjS+PR/hU+gL9K5tx+R7ZK2IVA9RNaJzSFW4lb+wMchsTzL7CknKRD0zH6iwDWvt4z3CQ7rZje1MjMRHd0QayIOW3gma5yCopWsDovkN+VoQqUdq3g/9X4kIAzL8Uv0MgIYmSRTG2yPzrsVG/UCKcZ2vJfOQIy9e8z0BKxSqyKOKMZQFPaUG7+MUyeQdOtrOXiAFICoH49kAaUaN20p8qQtxrT87klz59hztUyW4TAyXE0T6z6jU+ep1L/7yjcahHsbiVstCXRpxzfifKG8rXff0pzEZLDd8mekxzW4Drqvh9i4ZjQa2tEU+lzHJZlNWQyxJpqnl1ju6fxXPhoz1Kiar02RKOHtoWc87vFwbo2KoQQgc+vNrRaaE4rjR4u53lq35MxXCNCHAftbdfys+bxsFPmq02vWHOLMM1cqHSZz+Mg==",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 14,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 0,
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "max": 500,
+    "min": -500,
+    "name": "Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": false,
+  "pine": {
+   "digest": "57f0163254c2d6ba54841aa94b25f968d91dd35c",
+   "version": "32.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Choppiness_Index",
+  "shortDescription": "CHOP",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "CHOP"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

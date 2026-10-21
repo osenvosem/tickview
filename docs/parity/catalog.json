@@ -1,1844 +1,3375 @@
 {
-  "schema_version": 1,
-  "source": {
-    "app_version": "3.4.1",
-    "captured": "2026-10-20"
+ "schema_version": 1,
+ "source": {
+  "app_version": "3.4.1",
+  "captured": "2026-10-20"
+ },
+ "drawings": [
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTrendLine",
+   "tickview_id": "TrendLine",
+   "name": "Trendline",
+   "group": "Trend tools",
+   "icon": "trend-line",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
   },
-  "drawings": [
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTrendLine",
-      "tickview_id": "TrendLine",
-      "name": "Trendline",
-      "group": "Trend tools",
-      "icon": "trend-line",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRay",
-      "tickview_id": "Ray",
-      "name": "Ray",
-      "group": "Trend tools",
-      "icon": "ray",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolInfoLine",
-      "tickview_id": "InfoLine",
-      "name": "Info line",
-      "group": "Trend tools",
-      "icon": "info-line",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolExtended",
-      "tickview_id": "ExtLine",
-      "name": "Extended line",
-      "group": "Trend tools",
-      "icon": "extended-line",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTrendAngle",
-      "tickview_id": "TrendAngle",
-      "name": "Trend angle",
-      "group": "Trend tools",
-      "icon": "trend-angle",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolHorzLine",
-      "tickview_id": "HLine",
-      "name": "Horizontal line",
-      "group": "Trend tools",
-      "icon": "horizontal-line",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolHorzRay",
-      "tickview_id": "HRay",
-      "name": "Horizontal ray",
-      "group": "Trend tools",
-      "icon": "horizontal-ray",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolVertLine",
-      "tickview_id": "VLine",
-      "name": "Vertical line",
-      "group": "Trend tools",
-      "icon": "vertical-line",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolCrossLine",
-      "tickview_id": "CrossLine",
-      "name": "Crossline",
-      "group": "Trend tools",
-      "icon": "cross-line",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolParallelChannel",
-      "tickview_id": "Channel",
-      "name": "Parallel channel",
-      "group": "Trend tools",
-      "icon": "channel",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRegressionTrend",
-      "tickview_id": "RegTrend",
-      "name": "Regression trend",
-      "group": "Trend tools",
-      "icon": "regression-trend",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis",
-        "tickchart/tests/drawing_goldens.rs::regtrend_band_hit_matches_geometry"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFlatBottom",
-      "tickview_id": "FlatChannel",
-      "name": "Flat top/bottom",
-      "group": "Trend tools",
-      "icon": "flat-channel",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolDisjointAngle",
-      "tickview_id": "DisjointChannel",
-      "name": "Disjoint channel",
-      "group": "Trend tools",
-      "icon": "disjoint-channel",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPitchfork",
-      "tickview_id": "Pitchfork",
-      "name": "Pitchfork",
-      "group": "Trend tools",
-      "icon": "pitchfork",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolSchiffPitchfork2",
-      "tickview_id": "SchiffPitchfork",
-      "name": "Schiff pitchfork",
-      "group": "Trend tools",
-      "icon": "schiff-pitchfork",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolSchiffPitchfork",
-      "tickview_id": "ModifiedSchiffPitchfork",
-      "name": "Modified Schiff pitchfork",
-      "group": "Trend tools",
-      "icon": "modified-schiff",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolInsidePitchfork",
-      "tickview_id": "InsidePitchfork",
-      "name": "Inside pitchfork",
-      "group": "Trend tools",
-      "icon": "inside-pitchfork",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-trend.md",
-        "docs/screenshots/parity/trend-dark.png",
-        "docs/screenshots/parity/trend-light.png"
-      ],
-      "notes": "TV geometry contract + hit fixes; see evidence doc."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibRetracement",
-      "tickview_id": "Fib",
-      "name": "Fib retracement",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fibonacci",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "TV level set 0..100%; screen-space levels (log-axis placement noted divergence in evidence)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTrendBasedFibExtension",
-      "tickview_id": "FibExt",
-      "name": "Trend-based fib extension",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fibonacci-extension",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Levels project from c along a->b price delta; TV ratio set incl. 1.272+."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibChannel",
-      "tickview_id": "FibChannel",
-      "name": "Fib channel",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-channel",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Rails = base a->b shifted by ratio*(c-a); TV ratio set."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibTimeZone",
-      "tickview_id": "FibTimeZone",
-      "name": "Fib time zone",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-time-zone",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Verticals at fib ratios of the anchor bar span incl. 1.618/2.618."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibSpeedResistanceFan",
-      "tickview_id": "FibSpeedFan",
-      "name": "Fib speed resistance fan",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-speed-fan",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "TV anchors=2; TickView reduced from 3 to 2. Rays from origin to ratio points on vertical through b."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTrendBasedFibTime",
-      "tickview_id": "FibTime",
-      "name": "Trend-based fib time",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-time",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "3 anchors accepted; vertical ratio set as FibTimeZone (trend anchor c reserved)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibCircles",
-      "tickview_id": "FibCircles",
-      "name": "Fib circles",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-circles",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Radii base+(outer-base)*ratio around a; TV ratio set incl. 161.8%."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibSpiral",
-      "tickview_id": "FibSpiral",
-      "name": "Fib spiral",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-spiral",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "TV anchors=3; TickView raised from 2 to 3. Growth spiral radius*turn-fraction."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibSpeedResistanceArcs",
-      "tickview_id": "FibArcs",
-      "name": "Fib speed resistance arcs",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-arcs",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Swept arcs between |a-b| and |a-c| radii at TV ratios."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFibWedge",
-      "tickview_id": "FibWedge",
-      "name": "Fib wedge",
-      "group": "Gann and Fibonacci tools",
-      "icon": "fib-wedge",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Edges a->b, a->c plus intermediate ratio lines 23.6..78.6%."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPitchfan",
-      "tickview_id": "Pitchfan",
-      "name": "Pitchfan",
-      "group": "Gann and Fibonacci tools",
-      "icon": "pitchfan",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Rays from origin through ratio points of the b->c span; dotted b->c guide."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolGannSquare",
-      "tickview_id": "GannBox",
-      "name": "Gann box",
-      "group": "Gann and Fibonacci tools",
-      "icon": "gann-box",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "TV 'Gann box': rect + quarter grid + diagonals."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolGannFixed",
-      "tickview_id": "GannSquareFixed",
-      "name": "Gann square fixed",
-      "group": "Gann and Fibonacci tools",
-      "icon": "gann-square-fixed",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "Square side = max(|dx|,|dy|) signed by b; quarter grid + diagonals."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolGannComplex",
-      "tickview_id": "GannSquare",
-      "name": "Gann square",
-      "group": "Gann and Fibonacci tools",
-      "icon": "gann-square",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-gannfib.md",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "TV 'Gann square': grid + complex rays from origin corner to far-edge fractions (1/8..7/8)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolGannFan",
-      "tickview_id": "GannFan",
-      "name": "Gann fan",
-      "group": "Gann and Fibonacci tools",
-      "icon": "gann-fan",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart::drawings::tests::gann_price_uses_tv_ratios",
-        "tickchart::drawings::tests::gann_fan_has_nine_tv_rays_and_labels",
-        "tickchart::chart::tests::gann_fan_hit_tests_follow_ratio_rays",
-        "tickview::app::tests::every_drawing_tool_has_a_unique_icon",
-        "tickview::drawing_toolbar::tests::bar_sits_top_right_with_16px_inset",
-        "tickchart/tests/drawing_goldens.rs::gann_fan_case_hits_tv_rays_both_axes"
-      ],
-      "evidence": [
-        "docs/evidence/tv/gann-fan.md",
-        "docs/screenshots/parity/gann-fan-dark.png",
-        "docs/screenshots/parity/gannfib-dark.png"
-      ],
-      "notes": "M1 ratio geometry + M2 log-axis ray fix (rays pass through ratio point at end bar)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineTool5PointsPattern",
-      "tickview_id": "Xabcd",
-      "name": "XABCD pattern",
-      "group": "Patterns",
-      "icon": "xabcd",
-      "anchors": 5,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 5-pivot XABCD; segment-midpoint hit path."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolCypherPattern",
-      "tickview_id": "Cypher",
-      "name": "Cypher pattern",
-      "group": "Patterns",
-      "icon": "cypher",
-      "anchors": 5,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 5-pivot Cypher; shared connected-pivot renderer."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolHeadAndShoulders",
-      "tickview_id": "HeadShoulders",
-      "name": "Head and shoulders",
-      "group": "Patterns",
-      "icon": "head-shoulders",
-      "anchors": 5,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 5 anchors (LS,H,RS + 2 neckline)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolABCD",
-      "tickview_id": "Abcd",
-      "name": "ABCD pattern",
-      "group": "Patterns",
-      "icon": "abcd",
-      "anchors": 4,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 4-pivot ABCD."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTrianglePattern",
-      "tickview_id": "TrianglePattern",
-      "name": "Triangle pattern",
-      "group": "Patterns",
-      "icon": "triangle-pattern",
-      "anchors": 5,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 5-pivot triangle (A..E)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolThreeDrivers",
-      "tickview_id": "ThreeDrives",
-      "name": "Three drives pattern",
-      "group": "Patterns",
-      "icon": "three-drives",
-      "anchors": 5,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "TV 5-pivot three drives."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolElliottImpulse",
-      "tickview_id": "ElliottImpulse",
-      "name": "Elliott impulse wave (1·2·3·4·5)",
-      "group": "Patterns",
-      "icon": "elliott-impulse",
-      "anchors": 6,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "6 pivots incl. origin 0; waves 1..5 labelled."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolElliottCorrection",
-      "tickview_id": "ElliottCorrection",
-      "name": "Elliott correction wave (A·B·C)",
-      "group": "Patterns",
-      "icon": "elliott-correction",
-      "anchors": 4,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "4 pivots incl. origin 0."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolElliottTriangle",
-      "tickview_id": "ElliottTriangle",
-      "name": "Elliott triangle wave (A·B·C·D·E)",
-      "group": "Patterns",
-      "icon": "elliott-triangle",
-      "anchors": 6,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "6 pivots incl. origin 0."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolElliottDoubleCombo",
-      "tickview_id": "ElliottDoubleCombo",
-      "name": "Elliott double combo wave (W·X·Y)",
-      "group": "Patterns",
-      "icon": "elliott-double-combo",
-      "anchors": 4,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "4 pivots incl. origin 0."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolElliottTripleCombo",
-      "tickview_id": "ElliottTripleCombo",
-      "name": "Elliott triple combo wave (W·X·Y·X·Z)",
-      "group": "Patterns",
-      "icon": "elliott-triple-combo",
-      "anchors": 6,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "6 pivots incl. origin 0."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolCircleLines",
-      "tickview_id": "CyclicLines",
-      "name": "Cyclic lines",
-      "group": "Patterns",
-      "icon": "cyclic-lines",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "Hit fix: circle through anchors + center spokes select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTimeCycles",
-      "tickview_id": "TimeCycles",
-      "name": "Time cycles",
-      "group": "Patterns",
-      "icon": "time-cycles",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "Hit fix: painted verticals at k*|b-a| select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolSineLine",
-      "tickview_id": "SineLine",
-      "name": "Sine line",
-      "group": "Patterns",
-      "icon": "sine-line",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-patterns.md",
-        "docs/screenshots/parity/patterns-dark.png"
-      ],
-      "notes": "Hit fix: two-cycle sine curve + baseline select (shared sine_points)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRiskRewardLong",
-      "tickview_id": "LongPosition",
-      "name": "Long position",
-      "group": "Forecasting and measurement tools",
-      "icon": "long-position",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Box-select inside profit/loss band to right edge; R/R chips."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRiskRewardShort",
-      "tickview_id": "ShortPosition",
-      "name": "Short position",
-      "group": "Forecasting and measurement tools",
-      "icon": "short-position",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Box-select inside profit/loss band to right edge; R/R chips."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPrediction",
-      "tickview_id": "PositionForecast",
-      "name": "Position forecast",
-      "group": "Forecasting and measurement tools",
-      "icon": "position-forecast",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Hit fix: box-select band (was anchor-polyline only)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolBarsPattern",
-      "tickview_id": "BarsPattern",
-      "name": "Bars pattern",
-      "group": "Forecasting and measurement tools",
-      "icon": "bars-pattern",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart::datatools::tests::offset_default_and_stored",
-        "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
-        "app::tests::every_drawing_tool_has_a_unique_icon"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-bars-ghost.md",
-        "docs/screenshots/parity/barghost-dark.png"
-      ],
-      "notes": "Offset in extra[0] (bar-count + price shift); source rect selects, ghost is tinted copy."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolGhostFeed",
-      "tickview_id": "GhostFeed",
-      "name": "Ghost feed",
-      "group": "Forecasting and measurement tools",
-      "icon": "ghost-feed",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart::datatools::tests::offset_default_and_stored",
-        "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
-        "app::tests::every_drawing_tool_has_a_unique_icon"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-bars-ghost.md",
-        "docs/screenshots/parity/barghost-dark.png"
-      ],
-      "notes": "Whole visible series shifted by the same offset; source rect selects."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolProjection",
-      "tickview_id": "Sector",
-      "name": "Sector",
-      "group": "Forecasting and measurement tools",
-      "icon": "sector",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "3 anchors confirmed; hit fix: filled wedge interior selects."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolAnchoredVWAP",
-      "tickview_id": "AnchoredVwap",
-      "name": "Anchored VWAP",
-      "group": "Forecasting and measurement tools",
-      "icon": "anchored-vwap",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart::datatools::tests::vwap_hand_computed",
-        "tickchart::datatools::tests::vwap_anchor_offset_skips_earlier_bars",
-        "tickchart::datatools::tests::vwap_short_history_is_empty",
-        "tickchart::tests::drawing_goldens::vwap_case_hits_curve_and_misses_off",
-        "app::tests::every_drawing_tool_has_a_unique_icon"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-vwap.md",
-        "docs/screenshots/parity/vwap-dark.png"
-      ],
-      "notes": "TV recomputes VWAP from chart data; we compute at paint/hit time, nothing persisted. Zero-volume bars emit no point."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFixedRangeVolumeProfile",
-      "tickview_id": "FixedRangeVolumeProfile",
-      "name": "Fixed range volume profile",
-      "group": "Forecasting and measurement tools",
-      "icon": "volume-profile-fixed",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart::datatools::tests::profile_hand_computed_poc_and_value_area",
-        "tickchart::datatools::tests::profile_empty_or_flat_range_is_none",
-        "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
-        "app::tests::every_drawing_tool_has_a_unique_icon"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-volume-profile.md",
-        "docs/screenshots/parity/vprofile-dark.png"
-      ],
-      "notes": "Close-only binning, 24 bins, 70% value area from POC; right-anchored at range end."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolAnchoredVolumeProfile",
-      "tickview_id": "AnchoredVolumeProfile",
-      "name": "Anchored volume profile",
-      "group": "Forecasting and measurement tools",
-      "icon": "volume-profile-anchored",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
-        "tickchart::tests::drawing_goldens::profiles_survive_anchor_past_end",
-        "app::tests::every_drawing_tool_has_a_unique_icon"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-volume-profile.md",
-        "docs/screenshots/parity/vprofile-dark.png"
-      ],
-      "notes": "Same binning as fixed range; extends to last bar, hugs plot right edge."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPriceRange",
-      "tickview_id": "PriceRange",
-      "name": "Price range",
-      "group": "Forecasting and measurement tools",
-      "icon": "price-range",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Label now p1 -> p2 (+x.xx%) per TV."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolDateRange",
-      "tickview_id": "DateRange",
-      "name": "Date range",
-      "group": "Forecasting and measurement tools",
-      "icon": "date-range",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Label now N bars per TV (was static text)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolDateAndPriceRange",
-      "tickview_id": "DatePriceRange",
-      "name": "Date and price range",
-      "group": "Forecasting and measurement tools",
-      "icon": "date-price-range",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-forecast.md",
-        "docs/screenshots/parity/forecast-dark.png"
-      ],
-      "notes": "Label now p · N bars per TV."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolBrush",
-      "tickview_id": "Brush",
-      "name": "Brush",
-      "group": "Geometric shapes",
-      "icon": "brush",
-      "anchors": 0,
-      "interaction": "freehand",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Stroke trail a->b->vertices selects."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolHighlighter",
-      "tickview_id": "Highlighter",
-      "name": "Highlighter",
-      "group": "Geometric shapes",
-      "icon": "highlighter",
-      "anchors": 0,
-      "interaction": "freehand",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Stroke trail selects (same path model as brush)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolArrowMarker",
-      "tickview_id": "ArrowMarker",
-      "name": "Arrow marker",
-      "group": "Geometric shapes",
-      "icon": "arrow-marker",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Glyph-extent hit: 16px around anchor."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolArrow",
-      "tickview_id": "Arrow",
-      "name": "Arrow",
-      "group": "Geometric shapes",
-      "icon": "arrow",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Shaft + head select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolArrowMarkUp",
-      "tickview_id": "ArrowMarkUp",
-      "name": "Arrow mark up",
-      "group": "Geometric shapes",
-      "icon": "arrow-mark-up",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Glyph-extent hit: 16px around anchor."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolArrowMarkDown",
-      "tickview_id": "ArrowMarkDown",
-      "name": "Arrow mark down",
-      "group": "Geometric shapes",
-      "icon": "arrow-mark-down",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Glyph-extent hit: 16px around anchor."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRectangle",
-      "tickview_id": "Rect",
-      "name": "Rectangle",
-      "group": "Geometric shapes",
-      "icon": "rectangle",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Border always; interior when filled."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolRotatedRectangle",
-      "tickview_id": "RotatedRect",
-      "name": "Rotated rectangle",
-      "group": "Geometric shapes",
-      "icon": "rotated-rect",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Parallelogram interior when filled; edges always."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPath",
-      "tickview_id": "Path",
-      "name": "Path",
-      "group": "Geometric shapes",
-      "icon": "path",
-      "anchors": 0,
-      "interaction": "open-path",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Open-path vertex chain."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolCircle",
-      "tickview_id": "Circle",
-      "name": "Circle",
-      "group": "Geometric shapes",
-      "icon": "circle-shape",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Ring always; disc interior when filled."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolEllipse",
-      "tickview_id": "Ellipse",
-      "name": "Ellipse",
-      "group": "Geometric shapes",
-      "icon": "ellipse",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Ring always; interior when filled."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPolyline",
-      "tickview_id": "Polyline",
-      "name": "Polyline",
-      "group": "Geometric shapes",
-      "icon": "polyline",
-      "anchors": 0,
-      "interaction": "open-path",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Open-path vertex chain."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTriangle",
-      "tickview_id": "TriangleShape",
-      "name": "Triangle",
-      "group": "Geometric shapes",
-      "icon": "triangle-shape",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Interior when filled; edges always."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolArc",
-      "tickview_id": "Arc",
-      "name": "Arc",
-      "group": "Geometric shapes",
-      "icon": "arc-shape",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Hit fix: sampled arc curve, not anchor chords."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolBezierQuadro",
-      "tickview_id": "Curve",
-      "name": "Curve",
-      "group": "Geometric shapes",
-      "icon": "curve-shape",
-      "anchors": 3,
-      "interaction": "three-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Hit fix: quadratic curve sample."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolBezierCubic",
-      "tickview_id": "DoubleCurve",
-      "name": "Double curve",
-      "group": "Geometric shapes",
-      "icon": "double-curve",
-      "anchors": 4,
-      "interaction": "multi-point",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-shapes.md",
-        "docs/screenshots/parity/shapes-dark.png"
-      ],
-      "notes": "Hit fix: cubic curve sample (4 anchors)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolText",
-      "tickview_id": "Text",
-      "name": "Text",
-      "group": "Annotation tools",
-      "icon": "text",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Plain text at anchor (new Text kind, split from Note)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTextNote",
-      "tickview_id": "Note",
-      "name": "Note",
-      "group": "Annotation tools",
-      "icon": "note",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Bubble note (existing Note kind)."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPriceNote",
-      "tickview_id": "PriceNote",
-      "name": "Price note",
-      "group": "Annotation tools",
-      "icon": "price-note",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Price line + label; bounds select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolNote",
-      "tickview_id": "Pin",
-      "name": "Pin",
-      "group": "Annotation tools",
-      "icon": "pin",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Pin glyph; footprint select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTable",
-      "tickview_id": "Table",
-      "name": "Table",
-      "group": "Annotation tools",
-      "icon": "table",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "verified",
-      "tests": [
-        "app::store::tests::v2_payload_without_table_fields_loads",
-        "app::store::tests::table_cells_round_trip",
-        "tickchart::tests::drawing_goldens::table_case_hits_rect_and_misses_outside"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-table.md",
-        "docs/screenshots/parity/table-dark.png"
-      ],
-      "notes": "Default 3x3; settings popover rows/cols steppers + cell text; additive serde fields."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolCallout",
-      "tickview_id": "Callout",
-      "name": "Callout",
-      "group": "Annotation tools",
-      "icon": "callout",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Bubble with tail; bounds select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolComment",
-      "tickview_id": "Comment",
-      "name": "Comment",
-      "group": "Annotation tools",
-      "icon": "comment",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Comment bubble; bounds select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolPriceLabel",
-      "tickview_id": "PriceLabel",
-      "name": "Price label",
-      "group": "Annotation tools",
-      "icon": "price-label",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Axis-style price tag; bounds select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolSignpost",
-      "tickview_id": "Signpost",
-      "name": "Signpost",
-      "group": "Annotation tools",
-      "icon": "signpost",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Flag-on-pole glyph; footprint select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolFlagMark",
-      "tickview_id": "FlagMark",
-      "name": "Flag mark",
-      "group": "Annotation tools",
-      "icon": "flag-mark",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "verified",
-      "tests": [
-        "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
-        "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
-      ],
-      "evidence": [
-        "docs/evidence/tv/drawings-annotation.md",
-        "docs/screenshots/parity/annot-dark.png"
-      ],
-      "notes": "Flag glyph; footprint select."
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolImage",
-      "tickview_id": "Image",
-      "name": "Image",
-      "group": "Annotation tools",
-      "icon": "image",
-      "anchors": 2,
-      "interaction": "two-point",
-      "status": "excluded",
-      "tests": [],
-      "evidence": [],
-      "notes": "",
-      "exclusion_reason": "media object: out of scope per spec §4"
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolTweet",
-      "tickview_id": "Post",
-      "name": "Post",
-      "group": "Annotation tools",
-      "icon": "post",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "excluded",
-      "tests": [],
-      "evidence": [],
-      "notes": "",
-      "exclusion_reason": "social content object: out of scope per spec §4"
-    },
-    {
-      "kind": "drawing",
-      "tv_id": "LineToolIdea",
-      "tickview_id": "Idea",
-      "name": "Idea",
-      "group": "Annotation tools",
-      "icon": "idea",
-      "anchors": 1,
-      "interaction": "click",
-      "status": "excluded",
-      "tests": [],
-      "evidence": [],
-      "notes": "",
-      "exclusion_reason": "social idea object: out of scope per spec §4"
-    }
-  ],
-  "studies": []
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRay",
+   "tickview_id": "Ray",
+   "name": "Ray",
+   "group": "Trend tools",
+   "icon": "ray",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolInfoLine",
+   "tickview_id": "InfoLine",
+   "name": "Info line",
+   "group": "Trend tools",
+   "icon": "info-line",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolExtended",
+   "tickview_id": "ExtLine",
+   "name": "Extended line",
+   "group": "Trend tools",
+   "icon": "extended-line",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTrendAngle",
+   "tickview_id": "TrendAngle",
+   "name": "Trend angle",
+   "group": "Trend tools",
+   "icon": "trend-angle",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolHorzLine",
+   "tickview_id": "HLine",
+   "name": "Horizontal line",
+   "group": "Trend tools",
+   "icon": "horizontal-line",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolHorzRay",
+   "tickview_id": "HRay",
+   "name": "Horizontal ray",
+   "group": "Trend tools",
+   "icon": "horizontal-ray",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolVertLine",
+   "tickview_id": "VLine",
+   "name": "Vertical line",
+   "group": "Trend tools",
+   "icon": "vertical-line",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolCrossLine",
+   "tickview_id": "CrossLine",
+   "name": "Crossline",
+   "group": "Trend tools",
+   "icon": "cross-line",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolParallelChannel",
+   "tickview_id": "Channel",
+   "name": "Parallel channel",
+   "group": "Trend tools",
+   "icon": "channel",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRegressionTrend",
+   "tickview_id": "RegTrend",
+   "name": "Regression trend",
+   "group": "Trend tools",
+   "icon": "regression-trend",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis",
+    "tickchart/tests/drawing_goldens.rs::regtrend_band_hit_matches_geometry"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFlatBottom",
+   "tickview_id": "FlatChannel",
+   "name": "Flat top/bottom",
+   "group": "Trend tools",
+   "icon": "flat-channel",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolDisjointAngle",
+   "tickview_id": "DisjointChannel",
+   "name": "Disjoint channel",
+   "group": "Trend tools",
+   "icon": "disjoint-channel",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPitchfork",
+   "tickview_id": "Pitchfork",
+   "name": "Pitchfork",
+   "group": "Trend tools",
+   "icon": "pitchfork",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolSchiffPitchfork2",
+   "tickview_id": "SchiffPitchfork",
+   "name": "Schiff pitchfork",
+   "group": "Trend tools",
+   "icon": "schiff-pitchfork",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolSchiffPitchfork",
+   "tickview_id": "ModifiedSchiffPitchfork",
+   "name": "Modified Schiff pitchfork",
+   "group": "Trend tools",
+   "icon": "modified-schiff",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolInsidePitchfork",
+   "tickview_id": "InsidePitchfork",
+   "name": "Inside pitchfork",
+   "group": "Trend tools",
+   "icon": "inside-pitchfork",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::tv_anchor_counts_match_implementation",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::trend_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-trend.md",
+    "docs/screenshots/parity/trend-dark.png",
+    "docs/screenshots/parity/trend-light.png"
+   ],
+   "notes": "TV geometry contract + hit fixes; see evidence doc."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibRetracement",
+   "tickview_id": "Fib",
+   "name": "Fib retracement",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fibonacci",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "TV level set 0..100%; screen-space levels (log-axis placement noted divergence in evidence)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTrendBasedFibExtension",
+   "tickview_id": "FibExt",
+   "name": "Trend-based fib extension",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fibonacci-extension",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Levels project from c along a->b price delta; TV ratio set incl. 1.272+."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibChannel",
+   "tickview_id": "FibChannel",
+   "name": "Fib channel",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-channel",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Rails = base a->b shifted by ratio*(c-a); TV ratio set."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibTimeZone",
+   "tickview_id": "FibTimeZone",
+   "name": "Fib time zone",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-time-zone",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Verticals at fib ratios of the anchor bar span incl. 1.618/2.618."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibSpeedResistanceFan",
+   "tickview_id": "FibSpeedFan",
+   "name": "Fib speed resistance fan",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-speed-fan",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "TV anchors=2; TickView reduced from 3 to 2. Rays from origin to ratio points on vertical through b."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTrendBasedFibTime",
+   "tickview_id": "FibTime",
+   "name": "Trend-based fib time",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-time",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "3 anchors accepted; vertical ratio set as FibTimeZone (trend anchor c reserved)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibCircles",
+   "tickview_id": "FibCircles",
+   "name": "Fib circles",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-circles",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Radii base+(outer-base)*ratio around a; TV ratio set incl. 161.8%."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibSpiral",
+   "tickview_id": "FibSpiral",
+   "name": "Fib spiral",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-spiral",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "TV anchors=3; TickView raised from 2 to 3. Growth spiral radius*turn-fraction."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibSpeedResistanceArcs",
+   "tickview_id": "FibArcs",
+   "name": "Fib speed resistance arcs",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-arcs",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Swept arcs between |a-b| and |a-c| radii at TV ratios."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFibWedge",
+   "tickview_id": "FibWedge",
+   "name": "Fib wedge",
+   "group": "Gann and Fibonacci tools",
+   "icon": "fib-wedge",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Edges a->b, a->c plus intermediate ratio lines 23.6..78.6%."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPitchfan",
+   "tickview_id": "Pitchfan",
+   "name": "Pitchfan",
+   "group": "Gann and Fibonacci tools",
+   "icon": "pitchfan",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Rays from origin through ratio points of the b->c span; dotted b->c guide."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolGannSquare",
+   "tickview_id": "GannBox",
+   "name": "Gann box",
+   "group": "Gann and Fibonacci tools",
+   "icon": "gann-box",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "TV 'Gann box': rect + quarter grid + diagonals."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolGannFixed",
+   "tickview_id": "GannSquareFixed",
+   "name": "Gann square fixed",
+   "group": "Gann and Fibonacci tools",
+   "icon": "gann-square-fixed",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "Square side = max(|dx|,|dy|) signed by b; quarter grid + diagonals."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolGannComplex",
+   "tickview_id": "GannSquare",
+   "name": "Gann square",
+   "group": "Gann and Fibonacci tools",
+   "icon": "gann-square",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::gannfib_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::gannfib_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-gannfib.md",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "TV 'Gann square': grid + complex rays from origin corner to far-edge fractions (1/8..7/8)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolGannFan",
+   "tickview_id": "GannFan",
+   "name": "Gann fan",
+   "group": "Gann and Fibonacci tools",
+   "icon": "gann-fan",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart::drawings::tests::gann_price_uses_tv_ratios",
+    "tickchart::drawings::tests::gann_fan_has_nine_tv_rays_and_labels",
+    "tickchart::chart::tests::gann_fan_hit_tests_follow_ratio_rays",
+    "tickview::app::tests::every_drawing_tool_has_a_unique_icon",
+    "tickview::drawing_toolbar::tests::bar_sits_top_right_with_16px_inset",
+    "tickchart/tests/drawing_goldens.rs::gann_fan_case_hits_tv_rays_both_axes"
+   ],
+   "evidence": [
+    "docs/evidence/tv/gann-fan.md",
+    "docs/screenshots/parity/gann-fan-dark.png",
+    "docs/screenshots/parity/gannfib-dark.png"
+   ],
+   "notes": "M1 ratio geometry + M2 log-axis ray fix (rays pass through ratio point at end bar)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineTool5PointsPattern",
+   "tickview_id": "Xabcd",
+   "name": "XABCD pattern",
+   "group": "Patterns",
+   "icon": "xabcd",
+   "anchors": 5,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 5-pivot XABCD; segment-midpoint hit path."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolCypherPattern",
+   "tickview_id": "Cypher",
+   "name": "Cypher pattern",
+   "group": "Patterns",
+   "icon": "cypher",
+   "anchors": 5,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 5-pivot Cypher; shared connected-pivot renderer."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolHeadAndShoulders",
+   "tickview_id": "HeadShoulders",
+   "name": "Head and shoulders",
+   "group": "Patterns",
+   "icon": "head-shoulders",
+   "anchors": 5,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 5 anchors (LS,H,RS + 2 neckline)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolABCD",
+   "tickview_id": "Abcd",
+   "name": "ABCD pattern",
+   "group": "Patterns",
+   "icon": "abcd",
+   "anchors": 4,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 4-pivot ABCD."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTrianglePattern",
+   "tickview_id": "TrianglePattern",
+   "name": "Triangle pattern",
+   "group": "Patterns",
+   "icon": "triangle-pattern",
+   "anchors": 5,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 5-pivot triangle (A..E)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolThreeDrivers",
+   "tickview_id": "ThreeDrives",
+   "name": "Three drives pattern",
+   "group": "Patterns",
+   "icon": "three-drives",
+   "anchors": 5,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "TV 5-pivot three drives."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolElliottImpulse",
+   "tickview_id": "ElliottImpulse",
+   "name": "Elliott impulse wave (1\u00b72\u00b73\u00b74\u00b75)",
+   "group": "Patterns",
+   "icon": "elliott-impulse",
+   "anchors": 6,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "6 pivots incl. origin 0; waves 1..5 labelled."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolElliottCorrection",
+   "tickview_id": "ElliottCorrection",
+   "name": "Elliott correction wave (A\u00b7B\u00b7C)",
+   "group": "Patterns",
+   "icon": "elliott-correction",
+   "anchors": 4,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "4 pivots incl. origin 0."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolElliottTriangle",
+   "tickview_id": "ElliottTriangle",
+   "name": "Elliott triangle wave (A\u00b7B\u00b7C\u00b7D\u00b7E)",
+   "group": "Patterns",
+   "icon": "elliott-triangle",
+   "anchors": 6,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "6 pivots incl. origin 0."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolElliottDoubleCombo",
+   "tickview_id": "ElliottDoubleCombo",
+   "name": "Elliott double combo wave (W\u00b7X\u00b7Y)",
+   "group": "Patterns",
+   "icon": "elliott-double-combo",
+   "anchors": 4,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "4 pivots incl. origin 0."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolElliottTripleCombo",
+   "tickview_id": "ElliottTripleCombo",
+   "name": "Elliott triple combo wave (W\u00b7X\u00b7Y\u00b7X\u00b7Z)",
+   "group": "Patterns",
+   "icon": "elliott-triple-combo",
+   "anchors": 6,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "6 pivots incl. origin 0."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolCircleLines",
+   "tickview_id": "CyclicLines",
+   "name": "Cyclic lines",
+   "group": "Patterns",
+   "icon": "cyclic-lines",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "Hit fix: circle through anchors + center spokes select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTimeCycles",
+   "tickview_id": "TimeCycles",
+   "name": "Time cycles",
+   "group": "Patterns",
+   "icon": "time-cycles",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "Hit fix: painted verticals at k*|b-a| select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolSineLine",
+   "tickview_id": "SineLine",
+   "name": "Sine line",
+   "group": "Patterns",
+   "icon": "sine-line",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::pattern_anchor_counts_and_labels_match_tv",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::pattern_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-patterns.md",
+    "docs/screenshots/parity/patterns-dark.png"
+   ],
+   "notes": "Hit fix: two-cycle sine curve + baseline select (shared sine_points)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRiskRewardLong",
+   "tickview_id": "LongPosition",
+   "name": "Long position",
+   "group": "Forecasting and measurement tools",
+   "icon": "long-position",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Box-select inside profit/loss band to right edge; R/R chips."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRiskRewardShort",
+   "tickview_id": "ShortPosition",
+   "name": "Short position",
+   "group": "Forecasting and measurement tools",
+   "icon": "short-position",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Box-select inside profit/loss band to right edge; R/R chips."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPrediction",
+   "tickview_id": "PositionForecast",
+   "name": "Position forecast",
+   "group": "Forecasting and measurement tools",
+   "icon": "position-forecast",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Hit fix: box-select band (was anchor-polyline only)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolBarsPattern",
+   "tickview_id": "BarsPattern",
+   "name": "Bars pattern",
+   "group": "Forecasting and measurement tools",
+   "icon": "bars-pattern",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart::datatools::tests::offset_default_and_stored",
+    "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
+    "app::tests::every_drawing_tool_has_a_unique_icon"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-bars-ghost.md",
+    "docs/screenshots/parity/barghost-dark.png"
+   ],
+   "notes": "Offset in extra[0] (bar-count + price shift); source rect selects, ghost is tinted copy."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolGhostFeed",
+   "tickview_id": "GhostFeed",
+   "name": "Ghost feed",
+   "group": "Forecasting and measurement tools",
+   "icon": "ghost-feed",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart::datatools::tests::offset_default_and_stored",
+    "tickchart::tests::drawing_goldens::bars_ghost_cases_hit_source_range",
+    "app::tests::every_drawing_tool_has_a_unique_icon"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-bars-ghost.md",
+    "docs/screenshots/parity/barghost-dark.png"
+   ],
+   "notes": "Whole visible series shifted by the same offset; source rect selects."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolProjection",
+   "tickview_id": "Sector",
+   "name": "Sector",
+   "group": "Forecasting and measurement tools",
+   "icon": "sector",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "3 anchors confirmed; hit fix: filled wedge interior selects."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolAnchoredVWAP",
+   "tickview_id": "AnchoredVwap",
+   "name": "Anchored VWAP",
+   "group": "Forecasting and measurement tools",
+   "icon": "anchored-vwap",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart::datatools::tests::vwap_hand_computed",
+    "tickchart::datatools::tests::vwap_anchor_offset_skips_earlier_bars",
+    "tickchart::datatools::tests::vwap_short_history_is_empty",
+    "tickchart::tests::drawing_goldens::vwap_case_hits_curve_and_misses_off",
+    "app::tests::every_drawing_tool_has_a_unique_icon"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-vwap.md",
+    "docs/screenshots/parity/vwap-dark.png"
+   ],
+   "notes": "TV recomputes VWAP from chart data; we compute at paint/hit time, nothing persisted. Zero-volume bars emit no point."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFixedRangeVolumeProfile",
+   "tickview_id": "FixedRangeVolumeProfile",
+   "name": "Fixed range volume profile",
+   "group": "Forecasting and measurement tools",
+   "icon": "volume-profile-fixed",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart::datatools::tests::profile_hand_computed_poc_and_value_area",
+    "tickchart::datatools::tests::profile_empty_or_flat_range_is_none",
+    "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
+    "app::tests::every_drawing_tool_has_a_unique_icon"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-volume-profile.md",
+    "docs/screenshots/parity/vprofile-dark.png"
+   ],
+   "notes": "Close-only binning, 24 bins, 70% value area from POC; right-anchored at range end."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolAnchoredVolumeProfile",
+   "tickview_id": "AnchoredVolumeProfile",
+   "name": "Anchored volume profile",
+   "group": "Forecasting and measurement tools",
+   "icon": "volume-profile-anchored",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart::tests::drawing_goldens::profile_cases_hit_poc_and_value_area",
+    "tickchart::tests::drawing_goldens::profiles_survive_anchor_past_end",
+    "app::tests::every_drawing_tool_has_a_unique_icon"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-volume-profile.md",
+    "docs/screenshots/parity/vprofile-dark.png"
+   ],
+   "notes": "Same binning as fixed range; extends to last bar, hugs plot right edge."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPriceRange",
+   "tickview_id": "PriceRange",
+   "name": "Price range",
+   "group": "Forecasting and measurement tools",
+   "icon": "price-range",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Label now p1 -> p2 (+x.xx%) per TV."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolDateRange",
+   "tickview_id": "DateRange",
+   "name": "Date range",
+   "group": "Forecasting and measurement tools",
+   "icon": "date-range",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Label now N bars per TV (was static text)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolDateAndPriceRange",
+   "tickview_id": "DatePriceRange",
+   "name": "Date and price range",
+   "group": "Forecasting and measurement tools",
+   "icon": "date-price-range",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::forecast_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::forecast_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-forecast.md",
+    "docs/screenshots/parity/forecast-dark.png"
+   ],
+   "notes": "Label now p \u00b7 N bars per TV."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolBrush",
+   "tickview_id": "Brush",
+   "name": "Brush",
+   "group": "Geometric shapes",
+   "icon": "brush",
+   "anchors": 0,
+   "interaction": "freehand",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Stroke trail a->b->vertices selects."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolHighlighter",
+   "tickview_id": "Highlighter",
+   "name": "Highlighter",
+   "group": "Geometric shapes",
+   "icon": "highlighter",
+   "anchors": 0,
+   "interaction": "freehand",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Stroke trail selects (same path model as brush)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolArrowMarker",
+   "tickview_id": "ArrowMarker",
+   "name": "Arrow marker",
+   "group": "Geometric shapes",
+   "icon": "arrow-marker",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Glyph-extent hit: 16px around anchor."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolArrow",
+   "tickview_id": "Arrow",
+   "name": "Arrow",
+   "group": "Geometric shapes",
+   "icon": "arrow",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Shaft + head select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolArrowMarkUp",
+   "tickview_id": "ArrowMarkUp",
+   "name": "Arrow mark up",
+   "group": "Geometric shapes",
+   "icon": "arrow-mark-up",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Glyph-extent hit: 16px around anchor."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolArrowMarkDown",
+   "tickview_id": "ArrowMarkDown",
+   "name": "Arrow mark down",
+   "group": "Geometric shapes",
+   "icon": "arrow-mark-down",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Glyph-extent hit: 16px around anchor."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRectangle",
+   "tickview_id": "Rect",
+   "name": "Rectangle",
+   "group": "Geometric shapes",
+   "icon": "rectangle",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Border always; interior when filled."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolRotatedRectangle",
+   "tickview_id": "RotatedRect",
+   "name": "Rotated rectangle",
+   "group": "Geometric shapes",
+   "icon": "rotated-rect",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Parallelogram interior when filled; edges always."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPath",
+   "tickview_id": "Path",
+   "name": "Path",
+   "group": "Geometric shapes",
+   "icon": "path",
+   "anchors": 0,
+   "interaction": "open-path",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Open-path vertex chain."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolCircle",
+   "tickview_id": "Circle",
+   "name": "Circle",
+   "group": "Geometric shapes",
+   "icon": "circle-shape",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Ring always; disc interior when filled."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolEllipse",
+   "tickview_id": "Ellipse",
+   "name": "Ellipse",
+   "group": "Geometric shapes",
+   "icon": "ellipse",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Ring always; interior when filled."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPolyline",
+   "tickview_id": "Polyline",
+   "name": "Polyline",
+   "group": "Geometric shapes",
+   "icon": "polyline",
+   "anchors": 0,
+   "interaction": "open-path",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Open-path vertex chain."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTriangle",
+   "tickview_id": "TriangleShape",
+   "name": "Triangle",
+   "group": "Geometric shapes",
+   "icon": "triangle-shape",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Interior when filled; edges always."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolArc",
+   "tickview_id": "Arc",
+   "name": "Arc",
+   "group": "Geometric shapes",
+   "icon": "arc-shape",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Hit fix: sampled arc curve, not anchor chords."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolBezierQuadro",
+   "tickview_id": "Curve",
+   "name": "Curve",
+   "group": "Geometric shapes",
+   "icon": "curve-shape",
+   "anchors": 3,
+   "interaction": "three-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Hit fix: quadratic curve sample."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolBezierCubic",
+   "tickview_id": "DoubleCurve",
+   "name": "Double curve",
+   "group": "Geometric shapes",
+   "icon": "double-curve",
+   "anchors": 4,
+   "interaction": "multi-point",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::shape_anchor_counts_match_tv",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::shapes_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-shapes.md",
+    "docs/screenshots/parity/shapes-dark.png"
+   ],
+   "notes": "Hit fix: cubic curve sample (4 anchors)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolText",
+   "tickview_id": "Text",
+   "name": "Text",
+   "group": "Annotation tools",
+   "icon": "text",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Plain text at anchor (new Text kind, split from Note)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTextNote",
+   "tickview_id": "Note",
+   "name": "Note",
+   "group": "Annotation tools",
+   "icon": "note",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Bubble note (existing Note kind)."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPriceNote",
+   "tickview_id": "PriceNote",
+   "name": "Price note",
+   "group": "Annotation tools",
+   "icon": "price-note",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Price line + label; bounds select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolNote",
+   "tickview_id": "Pin",
+   "name": "Pin",
+   "group": "Annotation tools",
+   "icon": "pin",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Pin glyph; footprint select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTable",
+   "tickview_id": "Table",
+   "name": "Table",
+   "group": "Annotation tools",
+   "icon": "table",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "verified",
+   "tests": [
+    "app::store::tests::v2_payload_without_table_fields_loads",
+    "app::store::tests::table_cells_round_trip",
+    "tickchart::tests::drawing_goldens::table_case_hits_rect_and_misses_outside"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-table.md",
+    "docs/screenshots/parity/table-dark.png"
+   ],
+   "notes": "Default 3x3; settings popover rows/cols steppers + cell text; additive serde fields."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolCallout",
+   "tickview_id": "Callout",
+   "name": "Callout",
+   "group": "Annotation tools",
+   "icon": "callout",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Bubble with tail; bounds select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolComment",
+   "tickview_id": "Comment",
+   "name": "Comment",
+   "group": "Annotation tools",
+   "icon": "comment",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Comment bubble; bounds select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolPriceLabel",
+   "tickview_id": "PriceLabel",
+   "name": "Price label",
+   "group": "Annotation tools",
+   "icon": "price-label",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Axis-style price tag; bounds select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolSignpost",
+   "tickview_id": "Signpost",
+   "name": "Signpost",
+   "group": "Annotation tools",
+   "icon": "signpost",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Flag-on-pole glyph; footprint select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolFlagMark",
+   "tickview_id": "FlagMark",
+   "name": "Flag mark",
+   "group": "Annotation tools",
+   "icon": "flag-mark",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "verified",
+   "tests": [
+    "tickchart/tests/drawing_goldens.rs::text_kind_is_plain_and_note_kind_bubbles",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_hits_and_misses",
+    "tickchart/tests/drawing_goldens.rs::annotation_family_geometry_holds_on_log_axis"
+   ],
+   "evidence": [
+    "docs/evidence/tv/drawings-annotation.md",
+    "docs/screenshots/parity/annot-dark.png"
+   ],
+   "notes": "Flag glyph; footprint select."
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolImage",
+   "tickview_id": "Image",
+   "name": "Image",
+   "group": "Annotation tools",
+   "icon": "image",
+   "anchors": 2,
+   "interaction": "two-point",
+   "status": "excluded",
+   "tests": [],
+   "evidence": [],
+   "notes": "",
+   "exclusion_reason": "media object: out of scope per spec \u00a74"
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolTweet",
+   "tickview_id": "Post",
+   "name": "Post",
+   "group": "Annotation tools",
+   "icon": "post",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "excluded",
+   "tests": [],
+   "evidence": [],
+   "notes": "",
+   "exclusion_reason": "social content object: out of scope per spec \u00a74"
+  },
+  {
+   "kind": "drawing",
+   "tv_id": "LineToolIdea",
+   "tickview_id": "Idea",
+   "name": "Idea",
+   "group": "Annotation tools",
+   "icon": "idea",
+   "anchors": 1,
+   "interaction": "click",
+   "status": "excluded",
+   "tests": [],
+   "evidence": [],
+   "notes": "",
+   "exclusion_reason": "social idea object: out of scope per spec \u00a74"
+  }
+ ],
+ "studies": [
+  {
+   "kind": "study",
+   "tv_id": "ACCD@tv",
+   "tickview_id": "AccumulationDistribution",
+   "name": "Accumulation/Distribution",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "AwesomeOscillator@tv",
+   "tickview_id": "AwesomeOscillator",
+   "name": "Awesome Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "BB@tv",
+   "tickview_id": "BollingerBands",
+   "name": "Bollinger Bands",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "BollingerBandsR@tv",
+   "tickview_id": "PercentB",
+   "name": "%B",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "CCI@tv",
+   "tickview_id": "Cci",
+   "name": "Commodity Channel Index (CCI)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "ChaikinOscillator@tv",
+   "tickview_id": "ChaikinOscillator",
+   "name": "Chaikin Oscillator",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "chandeMO@tv",
+   "tickview_id": "Cmo",
+   "name": "Chande Momentum Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "CMF@tv",
+   "tickview_id": "ChaikinMoneyFlow",
+   "name": "Chaikin Money Flow",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "DetrendedPriceOscillator@tv",
+   "tickview_id": "Dpo",
+   "name": "Detrended Price Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "DM@tv",
+   "tickview_id": "Adx",
+   "name": "Average Directional Index (ADX)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "DONCH@tv",
+   "tickview_id": "DonchianChannels",
+   "name": "Donchian Channels",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "DoubleEMA@tv",
+   "tickview_id": "Dema",
+   "name": "Double EMA",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "EaseOfMovement@tv",
+   "tickview_id": "EaseOfMovement",
+   "name": "Ease of Movement",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "EFI@tv",
+   "tickview_id": "ElderForce",
+   "name": "Elder's Force Index",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "ENV@tv",
+   "tickview_id": "Envelope",
+   "name": "Envelope",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "hullMA@tv",
+   "tickview_id": "Hma",
+   "name": "Hull Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "HV@tv",
+   "tickview_id": "HistoricalVolatility",
+   "name": "Historical Volatility",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "IchimokuCloud@tv",
+   "tickview_id": "Ichimoku",
+   "name": "Ichimoku Cloud",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "KLTNR@tv",
+   "tickview_id": "KeltnerChannels",
+   "name": "Keltner Channels",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "KST@tv",
+   "tickview_id": "Kst",
+   "name": "KST Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "LinearRegression@tv",
+   "tickview_id": "LinReg",
+   "name": "Linear Regression",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MACD@tv",
+   "tickview_id": "Macd",
+   "name": "MACD",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MAExp@tv",
+   "tickview_id": "Ema",
+   "name": "Exponential Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MASimple@tv",
+   "tickview_id": "Sma",
+   "name": "Simple Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MAVolumeWeighted@tv",
+   "tickview_id": "Vwma",
+   "name": "Volume Weighted Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MAWeighted@tv",
+   "tickview_id": "Wma",
+   "name": "Weighted Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "MOM@tv",
+   "tickview_id": "Momentum",
+   "name": "Momentum",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_misc::misc_oscillators_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "OBV@tv",
+   "tickview_id": "Obv",
+   "name": "On Balance Volume (OBV)",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "PivotPointsStandard@tv",
+   "tickview_id": "Pivots",
+   "name": "Pivot Points Standard",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::pivot_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "PriceVolumeTrend@tv",
+   "tickview_id": "VolumePriceTrend",
+   "name": "Volume Price Trend",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "PSAR@tv",
+   "tickview_id": "Psar",
+   "name": "Parabolic SAR",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "ROC@tv",
+   "tickview_id": "Roc",
+   "name": "Rate of Change (ROC)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_misc::misc_oscillators_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "RSI@tv",
+   "tickview_id": "Rsi",
+   "name": "Relative Strength Index (RSI)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Accelerator",
+   "tickview_id": "Accelerator",
+   "name": "Accelerator Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Advance_Decline_Ratio_Bars",
+   "tickview_id": "",
+   "name": "Advance/Decline",
+   "pane": "",
+   "status": "excluded",
+   "tests": [],
+   "evidence": [],
+   "notes": "",
+   "exclusion_reason": "market-breadth study requires an external index feed; out of scope per spec \u00a74"
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Alma",
+   "tickview_id": "Alma",
+   "name": "Arnaud Legoux Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Aroon",
+   "tickview_id": "Aroon",
+   "name": "Aroon",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Average_True_Range",
+   "tickview_id": "Atr",
+   "name": "Average True Range",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Bias",
+   "tickview_id": "Bias",
+   "name": "Bias",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_misc::misc_oscillators_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Bollinger_Bands_Width",
+   "tickview_id": "BollingerBandsWidth",
+   "name": "Bollinger Bands Width",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;ChaikinVolatility",
+   "tickview_id": "ChaikinVolatility",
+   "name": "Chaikin Volatility",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Chandelier_Exit",
+   "tickview_id": "ChandelierExit",
+   "name": "Chandelier Exit",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Choppiness_Index",
+   "tickview_id": "ChoppinessIndex",
+   "name": "Choppiness Index",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Connors_RSI",
+   "tickview_id": "ConnorsRsi",
+   "name": "Connors RSI",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1a::wave1a_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Correlation_Coeff",
+   "tickview_id": "CorrelationCoeff",
+   "name": "Correlation Coefficient",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_corr::correlation_matches_python_reference",
+    "ta::registry::gold_corr::perfect_correlation_is_one",
+    "ta::registry::gold_corr::correlation_without_comparison_is_all_nan",
+    "ta::registry::gold_corr::constant_comparison_is_nan_not_panic",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;DMI",
+   "tickview_id": "Dmi",
+   "name": "Directional Movement",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;ElderRay",
+   "tickview_id": "ElderRay",
+   "name": "Elder-ray Index",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_misc::misc_oscillators_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;EmaRibbons",
+   "tickview_id": "EmaRibbons",
+   "name": "EMA Ribbons",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ribbon_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Fisher_Transform",
+   "tickview_id": "FisherTransform",
+   "name": "Fisher Transform",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;GarmanKlassVolatility",
+   "tickview_id": "GarmanKlassVolatility",
+   "name": "Garman-Klass Volatility",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Kama",
+   "tickview_id": "Kama",
+   "name": "Kaufman Adaptive Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Klinger",
+   "tickview_id": "Klinger",
+   "name": "Klinger Volume Oscillator",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Know_Sure_Thing",
+   "tickview_id": "KnowSureThing",
+   "name": "Know Sure Thing",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Lsma",
+   "tickview_id": "Lsma",
+   "name": "Least Squares Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;MassIndex",
+   "tickview_id": "MassIndex",
+   "name": "Mass Index",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;MoneyFlowIndex",
+   "tickview_id": "MoneyFlowIndex",
+   "name": "Money Flow Index",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;ParkinsonVolatility",
+   "tickview_id": "ParkinsonVolatility",
+   "name": "Parkinson Volatility",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Price_Oscillator",
+   "tickview_id": "PriceOscillator",
+   "name": "Price Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;PviDvi",
+   "tickview_id": "PviDvi",
+   "name": "PVI & DVI",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Rank_Correlation_Index",
+   "tickview_id": "RankCorrelationIndex",
+   "name": "Rank Correlation Index",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_corr::correlation_matches_python_reference",
+    "ta::registry::gold_corr::perfect_correlation_is_one",
+    "ta::registry::gold_corr::correlation_without_comparison_is_all_nan",
+    "ta::registry::gold_corr::constant_comparison_is_nan_not_panic",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;RateOfChangeVol",
+   "tickview_id": "RateOfChangeVol",
+   "name": "ROC Volume",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Relative_Volatility_Index",
+   "tickview_id": "RelativeVolatilityIndex",
+   "name": "Relative Volatility Index",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Rma",
+   "tickview_id": "Rma",
+   "name": "Smoothed Moving Average",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;RogersSatchellVolatility",
+   "tickview_id": "RogersSatchellVolatility",
+   "name": "Rogers-Satchell Volatility",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::channels::tests::channel_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;SMI_Ergodic_Indicator_Oscillator",
+   "tickview_id": "SmiErgodic",
+   "name": "SMI Ergodic Indicator/Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1b::wave1b_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Supertrend",
+   "tickview_id": "Supertrend",
+   "name": "Supertrend",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies/STD_Supertrend.json",
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Tsi",
+   "tickview_id": "Tsi",
+   "name": "True Strength Index (TSI)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Volatility_Stop",
+   "tickview_id": "VolatilityStop",
+   "name": "Volatility Stop",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;VolumeOscillator",
+   "tickview_id": "VolumeOscillator",
+   "name": "Volume Oscillator",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;VolumeRatio",
+   "tickview_id": "VolumeRatio",
+   "name": "Volume Ratio",
+   "pane": "volume",
+   "status": "verified",
+   "tests": [
+    "ta::vols::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Vortex",
+   "tickview_id": "Vortex",
+   "name": "Vortex",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::trends::tests::trend_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Whilliams_Fractals",
+   "tickview_id": "WilliamsFractals",
+   "name": "Williams Fractal",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Zig_Zag",
+   "tickview_id": "ZigZag",
+   "name": "Zig Zag",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_wave1c::wave1c_match_goldens",
+    "ta::registry::gold_wave1c::fractals_and_zigzag_do_not_repaint",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;Zlema",
+   "tickview_id": "Zlema",
+   "name": "Zero-Lag EMA",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "STD;ZScore",
+   "tickview_id": "ZScore",
+   "name": "Z-Score",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_misc::misc_oscillators_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "Stochastic@tv",
+   "tickview_id": "Stochastic",
+   "name": "Stochastic",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "StochasticRSI@tv",
+   "tickview_id": "StochasticRsi",
+   "name": "Stochastic RSI",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "TripleEMA@tv",
+   "tickview_id": "Tema",
+   "name": "Triple EMA",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_ma::ma_goldens_match_compute",
+    "ta::registry::gold_ma::ma_plots_match_meta",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "Trix@tv",
+   "tickview_id": "Trix",
+   "name": "TRIX",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "UltimateOsc@tv",
+   "tickview_id": "UltimateOscillator",
+   "name": "Ultimate Oscillator",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "VigorIndex@tv",
+   "tickview_id": "Rvi",
+   "name": "Relative Vigor Index (RVI)",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "VWAP@tv",
+   "tickview_id": "Vwap",
+   "name": "VWAP",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::ctx_tests::vwap_session_anchors",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "WilliamR@tv",
+   "tickview_id": "WilliamsR",
+   "name": "Williams %R",
+   "pane": "separate",
+   "status": "verified",
+   "tests": [
+    "ta::oscs::tests::goldens_match_all",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  },
+  {
+   "kind": "study",
+   "tv_id": "WilliamsAlligator@tv",
+   "tickview_id": "Alligator",
+   "name": "Alligator",
+   "pane": "price",
+   "status": "verified",
+   "tests": [
+    "ta::registry::gold_price::price_overlays_match_goldens",
+    "tv_defaults::registry_defaults_match_tv_wire"
+   ],
+   "evidence": [
+    "docs/evidence/tv/studies-catalog-notes.md",
+    "docs/evidence/tv-studies-defaults.json"
+   ],
+   "notes": "",
+   "exclusion_reason": null
+  }
+ ]
 }

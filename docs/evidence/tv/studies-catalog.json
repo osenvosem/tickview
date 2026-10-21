@@ -1,0 +1,1078 @@
+{
+ "schema_version": 1,
+ "source": {
+  "target": "TradingView Desktop 3.4.1",
+  "wire": "docs/evidence/tv-studies-defaults.json",
+  "meta_dir": "docs/evidence/tv/studies"
+ },
+ "tools": [
+  {
+   "tv_id": "ACCD@tv",
+   "name": "Accumulation/Distribution",
+   "tickview_id": "AccumulationDistribution",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "AwesomeOscillator@tv",
+   "name": "Awesome Oscillator",
+   "tickview_id": "AwesomeOscillator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "BB@tv",
+   "name": "Bollinger Bands",
+   "tickview_id": "BollingerBands",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20,
+    "stdDev": 2
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "BollingerBandsR@tv",
+   "name": "%B",
+   "tickview_id": "PercentB",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20,
+    "stdDev": 2
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "CCI@tv",
+   "name": "Commodity Channel Index (CCI)",
+   "tickview_id": "Cci",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "ChaikinOscillator@tv",
+   "name": "Chaikin Oscillator",
+   "tickview_id": "ChaikinOscillator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "fast length": 3,
+    "slow length": 10
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "chandeMO@tv",
+   "name": "Chande Momentum Oscillator",
+   "tickview_id": "Cmo",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "CMF@tv",
+   "name": "Chaikin Money Flow",
+   "tickview_id": "ChaikinMoneyFlow",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "DetrendedPriceOscillator@tv",
+   "name": "Detrended Price Oscillator",
+   "tickview_id": "Dpo",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "centered": false,
+    "period": 21
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "DM@tv",
+   "name": "Average Directional Index (ADX)",
+   "tickview_id": "Adx",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "ADX smoothing": 14,
+    "DI Length": 14
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "DONCH@tv",
+   "name": "Donchian Channels",
+   "tickview_id": "DonchianChannels",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "DoubleEMA@tv",
+   "name": "Double EMA",
+   "tickview_id": "Dema",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "Length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "EaseOfMovement@tv",
+   "name": "Ease of Movement",
+   "tickview_id": "EaseOfMovement",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "divisor": 10000,
+    "length": 14
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "EFI@tv",
+   "name": "Elder's Force Index",
+   "tickview_id": "ElderForce",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 13
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "ENV@tv",
+   "name": "Envelope",
+   "tickview_id": "Envelope",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "exponential": false,
+    "length": 20,
+    "percent": 10
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "hullMA@tv",
+   "name": "Hull Moving Average",
+   "tickview_id": "Hma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "HV@tv",
+   "name": "Historical Volatility",
+   "tickview_id": "HistoricalVolatility",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 10
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "IchimokuCloud@tv",
+   "name": "Ichimoku Cloud",
+   "tickview_id": "Ichimoku",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "displacement": 26,
+    "leading span 2 periods": 52,
+    "standard line periods": 26,
+    "turning line periods": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "KLTNR@tv",
+   "name": "Keltner Channels",
+   "tickview_id": "KeltnerChannels",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "exponential": true,
+    "length": 20,
+    "multiplier": 1
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "KST@tv",
+   "name": "KST Oscillator",
+   "tickview_id": "Kst",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "ROCLen1": 10,
+    "ROCLen2": 15,
+    "ROCLen3": 20,
+    "ROCLen4": 30,
+    "SMALen1": 10,
+    "SMALen2": 10,
+    "SMALen3": 10,
+    "SMALen4": 15,
+    "SigLen": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "LinearRegression@tv",
+   "name": "Linear Regression",
+   "tickview_id": "LinReg",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "count": 100,
+    "lower diviation": -2,
+    "upper diviation": 2,
+    "use lower diviation": true,
+    "use upper diviation": true
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MACD@tv",
+   "name": "MACD",
+   "tickview_id": "Macd",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "fast length": 12,
+    "signal smoothing": 9,
+    "simple ma(oscillator)": false,
+    "simple ma(signal line)": false,
+    "slow length": 26
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MAExp@tv",
+   "name": "Exponential Moving Average",
+   "tickview_id": "Ema",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MASimple@tv",
+   "name": "Simple Moving Average",
+   "tickview_id": "Sma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MAVolumeWeighted@tv",
+   "name": "Volume Weighted Moving Average",
+   "tickview_id": "Vwma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 20
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MAWeighted@tv",
+   "name": "Weighted Moving Average",
+   "tickview_id": "Wma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "MOM@tv",
+   "name": "Momentum",
+   "tickview_id": "Momentum",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 10
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "OBV@tv",
+   "name": "On Balance Volume (OBV)",
+   "tickview_id": "Obv",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "PivotPointsStandard@tv",
+   "name": "Pivot Points Standard",
+   "tickview_id": "Pivots",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "lookBack": 15,
+    "showHistoricalPivots": true
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "PriceVolumeTrend@tv",
+   "name": "Volume Price Trend",
+   "tickview_id": "VolumePriceTrend",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "PSAR@tv",
+   "name": "Parabolic SAR",
+   "tickview_id": "Psar",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "increment": 0.02,
+    "max value": 0.2,
+    "start": 0.02
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "ROC@tv",
+   "name": "Rate of Change (ROC)",
+   "tickview_id": "Roc",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "RSI@tv",
+   "name": "Relative Strength Index (RSI)",
+   "tickview_id": "Rsi",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 14
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "STD;Accelerator",
+   "name": "Accelerator Oscillator",
+   "tickview_id": "Accelerator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Advance_Decline_Ratio_Bars",
+   "name": "Advance/Decline",
+   "tickview_id": null,
+   "scope": "excluded",
+   "exclusion_reason": "market-breadth study requires an external index feed; out of scope per spec \u00a74",
+   "default_inputs": {
+    "in_0": 9,
+    "in_2": true
+   },
+   "is_price_study": false,
+   "source": "meta"
+  },
+  {
+   "tv_id": "STD;Alma",
+   "name": "Arnaud Legoux Moving Average",
+   "tickview_id": "Alma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Aroon",
+   "name": "Aroon",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 14,
+    "in_2": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Average_True_Range",
+   "name": "Average True Range",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 14,
+    "in_1": "RMA",
+    "in_3": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Bias",
+   "name": "Bias",
+   "tickview_id": "Bias",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Bollinger_Bands_Width",
+   "name": "Bollinger Bands Width",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 20,
+    "in_1": "close",
+    "in_2": 2,
+    "in_3": 125,
+    "in_4": 125,
+    "in_6": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;ChaikinVolatility",
+   "name": "Chaikin Volatility",
+   "tickview_id": "ChaikinVolatility",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Chandelier_Exit",
+   "name": "Chandelier Exit",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 22,
+    "in_1": 22,
+    "in_2": 3,
+    "in_4": true
+   },
+   "is_price_study": true,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Choppiness_Index",
+   "name": "Choppiness Index",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 14,
+    "in_1": 0,
+    "in_3": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Connors_RSI",
+   "name": "Connors RSI",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 3,
+    "in_1": 2,
+    "in_2": 100,
+    "in_4": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Correlation_Coeff",
+   "name": "Correlation Coefficient",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": "GOOG",
+    "in_1": "close",
+    "in_2": 20
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;DMI",
+   "name": "Directional Movement",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 14,
+    "in_1": 14,
+    "in_3": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;ElderRay",
+   "name": "Elder-ray Index",
+   "tickview_id": "ElderRay",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;EmaRibbons",
+   "name": "EMA Ribbons",
+   "tickview_id": "EmaRibbons",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Fisher_Transform",
+   "name": "Fisher Transform",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 9,
+    "in_2": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;GarmanKlassVolatility",
+   "name": "Garman-Klass Volatility",
+   "tickview_id": "GarmanKlassVolatility",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Kama",
+   "name": "Kaufman Adaptive Moving Average",
+   "tickview_id": "Kama",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Klinger",
+   "name": "Klinger Volume Oscillator",
+   "tickview_id": "Klinger",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Know_Sure_Thing",
+   "name": "Know Sure Thing",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 10,
+    "in_1": 15,
+    "in_10": true,
+    "in_2": 20,
+    "in_3": 30,
+    "in_4": 10,
+    "in_5": 10,
+    "in_6": 10,
+    "in_7": 15,
+    "in_8": 9
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Lsma",
+   "name": "Least Squares Moving Average",
+   "tickview_id": "Lsma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;MassIndex",
+   "name": "Mass Index",
+   "tickview_id": "MassIndex",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;MoneyFlowIndex",
+   "name": "Money Flow Index",
+   "tickview_id": "MoneyFlowIndex",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;ParkinsonVolatility",
+   "name": "Parkinson Volatility",
+   "tickview_id": "ParkinsonVolatility",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Price_Oscillator",
+   "name": "Price Oscillator",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": "close",
+    "in_1": 12,
+    "in_2": 26,
+    "in_3": 9,
+    "in_4": "EMA",
+    "in_5": "EMA",
+    "in_7": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;PviDvi",
+   "name": "PVI & DVI",
+   "tickview_id": "PviDvi",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Rank_Correlation_Index",
+   "name": "Rank Correlation Index",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": "close",
+    "in_1": 10,
+    "in_2": "SMA",
+    "in_3": 14,
+    "in_4": 2,
+    "in_6": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;RateOfChangeVol",
+   "name": "ROC Volume",
+   "tickview_id": "RateOfChangeVol",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Relative_Volatility_Index",
+   "name": "Relative Volatility Index",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 10,
+    "in_1": 0,
+    "in_2": "SMA",
+    "in_3": 14,
+    "in_4": 2,
+    "in_6": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Rma",
+   "name": "Smoothed Moving Average",
+   "tickview_id": "Rma",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;RogersSatchellVolatility",
+   "name": "Rogers-Satchell Volatility",
+   "tickview_id": "RogersSatchellVolatility",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;SMI_Ergodic_Indicator_Oscillator",
+   "name": "SMI Ergodic Indicator/Oscillator",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 20,
+    "in_1": 5,
+    "in_2": 5,
+    "in_4": true
+   },
+   "is_price_study": false,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Supertrend",
+   "name": "Supertrend",
+   "tickview_id": "Supertrend",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Tsi",
+   "name": "True Strength Index (TSI)",
+   "tickview_id": "Tsi",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Volatility_Stop",
+   "name": "Volatility Stop",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 20,
+    "in_1": "close",
+    "in_2": 2,
+    "in_4": true
+   },
+   "is_price_study": true,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;VolumeOscillator",
+   "name": "Volume Oscillator",
+   "tickview_id": "VolumeOscillator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;VolumeRatio",
+   "name": "Volume Ratio",
+   "tickview_id": "VolumeRatio",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Vortex",
+   "name": "Vortex",
+   "tickview_id": "Vortex",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;Whilliams_Fractals",
+   "name": "Williams Fractal",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 2
+   },
+   "is_price_study": true,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Zig_Zag",
+   "name": "Zig Zag",
+   "tickview_id": null,
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "in_0": 5,
+    "in_1": 10,
+    "in_2": "#2962FF",
+    "in_3": true,
+    "in_4": true,
+    "in_5": true,
+    "in_6": true,
+    "in_7": "Absolute"
+   },
+   "is_price_study": true,
+   "source": "meta",
+   "is_stub": false
+  },
+  {
+   "tv_id": "STD;Zlema",
+   "name": "Zero-Lag EMA",
+   "tickview_id": "Zlema",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "STD;ZScore",
+   "name": "Z-Score",
+   "tickview_id": "ZScore",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "derived"
+  },
+  {
+   "tv_id": "Stochastic@tv",
+   "name": "Stochastic",
+   "tickview_id": "Stochastic",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "D": 3,
+    "K": 14,
+    "smooth": 3
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "StochasticRSI@tv",
+   "name": "Stochastic RSI",
+   "tickview_id": "StochasticRsi",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "D": 3,
+    "K": 3,
+    "RSI Length": 14,
+    "Stochastic Length": 14
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "TripleEMA@tv",
+   "name": "Triple EMA",
+   "tickview_id": "Tema",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "Length": 9
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "Trix@tv",
+   "name": "TRIX",
+   "tickview_id": "Trix",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 18
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "UltimateOsc@tv",
+   "name": "Ultimate Oscillator",
+   "tickview_id": "UltimateOscillator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length1": 7,
+    "length2": 14,
+    "length3": 28
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "VigorIndex@tv",
+   "name": "Relative Vigor Index (RVI)",
+   "tickview_id": "Rvi",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 10
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "VWAP@tv",
+   "name": "VWAP",
+   "tickview_id": "Vwap",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {},
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "WilliamR@tv",
+   "name": "Williams %R",
+   "tickview_id": "WilliamsR",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "length": 14
+   },
+   "is_price_study": null,
+   "source": "wire"
+  },
+  {
+   "tv_id": "WilliamsAlligator@tv",
+   "name": "Alligator",
+   "tickview_id": "Alligator",
+   "scope": "in-scope",
+   "exclusion_reason": null,
+   "default_inputs": {
+    "jaw length": 13,
+    "lips length": 5,
+    "teeth length": 8
+   },
+   "is_price_study": null,
+   "source": "wire"
+  }
+ ]
+}

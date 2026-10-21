@@ -1,0 +1,157 @@
+{
+ "name": "Pivot Points Standard",
+ "scriptIdPart": "STD;Pivot_Points_Standard",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "graphics": {
+    "dwglabels": {
+     "labels": {
+      "visible": true
+     }
+    },
+    "dwglines": {
+     "lines": {
+      "visible": true
+     }
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": "D",
+    "pineFeatures": "{\"indicator\":1,\"line\":1,\"label\":1,\"request.security\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_d/4gUko60LUl6As60OT64g==_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"
+   },
+   "palettes": {
+    "palette_common": {
+     "colors": {
+      "0": {
+       "color": "rgba(41,98,255,1)"
+      },
+      "1": {
+       "color": "rgba(255,255,255,1)"
+      }
+     }
+    }
+   },
+   "styles": {}
+  },
+  "description": "Pivot points standard",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "graphics": {
+   "dwglabels": {
+    "labels": {
+     "name": "labels",
+     "title": "Labels"
+    }
+   },
+   "dwglines": {
+    "lines": {
+     "name": "lines",
+     "title": "Lines"
+    }
+   }
+  },
+  "historyCalculationMayChange": true,
+  "id": "Script$STD;Pivot_Points_Standard@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_d/4gUko60LUl6As60OT64g==_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",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"line\":1,\"label\":1,\"request.security\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "D",
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "name": "higherTF",
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "palettes": {
+   "palette_common": {
+    "colors": {
+     "0": {
+      "name": "Color 0"
+     },
+     "1": {
+      "name": "Color 1"
+     }
+    },
+    "valToIndex": {
+     "0": 0,
+     "1": 1
+    }
+   }
+  },
+  "pine": {
+   "digest": "fcbbcc27a77c526c69479b183cac76a848240168",
+   "version": "35.0"
+  },
+  "plots": [],
+  "scriptIdPart": "STD;Pivot_Points_Standard",
+  "shortDescription": "Pivots Std",
+  "styles": {},
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

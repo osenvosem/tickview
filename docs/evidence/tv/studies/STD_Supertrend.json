@@ -1,0 +1,265 @@
+{
+ "name": "SuperTrend",
+ "scriptIdPart": "STD;Supertrend",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "filledAreasStyle": {
+    "fill_0": {
+     "color": "rgba(76,175,80,0.1)",
+     "visible": true
+    },
+    "fill_1": {
+     "color": "rgba(242,54,69,0.1)",
+     "visible": true
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 10,
+    "in_1": 3,
+    "in_2": "",
+    "in_3": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"alertcondition\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_zEq6wOPA0/L47wx4TaUWXg==_ABfXtDASDkYWFqhFhgTwHL6WdEQ2l5nsFqz77mDbcQwPDNYHfv9KqQ4JkguJJPz0AitCcEQj+e/kt1aTLCcQnzGecSUk/vL76AFVvKCtXoAc2nu7IgvG2eyBqgtST8C/0GgFO7F3qH7fZTLilPXr0f6JgCX/08fO4tNYQ+wKvNDh8LQwHHiLS3Mi85NXDHjnrJ4fIDBaX4SnUg2PxejalbG5AhwySxbFQNBlWiAP9eP1W+ikaqv5rAofgts18vVYwuRzZpiAl+oPJCA3XB8DrOWUQkWJi6nwzcP3MJgWUzKqAqH50MCZ0mRNR1zqg+ncd6AwE//HTCSe12LnprwciXBmUaUplHaiutjZcj2hQUd2GC7Qj065K9x2wTtO2mdmBbAFKKTwxEnaKmRs+c5XtFlungs8JEzQby2w60Z2FCza436hDUCdZ8G4yI0YSe+fMTZGNRWEg+c3hrYrzhELh8SfA+4/d1+83KcnvMQUTsoeVuqr6PkaPWpyvK7fTxDEiGLfUwzi6mQesV0bV5Gns92AYYX8P/ZCg1NBuAJYjtE7M+ME8ZeazRf1+zHR7JXIJHe0T5NgbKsjAgOru6+b01Uaojh+x2uS1xdfIBMb1hfdqKyr9HbMkBsPh2bWqsb+C+7JGlgYoztkEQz0sFvFOtDIc5qnd7tJgPSg4JXuMnHjotMmOOe5TxaXE7aJJaMPIIBjQmoC6FzYvxJ+uIPiwB7mYxJZCkBrzAqlONXazVjgooQ5RqVgRl+yJkgXrpvEF2GAK5JOV162k80K6g8ropqRShWd66gXKPVPV2jETopiEF6PeOJVhIBuC1zUxX4iPUxhB60/ocJO6pJ7hbzP2yT3CMzNYMxlthkha4kPamai+vMng7VNY66iD79BVkEaANo18w8o0qQZz0kPHRa/xtZSeKgCB5FHWiB9D8H8v/OOXoy8j/orTwSimPOuwHbcnNh2FLAkQCE+Xg=="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#4CAF50",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 7,
+     "trackPrice": false
+    },
+    "plot_1": {
+     "color": "#F23645",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 7,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": null,
+     "display": 0,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Supertrend",
+  "docs": "",
+  "filledAreas": [
+   {
+    "fillgaps": false,
+    "id": "fill_0",
+    "isHidden": false,
+    "objAId": "plot_2",
+    "objBId": "plot_0",
+    "title": "Uptrend background",
+    "type": "plot_plot"
+   },
+   {
+    "fillgaps": false,
+    "id": "fill_1",
+    "isHidden": false,
+    "objAId": "plot_2",
+    "objBId": "plot_1",
+    "title": "Downtrend background",
+    "type": "plot_plot"
+   }
+  ],
+  "filledAreasStyle": {
+   "fill_0": {
+    "isHidden": false
+   },
+   "fill_1": {
+    "isHidden": false
+   }
+  },
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;Supertrend@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_zEq6wOPA0/L47wx4TaUWXg==_ABfXtDASDkYWFqhFhgTwHL6WdEQ2l5nsFqz77mDbcQwPDNYHfv9KqQ4JkguJJPz0AitCcEQj+e/kt1aTLCcQnzGecSUk/vL76AFVvKCtXoAc2nu7IgvG2eyBqgtST8C/0GgFO7F3qH7fZTLilPXr0f6JgCX/08fO4tNYQ+wKvNDh8LQwHHiLS3Mi85NXDHjnrJ4fIDBaX4SnUg2PxejalbG5AhwySxbFQNBlWiAP9eP1W+ikaqv5rAofgts18vVYwuRzZpiAl+oPJCA3XB8DrOWUQkWJi6nwzcP3MJgWUzKqAqH50MCZ0mRNR1zqg+ncd6AwE//HTCSe12LnprwciXBmUaUplHaiutjZcj2hQUd2GC7Qj065K9x2wTtO2mdmBbAFKKTwxEnaKmRs+c5XtFlungs8JEzQby2w60Z2FCza436hDUCdZ8G4yI0YSe+fMTZGNRWEg+c3hrYrzhELh8SfA+4/d1+83KcnvMQUTsoeVuqr6PkaPWpyvK7fTxDEiGLfUwzi6mQesV0bV5Gns92AYYX8P/ZCg1NBuAJYjtE7M+ME8ZeazRf1+zHR7JXIJHe0T5NgbKsjAgOru6+b01Uaojh+x2uS1xdfIBMb1hfdqKyr9HbMkBsPh2bWqsb+C+7JGlgYoztkEQz0sFvFOtDIc5qnd7tJgPSg4JXuMnHjotMmOOe5TxaXE7aJJaMPIIBjQmoC6FzYvxJ+uIPiwB7mYxJZCkBrzAqlONXazVjgooQ5RqVgRl+yJkgXrpvEF2GAK5JOV162k80K6g8ropqRShWd66gXKPVPV2jETopiEF6PeOJVhIBuC1zUxX4iPUxhB60/ocJO6pJ7hbzP2yT3CMzNYMxlthkha4kPamai+vMng7VNY66iD79BVkEaANo18w8o0qQZz0kPHRa/xtZSeKgCB5FHWiB9D8H8v/OOXoy8j/orTwSimPOuwHbcnNh2FLAkQCE+Xg==",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"alertcondition\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 10,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "ATR Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 3,
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 0.01,
+    "name": "Factor",
+    "step": 0.01,
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "6cca5dddcebaf9a17a879a5233de9645514cdaa6",
+   "version": "12.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "type": "line"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   },
+   {
+    "id": "plot_3",
+    "type": "alertcondition"
+   },
+   {
+    "id": "plot_4",
+    "type": "alertcondition"
+   },
+   {
+    "id": "plot_5",
+    "type": "alertcondition"
+   }
+  ],
+  "scriptIdPart": "STD;Supertrend",
+  "shortDescription": "Supertrend",
+  "stats": {
+   "alertcondition": 3,
+   "plot": 3
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Up Trend"
+   },
+   "plot_1": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Down Trend"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Body Middle"
+   },
+   "plot_3": {
+    "text": "The Supertrend value switched from Downtrend to Uptrend ",
+    "title": "Downtrend to Uptrend"
+   },
+   "plot_4": {
+    "text": "The Supertrend value switched from Uptrend to Downtrend",
+    "title": "Uptrend to Downtrend"
+   },
+   "plot_5": {
+    "text": "The Supertrend value switched from Uptrend to Downtrend or vice versa",
+    "title": "Trend Change"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

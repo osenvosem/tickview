@@ -161,7 +161,7 @@ pub fn hma(src: &[f64], len: usize) -> Series {
         return nan_like(src);
     }
     let half = (len as f64).sqrt().round() as usize;
-    let short_len = ((len as f64) / 2.0).round() as usize;
+    let short_len = len / 2; // Pine: math.floor(length / 2)
     let short = wma(src, short_len.max(1));
     let long = wma(src, len);
     let d: Series = short.iter().zip(&long).map(|(s, l)| 2.0 * s - l).collect();
@@ -712,4 +712,79 @@ pub fn kama(src: &[f64], er_len: usize, fast: usize, slow: usize) -> Series {
         out[i] = prev_out;
     }
     out
+}
+
+/// Bucket candles into fixed `secs`-wide intervals. Only buckets that are
+/// provably closed (a later bucket exists in the input) are emitted, so
+/// streaming prefixes never repaint past output.
+#[must_use]
+pub fn resample(cd: &crate::Candles, secs: i64) -> crate::Candles {
+    if secs <= 0 || cd.is_empty() {
+        return crate::Candles::from_bars(&[]);
+    }
+    let t: Vec<i64> = cd.t.clone();
+    let keys: Vec<i64> = t.iter().map(|&ts| ts.div_euclid(secs)).collect();
+    let mut bars: Vec<crate::Bar> = Vec::new();
+    let mut start = 0usize;
+    for i in 1..=keys.len() {
+        if i == keys.len() || keys[i] != keys[start] {
+            // bucket closed only if a later bar exists in a later bucket
+            if i < keys.len() {
+                let (mut hi, mut lo, mut vol) = (f64::MIN, f64::MAX, 0.0);
+                for j in start..i {
+                    hi = hi.max(cd.h[j]);
+                    lo = lo.min(cd.l[j]);
+                    vol += cd.v[j];
+                }
+                bars.push(crate::Bar {
+                    t: keys[start] * secs,
+                    o: cd.o[start],
+                    h: hi,
+                    l: lo,
+                    c: cd.c[i - 1],
+                    v: vol,
+                });
+            }
+            start = i;
+        }
+    }
+    crate::Candles::from_bars(&bars)
+}
+
+#[cfg(test)]
+mod resample_tests {
+    use super::*;
+
+    fn minute(n: usize) -> crate::Candles {
+        let bars: Vec<crate::Bar> = (0..n)
+            .map(|i| crate::Bar {
+                t: (i as i64) * 60,
+                o: i as f64,
+                h: i as f64 + 1.0,
+                l: i as f64 - 1.0,
+                c: i as f64 + 0.5,
+                v: 10.0,
+            })
+            .collect();
+        crate::Candles::from_bars(&bars)
+    }
+
+    #[test]
+    fn resample_closed_htf_no_lookahead() {
+        let cd = minute(150);
+        let hr = resample(&cd, 3600);
+        assert_eq!(hr.len(), 2, "only closed hour buckets");
+        assert_eq!(hr.t, vec![0, 3600]);
+        assert_eq!(hr.c[1], 119.5);
+        // prefix invariance at closed boundaries
+        for k in [60usize, 120, 121, 150] {
+            let sub = minute(k);
+            let r = resample(&sub, 3600);
+            let full = resample(&cd, 3600);
+            let m = r.len();
+            assert!(m <= full.len());
+            assert_eq!(r.t, full.t[..m].to_vec(), "prefix t k={k}");
+            assert_eq!(r.c[..m], full.c[..m], "prefix c k={k}");
+        }
+    }
 }

@@ -48,6 +48,23 @@ pub enum TvId {
     Ichimoku,
     Alligator,
     BollingerBands,
+    BollingerBandsWidth,
+    Aroon,
+    Atr,
+    ChandelierExit,
+    ChoppinessIndex,
+    ConnorsRsi,
+    CorrelationCoeff,
+    Dmi,
+    FisherTransform,
+    KnowSureThing,
+    PriceOscillator,
+    RankCorrelationIndex,
+    RelativeVolatilityIndex,
+    SmiErgodic,
+    VolatilityStop,
+    WilliamsFractals,
+    ZigZag,
     PercentB,
     KeltnerChannels,
     DonchianChannels,
@@ -659,6 +676,18 @@ const DEFS_PRICE: &[Def] = &[
         plots: &[pl!("%B", PURPLE)],
     },
     Def {
+        id: TvId::BollingerBandsWidth,
+        tv_name: "Bollinger Bands Width",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("length", "Length", 20, 1, 5000),
+            fp!("mult", "StdDev", 2.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Width", BLUE)],
+    },
+    Def {
         id: TvId::KeltnerChannels,
         tv_name: "Keltner Channels",
         pane: Pane::Price,
@@ -667,7 +696,7 @@ const DEFS_PRICE: &[Def] = &[
         params: &[
             ip!("length", "Length", 20, 1, 5000),
             fp!("mult", "Multiplier", 1.0, 0.5, 10.0, 0.1),
-            ep!("source", "source", 4, SOURCE_VARIANTS),
+            ep!("source", "source", 0, SOURCE_VARIANTS), // wire: source=close
         ],
         plots: &[
             pl!("Middle", PURPLE),
@@ -696,7 +725,7 @@ const DEFS_PRICE: &[Def] = &[
         hlines: &[],
         params: &[
             ip!("length", "Length", 20, 1, 5000),
-            fp!("deviation", "Deviation %", 5.0, 0.1, 100.0, 0.1),
+            fp!("deviation", "Deviation %", 10.0, 0.1, 100.0, 0.1), // wire: percent 10
             ep!("ma_type", "MA Type", 0, "sma", "ema"),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
@@ -730,7 +759,7 @@ const DEFS_PRICE: &[Def] = &[
         hlines: &[],
         params: &[
             ip!("length", "Length", 100, 2, 5000),
-            fp!("mult", "StdDev Multiplier", 1.0, 0.0, 5.0, 0.1),
+            fp!("mult", "StdDev Multiplier", 2.0, 0.0, 5.0, 0.1),
             ep!("source", "source", 0, SOURCE_VARIANTS),
         ],
         plots: &[
@@ -766,6 +795,55 @@ const DEFS_PRICE: &[Def] = &[
             pl!("S3", GREEN),
             pl!("S4", GREEN, PlotStyle::Line, hide),
         ],
+    },
+    Def {
+        id: TvId::ChandelierExit,
+        tv_name: "Chandelier Exit",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("period", "Length", 22, 1, 5000),
+            ip!("atr_len", "ATR Length", 22, 1, 5000),
+            fp!("mult", "Multiplier", 3.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Long Stop", GREEN), pl!("Short Stop", RED)],
+    },
+    Def {
+        id: TvId::VolatilityStop,
+        tv_name: "Volatility Stop",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("length", "Length", 20, 1, 5000),
+            fp!("mult", "Multiplier", 2.0, 0.1, 10.0, 0.1),
+        ],
+        plots: &[pl!("Stop", BLUE), pl!("Trend", GRAY)],
+    },
+    Def {
+        id: TvId::WilliamsFractals,
+        tv_name: "Williams Fractals",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("left", "Left Bars", 2, 1, 50),
+            ip!("right", "Right Bars", 2, 1, 50),
+        ],
+        plots: &[pl!("Up", GREEN), pl!("Down", RED)],
+    },
+    Def {
+        id: TvId::ZigZag,
+        tv_name: "Zig Zag",
+        pane: Pane::Price,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            fp!("deviation", "Deviation %", 5.0, 0.01, 100.0, 0.1),
+            ip!("depth", "Depth", 10, 2, 500),
+        ],
+        plots: &[pl!("ZigZag", BLUE)],
     },
 ];
 
@@ -1278,6 +1356,142 @@ const DEFS_OSC: &[Def] = &[
         params: &[ip!("length", "Length", 10, 1, 500)],
         plots: &[pl!("VI+", PURPLE), pl!("VI-", ORANGE)],
     },
+    Def {
+        id: TvId::Aroon,
+        tv_name: "Aroon",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[50.0],
+        params: &[ip!("period", "Period", 14, 1, 5000)],
+        plots: &[pl!("Aroon Up", GREEN), pl!("Aroon Down", RED)],
+    },
+    Def {
+        id: TvId::Atr,
+        tv_name: "Average True Range",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[ip!("length", "Length", 14, 1, 5000)],
+        plots: &[pl!("ATR", BLUE)],
+    },
+    Def {
+        id: TvId::ChoppinessIndex,
+        tv_name: "Choppiness Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[61.3, 38.2],
+        params: &[ip!("length", "Length", 14, 1, 5000)],
+        plots: &[pl!("CHOP", PURPLE)],
+    },
+    Def {
+        id: TvId::ConnorsRsi,
+        tv_name: "Connors RSI",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[70.0, 30.0],
+        params: &[
+            ip!("fast", "RSI Length", 3, 1, 500),
+            ip!("rank_len", "Rank Length", 2, 1, 500),
+            ip!("slow", "Long RSI Length", 100, 1, 500),
+            ip!("ema_len", "EMA Length", 7, 1, 500),
+        ],
+        plots: &[pl!("CRSI", BLUE)],
+    },
+    Def {
+        id: TvId::Dmi,
+        tv_name: "Directional Movement Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[],
+        params: &[
+            ip!("di_len", "DI Length", 14, 1, 5000),
+            ip!("adx_sm", "ADX Smoothing", 14, 1, 5000),
+        ],
+        plots: &[pl!("DI+", BLUE), pl!("DI-", RED), pl!("ADX", ORANGE)],
+    },
+    Def {
+        id: TvId::FisherTransform,
+        tv_name: "Fisher Transform",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[ip!("length", "Length", 9, 1, 5000)],
+        plots: &[pl!("Fisher", BLUE), pl!("Trigger", RED)],
+    },
+    Def {
+        id: TvId::KnowSureThing,
+        tv_name: "Know Sure Thing",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("roc1", "ROC Length 1", 10, 1, 500),
+            ip!("roc2", "ROC Length 2", 15, 1, 500),
+            ip!("roc3", "ROC Length 3", 20, 1, 500),
+            ip!("roc4", "ROC Length 4", 30, 1, 500),
+            ip!("sma1", "SMA Length 1", 10, 1, 500),
+            ip!("sma2", "SMA Length 2", 10, 1, 500),
+            ip!("sma3", "SMA Length 3", 10, 1, 500),
+            ip!("sma4", "SMA Length 4", 15, 1, 500),
+            ip!("sig", "Signal Length", 9, 1, 500),
+        ],
+        plots: &[pl!("KST", BLUE), pl!("Signal", ORANGE)],
+    },
+    Def {
+        id: TvId::PriceOscillator,
+        tv_name: "Price Oscillator",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("fast", "Short EMA", 12, 1, 5000),
+            ip!("slow", "Long EMA", 26, 1, 5000),
+            ip!("sig", "Signal EMA", 9, 1, 5000),
+        ],
+        plots: &[pl!("Oscillator", BLUE), pl!("Signal", ORANGE)],
+    },
+    Def {
+        id: TvId::RelativeVolatilityIndex,
+        tv_name: "Relative Volatility Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[50.0],
+        params: &[
+            ip!("length", "Length", 10, 1, 5000),
+            ip!("smooth", "Smoothing", 10, 1, 5000),
+        ],
+        plots: &[pl!("RVI", BLUE)],
+    },
+    Def {
+        id: TvId::SmiErgodic,
+        tv_name: "SMI Ergodic Indicator/Oscillator",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0],
+        params: &[
+            ip!("length", "SMI Length", 20, 1, 5000),
+            ip!("sig", "Trigger Length", 5, 1, 5000),
+        ],
+        plots: &[pl!("SMI", BLUE), pl!("Signal", ORANGE)],
+    },
+    Def {
+        id: TvId::CorrelationCoeff,
+        tv_name: "Correlation Coefficient",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0, 1.0],
+        params: &[ip!("length", "Length", 20, 1, 5000)],
+        plots: &[pl!("Correlation", BLUE)],
+    },
+    Def {
+        id: TvId::RankCorrelationIndex,
+        tv_name: "Rank Correlation Index",
+        pane: Pane::Separate,
+        scale: Scale::Auto,
+        hlines: &[0.0, 1.0],
+        params: &[ip!("length", "Length", 10, 1, 5000)],
+        plots: &[pl!("Rank Correlation", BLUE)],
+    },
 ];
 
 /// All indicator definitions, stable order.
@@ -1323,7 +1537,14 @@ fn ma_by(src: &[f64], len: usize, typ: usize) -> Vec<f64> {
 }
 
 #[allow(clippy::too_many_lines)]
-fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> Output {
+fn compute_id(
+    id: TvId,
+    p: &Params,
+    defn: &Def,
+    cd: &Candles,
+    ax: &Anchors,
+    cmp: Option<&Candles>,
+) -> Output {
     let n = cd.len();
     let src = source_series(cd, p.e(defn, "source"));
     let h = &cd.h;
@@ -1436,6 +1657,102 @@ fn compute_id(id: TvId, p: &Params, defn: &Def, cd: &Candles, ax: &Anchors) -> O
         TvId::PercentB => out(vec![
             channels::bollinger(&src, p.i(defn, "length"), p.f(defn, "mult")).percent_b,
         ]),
+        TvId::BollingerBandsWidth => out(vec![
+            channels::bollinger(&src, p.i(defn, "length"), p.f(defn, "mult")).band_width,
+        ]),
+        TvId::Aroon => {
+            let (up, down) = trends::aroon(h, l, p.i(defn, "period"));
+            out(vec![up, down])
+        }
+        TvId::Atr => out(vec![series::rma(&series::tr(cd), p.i(defn, "length"))]),
+        TvId::ChandelierExit => {
+            let ch = trends::chandelier(
+                cd,
+                p.i(defn, "period"),
+                p.i(defn, "atr_len"),
+                p.f(defn, "mult"),
+            );
+            out(vec![ch.long, ch.short])
+        }
+        TvId::VolatilityStop => {
+            let vs = trends::vol_stop(cd, p.i(defn, "length"), p.f(defn, "mult"));
+            out(vec![vs.line, vs.trend])
+        }
+        TvId::WilliamsFractals => {
+            let (up, dn) = trends::fractals(cd, p.i(defn, "left"), p.i(defn, "right"));
+            out(vec![up, dn])
+        }
+        TvId::ZigZag => out(vec![trends::zigzag(
+            cd,
+            p.i(defn, "depth"),
+            p.f(defn, "deviation"),
+        )]),
+        TvId::ChoppinessIndex => out(vec![trends::choppiness(cd, p.i(defn, "length"))]),
+        TvId::ConnorsRsi => out(vec![oscs::connors_rsi(
+            &src,
+            p.i(defn, "fast"),
+            p.i(defn, "rank_len"),
+            p.i(defn, "slow"),
+            p.i(defn, "ema_len"),
+        )]),
+        TvId::Dmi => {
+            let a = oscs::adx(cd, p.i(defn, "di_len"), p.i(defn, "adx_sm"));
+            out(vec![a.di_plus, a.di_minus, a.adx])
+        }
+        TvId::FisherTransform => {
+            let (f, t) = oscs::fisher(cd, p.i(defn, "length"));
+            out(vec![f, t])
+        }
+        TvId::KnowSureThing => {
+            let k = oscs::kst(
+                &src,
+                [
+                    p.i(defn, "roc1"),
+                    p.i(defn, "roc2"),
+                    p.i(defn, "roc3"),
+                    p.i(defn, "roc4"),
+                ],
+                [
+                    p.i(defn, "sma1"),
+                    p.i(defn, "sma2"),
+                    p.i(defn, "sma3"),
+                    p.i(defn, "sma4"),
+                ],
+                p.i(defn, "sig"),
+            );
+            out(vec![k.kst, k.signal])
+        }
+        TvId::PriceOscillator => {
+            let po = oscs::price_oscillator(
+                &src,
+                p.i(defn, "fast"),
+                p.i(defn, "slow"),
+                p.i(defn, "sig"),
+            );
+            out(vec![po.osc, po.signal])
+        }
+        TvId::RelativeVolatilityIndex => out(vec![oscs::rel_vol_index(
+            &src,
+            p.i(defn, "length"),
+            p.i(defn, "smooth"),
+        )]),
+        TvId::SmiErgodic => {
+            let s = oscs::smi_ergodic(cd, p.i(defn, "length"), p.i(defn, "sig"));
+            out(vec![s.smi, s.signal])
+        }
+        TvId::CorrelationCoeff | TvId::RankCorrelationIndex => {
+            let len = p.i(defn, "length");
+            let mut s = vec![f64::NAN; n];
+            if let Some(other) = cmp {
+                let raw = if id == TvId::RankCorrelationIndex {
+                    oscs::spearman(&src, &other.c, len)
+                } else {
+                    oscs::pearson(&src, &other.c, len)
+                };
+                s[..raw.len()].copy_from_slice(&raw);
+            }
+            out(vec![s])
+        }
         TvId::KeltnerChannels => {
             let len = p.i(defn, "length");
             let mult = p.f(defn, "mult");
@@ -1800,7 +2117,7 @@ fn cci_on(src: &[f64], len: usize) -> Vec<f64> {
 #[must_use]
 pub fn compute(id: TvId, params: &Params, cd: &Candles, ax: &Anchors) -> Output {
     let d = def(id);
-    let mut o = compute_id(id, params, d, cd, ax);
+    let mut o = compute_id(id, params, d, cd, ax, None);
     debug_assert_eq!(o.plots.len(), d.plots.len(), "plot count drift for {id:?}");
     if o.plots.len() != d.plots.len() {
         // release-safe normalization
@@ -1809,8 +2126,33 @@ pub fn compute(id: TvId, params: &Params, cd: &Candles, ax: &Anchors) -> Output 
     o
 }
 
+/// Inputs a study may need beyond its own symbol series: higher-timeframe
+/// candles (closed-only), session/week/month anchors, the visible index range
+/// for range-scoped studies, and an optional comparison symbol.
+pub struct StudyContext<'a> {
+    pub htfc: Option<&'a Candles>,
+    pub anchors: Anchors,
+    pub visible: Option<(usize, usize)>,
+    pub comparison: Option<&'a Candles>,
+    pub symbol: &'a str,
+    pub interval: &'a str,
+}
+
+/// Compute with an explicit input context (HTF/comparison/visible).
+#[must_use]
+pub fn compute_with(id: TvId, params: &Params, cd: &Candles, ctx: &StudyContext<'_>) -> Output {
+    let d = def(id);
+    let mut o = compute_id(id, params, d, cd, &ctx.anchors, ctx.comparison);
+    debug_assert_eq!(o.plots.len(), d.plots.len(), "plot count drift for {id:?}");
+    if o.plots.len() != d.plots.len() {
+        o.plots.truncate(d.plots.len().max(1));
+    }
+    o
+}
+
 #[cfg(test)]
 mod tests {
+    use super::TvId::*;
     use super::*;
     use crate::Bar;
 
@@ -1915,6 +2257,631 @@ mod tests {
         assert_eq!(names.len(), count, "duplicate tv_name");
         assert!(defs().iter().any(|d| d.pane == Pane::Volume));
         assert!(defs().iter().any(|d| d.pane == Pane::Separate));
-        assert_eq!(count, 66);
+        assert_eq!(count, 83);
+    }
+
+    /// Every registry id must have golden coverage: either a registry-level
+    /// golden module (`gold_ma`/`gold_price`/`gold_misc`/`gold_wave1a`/
+    /// `gold_wave1b`/`gold_wave1c`/`gold_corr`) or a function-level golden
+    /// pinned in `gold_oscs`/`gold_vol`/`gold_tc`/`gold_trend` tests.
+    /// Adding a study without golden coverage fails this pin.
+    #[test]
+    fn every_study_has_golden_defaults_and_meta_coverage() {
+        const COVERED: &[TvId] = &[
+            Sma,
+            Ema,
+            Wma,
+            Hma,
+            Dema,
+            Tema,
+            Zlema,
+            Rma,
+            Vwma,
+            Lsma,
+            Alma,
+            Kama,
+            EmaRibbons,
+            Psar,
+            Supertrend,
+            Ichimoku,
+            Alligator,
+            BollingerBands,
+            BollingerBandsWidth,
+            Aroon,
+            Atr,
+            ChandelierExit,
+            ChoppinessIndex,
+            ConnorsRsi,
+            CorrelationCoeff,
+            Dmi,
+            FisherTransform,
+            KnowSureThing,
+            PriceOscillator,
+            RankCorrelationIndex,
+            RelativeVolatilityIndex,
+            SmiErgodic,
+            VolatilityStop,
+            WilliamsFractals,
+            ZigZag,
+            PercentB,
+            KeltnerChannels,
+            DonchianChannels,
+            Envelope,
+            Vwap,
+            LinReg,
+            Pivots,
+            Obv,
+            AccumulationDistribution,
+            ChaikinMoneyFlow,
+            MoneyFlowIndex,
+            VolumePriceTrend,
+            Klinger,
+            PviDvi,
+            EaseOfMovement,
+            MassIndex,
+            VolumeRatio,
+            ElderForce,
+            VolumeOscillator,
+            Rsi,
+            Macd,
+            Stochastic,
+            StochasticRsi,
+            Cmo,
+            WilliamsR,
+            Cci,
+            Adx,
+            AwesomeOscillator,
+            Accelerator,
+            UltimateOscillator,
+            Kst,
+            Tsi,
+            Rvi,
+            Trix,
+            Dpo,
+            Bias,
+            ZScore,
+            Momentum,
+            Roc,
+            RateOfChangeVol,
+            ElderRay,
+            ChaikinOscillator,
+            HistoricalVolatility,
+            ParkinsonVolatility,
+            GarmanKlassVolatility,
+            RogersSatchellVolatility,
+            ChaikinVolatility,
+            Vortex,
+        ];
+        assert_eq!(COVERED.len(), 83);
+        for d in defs() {
+            assert!(COVERED.contains(&d.id), "{:?} lacks golden coverage", d.id);
+        }
+        let raw = include_str!("../../../docs/evidence/tv-studies-defaults.json");
+        let ev: serde_json::Value = serde_json::from_str(raw).expect("defaults evidence");
+        let cat_raw = include_str!("../../../docs/parity/catalog.json");
+        let cat: serde_json::Value = serde_json::from_str(cat_raw).expect("catalog");
+        let panes: std::collections::BTreeMap<String, String> = cat["studies"]
+            .as_array()
+            .expect("studies array")
+            .iter()
+            .filter_map(|e| {
+                Some((
+                    e["tickview_id"].as_str()?.to_owned(),
+                    e["pane"].as_str()?.to_owned(),
+                ))
+            })
+            .collect();
+        for d in defs() {
+            let key = format!("{:?}", d.id);
+            assert!(ev.get(&key).is_some(), "{key} lacks defaults evidence row");
+            let want = format!("{:?}", d.pane).to_lowercase();
+            assert_eq!(
+                panes.get(&key).map(String::as_str),
+                Some(want.as_str()),
+                "{key} pane"
+            );
+        }
+    }
+
+    #[test]
+    fn every_study_short_history_is_all_nan_or_finite() {
+        let bars: Vec<crate::Bar> = (0..3)
+            .map(|i| crate::Bar {
+                t: 1_700_000_000 + i as i64 * 60_000,
+                o: 100.0 + i as f64,
+                h: 101.0 + i as f64,
+                l: 99.0 + i as f64,
+                c: 100.5 + i as f64,
+                v: 1000.0 + i as f64,
+            })
+            .collect();
+        let cd = crate::Candles::from_bars(&bars);
+        let ax = Anchors::from_ts(&[bars[0].t, bars[1].t, bars[2].t]);
+        for d in defs() {
+            let out = compute(d.id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), d.plots.len(), "{:?} plots", d.id);
+            for p in &out.plots {
+                assert_eq!(p.series.len(), 3, "{:?} {}", d.id, p.title);
+                for v in &p.series {
+                    assert!(!v.is_infinite(), "{:?} {} produced inf", d.id, p.title);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_study_id_in_catalog_verified() {
+        let raw = include_str!("../../../docs/parity/catalog.json");
+        let cat: serde_json::Value = serde_json::from_str(raw).expect("catalog");
+        let status: std::collections::BTreeMap<String, String> = cat["studies"]
+            .as_array()
+            .expect("studies")
+            .iter()
+            .filter_map(|e| {
+                Some((
+                    e["tickview_id"].as_str()?.to_owned(),
+                    e["status"].as_str()?.to_owned(),
+                ))
+            })
+            .collect();
+        let mut verified = 0;
+        for d in defs() {
+            let key = format!("{:?}", d.id);
+            assert_eq!(
+                status.get(&key).map(String::as_str),
+                Some("verified"),
+                "{key}"
+            );
+            verified += 1;
+        }
+        assert_eq!(verified, 83);
+        assert_eq!(
+            status.values().filter(|v| v.as_str() == "excluded").count(),
+            1,
+            "exactly one excluded study"
+        );
+    }
+}
+
+#[cfg(test)]
+mod gold_ma {
+    use super::{Anchors, Params, TvId, compute};
+    use crate::{Bar, Candles};
+
+    include!("gold_mis.rs");
+
+    pub(super) fn fixture2() -> Candles {
+        let bars: Vec<Bar> = FIX_T
+            .iter()
+            .enumerate()
+            .map(|(i, &ti)| Bar {
+                t: ti,
+                o: FIX_O[i],
+                h: FIX_H[i],
+                l: FIX_L[i],
+                c: FIX_C[i],
+                v: FIX_V[i],
+            })
+            .collect();
+        Candles::from_bars(&bars)
+    }
+
+    pub(super) fn approx(got: &[f64], want: &[f64], what: &str) {
+        assert_eq!(got.len(), want.len(), "{what}: len");
+        for (i, (g, w)) in got.iter().zip(want).enumerate() {
+            if w.is_nan() {
+                assert!(g.is_nan(), "{what}[{i}]: expected NaN, got {g}");
+            } else {
+                assert!(
+                    (g - w).abs() <= 1e-9f64.max(w.abs() * 1e-9),
+                    "{what}[{i}]: {g} vs {w}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn ma_goldens_match_compute() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases = [
+            (TvId::Sma, &SMA[..]),
+            (TvId::Ema, &EMA[..]),
+            (TvId::Wma, &WMA[..]),
+            (TvId::Hma, &HMA[..]),
+            (TvId::Dema, &DEMA[..]),
+            (TvId::Tema, &TEMA[..]),
+            (TvId::Zlema, &ZLEMA[..]),
+            (TvId::Rma, &RMA[..]),
+            (TvId::Vwma, &VWMA[..]),
+            (TvId::Lsma, &LSMA[..]),
+            (TvId::Alma, &ALMA[..]),
+            (TvId::Kama, &KAMA[..]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), 1, "{id:?}: plots");
+            approx(&out.plots[0].series, want, &format!("{id:?}"));
+        }
+    }
+
+    #[test]
+    fn ribbon_goldens_match_compute() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let out = compute(TvId::EmaRibbons, &Params::default(), &cd, &ax);
+        let wants: [&[f64]; 8] = [
+            &RIBBON_E8,
+            &RIBBON_E13,
+            &RIBBON_E21,
+            &RIBBON_E34,
+            &RIBBON_E55,
+            &RIBBON_E89,
+            &RIBBON_E144,
+            &RIBBON_E169,
+        ];
+        assert_eq!(out.plots.len(), 8);
+        for (plot, want) in out.plots.iter().zip(wants) {
+            approx(&plot.series, want, plot.title);
+        }
+    }
+
+    #[test]
+    fn ma_plots_match_meta() {
+        let ids = [
+            TvId::Sma,
+            TvId::Ema,
+            TvId::Wma,
+            TvId::Hma,
+            TvId::Dema,
+            TvId::Tema,
+            TvId::Zlema,
+            TvId::Rma,
+            TvId::Vwma,
+            TvId::Lsma,
+            TvId::Alma,
+            TvId::Kama,
+        ];
+        for id in ids {
+            let d = super::def(id);
+            assert_eq!(d.plots.len(), 1, "{id:?}: one plot");
+            let key = if id == TvId::Kama { "er_len" } else { "length" };
+            assert!(d.params.iter().any(|p| p.key == key), "{id:?}: {key} param");
+        }
+        let ribbons = super::def(TvId::EmaRibbons);
+        assert_eq!(ribbons.plots.len(), 8, "ribbon plot count");
+    }
+}
+
+#[cfg(test)]
+mod gold_price {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+    use crate::Candles;
+
+    include!("gold_mis.rs");
+
+    fn check(id: TvId, want: &[&[f64]], cd: &Candles, ax: &Anchors) {
+        let out = compute(id, &Params::default(), cd, ax);
+        assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+        for (plot, w) in out.plots.iter().zip(want) {
+            approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+        }
+    }
+
+    #[test]
+    fn price_overlays_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        check(TvId::BollingerBands, &[&BB_U, &BB_B, &BB_L], &cd, &ax);
+        check(
+            TvId::KeltnerChannels,
+            &[&KELT_B, &KELT_U, &KELT_L],
+            &cd,
+            &ax,
+        );
+        check(TvId::DonchianChannels, &[&DON_U, &DON_M, &DON_L], &cd, &ax);
+        check(TvId::Envelope, &[&ENV_U, &ENV_B, &ENV_L], &cd, &ax);
+        check(TvId::LinReg, &[&LR_C, &LR_U, &LR_L], &cd, &ax);
+        check(TvId::Psar, &[&PSAR], &cd, &ax);
+        check(TvId::Supertrend, &[&ST_UP, &ST_DN], &cd, &ax);
+        check(TvId::Alligator, &[&AG_JAW, &AG_TEETH, &AG_LIPS], &cd, &ax);
+        check(
+            TvId::Ichimoku,
+            &[&ICHI_C, &ICHI_B, &ICHI_SA, &ICHI_SB],
+            &cd,
+            &ax,
+        );
+    }
+}
+
+#[cfg(test)]
+mod gold_misc {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn misc_oscillators_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 5] = [
+            (TvId::Momentum, &[&MOM]),
+            (TvId::Roc, &[&ROC]),
+            (TvId::ZScore, &[&ZSCORE]),
+            (TvId::Bias, &[&BIAS]),
+            (TvId::ElderRay, &[&ER_BULL, &ER_BEAR]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod ctx_tests {
+    use super::{Anchors, Params, StudyContext, TvId, compute, compute_with};
+    use crate::{Bar, Candles};
+
+    fn hourly(days: usize) -> Candles {
+        let mut bars = Vec::new();
+        for d in 0..days {
+            for h in 0..24 {
+                bars.push(Bar {
+                    t: (d as i64) * 86_400 + (h as i64) * 3600,
+                    o: 100.0 + d as f64 + h as f64 * 0.1,
+                    h: 101.0 + d as f64 + h as f64 * 0.1,
+                    l: 99.0 + d as f64 + h as f64 * 0.1,
+                    c: 100.5 + d as f64 + h as f64 * 0.15,
+                    v: 10.0 + (h % 5) as f64,
+                });
+            }
+        }
+        Candles::from_bars(&bars)
+    }
+
+    #[test]
+    fn vwap_session_anchors() {
+        let cd = hourly(3);
+        let ax = Anchors::from_ts(&cd.t);
+        let out = compute(TvId::Vwap, &Params::default(), &cd, &ax);
+        let hl3 = |i: usize| (cd.h[i] + cd.l[i] + cd.c[i]) / 3.0;
+        // day anchor resets: first bar of a session equals that bar's hl3
+        assert!((out.plots[0].series[0] - hl3(0)).abs() < 1e-12);
+        assert!((out.plots[0].series[24] - hl3(24)).abs() < 1e-12);
+        assert!((out.plots[0].series[48] - hl3(48)).abs() < 1e-12);
+        // mid-session the anchor accumulates, diverging from hl3
+        assert!((out.plots[0].series[25] - hl3(25)).abs() > 1e-9);
+    }
+
+    #[test]
+    fn compute_with_default_ctx_matches_compute() {
+        let cd = hourly(2);
+        let ax = Anchors::from_ts(&cd.t);
+        let ctx = StudyContext {
+            htfc: None,
+            anchors: ax.clone(),
+            visible: None,
+            comparison: None,
+            symbol: "TEST",
+            interval: "1h",
+        };
+        let a = compute(TvId::Vwap, &Params::default(), &cd, &ax);
+        let b = compute_with(TvId::Vwap, &Params::default(), &cd, &ctx);
+        assert_eq!(a.plots.len(), b.plots.len());
+        for (x, y) in a.plots.iter().zip(&b.plots) {
+            assert_eq!(x.series, y.series, "{}", x.title);
+        }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1a {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1a_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 5] = [
+            (TvId::Aroon, &[&AROON_UP, &AROON_DN]),
+            (TvId::Atr, &[&ATR]),
+            (TvId::ChandelierExit, &[&CHAND_L, &CHAND_S]),
+            (TvId::ChoppinessIndex, &[&CHOP]),
+            (TvId::ConnorsRsi, &[&CRSI]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1b {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1b_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 7] = [
+            (TvId::Dmi, &[&DI_P, &DI_M, &ADX]),
+            (TvId::FisherTransform, &[&FISHER, &FISHER_TRIG]),
+            (TvId::KnowSureThing, &[&KST_K, &KST_SIG]),
+            (TvId::Kst, &[&KST_K, &KST_SIG]),
+            (TvId::PriceOscillator, &[&PO, &PO_SIG]),
+            (TvId::RelativeVolatilityIndex, &[&RVI2]),
+            (TvId::SmiErgodic, &[&SMI, &SMI_SIG]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod gold_wave1c {
+    use super::compute;
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, TvId};
+    use crate::trends::{fractals, zigzag};
+
+    include!("gold_mis.rs");
+
+    #[test]
+    fn wave1c_match_goldens() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        let cases: [(TvId, &[&[f64]]); 3] = [
+            (TvId::VolatilityStop, &[&VS, &VS_T]),
+            (TvId::WilliamsFractals, &[&FR_U, &FR_D]),
+            (TvId::ZigZag, &[&ZZ]),
+        ];
+        for (id, want) in cases {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert_eq!(out.plots.len(), want.len(), "{id:?}: plot count");
+            for (plot, w) in out.plots.iter().zip(want) {
+                approx(&plot.series, w, &format!("{id:?} {}", plot.title));
+            }
+        }
+    }
+
+    #[test]
+    fn fractals_and_zigzag_do_not_repaint() {
+        for k in (40..=FIX_C.len()).step_by(7) {
+            let mut bars = Vec::new();
+            for i in 0..k {
+                bars.push(crate::Bar {
+                    t: FIX_T[i],
+                    o: FIX_O[i],
+                    h: FIX_H[i],
+                    l: FIX_L[i],
+                    c: FIX_C[i],
+                    v: FIX_V[i],
+                });
+            }
+            let pre = crate::Candles::from_bars(&bars);
+            let (up, dn) = fractals(&pre, 2, 2);
+            for i in 0..k.saturating_sub(2) {
+                assert_same(up[i], FR_U[i], &format!("fractal up repaint {k}:{i}"));
+                assert_same(dn[i], FR_D[i], &format!("fractal down repaint {k}:{i}"));
+            }
+            let zz = zigzag(&pre, 10, 5.0);
+            for i in 0..k.saturating_sub(10) {
+                assert_same(zz[i], ZZ[i], &format!("zigzag repaint {k}:{i}"));
+            }
+        }
+    }
+
+    fn assert_same(got: f64, want: f64, what: &str) {
+        assert!(
+            (got.is_nan() && want.is_nan()) || got == want,
+            "{what}: {got} vs {want}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod gold_corr {
+    use super::gold_ma::{approx, fixture2};
+    use super::{Anchors, Params, StudyContext, TvId};
+    use crate::{compute, compute_with};
+
+    include!("gold_mis.rs");
+
+    fn ctx<'a>(cmp: Option<&'a crate::Candles>) -> StudyContext<'a> {
+        StudyContext {
+            htfc: None,
+            anchors: Anchors::from_ts(&FIX_T),
+            visible: None,
+            comparison: cmp,
+            symbol: "TEST",
+            interval: "1m",
+        }
+    }
+
+    #[test]
+    fn correlation_matches_python_reference() {
+        let cd = fixture2();
+        let mut volcmp = fixture2();
+        volcmp.c.copy_from_slice(&FIX_V);
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&volcmp)),
+        );
+        approx(&out.plots[0].series, &CORR, "Pearson close-vs-volume");
+        let out = compute_with(
+            TvId::RankCorrelationIndex,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&volcmp)),
+        );
+        approx(&out.plots[0].series, &RANK_CORR, "Spearman close-vs-volume");
+    }
+
+    #[test]
+    fn perfect_correlation_is_one() {
+        let cd = fixture2();
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&cd)),
+        );
+        for (i, v) in out.plots[0].series.iter().enumerate().skip(19) {
+            assert!((v - 1.0).abs() <= 1e-12, "self-correlation at {i}: {v}");
+        }
+    }
+
+    #[test]
+    fn correlation_without_comparison_is_all_nan() {
+        let cd = fixture2();
+        let ax = Anchors::from_ts(&FIX_T);
+        for id in [TvId::CorrelationCoeff, TvId::RankCorrelationIndex] {
+            let out = compute(id, &Params::default(), &cd, &ax);
+            assert!(
+                out.plots[0].series.iter().all(|v| v.is_nan()),
+                "{id:?} without cmp"
+            );
+        }
+    }
+
+    #[test]
+    fn constant_comparison_is_nan_not_panic() {
+        let cd = fixture2();
+        let mut flat = fixture2();
+        flat.c.fill(42.0);
+        let out = compute_with(
+            TvId::CorrelationCoeff,
+            &Params::default(),
+            &cd,
+            &ctx(Some(&flat)),
+        );
+        assert!(out.plots[0].series.iter().all(|v| v.is_nan()));
     }
 }

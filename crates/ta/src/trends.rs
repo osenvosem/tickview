@@ -232,6 +232,237 @@ pub fn vortex(cd: &Candles, len: usize) -> Vortex {
     Vortex { plus, minus }
 }
 
+/// Aroon oscillator pair (TV Pine semantics): `100 * (period + offset)/period`
+/// where offset is the bars since the extreme inside the window.
+#[must_use]
+pub fn aroon(h: &[f64], l: &[f64], period: usize) -> (Series, Series) {
+    let n = h.len();
+    let mut up = vec![f64::NAN; n];
+    let mut down = vec![f64::NAN; n];
+    if period == 0 || n < period {
+        return (up, down);
+    }
+    let p = period as f64;
+    for i in period - 1..n {
+        let w = &h[i + 1 - period..=i];
+        if w.iter().all(|v| v.is_finite()) {
+            let hb = w
+                .iter()
+                .enumerate()
+                .fold(0usize, |b, (k, &v)| if v > w[b] { k } else { b });
+            up[i] = 100.0 * (p - (period - 1 - hb) as f64) / p;
+        }
+        let w = &l[i + 1 - period..=i];
+        if w.iter().all(|v| v.is_finite()) {
+            let lb = w
+                .iter()
+                .enumerate()
+                .fold(0usize, |b, (k, &v)| if v < w[b] { k } else { b });
+            down[i] = 100.0 * (p - (period - 1 - lb) as f64) / p;
+        }
+    }
+    (up, down)
+}
+
+/// Chandelier Exit: long stop = HH(period) − mult·ATR(atr_len), short stop
+/// mirrored from LL. ATR is RMA-smoothed true range (TV default).
+#[must_use]
+pub struct Chandelier {
+    pub long: Series,
+    pub short: Series,
+}
+
+pub fn chandelier(cd: &Candles, period: usize, atr_len: usize, mult: f64) -> Chandelier {
+    let n = cd.len();
+    let hh = crate::series::highest(&cd.h, period);
+    let ll = crate::series::lowest(&cd.l, period);
+    let atr = crate::series::rma(&crate::series::tr(cd), atr_len);
+    let (long, short): (Series, Series) = (0..n)
+        .map(|i| {
+            if hh[i].is_finite() && ll[i].is_finite() && atr[i].is_finite() {
+                (hh[i] - mult * atr[i], ll[i] + mult * atr[i])
+            } else {
+                (f64::NAN, f64::NAN)
+            }
+        })
+        .unzip();
+    Chandelier { long, short }
+}
+
+/// Choppiness Index: `100·log10(SUM(TR,len)/(HH(len)−LL(len)))/log10(len)`.
+#[must_use]
+pub fn choppiness(cd: &Candles, len: usize) -> Series {
+    let n = cd.len();
+    let mut out = vec![f64::NAN; n];
+    if len < 2 || n < len {
+        return out;
+    }
+    let tr = crate::series::tr(cd);
+    let hh = crate::series::highest(&cd.h, len);
+    let ll = crate::series::lowest(&cd.l, len);
+    let denom = (len as f64).log10();
+    for i in len - 1..n {
+        let w = &tr[i + 1 - len..=i];
+        if w.iter().all(|v| v.is_finite()) && hh[i].is_finite() && ll[i].is_finite() {
+            let range = hh[i] - ll[i];
+            if range > 0.0 {
+                let s: f64 = w.iter().sum();
+                out[i] = 100.0 * (s / range).log10() / denom;
+            }
+        }
+    }
+    out
+}
+
+/// Volatility Stop (TV `STD;Volatility_Stop`): ATR bands around `src` with
+/// trend-flip ratcheting, like Supertrend but centered on the source series.
+#[must_use]
+pub struct VolStop {
+    pub line: Series,
+    pub trend: Series,
+}
+
+pub fn vol_stop(cd: &Candles, len: usize, mult: f64) -> VolStop {
+    let n = cd.len();
+    let atr = crate::series::rma(&crate::series::tr(cd), len);
+    let mut line = vec![f64::NAN; n];
+    let mut trend = vec![f64::NAN; n];
+    let mut lower = vec![f64::NAN; n];
+    let mut upper = vec![f64::NAN; n];
+    let mut prev_t = 1.0f64;
+    for i in 0..n {
+        if !atr[i].is_finite() || !cd.c[i].is_finite() {
+            continue;
+        }
+        let lb = cd.c[i] - mult * atr[i];
+        let ub = cd.c[i] + mult * atr[i];
+        lower[i] = if i == 0
+            || !lower[i - 1].is_finite()
+            || lb > lower[i - 1]
+            || cd.c[i - 1] > lower[i - 1]
+        {
+            lb
+        } else {
+            lower[i - 1]
+        };
+        upper[i] = if i == 0
+            || !upper[i - 1].is_finite()
+            || ub < upper[i - 1]
+            || cd.c[i - 1] < upper[i - 1]
+        {
+            ub
+        } else {
+            upper[i - 1]
+        };
+        let t = if prev_t > 0.0 && cd.c[i] <= lower[i] {
+            -1.0
+        } else if prev_t < 0.0 && cd.c[i] >= upper[i] {
+            1.0
+        } else {
+            prev_t
+        };
+        line[i] = if t > 0.0 { lower[i] } else { upper[i] };
+        trend[i] = t;
+        prev_t = t;
+    }
+    VolStop { line, trend }
+}
+
+/// Bill Williams fractals: confirmed `right` bars after the extremum;
+/// unconfirmed bars stay NaN.
+#[must_use]
+pub fn fractals(cd: &Candles, left: usize, right: usize) -> (Series, Series) {
+    let n = cd.len();
+    let mut up = vec![f64::NAN; n];
+    let mut dn = vec![f64::NAN; n];
+    if left == 0 || right == 0 {
+        return (up, dn);
+    }
+    for j in left..(n.saturating_sub(right)) {
+        let mut is_up = true;
+        let mut is_dn = true;
+        for k in j.saturating_sub(left)..j {
+            is_up &= cd.h[j] > cd.h[k];
+            is_dn &= cd.l[j] < cd.l[k];
+        }
+        for k in (j + 1)..=(j + right) {
+            is_up &= cd.h[j] > cd.h[k];
+            is_dn &= cd.l[j] < cd.l[k];
+        }
+        if is_up {
+            up[j] = cd.h[j];
+        }
+        if is_dn {
+            dn[j] = cd.l[j];
+        }
+    }
+    (up, dn)
+}
+
+/// ZigZag pivots: `depth`-bar local extremes (TV `ta.pivothigh/low`) kept
+/// only when the move from the last accepted opposite pivot reaches
+/// `deviation` percent. Values sit on the pivot bar; confirmation happens
+/// `depth` bars later, so prefixes never repaint confirmed pivots.
+#[must_use]
+pub fn zigzag(cd: &Candles, depth: usize, deviation: f64) -> Series {
+    let n = cd.len();
+    let mut out = vec![f64::NAN; n];
+    if depth == 0 || n <= 2 * depth {
+        return out;
+    }
+    let dev = deviation / 100.0;
+    // (index, price, is_high) of the last accepted pivot
+    let mut last: Option<(usize, f64, bool)> = None;
+    // running extreme candidate between accepted pivots
+    let (mut hj, mut hv) = (0usize, cd.h[0]);
+    let (mut lj, mut lv) = (0usize, cd.l[0]);
+    // j is the confirmation index; the extreme being confirmed sits at e.
+    for j in depth..n {
+        let e = j - depth;
+        if cd.h[e] > hv {
+            hv = cd.h[e];
+            hj = e;
+        }
+        if cd.l[e] < lv {
+            lv = cd.l[e];
+            lj = e;
+        }
+        if hj + depth == j {
+            let right_max = cd.h[hj + 1..=j].iter().fold(f64::MIN, |a, &v| a.max(v));
+            if hv > right_max {
+                let accept = match last {
+                    None => true,
+                    Some((_, p, true)) => hv > p,
+                    Some((_, p, false)) => hv >= p * (1.0 + dev),
+                };
+                if accept {
+                    out[hj] = hv;
+                    last = Some((hj, hv, true));
+                    lv = cd.l[j];
+                    lj = j;
+                }
+            }
+        }
+        if lj + depth == j {
+            let right_min = cd.l[lj + 1..=j].iter().fold(f64::MAX, |a, &v| a.min(v));
+            if lv < right_min {
+                let accept = match last {
+                    None => true,
+                    Some((_, p, false)) => lv < p,
+                    Some((_, p, true)) => lv <= p * (1.0 - dev),
+                };
+                if accept {
+                    out[lj] = lv;
+                    last = Some((lj, lv, false));
+                    hv = cd.h[j];
+                    hj = j;
+                }
+            }
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

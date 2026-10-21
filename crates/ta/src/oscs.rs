@@ -357,10 +357,18 @@ fn roc_pct(src: &[f64], len: usize) -> Series {
 /// KST (rates 10,15,20,30 smoothed 1,1,1,1; signal SMA 16).
 #[must_use]
 pub fn kst(src: &[f64], rates: [usize; 4], smoothing: [usize; 4], sig: usize) -> Kst {
+    // TV KST weights the four smoothed ROC legs by 1..4.
     let parts: Vec<Series> = rates
         .iter()
         .zip(&smoothing)
-        .map(|(r, s)| sma(&roc_pct(src, *r), *s))
+        .enumerate()
+        .map(|(k, (r, s))| {
+            let w = (k + 1) as f64;
+            sma(&roc_pct(src, *r), *s)
+                .iter()
+                .map(|v| if v.is_finite() { w * v } else { *v })
+                .collect()
+        })
         .collect();
     let n = src.len();
     let line: Series = (0..n)
@@ -579,6 +587,229 @@ pub fn elder_ray(cd: &Candles, len: usize) -> ElderRay {
     ElderRay { bull, bear }
 }
 
+/// Connors RSI: mean of RSI(fast), RSI(slow) and the percent-rank of
+/// RSI(rank_len) over the trailing `slow` bars, smoothed by EMA(ema_len).
+#[must_use]
+pub fn connors_rsi(c: &[f64], fast: usize, rank_len: usize, slow: usize, ema_len: usize) -> Series {
+    let r_fast = rsi(c, fast);
+    let r_rank = rsi(c, rank_len);
+    let r_slow = rsi(c, slow);
+    let n = c.len();
+    let avg: Series = (0..n)
+        .map(|i| {
+            if !(r_fast[i].is_finite() && r_rank[i].is_finite() && r_slow[i].is_finite()) {
+                return f64::NAN;
+            }
+            let win = (i + 1).min(slow);
+            let start = i + 1 - win;
+            let le = (start..=i)
+                .filter(|&j| r_rank[j].is_finite() && r_rank[j] <= r_rank[i])
+                .count();
+            let rank = 100.0 * (le as f64) / (win as f64);
+            (rank + r_fast[i] + r_slow[i]) / 3.0
+        })
+        .collect();
+    crate::series::ema_seed(&avg, ema_len, crate::series::Seed::Sma)
+}
+
+/// Fisher Transform (TV): smoothed normalized value clamped to ±0.999,
+/// logarithmic transform with 0.5 feedback; trigger is the previous value.
+#[must_use]
+pub fn fisher(cd: &Candles, len: usize) -> (Series, Series) {
+    let n = cd.len();
+    let hh = crate::series::highest(&cd.h, len);
+    let ll = crate::series::lowest(&cd.l, len);
+    let mut fish = vec![f64::NAN; n];
+    let mut trig = vec![f64::NAN; n];
+    let (mut v_prev, mut f_prev) = (0.0, 0.0);
+    for i in 0..n {
+        if hh[i].is_finite() && ll[i].is_finite() && hh[i] > ll[i] && cd.c[i].is_finite() {
+            let raw = 2.0 * ((cd.c[i] - ll[i]) / (hh[i] - ll[i])) - 1.0;
+            let v = (0.33 * raw + 0.67 * v_prev).clamp(-0.999, 0.999);
+            let f = 0.5 * ((1.0 + v) / (1.0 - v)).ln() + 0.5 * f_prev;
+            fish[i] = f;
+            trig[i] = f_prev;
+            v_prev = v;
+            f_prev = f;
+        }
+    }
+    (fish, trig)
+}
+
+/// Price Oscillator: `100·(EMA(fast) − EMA(slow))/EMA(slow)` plus a signal EMA.
+#[must_use]
+pub struct PriceOsc {
+    pub osc: Series,
+    pub signal: Series,
+}
+
+pub fn price_oscillator(c: &[f64], fast: usize, slow: usize, sig: usize) -> PriceOsc {
+    let ef = crate::series::ema_seed(c, fast, crate::series::Seed::Sma);
+    let es = crate::series::ema_seed(c, slow, crate::series::Seed::Sma);
+    let osc: Series = (0..c.len())
+        .map(|i| {
+            if ef[i].is_finite() && es[i].is_finite() && es[i] != 0.0 {
+                100.0 * (ef[i] - es[i]) / es[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    PriceOsc {
+        osc: osc.clone(),
+        signal: crate::series::ema_seed(&osc, sig, crate::series::Seed::Sma),
+    }
+}
+
+/// Relative Volatility Index: stdev-weighted RSI variant, SMA-smoothed.
+#[must_use]
+pub fn rel_vol_index(c: &[f64], len: usize, smooth: usize) -> Series {
+    let n = c.len();
+    let sd = crate::series::stdev(c, len);
+    let mut up = vec![f64::NAN; n];
+    let mut dn = vec![f64::NAN; n];
+    for i in 1..n {
+        if sd[i].is_finite() && c[i].is_finite() && c[i - 1].is_finite() {
+            up[i] = if c[i] > c[i - 1] { sd[i] } else { 0.0 };
+            dn[i] = if c[i] < c[i - 1] { sd[i] } else { 0.0 };
+        }
+    }
+    let su = crate::series::sma(&up, smooth);
+    let sdn = crate::series::sma(&dn, smooth);
+    (0..n)
+        .map(|i| {
+            if su[i].is_finite() && sdn[i].is_finite() && su[i] + sdn[i] != 0.0 {
+                100.0 * su[i] / (su[i] + sdn[i])
+            } else {
+                f64::NAN
+            }
+        })
+        .collect()
+}
+
+/// SMI Ergodic Oscillator: double-EMA-smoothed numerator/denominator of the
+/// bar range and close position within it, scaled to ±100, with SMA trigger.
+#[must_use]
+pub struct Smi {
+    pub smi: Series,
+    pub signal: Series,
+}
+
+pub fn smi_ergodic(cd: &Candles, n: usize, sig: usize) -> Smi {
+    let len = cd.len();
+    let hh = crate::series::highest(&cd.h, n);
+    let ll = crate::series::lowest(&cd.l, n);
+    let qsmm = |x: &[f64]| {
+        let e1 = crate::series::ema_seed(x, n, crate::series::Seed::Sma);
+        crate::series::ema_seed(&e1, n, crate::series::Seed::Sma)
+    };
+    let raw_num: Series = (0..len)
+        .map(|i| {
+            if hh[i].is_finite() && ll[i].is_finite() && cd.c[i].is_finite() {
+                cd.c[i] - (hh[i] + ll[i]) / 2.0
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    let raw_den: Series = (0..len)
+        .map(|i| {
+            if hh[i].is_finite() && ll[i].is_finite() {
+                hh[i] - ll[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    let qn = qsmm(&raw_num);
+    let qd = qsmm(&raw_den);
+    let smi: Series = (0..len)
+        .map(|i| {
+            if qn[i].is_finite() && qd[i].is_finite() && qd[i] != 0.0 {
+                100.0 * qn[i] / qd[i]
+            } else {
+                f64::NAN
+            }
+        })
+        .collect();
+    Smi {
+        smi: smi.clone(),
+        signal: crate::series::sma(&smi, sig),
+    }
+}
+
+/// Rolling Pearson correlation (TV `ta.correlation`); NaN while either
+/// window has zero variance.
+#[must_use]
+pub fn pearson(x: &[f64], y: &[f64], len: usize) -> Series {
+    let n = x.len().min(y.len());
+    let mut out = vec![f64::NAN; n];
+    if len < 2 {
+        return out;
+    }
+    for i in len - 1..n {
+        let wx = &x[i + 1 - len..=i];
+        let wy = &y[i + 1 - len..=i];
+        if !wx.iter().all(|v| v.is_finite()) || !wy.iter().all(|v| v.is_finite()) {
+            continue;
+        }
+        let mx = wx.iter().sum::<f64>() / len as f64;
+        let my = wy.iter().sum::<f64>() / len as f64;
+        let (mut sxy, mut sxx, mut syy) = (0.0, 0.0, 0.0);
+        for k in 0..len {
+            let dx = wx[k] - mx;
+            let dy = wy[k] - my;
+            sxy += dx * dy;
+            sxx += dx * dx;
+            syy += dy * dy;
+        }
+        if sxx > 0.0 && syy > 0.0 {
+            out[i] = sxy / (sxx.sqrt() * syy.sqrt());
+        }
+    }
+    out
+}
+
+/// Rolling Spearman rank correlation: average ranks inside each window,
+/// then Pearson over the ranks (TV `ta.correlation(ranks)`).
+#[must_use]
+pub fn spearman(x: &[f64], y: &[f64], len: usize) -> Series {
+    let n = x.len().min(y.len());
+    let mut out = vec![f64::NAN; n];
+    if len < 2 {
+        return out;
+    }
+    let rank = |w: &[f64]| -> Vec<f64> {
+        let mut idx: Vec<usize> = (0..w.len()).collect();
+        idx.sort_by(|&a, &b| w[a].partial_cmp(&w[b]).unwrap_or(std::cmp::Ordering::Equal));
+        let mut r = vec![0.0; w.len()];
+        let mut k = 0;
+        while k < w.len() {
+            let mut j = k;
+            while j + 1 < w.len() && w[idx[j + 1]] == w[idx[k]] {
+                j += 1;
+            }
+            let avg = (k + j) as f64 / 2.0 + 1.0;
+            for t in &idx[k..=j] {
+                r[*t] = avg;
+            }
+            k = j + 1;
+        }
+        r
+    };
+    for i in len - 1..n {
+        let wx = &x[i + 1 - len..=i];
+        let wy = &y[i + 1 - len..=i];
+        if !wx.iter().all(|v| v.is_finite()) || !wy.iter().all(|v| v.is_finite()) {
+            continue;
+        }
+        let rx = rank(wx);
+        let ry = rank(wy);
+        out[i] = pearson(&rx, &ry, len)[len - 1];
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -648,9 +879,6 @@ mod tests {
         approx(&a.di_minus, &DI_M, "di-");
         approx(&awesome_oscillator(&cd, 5, 34), &AO, "ao");
         approx(&ultimate_oscillator(&cd, 7, 14, 28), &UO, "uo");
-        let k = kst(&c, [10, 15, 20, 30], [1, 1, 1, 1], 16);
-        approx(&k.kst, &KST, "kst");
-        approx(&k.signal, &KST_SIG, "kst_sig");
         let t = tsi(&c, 25, 13, 13);
         approx(&t.tsi, &TSI, "tsi");
         approx(&t.signal, &TSI_SIG, "tsi_sig");

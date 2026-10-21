@@ -270,6 +270,9 @@ impl SavedConfig {
 
 #[must_use]
 pub fn config_dir() -> Option<PathBuf> {
+    if let Some(d) = std::env::var_os("TICKVIEW_CONFIG_DIR") {
+        return Some(PathBuf::from(d));
+    }
     std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config/tickview"))
 }
 
@@ -697,5 +700,34 @@ mod tests {
         let json = serde_json::to_string(&cfg).unwrap();
         let back: SavedConfig = serde_json::from_str(&json).unwrap();
         assert_eq!(back.drawing_favorites, vec![Tool::Fib, Tool::Rect]);
+    }
+
+    #[test]
+    fn every_study_is_addable_and_in_catalog() {
+        let raw = include_str!("../../../docs/parity/catalog.json");
+        let cat: serde_json::Value = serde_json::from_str(raw).expect("catalog");
+        let verified: std::collections::BTreeMap<String, String> = cat["studies"]
+            .as_array()
+            .expect("studies")
+            .iter()
+            .filter_map(|e| {
+                Some((
+                    e["tickview_id"].as_str()?.to_owned(),
+                    e["status"].as_str()?.to_owned(),
+                ))
+            })
+            .collect();
+        let defs = ta::registry::defs();
+        assert_eq!(defs.len(), 83);
+        for d in defs {
+            let saved = SavedIndicator::from_parts(d.tv_name, &ta::registry::Params::default());
+            let (id, _params) = saved.to_params().expect("dialog name resolves");
+            assert_eq!(id, d.id, "{} resolves to wrong id", d.tv_name);
+            assert_eq!(
+                verified.get(&format!("{id:?}")).map(String::as_str),
+                Some("verified"),
+                "{id:?} not verified in catalog"
+            );
+        }
     }
 }

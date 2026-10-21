@@ -13,7 +13,10 @@ use crate::painter::{self, ChartType, Palette};
 use crate::priceaxis::PriceAxis;
 use crate::timeaxis;
 use ta::Candles;
-use ta::registry::{Anchors, Output, Pane as TvPane, Params, PlotStyle, TvId, compute, def};
+use ta::registry::{
+    Anchors, Output, Pane as TvPane, Params, PlotStyle, StudyContext, TvId, compute, compute_with,
+    def,
+};
 
 /// One attached indicator instance.
 #[derive(Clone, Debug)]
@@ -274,6 +277,17 @@ impl ChartState {
             for l in &mut p.layers {
                 if l.id == id {
                     l.data = compute(id, &l.params, cd, ax);
+                }
+            }
+        }
+    }
+
+    /// Recompute with an explicit study input context (comparison/HTF/visible).
+    pub fn recompute_with(&mut self, id: TvId, cd: &Candles, ctx: &StudyContext<'_>) {
+        for p in &mut self.panes {
+            for l in &mut p.layers {
+                if l.id == id {
+                    l.data = compute_with(id, &l.params, cd, ctx);
                 }
             }
         }
