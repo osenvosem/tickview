@@ -3,7 +3,7 @@
 Source: TradingView 3.4.1 (captured 2026-10-20).
 
 Drawings: 84 verified, 0 in progress, 0 missing, 3 excluded (87 total).
-Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
+Studies: 35 verified, 48 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
@@ -101,20 +101,20 @@ Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
 
 | Name | TradingView id | TickView id | Icon | Status |
 |---|---|---|---|---|
-| Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | in-progress |
+| Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | verified |
 | Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | in-progress |
 | Bollinger Bands | `BB@tv` | `BollingerBands` | `` | verified |
 | %B | `BollingerBandsR@tv` | `PercentB` | `` | in-progress |
 | Commodity Channel Index (CCI) | `CCI@tv` | `Cci` | `` | in-progress |
-| Chaikin Oscillator | `ChaikinOscillator@tv` | `ChaikinOscillator` | `` | in-progress |
+| Chaikin Oscillator | `ChaikinOscillator@tv` | `ChaikinOscillator` | `` | verified |
 | Chande Momentum Oscillator | `chandeMO@tv` | `Cmo` | `` | in-progress |
-| Chaikin Money Flow | `CMF@tv` | `ChaikinMoneyFlow` | `` | in-progress |
+| Chaikin Money Flow | `CMF@tv` | `ChaikinMoneyFlow` | `` | verified |
 | Detrended Price Oscillator | `DetrendedPriceOscillator@tv` | `Dpo` | `` | in-progress |
 | Average Directional Index (ADX) | `DM@tv` | `Adx` | `` | in-progress |
 | Donchian Channels | `DONCH@tv` | `DonchianChannels` | `` | verified |
 | Double EMA | `DoubleEMA@tv` | `Dema` | `` | verified |
-| Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | in-progress |
-| Elder's Force Index | `EFI@tv` | `ElderForce` | `` | in-progress |
+| Ease of Movement | `EaseOfMovement@tv` | `EaseOfMovement` | `` | verified |
+| Elder's Force Index | `EFI@tv` | `ElderForce` | `` | verified |
 | Envelope | `ENV@tv` | `Envelope` | `` | verified |
 | Hull Moving Average | `hullMA@tv` | `Hma` | `` | verified |
 | Historical Volatility | `HV@tv` | `HistoricalVolatility` | `` | in-progress |
@@ -128,9 +128,9 @@ Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
 | Volume Weighted Moving Average | `MAVolumeWeighted@tv` | `Vwma` | `` | verified |
 | Weighted Moving Average | `MAWeighted@tv` | `Wma` | `` | verified |
 | Momentum | `MOM@tv` | `Momentum` | `` | in-progress |
-| On Balance Volume (OBV) | `OBV@tv` | `Obv` | `` | in-progress |
+| On Balance Volume (OBV) | `OBV@tv` | `Obv` | `` | verified |
 | Pivot Points Standard | `PivotPointsStandard@tv` | `Pivots` | `` | in-progress |
-| Volume Price Trend | `PriceVolumeTrend@tv` | `VolumePriceTrend` | `` | in-progress |
+| Volume Price Trend | `PriceVolumeTrend@tv` | `VolumePriceTrend` | `` | verified |
 | Parabolic SAR | `PSAR@tv` | `Psar` | `` | verified |
 | Rate of Change (ROC) | `ROC@tv` | `Roc` | `` | in-progress |
 | Relative Strength Index (RSI) | `RSI@tv` | `Rsi` | `` | in-progress |
@@ -152,16 +152,16 @@ Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
 | Fisher Transform | `STD;Fisher_Transform` | `FisherTransform` | `` | in-progress |
 | Garman-Klass Volatility | `STD;GarmanKlassVolatility` | `GarmanKlassVolatility` | `` | in-progress |
 | Kaufman Adaptive Moving Average | `STD;Kama` | `Kama` | `` | verified |
-| Klinger Volume Oscillator | `STD;Klinger` | `Klinger` | `` | in-progress |
+| Klinger Volume Oscillator | `STD;Klinger` | `Klinger` | `` | verified |
 | Know Sure Thing | `STD;Know_Sure_Thing` | `KnowSureThing` | `` | in-progress |
 | Least Squares Moving Average | `STD;Lsma` | `Lsma` | `` | verified |
 | Mass Index | `STD;MassIndex` | `MassIndex` | `` | in-progress |
-| Money Flow Index | `STD;MoneyFlowIndex` | `MoneyFlowIndex` | `` | in-progress |
+| Money Flow Index | `STD;MoneyFlowIndex` | `MoneyFlowIndex` | `` | verified |
 | Parkinson Volatility | `STD;ParkinsonVolatility` | `ParkinsonVolatility` | `` | in-progress |
 | Price Oscillator | `STD;Price_Oscillator` | `PriceOscillator` | `` | in-progress |
-| PVI & DVI | `STD;PviDvi` | `PviDvi` | `` | in-progress |
+| PVI & DVI | `STD;PviDvi` | `PviDvi` | `` | verified |
 | Rank Correlation Index | `STD;Rank_Correlation_Index` | `RankCorrelationIndex` | `` | in-progress |
-| ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | in-progress |
+| ROC Volume | `STD;RateOfChangeVol` | `RateOfChangeVol` | `` | verified |
 | Relative Volatility Index | `STD;Relative_Volatility_Index` | `RelativeVolatilityIndex` | `` | in-progress |
 | Smoothed Moving Average | `STD;Rma` | `Rma` | `` | verified |
 | Rogers-Satchell Volatility | `STD;RogersSatchellVolatility` | `RogersSatchellVolatility` | `` | in-progress |
@@ -169,8 +169,8 @@ Studies: 22 verified, 61 in progress, 0 missing, 1 excluded (84 total).
 | Supertrend | `STD;Supertrend` | `Supertrend` | `` | verified |
 | True Strength Index (TSI) | `STD;Tsi` | `Tsi` | `` | in-progress |
 | Volatility Stop | `STD;Volatility_Stop` | `VolatilityStop` | `` | in-progress |
-| Volume Oscillator | `STD;VolumeOscillator` | `VolumeOscillator` | `` | in-progress |
-| Volume Ratio | `STD;VolumeRatio` | `VolumeRatio` | `` | in-progress |
+| Volume Oscillator | `STD;VolumeOscillator` | `VolumeOscillator` | `` | verified |
+| Volume Ratio | `STD;VolumeRatio` | `VolumeRatio` | `` | verified |
 | Vortex | `STD;Vortex` | `Vortex` | `` | in-progress |
 | Williams Fractal | `STD;Whilliams_Fractals` | `WilliamsFractals` | `` | in-progress |
 | Zig Zag | `STD;Zig_Zag` | `ZigZag` | `` | in-progress |
