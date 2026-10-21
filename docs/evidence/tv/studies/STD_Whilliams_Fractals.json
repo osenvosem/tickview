@@ -1,0 +1,143 @@
+{
+ "name": "Williams Fractal",
+ "scriptIdPart": "STD;Whilliams_Fractals",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 2,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_JOuHhyxl/1NbsiYFZRkv4Q==_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"
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#F44336",
+     "display": 4294967295,
+     "location": "BelowBar",
+     "plottype": "shape_triangle_down",
+     "textColor": null
+    },
+    "plot_1": {
+     "color": "#009688",
+     "display": 4294967295,
+     "location": "AboveBar",
+     "plottype": "shape_triangle_up",
+     "textColor": null
+    }
+   }
+  },
+  "description": "Williams fractal",
+  "docs": "",
+  "format": {
+   "precision": 0,
+   "type": "price"
+  },
+  "id": "Script$STD;Whilliams_Fractals@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_JOuHhyxl/1NbsiYFZRkv4Q==_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",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 2,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 2,
+    "name": "Periods",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "92fc37d29359f5acf2cfa0c54688e47c67c7f4bb",
+   "version": "31.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "shapes"
+   },
+   {
+    "id": "plot_1",
+    "type": "shapes"
+   }
+  ],
+  "scriptIdPart": "STD;Whilliams_Fractals",
+  "shortDescription": "Fractal",
+  "stats": {
+   "plotshape": 2
+  },
+  "styles": {
+   "plot_0": {
+    "isHidden": false,
+    "size": "small",
+    "title": "Shapes"
+   },
+   "plot_1": {
+    "isHidden": false,
+    "size": "small",
+    "title": "Shapes"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

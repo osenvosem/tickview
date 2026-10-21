@@ -1,0 +1,82 @@
+# Study catalog extraction — method and decisions
+
+**Captured:** TradingView Desktop 3.4.1 (Electron bundle; RE session
+`docs/evidence/tv-live-re-2026-10-19.md`).
+
+## Sources (spec §7.1 precedence)
+
+1. **Wire `all_studies_metadata`** — 66 rows in
+   `docs/evidence/tv-studies-defaults.json` (pack `tv-basicstudies` /
+   `tv-corestudies` / `tv-prostudies`). 42 rows carry readable numeric/bool
+   defaults + `wire_id`; 24 rows were resolved by name only (no `wire_id` in
+   the payload projection). For those 24 the catalog assigns the provisional
+   id `STD;<TickViewKey>` (`source: "derived"`), following TV's own
+   `STD;` naming for pack studies. The gap is recorded per row; none of the
+   24 changes TickView behavior.
+2. **Per-study `metaInfo` fetches** — 58 files, copied verbatim to
+   `docs/evidence/tv/studies/`. These carry `scriptIdPart`, readable
+   `defaults.inputs.in_N` values, `is_price_study`, and stub flags. All 58
+   fetched files are real scripts (`isTVScriptStub: false`).
+3. **Official docs / independent references** — used only where the bundle
+   omits a value (plot counts, smoothing enum meanings), always noted.
+
+## Dedup
+
+32 fetched `STD;` ids describe studies already in the wire payload
+(`STD;EMA` = Ema, `STD;VWAP` = Vwap, `STD;Williams_Alligator` = Alligator,
+`STD;Bollinger_Bands_B` = PercentB, …). They collapse onto the existing rows;
+the mapping is encoded in `research/studies/build_catalog.py::DEDUP`. The
+catalog has exactly 84 rows: 66 wire + 17 new + 1 excluded.
+
+## Scope decisions
+
+- **Excluded:** `STD;Advance_Decline_Ratio_Bars` — market-breadth study whose
+  inputs are external index symbols; feeds other than price/volume are
+  excluded per spec §4.
+- **Comparison studies in scope:** `STD;Correlation_Coeff`,
+  `STD;Rank_Correlation_Index` — spec §10.3 provides the optional
+  comparison series; TickView already aligns comparison candles for the
+  overlay.
+- **Volume profile / anchored VWAP:** shipped by TV as drawing tools, not
+  studies. Verified in the drawings manifest (M2, `LineToolTradedVolumeProfile`
+  family + anchored VWAP). The study-side `VWAP` (session VWAP) is audited
+  here via session anchors (plan task 9). No study-level profile entry is
+  fabricated.
+- Strategies, fundamentals, earnings/calendar, social/idea, notification
+  studies: excluded wholesale per spec §4; they never enter the catalog.
+
+## Default-source rulings for the 17 new studies
+
+Defaults come from the fetched `metaInfo` (bundle beats docs). Where docs
+disagree, the bundle value is used and the conflict is recorded here:
+
+| Study | Bundle defaults (in_N) | Docs note |
+|---|---|---|
+| Aroon | len 14 | TV docs say 25 — bundle wins; open question logged |
+| ATR | len 14, smoothing RMA | matches docs |
+| BB Width | len 20, mult 2.0, source close | matches docs |
+| Chandelier Exit | len 22, ATR len 22, mult 3.0 | matches docs |
+| Choppiness Index | len 14 | matches docs |
+| Connors RSI | RSI 3 / RSI 2 / RSI 100 | EMA-smoothing length (docs: 7) not readable in meta — open question, 7 used |
+| Correlation Coeff | symbol GOOG, source close, len 20 | matches docs |
+| DMI | DI len 14, ADX smoothing len 14 | matches docs |
+| Fisher Transform | len 9 | matches docs |
+| Know Sure Thing | meta shows 10/15/20/30 + … (KST-shaped params) | fetch likely mislabeled; docs values length 25, MA 2 used — open question logged |
+| Price Oscillator | source close, short 12, long 26, signal 9, EMA/EMA | matches MACD-style docs |
+| Rank Correlation Index | source close, short 10, MA SMA, long 14, signal 2 | matches docs |
+| Relative Volatility Index | short 10, MA SMA, long 14 | matches docs |
+| SMI Ergodic | long 20, short 5, signal 5 | docs say 10/3/3 — bundle wins; open question logged |
+| Volatility Stop | len 20, source close, mult 2.0 | matches docs |
+| Williams Fractals | 2/2 (in_0 only) | symmetric 2-bar fractals per docs |
+| ZigZag | deviation 5, depth 10, mode Absolute | docs depth 5 conflict — bundle wins; open question logged |
+
+`in_1`-style boolean trailing inputs (`in_3/in_4/in_6…: true`) are
+"extend/right-axis" flags, not numeric defaults, and are ignored.
+
+## Known uncertainties
+
+- `Correlation_Coeff` default symbol is literally `GOOG` (TV's default);
+  TickView substitutes the active comparison series instead — documented in
+  the study entry notes.
+- Connors %R rank-percentile window semantics (RSI(2) percentile rank over
+  100 bars) follow the published formula; no wire plot values were extractable.

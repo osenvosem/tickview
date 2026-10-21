@@ -1,0 +1,278 @@
+{
+ "name": "Bollinger Bands",
+ "scriptIdPart": "STD;Bollinger_Bands",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "filledAreasStyle": {
+    "fill_0": {
+     "color": "rgba(33,150,243,0.05)",
+     "visible": true
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 20,
+    "in_1": "SMA",
+    "in_2": "close",
+    "in_3": 2,
+    "in_4": 0,
+    "in_5": "",
+    "in_6": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_30L9HY5qpF0Sopmot3Xy8g==_p65CWyHCeU2MM1G0+Zb2tbRKN9uVkhRhcrs34t6ygBtUCNeC6iaLpE5Mo/u0XIOm25rCyg3wkcdvr6hiD8qvUhiXmuN5CGy6vQQpM+FC7yTCyNxQ4n9jfZZDbFWp/R3YzNZelwoE+7yG4z92DJE3vsSRXmVKQfhHb6sfqhyh/SVVxWO3dttQirjmBwpOI5TGHIu5GSPqAoOmPpSRi8ZZRIvOOVKrc+dtqfWm3Nhp9FoE1wXki0xK1PxIW2uM6ODuq8qC15z3Rey3X2ku+unUT4/gQCrMALWrbgAAbaEC1btrDf1+Iq+nNeytEx1zH8GimZFFr1zy7VsiwcKjtpbAMXyt4pjufRUwRX9YfEpQ5jfN4crE/h7N28v6hhYAtgcWrWbt4GKSguMM9VCll0nmp0MVFzkA79Zln8OkiXAMIbgvT5H3YRAP1/V+1T337bTXa3TJ37H75hggAz2rouqQMoH3tn61RXRm7DnsSa/pbSYQYLMJP6L7hu7jINr01+w2vEtPOQMOJuQ8ilQYzCWlvX2L3p2eeGiAatGmY2gRslnFH0ZlXSbOE1JLAIUcFlUOmEbHRf2iCK1K4WtXW9AKiR93SZAWM5cNHQWDCLp0IgnZTM+PYyxesYEG642YCDfFdNCg9BFyPTdxFw5gEkHMln6sJPm54Zkg5TpSGbIKu1LQlEhcJkpfoVtcNZ8m5A6uobXVTzIFxId9MoYa2OkgfEEmGyt0qkACeCATpopaJHM5F0kpW6volcYI4eIkZ4GU+Z7884q1IqOK7qoujfx1Pmyu6lIHwzODSW/rP+ml7EfNWzRTtpHni3WnAmAtqJD4RPQyz+PQOgSHYBV91wPdncoc1VdDsYt0n/9J5JEPl6xvTJqdrFEqr2bJEcSALyXtKrxr9gjYMMZsemr2AZTepF2TUiZ3U5O278hVQqhEfyGXBz7yD0e55MzolIpSwAfZ1yLFz2LhfakdKvGsDR6yuWDdXWLzM9ZqizO7DAZz8EkTI4ARSdDld9aHV0ZNm1LWObk/+Fd/wx7KnCNJPI6DPrdWtwAzM0gjJ3zknysf+HaENwZEIiQXyLENPtA4GtzW7QsMYEqcAG+C0zLUsEcTgeu8COUMYu+av6XseUJvEDc1/LtzhU+LcddWT7TKrwKraEfhY5AYD5xKswxGNXuJqiE4cdHsci1I8E4G2oiHrUE4tXxlDZAhstWxrCbO6QxQSEw="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_1": {
+     "color": "#F23645",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": "#089981",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Bollinger Bands",
+  "docs": "",
+  "filledAreas": [
+   {
+    "fillgaps": false,
+    "id": "fill_0",
+    "isHidden": false,
+    "objAId": "plot_1",
+    "objBId": "plot_2",
+    "title": "Background",
+    "type": "plot_plot"
+   }
+  ],
+  "filledAreasStyle": {
+   "fill_0": {
+    "isHidden": false
+   }
+  },
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;Bollinger_Bands@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_30L9HY5qpF0Sopmot3Xy8g==_p65CWyHCeU2MM1G0+Zb2tbRKN9uVkhRhcrs34t6ygBtUCNeC6iaLpE5Mo/u0XIOm25rCyg3wkcdvr6hiD8qvUhiXmuN5CGy6vQQpM+FC7yTCyNxQ4n9jfZZDbFWp/R3YzNZelwoE+7yG4z92DJE3vsSRXmVKQfhHb6sfqhyh/SVVxWO3dttQirjmBwpOI5TGHIu5GSPqAoOmPpSRi8ZZRIvOOVKrc+dtqfWm3Nhp9FoE1wXki0xK1PxIW2uM6ODuq8qC15z3Rey3X2ku+unUT4/gQCrMALWrbgAAbaEC1btrDf1+Iq+nNeytEx1zH8GimZFFr1zy7VsiwcKjtpbAMXyt4pjufRUwRX9YfEpQ5jfN4crE/h7N28v6hhYAtgcWrWbt4GKSguMM9VCll0nmp0MVFzkA79Zln8OkiXAMIbgvT5H3YRAP1/V+1T337bTXa3TJ37H75hggAz2rouqQMoH3tn61RXRm7DnsSa/pbSYQYLMJP6L7hu7jINr01+w2vEtPOQMOJuQ8ilQYzCWlvX2L3p2eeGiAatGmY2gRslnFH0ZlXSbOE1JLAIUcFlUOmEbHRf2iCK1K4WtXW9AKiR93SZAWM5cNHQWDCLp0IgnZTM+PYyxesYEG642YCDfFdNCg9BFyPTdxFw5gEkHMln6sJPm54Zkg5TpSGbIKu1LQlEhcJkpfoVtcNZ8m5A6uobXVTzIFxId9MoYa2OkgfEEmGyt0qkACeCATpopaJHM5F0kpW6volcYI4eIkZ4GU+Z7884q1IqOK7qoujfx1Pmyu6lIHwzODSW/rP+ml7EfNWzRTtpHni3WnAmAtqJD4RPQyz+PQOgSHYBV91wPdncoc1VdDsYt0n/9J5JEPl6xvTJqdrFEqr2bJEcSALyXtKrxr9gjYMMZsemr2AZTepF2TUiZ3U5O278hVQqhEfyGXBz7yD0e55MzolIpSwAfZ1yLFz2LhfakdKvGsDR6yuWDdXWLzM9ZqizO7DAZz8EkTI4ARSdDld9aHV0ZNm1LWObk/+Fd/wx7KnCNJPI6DPrdWtwAzM0gjJ3zknysf+HaENwZEIiQXyLENPtA4GtzW7QsMYEqcAG+C0zLUsEcTgeu8COUMYu+av6XseUJvEDc1/LtzhU+LcddWT7TKrwKraEfhY5AYD5xKswxGNXuJqiE4cdHsci1I8E4G2oiHrUE4tXxlDZAhstWxrCbO6QxQSEw=",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 20,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Length",
+    "tooltip": "The time period to be used in calculating the MA which creates the base for the Upper and Lower Bands.",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "SMA",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Basis MA Type",
+    "options": [
+     "SMA",
+     "EMA",
+     "SMMA (RMA)",
+     "WMA",
+     "VWMA"
+    ],
+    "tooltip": "Determines the type of Moving Average that is applied to the basis plot line.",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_2",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "tooltip": "Determines what data from each bar will be used in calculations.",
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": 2,
+    "display": 4294967295,
+    "id": "in_3",
+    "isFake": true,
+    "max": 50,
+    "min": 0.001,
+    "name": "StdDev",
+    "tooltip": "The number of Standard Deviations away from the MA that the Upper and Lower Bands should be.",
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": 0,
+    "display": 0,
+    "id": "in_4",
+    "isFake": true,
+    "max": 500,
+    "min": -500,
+    "name": "Offset",
+    "tooltip": "Changing this number will move the Bollinger Bands either Forwards or Backwards relative to the current market.",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_5",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_6",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "439ae83b2f72f5b748174cabd27a8664f8d88fcc",
+   "version": "35.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "type": "line"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Bollinger_Bands",
+  "shortDescription": "BB",
+  "stats": {
+   "plot": 3
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Basis"
+   },
+   "plot_1": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Upper"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Lower"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

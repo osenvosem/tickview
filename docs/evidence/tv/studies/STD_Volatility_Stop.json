@@ -1,0 +1,229 @@
+{
+ "name": "Volatility Stop",
+ "scriptIdPart": "STD;Volatility_Stop",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 20,
+    "in_1": "close",
+    "in_2": 2,
+    "in_3": "",
+    "in_4": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_6bSOGCfjRGnNvOmf/+X9AA==_hKJLqRtvUVfh8hTi+NDYxVMTlv/HvZLwT3sJpCOzM+2GKixtWRjVK6w3a50feqXuxewnwmhJmtvR5wlF3Z+/D/ZfXfMeDapyd3OhSrQfTEPLRGFBBA8RjwzS6HouXxWtp4k8rffKRw8fsEaqrRN9RJtUkI+1+wv01YtEXNXs1qWmtQbSMX2JorxR0nPImqIOrseMTQ/FUYL4FcPAmjLvu61SM6Sg7HkVuqlmqGiHTchA9FJEwvOseH1rtodSZX33OWcadsQLZt3Rg3vC6dK8cVGZi2M3d+56BqEcMw7b6WLvXhnJLAV3zQ2D1+IVMGe3l/e8Pi/dvFfnRVZI2ncsO9mioaa2qDRa9snJt4uwaBl342/49iaD8OOcjQi9f1/a3+HNuKcmLd8bvOD1ayLuqo7qYtoUYq8sejQkxMMKB6XDhN77YX91HhLdSRPecORhl1IxbwAsiQCgnMSdvZ3nFq7VSzeNVqM5+6B0pKX5HzOD/SrfcLnBb0KUB7G72DJhUst/EbNmJDSbRQnY7WGJMwyYRq4NNYhkB8a2T/2bVBsek5KmXV+p6r35bRdtW/pYeaj+mn+/PXNE9Qcdra2GjHOkuW5WhoXLj6UYq4z/Fm+ZOondZeRPCxyg8Rv5SHbwN2rsYVh1qw0ys/avt3nf4Rw9O5K5AxWGe1H2PMU5NvfWCw5tvW/hyaRijxKidem29uZGPR7P7fp7HL/yHqaTQ4uC0M+n+MraTfDOe0YlknfdJYrb0akVkOePTugbO7uP6m/W8sShiBoSbAvpQFzKeJV0/EKW2elQ5pmbeLRpc0yNH3H/MWVGZw9BIZPQUnN6jWyclQ+Bm2XH4U5++ydDdDztETdtr/wBMyBzTPvBKOUV/UuNzSJA3U3Zo9sTWeaRjvoZMdIT8UcGlUjlZae3h24OEIGYmmIqzIlpxJNvVZoU7TJjbgZ0uWjpLAMQs5xpCwzmiBwtUHxfvgyg1k+Qz6QOvo2m+6SQaGPRihHjowS1qqzjnlL62QPFniD+rIKkU8qptv+o3Dcw61SUiEtEibxp2ew3GesBHMeRUkiIl/Y7m90XXlPltgbgE5gPdFeCt6t8cJMLqJjFpyNt5Qy5cxBfzS3Z1zxVe699LrdLodwZ4AsA+yLawu0Kv3OvLm/QdpEVSWQUm414qDXwA0fOWT91n87362DfziCK1M8BJy0ok6mkThXzI8HZvRHpTYpLb/piwDDMOHugRJ/W77lfNw=="
+   },
+   "palettes": {
+    "palette_0": {
+     "colors": {
+      "0": {
+       "color": "rgba(0,150,136,1)",
+       "style": 0,
+       "width": 1
+      },
+      "1": {
+       "color": "rgba(244,67,54,1)",
+       "style": 0,
+       "width": 1
+      }
+     }
+    }
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962ff",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 3,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Volatility stop",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;Volatility_Stop@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_6bSOGCfjRGnNvOmf/+X9AA==_hKJLqRtvUVfh8hTi+NDYxVMTlv/HvZLwT3sJpCOzM+2GKixtWRjVK6w3a50feqXuxewnwmhJmtvR5wlF3Z+/D/ZfXfMeDapyd3OhSrQfTEPLRGFBBA8RjwzS6HouXxWtp4k8rffKRw8fsEaqrRN9RJtUkI+1+wv01YtEXNXs1qWmtQbSMX2JorxR0nPImqIOrseMTQ/FUYL4FcPAmjLvu61SM6Sg7HkVuqlmqGiHTchA9FJEwvOseH1rtodSZX33OWcadsQLZt3Rg3vC6dK8cVGZi2M3d+56BqEcMw7b6WLvXhnJLAV3zQ2D1+IVMGe3l/e8Pi/dvFfnRVZI2ncsO9mioaa2qDRa9snJt4uwaBl342/49iaD8OOcjQi9f1/a3+HNuKcmLd8bvOD1ayLuqo7qYtoUYq8sejQkxMMKB6XDhN77YX91HhLdSRPecORhl1IxbwAsiQCgnMSdvZ3nFq7VSzeNVqM5+6B0pKX5HzOD/SrfcLnBb0KUB7G72DJhUst/EbNmJDSbRQnY7WGJMwyYRq4NNYhkB8a2T/2bVBsek5KmXV+p6r35bRdtW/pYeaj+mn+/PXNE9Qcdra2GjHOkuW5WhoXLj6UYq4z/Fm+ZOondZeRPCxyg8Rv5SHbwN2rsYVh1qw0ys/avt3nf4Rw9O5K5AxWGe1H2PMU5NvfWCw5tvW/hyaRijxKidem29uZGPR7P7fp7HL/yHqaTQ4uC0M+n+MraTfDOe0YlknfdJYrb0akVkOePTugbO7uP6m/W8sShiBoSbAvpQFzKeJV0/EKW2elQ5pmbeLRpc0yNH3H/MWVGZw9BIZPQUnN6jWyclQ+Bm2XH4U5++ydDdDztETdtr/wBMyBzTPvBKOUV/UuNzSJA3U3Zo9sTWeaRjvoZMdIT8UcGlUjlZae3h24OEIGYmmIqzIlpxJNvVZoU7TJjbgZ0uWjpLAMQs5xpCwzmiBwtUHxfvgyg1k+Qz6QOvo2m+6SQaGPRihHjowS1qqzjnlL62QPFniD+rIKkU8qptv+o3Dcw61SUiEtEibxp2ew3GesBHMeRUkiIl/Y7m90XXlPltgbgE5gPdFeCt6t8cJMLqJjFpyNt5Qy5cxBfzS3Z1zxVe699LrdLodwZ4AsA+yLawu0Kv3OvLm/QdpEVSWQUm414qDXwA0fOWT91n87362DfziCK1M8BJy0ok6mkThXzI8HZvRHpTYpLb/piwDDMOHugRJ/W77lfNw==",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 20,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 2,
+    "name": "Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": 2,
+    "display": 4294967295,
+    "id": "in_2",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 0.25,
+    "name": "Multiplier",
+    "step": 0.25,
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_4",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "palettes": {
+   "palette_0": {
+    "addDefaultColor": true,
+    "colors": {
+     "0": {
+      "name": "Color 0"
+     },
+     "1": {
+      "name": "Color 1"
+     }
+    },
+    "valToIndex": {
+     "0": 0,
+     "1": 1
+    }
+   }
+  },
+  "pine": {
+   "digest": "0919c26b00c71bb85cade99fe42457cec9af2d0b",
+   "version": "21.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "palette": "palette_0",
+    "target": "plot_0",
+    "type": "colorer"
+   }
+  ],
+  "scriptIdPart": "STD;Volatility_Stop",
+  "shortDescription": "VStop",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Volatility Stop"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": [
+   "{\"message\":\"The function \\\"{functionName}\\\" should be called on each calculation for consistency. It is recommended to extract the call from this scope\",\"start\":{\"line\":12,\"column\":26},\"end\":{\"line\":12,\"column\":39},\"code\":\"CW10003\",\"ctx\":{\"functionName\":\"ta.atr\"}}",
+   "{\"message\":\"The variable \\\"{value}\\\" is declared in local scope, which may not be executed at every update. So, obtaining its historical values may lead to unexpected results\",\"start\":{\"line\":17,\"column\":23},\"end\":{\"line\":17,\"column\":32},\"code\":\"CW10018\",\"ctx\":{\"value\":\"uptrend\"}}"
+  ]
+ }
+}

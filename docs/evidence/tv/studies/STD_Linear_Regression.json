@@ -1,0 +1,305 @@
+{
+ "name": "Linear Regression Curve",
+ "scriptIdPart": "STD;Linear_Regression",
+ "metaInfo": {
+  "TVScriptMetaInfoExprs": {
+   "patchMap": {
+    "inputs.7.active": "rm_0",
+    "inputs.9.active": "rm_1"
+   },
+   "tree": "//@version=6\nuseUpperDevInput=##input(defval=true,type='INPUT_BOOL',##id='in_2')\n##root(root_metainfo,rm_0,##active('in_3',useUpperDevInput),\"input&&bool\")\nuseLowerDevInput=##input(defval=true,type='INPUT_BOOL',##id='in_4')\n##root(root_metainfo,rm_1,##active('in_5',useLowerDevInput),\"input&&bool\")\n"
+  },
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "graphics": {
+    "dwglabels": {
+     "labels": {
+      "visible": true
+     }
+    },
+    "dwglinefills": {
+     "lineFills": {
+      "visible": true
+     }
+    },
+    "dwglines": {
+     "lines": {
+      "visible": true
+     }
+    }
+   },
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 100,
+    "in_1": "close",
+    "in_10": "rgba(242,54,69,0.15)",
+    "in_2": true,
+    "in_3": 2,
+    "in_4": true,
+    "in_5": 2,
+    "in_6": true,
+    "in_7": false,
+    "in_8": true,
+    "in_9": "rgba(41,98,255,0.15)",
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"str\":1,\"math\":1,\"alertcondition\":1,\"line\":1,\"linefill\":1,\"label\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_keMqtwewLfSvKL5I4op/sw==_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"
+   },
+   "styles": {}
+  },
+  "description": "Linear regression channel",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "graphics": {
+   "dwglabels": {
+    "labels": {
+     "name": "labels",
+     "title": "Labels"
+    }
+   },
+   "dwglinefills": {
+    "lineFills": {
+     "name": "lineFills",
+     "title": "LineFills"
+    }
+   },
+   "dwglines": {
+    "lines": {
+     "name": "lines",
+     "title": "Lines"
+    }
+   }
+  },
+  "historyCalculationMayChange": true,
+  "id": "Script$STD;Linear_Regression@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_keMqtwewLfSvKL5I4op/sw==_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",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"str\":1,\"math\":1,\"alertcondition\":1,\"line\":1,\"linefill\":1,\"label\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 100,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 5000,
+    "min": 1,
+    "name": "Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "display": 0,
+    "group": "Channel Settings",
+    "id": "in_2",
+    "inline": "Upper Deviation",
+    "isFake": true,
+    "name": "Upper Deviation",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": 2,
+    "display": 4294967295,
+    "group": "Channel Settings",
+    "id": "in_3",
+    "inline": "Upper Deviation",
+    "isFake": true,
+    "name": "",
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "display": 0,
+    "group": "Channel Settings",
+    "id": "in_4",
+    "inline": "Lower Deviation",
+    "isFake": true,
+    "name": "Lower Deviation",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": 2,
+    "display": 4294967295,
+    "group": "Channel Settings",
+    "id": "in_5",
+    "inline": "Lower Deviation",
+    "isFake": true,
+    "name": "",
+    "type": "float"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "display": 0,
+    "group": "Display Settings",
+    "id": "in_6",
+    "isFake": true,
+    "name": "Show Pearson's R",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "display": 0,
+    "group": "Display Settings",
+    "id": "in_7",
+    "isFake": true,
+    "name": "Extend Lines Left",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "display": 0,
+    "group": "Display Settings",
+    "id": "in_8",
+    "isFake": true,
+    "name": "Extend Lines Right",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": "rgba(41,98,255,0.15)",
+    "display": 0,
+    "group": "Color Settings",
+    "id": "in_9",
+    "inline": "Color Settings",
+    "isFake": true,
+    "name": "",
+    "type": "color"
+   },
+   {
+    "active": true,
+    "defval": "rgba(242,54,69,0.15)",
+    "display": 0,
+    "group": "Color Settings",
+    "id": "in_10",
+    "inline": "Color Settings",
+    "isFake": true,
+    "name": "",
+    "type": "color"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isRGB": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "f05b4a0fb90b196e28aa5ae0609475382b642134",
+   "version": "31.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "alertcondition"
+   },
+   {
+    "id": "plot_1",
+    "type": "alertcondition"
+   },
+   {
+    "id": "plot_2",
+    "type": "alertcondition"
+   }
+  ],
+  "scriptIdPart": "STD;Linear_Regression",
+  "shortDescription": "Lin reg channel",
+  "stats": {
+   "alertcondition": 3
+  },
+  "styles": {
+   "plot_0": {
+    "text": "The price movement has exited Regression Channel's bounds",
+    "title": "Regression Channel Exited"
+   },
+   "plot_1": {
+    "text": "The Regression Channel trend switched from Downtrend to Uptrend",
+    "title": "Switched to Uptrend"
+   },
+   "plot_2": {
+    "text": "The Regression Channel trend switched from Uptrend to Downtrend",
+    "title": "Switched to Downtrend"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

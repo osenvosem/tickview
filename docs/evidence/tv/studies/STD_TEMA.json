@@ -1,0 +1,153 @@
+{
+ "name": "Moving Average Triple",
+ "scriptIdPart": "STD;TEMA",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 9,
+    "in_1": "",
+    "in_2": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_m2DFPeVM9RaeebS9mzPD8g==_iHl+P5q1wgOabIF9blTmBb3WUNsRUZ1/zSgebLdAKy3DoXJma1I5TQLRXaXjyqjCV8js3SdvY9CTWczae6t/W+OoJO4Ozs4uYWzPIHSkVirJyJ3SwCFI9wNfAaLqOI4KNDlZp5CEj7owDNhLWPkriJEdsa+l9krXwyLd0fSNjICMIryShZB5k/e+ofhZcv3zubgGEnZ973SUEKTYtX7ZlkdwBD2HNThJKNHYDVvY9hm0mdDqBXQDL/QSXvypJ1A2UlZBA6LkPEy8mFygd5UYLkAddvx/O3dsPyoWrhR/e3vI4DoJ/kgE3Zma97y5RlqlG2vUmq7QyPnA2mcf5QUf0ooctENpvbfPZBOXj3X5ENVqZv18w7edSMEaGuX7SG8LnaYtIWDiQUeWKA0ffMiMYy+YgRqMTBUc09ht4PxtivP5FA9IHqfmSdM1ZKJ7GT1cTBGLyb5jrOQwkBh2amn7H0clQkFSTADu0tq7FAUKtA0p1ydjz9Ly36g8H7fKB2nuuXNAJqSW+Lt7d2hjo+nYMh9SZyPnRUhkIEYb63DvfDobsd1cd7tocIUSGbiYlnHI1nqZewIviMFe7e7irrgL6lsLzlEx"
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Triple exponential moving average",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;TEMA@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_m2DFPeVM9RaeebS9mzPD8g==_iHl+P5q1wgOabIF9blTmBb3WUNsRUZ1/zSgebLdAKy3DoXJma1I5TQLRXaXjyqjCV8js3SdvY9CTWczae6t/W+OoJO4Ozs4uYWzPIHSkVirJyJ3SwCFI9wNfAaLqOI4KNDlZp5CEj7owDNhLWPkriJEdsa+l9krXwyLd0fSNjICMIryShZB5k/e+ofhZcv3zubgGEnZ973SUEKTYtX7ZlkdwBD2HNThJKNHYDVvY9hm0mdDqBXQDL/QSXvypJ1A2UlZBA6LkPEy8mFygd5UYLkAddvx/O3dsPyoWrhR/e3vI4DoJ/kgE3Zma97y5RlqlG2vUmq7QyPnA2mcf5QUf0ooctENpvbfPZBOXj3X5ENVqZv18w7edSMEaGuX7SG8LnaYtIWDiQUeWKA0ffMiMYy+YgRqMTBUc09ht4PxtivP5FA9IHqfmSdM1ZKJ7GT1cTBGLyb5jrOQwkBh2amn7H0clQkFSTADu0tq7FAUKtA0p1ydjz9Ly36g8H7fKB2nuuXNAJqSW+Lt7d2hjo+nYMh9SZyPnRUhkIEYb63DvfDobsd1cd7tocIUSGbiYlnHI1nqZewIviMFe7e7irrgL6lsLzlEx",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 9,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_1",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "767eaa2069bc795f8a6ace8999283becfd8d297f",
+   "version": "33.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;TEMA",
+  "shortDescription": "TEMA",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "TEMA"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

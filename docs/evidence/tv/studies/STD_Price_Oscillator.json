@@ -1,0 +1,336 @@
+{
+ "name": "Price Oscillator",
+ "scriptIdPart": "STD;Price_Oscillator",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "bands": [
+   {
+    "id": "hline_0",
+    "isHidden": false,
+    "name": "Zero"
+   }
+  ],
+  "behind_chart": true,
+  "defaults": {
+   "bands": [
+    {
+     "color": "rgba(120,123,134,0.5)",
+     "linestyle": 2,
+     "linewidth": 1,
+     "value": 0,
+     "visible": true
+    }
+   ],
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": "close",
+    "in_1": 12,
+    "in_2": 26,
+    "in_3": 9,
+    "in_4": "EMA",
+    "in_5": "EMA",
+    "in_6": "",
+    "in_7": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_H7GTZJl3/uikXoo+jnDfRw==_MDEF0DqG4CmPaDFYNkTqDlDR2VdxKSscBzEknjeFIiWPyGezITafu28FujQ1SEdBpabiXmyEPwtqMdnjyqRtW0cZcATkVg1MVcK6aeUGHk/Zs2N5/ESehrvxd1yr7sUkgrBix9z48ADk8fLvnPDuW5jUucEmk8NzwmLAi+nIGFwPAtYyow6QzCG30bbrvcWxO/M/r5ovpXNb3u9SnMHfiGqi1koHa+wONatFvelF8P6DBstSwNKVTOPVHXoYwUFw7IHQNL6aOGQh/7it/u5ABVEI3YcOTf17VZrmINGg/wOX9XblCyawqyOovbe/uKWJl23yRxBey9HNSmqrnV+xkpCtY9pOXgo+5gdKd9lSy66j/0O5EnPz2xgh7YxQq15MF/E6SqBfTdslTyoEPhKn4FqC8Ft5qG624rdO3P+TjodbHw4C8dfyZS3W1moBktlLaHJSP+9BcesxV6vpkDYjVTBJXKkeEQX3UVO+wJYVQErTcrf4o5Jmk9HLddd/G9kgmwTkjeHRTmOmfrRncFodrNMoCaRa8okAvHs8OUzSbCTZU+ICyLeAZNnQFsZTJ4Xtr58KQtNWNFhWyWxLOxUjm2eaRUdYhjpa7zhn+1ysIjkgn7IiLZjdJVqp4G6hTXxcs3MEGGVz0P/zT97LaVOgKzzYvNfbpJWzf2Bl+lAQ0+ECP0rNd4fTB+wWhDHQO2Jd1K1m1GewAPvoEIeBCuvKYA1bweRjjT+OsA/liYjeMShEzgECZ+2PdlRyUl4lrX0v19Qu5GwiVSJ/BwxMKZ2UL8LRT5HbBV+FgU1kUcV23DyoEXXrTTAQ0S0V5WGUtR8MP5WR2NQi8D8vDU9oK1vOGsruhT+WzXChhzOTVKyc6qpGsiuDD2sw2SoGsYF9watVXPegU5CWbgg7MS6wx4aw5yio+k1IPJbypO0RkKOdIqDlwNxHvJbm+AM770TYRJ7pRGa4VLIkiBORXGt9tFSp34ITSCuwHeqDDmDgAQVUjlJ5TvxKOYQPiH7qtjJQeVWExKDx2n/at9fYTJz3AjQ4fpu+C9UA1MYuxoX86W2sQqbMYIbACBQlcrSdRuU+H5jVhWEI5lcL2DunCRSgGD2u5a9Sbws4vd/w6wBhZVh+AmJn8bQJR9jn6y5nseNOh0t8Av/dGC1XF8s="
+   },
+   "palettes": {
+    "palette_0": {
+     "colors": {
+      "0": {
+       "color": "rgba(38,166,154,1)",
+       "style": 0,
+       "width": 1
+      },
+      "1": {
+       "color": "rgba(178,223,219,1)",
+       "style": 0,
+       "width": 1
+      },
+      "2": {
+       "color": "rgba(255,205,210,1)",
+       "style": 0,
+       "width": 1
+      },
+      "3": {
+       "color": "rgba(255,82,82,1)",
+       "style": 0,
+       "width": 1
+      }
+     }
+    }
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962ff",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 5,
+     "trackPrice": false
+    },
+    "plot_2": {
+     "color": null,
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    },
+    "plot_3": {
+     "color": "#ff6d00",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Price oscillator",
+  "docs": "",
+  "format": {
+   "precision": 2,
+   "type": "percent"
+  },
+  "id": "Script$STD;Price_Oscillator@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_H7GTZJl3/uikXoo+jnDfRw==_MDEF0DqG4CmPaDFYNkTqDlDR2VdxKSscBzEknjeFIiWPyGezITafu28FujQ1SEdBpabiXmyEPwtqMdnjyqRtW0cZcATkVg1MVcK6aeUGHk/Zs2N5/ESehrvxd1yr7sUkgrBix9z48ADk8fLvnPDuW5jUucEmk8NzwmLAi+nIGFwPAtYyow6QzCG30bbrvcWxO/M/r5ovpXNb3u9SnMHfiGqi1koHa+wONatFvelF8P6DBstSwNKVTOPVHXoYwUFw7IHQNL6aOGQh/7it/u5ABVEI3YcOTf17VZrmINGg/wOX9XblCyawqyOovbe/uKWJl23yRxBey9HNSmqrnV+xkpCtY9pOXgo+5gdKd9lSy66j/0O5EnPz2xgh7YxQq15MF/E6SqBfTdslTyoEPhKn4FqC8Ft5qG624rdO3P+TjodbHw4C8dfyZS3W1moBktlLaHJSP+9BcesxV6vpkDYjVTBJXKkeEQX3UVO+wJYVQErTcrf4o5Jmk9HLddd/G9kgmwTkjeHRTmOmfrRncFodrNMoCaRa8okAvHs8OUzSbCTZU+ICyLeAZNnQFsZTJ4Xtr58KQtNWNFhWyWxLOxUjm2eaRUdYhjpa7zhn+1ysIjkgn7IiLZjdJVqp4G6hTXxcs3MEGGVz0P/zT97LaVOgKzzYvNfbpJWzf2Bl+lAQ0+ECP0rNd4fTB+wWhDHQO2Jd1K1m1GewAPvoEIeBCuvKYA1bweRjjT+OsA/liYjeMShEzgECZ+2PdlRyUl4lrX0v19Qu5GwiVSJ/BwxMKZ2UL8LRT5HbBV+FgU1kUcV23DyoEXXrTTAQ0S0V5WGUtR8MP5WR2NQi8D8vDU9oK1vOGsruhT+WzXChhzOTVKyc6qpGsiuDD2sw2SoGsYF9watVXPegU5CWbgg7MS6wx4aw5yio+k1IPJbypO0RkKOdIqDlwNxHvJbm+AM770TYRJ7pRGa4VLIkiBORXGt9tFSp34ITSCuwHeqDDmDgAQVUjlJ5TvxKOYQPiH7qtjJQeVWExKDx2n/at9fYTJz3AjQ4fpu+C9UA1MYuxoX86W2sQqbMYIbACBQlcrSdRuU+H5jVhWEI5lcL2DunCRSgGD2u5a9Sbws4vd/w6wBhZVh+AmJn8bQJR9jn6y5nseNOh0t8Av/dGC1XF8s=",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": 12,
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Fast length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 26,
+    "display": 4294967295,
+    "id": "in_2",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Slow length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": 9,
+    "display": 4294967295,
+    "id": "in_3",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Signal length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "EMA",
+    "display": 0,
+    "id": "in_4",
+    "isFake": true,
+    "name": "Oscillator MA type",
+    "options": [
+     "EMA",
+     "SMA"
+    ],
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "EMA",
+    "display": 0,
+    "id": "in_5",
+    "isFake": true,
+    "name": "Signal MA type",
+    "options": [
+     "EMA",
+     "SMA"
+    ],
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_6",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_7",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": false,
+  "palettes": {
+   "palette_0": {
+    "addDefaultColor": true,
+    "colors": {
+     "0": {
+      "name": "Color 0"
+     },
+     "1": {
+      "name": "Color 1"
+     },
+     "2": {
+      "name": "Color 2"
+     },
+     "3": {
+      "name": "Color 3"
+     }
+    },
+    "valToIndex": {
+     "0": 0,
+     "1": 1,
+     "2": 2,
+     "3": 3
+    }
+   }
+  },
+  "pine": {
+   "digest": "2f0ad69065fbfa6b89572c89f03cc21e8c33cefb",
+   "version": "35.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   },
+   {
+    "id": "plot_1",
+    "palette": "palette_0",
+    "target": "plot_0",
+    "type": "colorer"
+   },
+   {
+    "id": "plot_2",
+    "type": "line"
+   },
+   {
+    "id": "plot_3",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Price_Oscillator",
+  "shortDescription": "PPO",
+  "stats": {
+   "plot": 3
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Histogram"
+   },
+   "plot_2": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "PPO"
+   },
+   "plot_3": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Signal line"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

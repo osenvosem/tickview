@@ -1,0 +1,174 @@
+{
+ "name": "Hull Moving Average",
+ "scriptIdPart": "STD;Hull_MA",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 9,
+    "in_1": "close",
+    "in_2": "",
+    "in_3": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_BC5HF3JHCXeI57MrvmtALg==_KyvWiLfCJGTwdTqVTkr01p9cFPUsGSsfxy+xok/gMGPBMD5/LioDOhF6YoEWWLvI3Q/6WsNAJidcjhYQc315cJEDICy0bc2kWSD7YcnAxU7Lio8D1GxU7C8eedtxK3fuMwK+VdisD4Byl8HQCssw81zrrG7Z5CFjcv9TFhXCfEG24jH2+qY7SWQLFmf00oKbiLFsq+BKinl4gP5aOqQDQfhY2dzquFv0B8ymCrzZjPNESwyoLvotLR6COiz+FhQxUn844W9tvJei9DYhfuirUk/sHLORKH4CToZ+gTPirydjeUzlcyDuWpVrJ+DtGOJGDxrRuxp+qhdXJwBtp/aNOBKYmWrxXXz3sEdpKQwKazOQ2758ogPRFbAPR0ixHR/IwILpzwW5G0gIXPiNTtysgVdmnBNLZXK1oJyLUkUrfSv7+Xu3JOMUedZiQoBc6ylQNo77l8sgJOM4412soCG166bmby9QKk0UKlYJUOWC82220apTEg7FZK/B6kP+m2QS/BJP6QXPmyJtka4BXBhd21GX+pYu2wRcaxZwSP4Rxwk1b6DZWbWJjRGUY5ry9tR51Er1Bvnca4O6s06g/58deIJeClwOeRl0WMfdO1mqsA/Wt8QopT6cshg7Hng54a0llCTf"
+   },
+   "styles": {
+    "plot_0": {
+     "color": null,
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Hull MA",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;Hull_MA@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_BC5HF3JHCXeI57MrvmtALg==_KyvWiLfCJGTwdTqVTkr01p9cFPUsGSsfxy+xok/gMGPBMD5/LioDOhF6YoEWWLvI3Q/6WsNAJidcjhYQc315cJEDICy0bc2kWSD7YcnAxU7Lio8D1GxU7C8eedtxK3fuMwK+VdisD4Byl8HQCssw81zrrG7Z5CFjcv9TFhXCfEG24jH2+qY7SWQLFmf00oKbiLFsq+BKinl4gP5aOqQDQfhY2dzquFv0B8ymCrzZjPNESwyoLvotLR6COiz+FhQxUn844W9tvJei9DYhfuirUk/sHLORKH4CToZ+gTPirydjeUzlcyDuWpVrJ+DtGOJGDxrRuxp+qhdXJwBtp/aNOBKYmWrxXXz3sEdpKQwKazOQ2758ogPRFbAPR0ixHR/IwILpzwW5G0gIXPiNTtysgVdmnBNLZXK1oJyLUkUrfSv7+Xu3JOMUedZiQoBc6ylQNo77l8sgJOM4412soCG166bmby9QKk0UKlYJUOWC82220apTEg7FZK/B6kP+m2QS/BJP6QXPmyJtka4BXBhd21GX+pYu2wRcaxZwSP4Rxwk1b6DZWbWJjRGUY5ry9tR51Er1Bvnca4O6s06g/58deIJeClwOeRl0WMfdO1mqsA/Wt8QopT6cshg7Hng54a0llCTf",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1,\"math\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 9,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_2",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": true,
+  "is_price_study": true,
+  "pine": {
+   "digest": "1082cc9d70d68efb79da442e4871cb1368ba9df0",
+   "version": "30.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;Hull_MA",
+  "shortDescription": "HMA",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "Plot"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}

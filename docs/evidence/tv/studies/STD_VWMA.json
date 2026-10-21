@@ -1,0 +1,186 @@
+{
+ "name": "VWMA",
+ "scriptIdPart": "STD;VWMA",
+ "metaInfo": {
+  "_metainfoVersion": 55,
+  "behind_chart": true,
+  "defaults": {
+   "inputs": {
+    "__fast_calc": false,
+    "__profile": false,
+    "in_0": 20,
+    "in_1": "close",
+    "in_2": 0,
+    "in_3": "",
+    "in_4": true,
+    "pineFeatures": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "pineId": "",
+    "pineVersion": "",
+    "text": "bmI9Ks46_Rh6/Rb6vc0K19hReLTCWAw==_HqxVO7vXLSiyLsDKJGFQK9sWXCzJZKYRn8xP4ARnabViB7ex6b1NQi9SMcmvfUGUa5V5TbcHSkO00xWDfeEtZHEaAKo0rOk7cluswdzj+odbdMcbGL3yXmhv0fHSCRazeieTE4iHhw782WysCSKvPXZAo+YUWYcphkmQTQiS1gJN2cAlaUpJXkZKjt2JjNEgknyg1af5w9KCfeQReb5VyVMiqNavbZOBjQni3rpQMbrtICneW6P4gl7UCJRwjR//yWxKpvu7tTWRUMmeIw6IqTRLv8DYeKmKpWCpephDcV+wvmxPKrbyQMxquv8uHCVOvZxUMpmgkCZ5rt8gz2FJPGz2heSwYXlXyTOnuHbubX1Wn0xa6n3LHhOghRPCQkHR9sbqzxMstmnnvpkfeJcd+e5s/gSkfCeWWGa39sY8Sq0wHXyQ5V8L5A5djQdgtYVe8k6UhnE+NR9Gxv+mTASuDbNwLPEqlGU+AiiconTonhl8GiB7JAPu4zvwEv0J7rNq7kJ+Uo+NHVAM+15rVG9D/OpkhJ+UcdbDnRtHG9uFrpjhHHLsiSH89W4br10u3GgNsY0/fR5AIPzPn9sCE2q/NQHW/+jCJcYaCKcJStgOqwH9j475XLouaVp1jt99lA=="
+   },
+   "styles": {
+    "plot_0": {
+     "color": "#2962FF",
+     "display": 4294967295,
+     "linestyle": 0,
+     "linewidth": 1,
+     "plottype": 0,
+     "trackPrice": false
+    }
+   }
+  },
+  "description": "Volume-weighted moving average",
+  "docs": "",
+  "format": {
+   "type": "inherit"
+  },
+  "id": "Script$STD;VWMA@tv-scripting-101",
+  "inputs": [
+   {
+    "defval": "bmI9Ks46_Rh6/Rb6vc0K19hReLTCWAw==_HqxVO7vXLSiyLsDKJGFQK9sWXCzJZKYRn8xP4ARnabViB7ex6b1NQi9SMcmvfUGUa5V5TbcHSkO00xWDfeEtZHEaAKo0rOk7cluswdzj+odbdMcbGL3yXmhv0fHSCRazeieTE4iHhw782WysCSKvPXZAo+YUWYcphkmQTQiS1gJN2cAlaUpJXkZKjt2JjNEgknyg1af5w9KCfeQReb5VyVMiqNavbZOBjQni3rpQMbrtICneW6P4gl7UCJRwjR//yWxKpvu7tTWRUMmeIw6IqTRLv8DYeKmKpWCpephDcV+wvmxPKrbyQMxquv8uHCVOvZxUMpmgkCZ5rt8gz2FJPGz2heSwYXlXyTOnuHbubX1Wn0xa6n3LHhOghRPCQkHR9sbqzxMstmnnvpkfeJcd+e5s/gSkfCeWWGa39sY8Sq0wHXyQ5V8L5A5djQdgtYVe8k6UhnE+NR9Gxv+mTASuDbNwLPEqlGU+AiiconTonhl8GiB7JAPu4zvwEv0J7rNq7kJ+Uo+NHVAM+15rVG9D/OpkhJ+UcdbDnRtHG9uFrpjhHHLsiSH89W4br10u3GgNsY0/fR5AIPzPn9sCE2q/NQHW/+jCJcYaCKcJStgOqwH9j475XLouaVp1jt99lA==",
+    "id": "text",
+    "isHidden": true,
+    "name": "ILScript",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineId",
+    "isHidden": true,
+    "name": "pineId",
+    "type": "text"
+   },
+   {
+    "defval": "",
+    "id": "pineVersion",
+    "isHidden": true,
+    "name": "pineVersion",
+    "type": "text"
+   },
+   {
+    "defval": "{\"indicator\":1,\"plot\":1,\"ta\":1}",
+    "id": "pineFeatures",
+    "isFake": true,
+    "isHidden": true,
+    "name": "pineFeatures",
+    "type": "text"
+   },
+   {
+    "active": true,
+    "defval": 20,
+    "display": 4294967295,
+    "id": "in_0",
+    "isFake": true,
+    "max": 1000000000000,
+    "min": 1,
+    "name": "Length",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "close",
+    "display": 4294967295,
+    "id": "in_1",
+    "isFake": true,
+    "name": "Source",
+    "options": [
+     "open",
+     "high",
+     "low",
+     "close",
+     "hl2",
+     "hlc3",
+     "hlcc4",
+     "ohlc4",
+     "volume"
+    ],
+    "type": "source"
+   },
+   {
+    "active": true,
+    "defval": 0,
+    "display": 4294967295,
+    "id": "in_2",
+    "isFake": true,
+    "max": 500,
+    "min": -500,
+    "name": "Offset",
+    "type": "integer"
+   },
+   {
+    "active": true,
+    "defval": "",
+    "group": "Calculation",
+    "id": "in_3",
+    "isFake": true,
+    "isMTFResolution": true,
+    "name": "Timeframe",
+    "solutionId": 43000591555,
+    "type": "resolution"
+   },
+   {
+    "active": true,
+    "defval": true,
+    "group": "Calculation",
+    "id": "in_4",
+    "isFake": true,
+    "isMTFGaps": true,
+    "name": "Wait for timeframe closes",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "group": "Calculation",
+    "id": "__fast_calc",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "Fast calculation",
+    "tooltip": "Limits script calculation to the last 2K bars. Turns off automatically when chart loads more historical data.",
+    "type": "bool"
+   },
+   {
+    "active": true,
+    "defval": false,
+    "id": "__profile",
+    "isFake": true,
+    "isHidden": true,
+    "migrate": true,
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "isMTFGaps": true,
+  "isMTFResolution": true,
+  "isTVScript": true,
+  "isTVScriptStub": false,
+  "is_hidden_study": false,
+  "is_price_study": true,
+  "pine": {
+   "digest": "9632f61a01bde5b2a6fe9930bb34c22320314185",
+   "version": "32.0"
+  },
+  "plots": [
+   {
+    "id": "plot_0",
+    "type": "line"
+   }
+  ],
+  "scriptIdPart": "STD;VWMA",
+  "shortDescription": "VWMA",
+  "stats": {
+   "plot": 1
+  },
+  "styles": {
+   "plot_0": {
+    "histogramBase": 0,
+    "isHidden": false,
+    "joinPoints": false,
+    "title": "VWMA"
+   }
+  },
+  "usesPrivateLib": false,
+  "warnings": []
+ }
+}
