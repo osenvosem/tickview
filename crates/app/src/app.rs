@@ -2064,10 +2064,6 @@ impl TickView {
         self.persist();
     }
 
-    pub fn cycle_theme(&mut self, ctx: &egui::Context) {
-        self.set_theme(ctx, self.theme.next());
-    }
-
     fn request_history(&mut self, tab_idx: usize, before: Option<i64>, limit: u32) {
         let Some(tab) = self.tabs.get_mut(tab_idx) else {
             return;
@@ -3506,7 +3502,6 @@ impl TickView {
         }
         win.show(ctx, |ui| {
             ui.set_width(500.0);
-            widgets::dialog_bg(ui, p);
             let re = ui.add(
                 egui::TextEdit::singleline(&mut self.search_q)
                     .hint_text(hint)
@@ -3650,7 +3645,6 @@ impl TickView {
         }
         win.show(ctx, |ui| {
             ui.set_width(560.0);
-            widgets::dialog_bg(ui, p);
             widgets::section_label(ui, p, "ON THIS CHART");
             if layers.is_empty() {
                 ui.label(
@@ -3841,7 +3835,6 @@ impl TickView {
         }
         win.show(ctx, |ui| {
             ui.set_width(380.0);
-            widgets::dialog_bg(ui, p);
             ui.label(
                 RichText::new(match d.pane {
                     ta::registry::Pane::Price => "Overlay on price",
@@ -3954,7 +3947,6 @@ impl TickView {
             win = win.anchor(Align2::CENTER_TOP, off);
         }
         win.show(ctx, |ui| {
-            widgets::dialog_bg(ui, p);
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new(&self.tabs[self.active].symbol.ticker)
@@ -4109,7 +4101,6 @@ impl TickView {
         }
         win.show(ctx, |ui| {
             ui.set_width(420.0);
-            widgets::dialog_bg(ui, p);
             widgets::section_label(ui, p, "APPEARANCE");
             ui.horizontal(|ui| {
                 for mode in [ThemeMode::Dark, ThemeMode::Light, ThemeMode::System] {

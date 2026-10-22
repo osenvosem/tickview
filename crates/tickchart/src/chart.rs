@@ -1570,9 +1570,16 @@ fn handle_input(
     // Wheel: plain/ctrl zoom time, shift pans.
     let zoom = ctx.input(|i| i.zoom_delta());
     let scroll = ctx.input(|i| i.smooth_scroll_delta);
-    let over = ctx
-        .input(|i| i.pointer.hover_pos())
-        .is_some_and(|p| resp.rect.contains(p) && !st.hover_block.is_some_and(|r| r.contains(p)));
+    // Modal windows and menus live on higher layers; the wheel must not
+    // reach the chart while the pointer is over one of them.
+    let covered = ctx.input(|i| i.pointer.hover_pos()).is_some_and(|p| {
+        ctx.layer_id_at(p)
+            .is_some_and(|l| l.order != egui::Order::Background)
+    });
+    let over = !covered
+        && ctx.input(|i| i.pointer.hover_pos()).is_some_and(|p| {
+            resp.rect.contains(p) && !st.hover_block.is_some_and(|r| r.contains(p))
+        });
     if over {
         if (zoom - 1.0).abs() > 1e-4 {
             if let Some(mx) = ctx.input(|i| i.pointer.hover_pos()).map(|p| p.x) {

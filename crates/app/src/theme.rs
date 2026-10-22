@@ -30,15 +30,6 @@ impl ThemeMode {
     }
 
     #[must_use]
-    pub fn next(self) -> Self {
-        match self {
-            Self::Dark => Self::Light,
-            Self::Light => Self::System,
-            Self::System => Self::Dark,
-        }
-    }
-
-    #[must_use]
     pub fn is_dark(self) -> bool {
         matches!(self, Self::Dark)
     }

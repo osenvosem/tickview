@@ -1148,18 +1148,16 @@ impl Icon {
                 path(&[(10.2, 20.0), (12.0, 21.0), (13.8, 20.0)]);
             }
             Self::Settings => {
-                circle(12.0, 12.0, 3.0);
-                for i in 0..8 {
-                    let a = i as f32 * std::f32::consts::TAU / 8.0;
-                    let inner = 6.2;
-                    let outer = 9.2;
-                    line(
-                        12.0 + a.cos() * inner,
-                        12.0 + a.sin() * inner,
-                        12.0 + a.cos() * outer,
-                        12.0 + a.sin() * outer,
-                    );
+                // Gear: toothed rim (alternating radius polygon) + hub hole.
+                let mut rim = Vec::with_capacity(32);
+                for i in 0..32 {
+                    let a = i as f32 * std::f32::consts::TAU / 32.0;
+                    let r = if i % 4 < 2 { 9.2 } else { 7.0 };
+                    rim.push((12.0 + a.cos() * r, 12.0 + a.sin() * r));
                 }
+                rim.push(rim[0]);
+                path(&rim);
+                circle(12.0, 12.0, 2.6);
             }
             Self::Plus => {
                 line(12.0, 4.0, 12.0, 20.0);

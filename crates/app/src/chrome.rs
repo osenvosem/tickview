@@ -254,25 +254,6 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     app.settings_open = true;
                 }
 
-                let theme_icon = if app.palette == Palette::light() {
-                    Icon::Moon
-                } else {
-                    Icon::Sun
-                };
-                if widgets::icon_button(
-                    ui,
-                    p,
-                    theme_icon,
-                    vec2(space::ICON_BTN, space::ICON_BTN),
-                    false,
-                    true,
-                    &format!("Theme: {} (click to switch)", app.theme.label()),
-                )
-                .clicked()
-                {
-                    app.cycle_theme(ui.ctx());
-                }
-
                 if widgets::icon_button(
                     ui,
                     p,

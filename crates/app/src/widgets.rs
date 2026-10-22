@@ -112,11 +112,6 @@ pub fn command_button(
     hover_feedback(resp, enabled, tip)
 }
 
-/// Paint an opaque dialog body so platform/theme transitions can never let the
-/// chart bleed through a floating window.
-pub fn dialog_bg(ui: &Ui, p: &Palette) {
-    ui.painter().rect_filled(ui.max_rect(), 0.0, p.elevated);
-}
 /// A compact filled action button used for confirming dialogs.
 #[must_use]
 pub fn primary_button(ui: &mut Ui, p: &Palette, label: &str) -> egui::Response {
