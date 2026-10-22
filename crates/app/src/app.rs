@@ -3047,6 +3047,18 @@ impl TickView {
         if ctx.egui_wants_keyboard_input() {
             return;
         }
+
+        // TV: Alt+L locks/unlocks all drawings on the active chart.
+        if ctx.input(|i| i.modifiers.alt && !i.modifiers.command && i.key_pressed(Key::L)) {
+            let locked = !self.tabs[self.active].locked;
+            self.set_drawings_locked(locked);
+            self.toast(if locked {
+                "Drawings locked"
+            } else {
+                "Drawings unlocked"
+            });
+            return;
+        }
         let rectangle = ctx.input(|i| {
             i.modifiers.alt && i.modifiers.shift && !i.modifiers.command && i.key_pressed(Key::R)
         });
