@@ -1309,8 +1309,14 @@ fn handle_input(
                                 let i = drawings::nearest_index_ext(cd, a.t).unwrap_or(0);
                                 Pos2::new(st.view.x_of(i), ax.y_of(a.price))
                             };
-                            drawings::handle_slot(&d.screen_points(&map), pos, 6.0)
-                                .map(|slot| (id, slot))
+                            // Hit-test only the anchors the kind exposes; a
+                            // desynced duplicate b must stay ungrabbable.
+                            let pts: Vec<egui::Pos2> = if d.kind.points() == 1 {
+                                vec![map(d.a)]
+                            } else {
+                                d.screen_points(&map)
+                            };
+                            drawings::handle_slot(&pts, pos, 6.0).map(|slot| (id, slot))
                         })
                 } else {
                     None

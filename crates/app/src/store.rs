@@ -280,14 +280,12 @@ impl SavedConfig {
             }
         }
         // Legacy repair: older builds let a handle drag desync the duplicate
-        // anchor of HLine/VLine, leaving a stray dot. Collapse them back.
+        // anchor of single-anchor kinds (HLine/VLine/CrossLine/…), leaving a
+        // stray dot. Collapse them back.
         for tab in &mut self.tabs {
             for list in tab.drawings.values_mut() {
                 for d in list {
-                    if matches!(
-                        d.kind,
-                        tickchart::DrawingKind::HLine | tickchart::DrawingKind::VLine
-                    ) {
+                    if d.kind.points() == 1 {
                         d.b = d.a;
                     }
                 }
