@@ -1715,12 +1715,13 @@ impl Icon {
                 ));
             }
             Self::DragHandle => {
-                // TradingView grip: narrow 2x3 dot stack. Radii/spacing are
-                // sized for the 14 px paint box (dots land at ~1.3 px with
-                // ~2.3/2.9 px column/row gaps on screen).
-                for y in [7.0, 12.0, 17.0] {
-                    dot(10.0, y, 2.2);
-                    dot(14.0, y, 2.2);
+                // TradingView grip: 2x3 dot stack. `dot` centers map through
+                // the box but the radius is raw pixels, so r 1.3 keeps the
+                // dots distinct at every size (large radii merged the columns
+                // into a solid pill in the 14 px toolbar box).
+                for y in [3.5, 12.0, 20.5] {
+                    dot(7.5, y, 1.3);
+                    dot(16.5, y, 1.3);
                 }
             }
             Self::SelectMultiple => {
@@ -1913,17 +1914,17 @@ mod tests {
         assert_eq!(dots.len(), 6, "TV grip is exactly six dots");
         let xs: Vec<f32> = dots.iter().map(|p| p.x).collect();
         let ys: Vec<f32> = dots.iter().map(|p| p.y).collect();
-        // Two narrow columns (gap < half the box) and three rows taller
-        // than the column gap - the vertical TradingView grip profile.
+        // TV grip: even ~square dot grid that stays legible - both pitch
+        // axes well above the 2.6 px dot diameter (no merging), and the
+        // whole cluster narrower than tall.
         let gap_x = xs.iter().copied().fold(f32::NEG_INFINITY, f32::max)
             - xs.iter().copied().fold(f32::INFINITY, f32::min);
         let gap_y = ys.iter().copied().fold(f32::NEG_INFINITY, f32::max)
             - ys.iter().copied().fold(f32::INFINITY, f32::min);
-        assert!(gap_x < 7.0, "columns too wide: {gap_x}");
-        assert!(
-            gap_y > gap_x * 1.5,
-            "stack not vertical: {gap_y} vs {gap_x}"
-        );
+        // Pitch must clear the dot diameter (2.6 px) or columns merge.
+        assert!(gap_x >= 3.6, "columns would merge: pitch {gap_x}");
+        assert!(gap_y >= 3.6, "rows would merge: pitch {gap_y}");
+        assert!(gap_x <= 8.0 && gap_y <= 8.0, "grip too spread");
     }
 
     #[test]
