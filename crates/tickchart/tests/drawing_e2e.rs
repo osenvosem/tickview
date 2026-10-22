@@ -1047,3 +1047,43 @@ fn backspace_deletes_selection_without_hover() {
     assert!(h.st.drawings.is_empty(), "drawing survived backspace");
     assert!(h.st.selection.is_empty());
 }
+
+#[test]
+fn drag_grabs_and_moves_selected_drawing() {
+    // TV: grab a drawing body and move it; the drag engages and anchors
+    // follow. The edit toolbar must be gone during the drag (app-side gate
+    // uses drawing_drag_active()).
+    let mut h = Harness::new(DrawTool::TrendLine);
+    let (lo, hi) = h.lo_hi();
+    let n = h.cd.len();
+    let a = h.pt(n - 60, lo + (hi - lo) * 0.3);
+    let b = h.pt(n - 25, lo + (hi - lo) * 0.6);
+    h.drag(a, b);
+    assert_eq!(h.st.drawings.len(), 1, "trend line not created");
+    assert!(
+        h.st.selection.primary().is_some(),
+        "created drawing not selected"
+    );
+    h.st.tools.set_tool(DrawTool::Cursor); // app resets the rail after completion
+    let before = h.st.drawings[0].a;
+    h.frame(vec![]); // bbox is recomputed at the top of the next frame
+    assert!(h.st.selection_bbox.is_some(), "selection bbox missing");
+
+    let m = Pos2::new((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
+    let d = egui::vec2(36.0, 22.0);
+    // Mid-drag probe: press, move past the threshold, check engagement.
+    h.press(m, Modifiers::default());
+    let moved = h.frame(vec![Event::PointerMoved(m + d)]);
+    assert!(h.st.drawing_drag_active(), "drawing drag did not engage");
+    assert!(moved.changed, "move did not mark drawings changed");
+    h.release(m + d, Modifiers::NONE);
+    let after = h.st.drawings[0].a;
+    assert!(
+        (after.t - before.t).abs() > 1 && (after.price - before.price).abs() > 1.0,
+        "anchors did not follow the drag: {before:?} -> {after:?}"
+    );
+    assert!(
+        !h.st.drawing_drag_active(),
+        "drag stuck active after release"
+    );
+}

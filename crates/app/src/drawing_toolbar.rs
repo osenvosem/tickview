@@ -133,6 +133,9 @@ pub struct ToolbarModel<'a> {
     pub selection: &'a Selection,
     pub drawings: &'a [Drawing],
     pub has_clipboard: bool,
+    /// Screen bbox of the selection; the bar dodges it so it never covers
+    /// the drawing being edited.
+    pub bbox: Option<Rect>,
 }
 
 impl<'a> ToolbarModel<'a> {
@@ -152,10 +155,26 @@ impl<'a> ToolbarModel<'a> {
 }
 
 #[must_use]
-pub fn bar_rect(bounds: Rect, width: f32) -> Rect {
+pub fn bar_rect(bounds: Rect, width: f32, bbox: Option<Rect>) -> Rect {
     let width = width.min(bounds.width() - 32.0).max(120.0);
     let x = (bounds.right() - 16.0 - width).max(bounds.left() + 16.0);
-    Rect::from_min_size(egui::pos2(x, bounds.top() + 16.0), vec2(width, 44.0))
+    let top = Rect::from_min_size(egui::pos2(x, bounds.top() + 16.0), vec2(width, 44.0));
+    // TV keeps the bar off the object it edits: if the default top-right
+    // slot covers the selection, park the bar just below-right of it.
+    if let Some(sel) = bbox
+        && top.intersects(sel)
+    {
+        let y = (sel.max.y + 8.0).clamp(
+            bounds.top() + 16.0,
+            (bounds.bottom() - 52.0).max(bounds.top() + 16.0),
+        );
+        let x = (sel.max.x - width).clamp(
+            bounds.left() + 16.0,
+            (bounds.right() - 16.0 - width).max(bounds.left() + 16.0),
+        );
+        return Rect::from_min_size(egui::pos2(x, y), vec2(width, 44.0));
+    }
+    top
 }
 
 fn all_equal<T: PartialEq>(values: impl IntoIterator<Item = T>) -> Option<T> {
@@ -245,7 +264,7 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
         + button_count as f32 * 28.0
         + button_count.saturating_sub(1) as f32 * 4.0
         + 8.0;
-    let bar = bar_rect(bounds, width);
+    let bar = bar_rect(bounds, width, model.bbox);
     let locked_all = selected.iter().all(|drawing| drawing.locked);
     let hidden_all = selected.iter().all(|drawing| drawing.hidden);
     let mut exclusion = bar;
@@ -836,10 +855,26 @@ mod tests {
     #[test]
     fn bar_sits_top_right_with_16px_inset() {
         let bounds = Rect::from_min_size(Pos2::ZERO, vec2(1000.0, 700.0));
-        let rect = bar_rect(bounds, 320.0);
+        let rect = bar_rect(bounds, 320.0, None);
         assert_eq!(rect.height(), 44.0);
         assert_eq!(rect.right(), bounds.right() - 16.0);
         assert_eq!(rect.top(), bounds.top() + 16.0);
+    }
+
+    #[test]
+    fn bar_dodges_selection_covering_top_right() {
+        let bounds = Rect::from_min_size(Pos2::ZERO, vec2(1000.0, 700.0));
+        let sel = Rect::from_min_size(Pos2::new(700.0, 30.0), vec2(120.0, 40.0));
+        let rect = bar_rect(bounds, 320.0, Some(sel));
+        assert!(!rect.intersects(sel), "toolbar covers the drawing it edits");
+        assert!(rect.top() > sel.max.y, "bar stayed above the selection");
+        assert!(rect.bottom() <= bounds.bottom());
+        // Far-away selections keep the default top-right slot.
+        let far = Rect::from_min_size(Pos2::new(50.0, 500.0), vec2(80.0, 40.0));
+        assert_eq!(
+            bar_rect(bounds, 320.0, Some(far)),
+            bar_rect(bounds, 320.0, None)
+        );
     }
 
     #[test]

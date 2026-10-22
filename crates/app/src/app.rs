@@ -151,11 +151,20 @@ impl Tab {
 
 /// The selected-object edit toolbar shows whenever a drawing is selected and
 /// drawings are visible. It survives background reloads (live polling, older
-/// history) — anchors are timestamp-keyed, so hiding it mid-poll was a
-/// random-disappearance bug.
+/// history — anchors are timestamp-keyed) and hides while a drawing or
+/// anchor is being dragged, exactly like TradingView.
+#[must_use]
+pub fn toolbar_visible_for(hidden: bool, has_selection: bool, drag_active: bool) -> bool {
+    !hidden && has_selection && !drag_active
+}
+
 #[must_use]
 pub fn tab_toolbar_visible(tab: &Tab) -> bool {
-    !tab.drawings_hidden && tab.chart.selection.primary().is_some()
+    toolbar_visible_for(
+        tab.drawings_hidden,
+        tab.chart.selection.primary().is_some(),
+        tab.chart.drawing_drag_active(),
+    )
 }
 
 /// Active drawing tool (drawing engine lands in Phase 2).
@@ -3458,6 +3467,7 @@ impl TickView {
                         selection: &selection,
                         drawings: &drawings,
                         has_clipboard: !self.drawing_clipboard.is_empty(),
+                        bbox: self.tabs[ti].chart.selection_bbox,
                     };
                     let out = drawing_toolbar::show(ui, p, &mut self.tabs[ti].toolbar, &model);
                     self.tabs[ti].chart.popup_rect = Some(out.exclusion_rect);
@@ -4467,6 +4477,12 @@ mod tests {
         assert!(tab_toolbar_visible(&tab), "toolbar vanished during reload");
         tab.drawings_hidden = true;
         assert!(!tab_toolbar_visible(&tab), "hidden drawings kept toolbar");
+        // TV hides the edit bar while an object drag is in flight.
+        assert!(toolbar_visible_for(false, true, false));
+        assert!(
+            !toolbar_visible_for(false, true, true),
+            "toolbar visible during drawing drag"
+        );
     }
 
     #[test]

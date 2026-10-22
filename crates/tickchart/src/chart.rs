@@ -100,6 +100,10 @@ pub struct ChartState {
     pub drawings_hidden: bool,
     /// Last screen rect of the floating drawing toolbar; clicks there are not chart clicks.
     pub popup_rect: Option<Rect>,
+    /// Screen-space bounding box of the selected drawings (updated each
+    /// frame); the edit toolbar dodges this rect so it never covers what it
+    /// is editing.
+    pub selection_bbox: Option<Rect>,
     /// Screen rect of an open app overlay (tool flyout, utility menu, emoji
     /// picker); wheel/keyboard pan is ignored while the pointer is inside.
     pub hover_block: Option<Rect>,
@@ -197,6 +201,7 @@ impl ChartState {
             locked: false,
             drawings_hidden: false,
             popup_rect: None,
+            selection_bbox: None,
             hover_block: None,
             magnet_snap_indicators: false,
             volume_pane_hidden: false,
@@ -269,6 +274,14 @@ impl ChartState {
         self.marquee = None;
         self.drag_drawing = None;
         self.drag_anchor = None;
+    }
+
+    /// True while the user is dragging a drawing or one of its anchors.
+    /// The edit toolbar hides during a drag (TV behaviour) and the chart
+    /// keeps the pointer for the move.
+    #[must_use]
+    pub fn drawing_drag_active(&self) -> bool {
+        self.drag_drawing.is_some() || self.drag_anchor.is_some()
     }
 
     /// Hide the current symbol's drawings and restore the target symbol's set.
@@ -1131,6 +1144,28 @@ fn handle_input(
     let over_popup = st
         .popup_rect
         .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
+    st.selection_bbox = {
+        let mut bbox: Option<Rect> = None;
+        for d in &st.drawings {
+            if !st.selection.contains(d.id) {
+                continue;
+            }
+            let mut pts = vec![d.a, d.b];
+            pts.extend(d.c);
+            pts.extend(d.extra.iter().copied());
+            for a in pts {
+                let Some(pt) = drawings::anchor_pos(a, cd, &st.view, ax) else {
+                    continue;
+                };
+                let pad = egui::Rect::from_center_size(pt, Vec2::splat(6.0));
+                bbox = Some(match bbox {
+                    Some(r) => r.union(pad),
+                    None => pad,
+                });
+            }
+        }
+        bbox
+    };
     let primary_pressed = ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary));
     let add_mod = ctx.input(|i| i.modifiers.command);
     if !primary_pressed && !resp.clicked() {
