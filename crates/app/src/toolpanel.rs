@@ -2416,3 +2416,39 @@ mod tests {
         assert_eq!(Tool::from_shortcut_key(Key::R), None);
     }
 }
+
+#[test]
+fn catalog_covers_hands_people_and_families_without_tone_variants() {
+    let cat = emoji_catalog();
+    // OpenMoji spells text-default emoji with VS16; compare normalized.
+    let glyphs: std::collections::HashSet<String> = cat
+        .entries
+        .iter()
+        .map(|e| e.glyph.replace('\u{FE0F}', ""))
+        .collect();
+    for g in [
+        "\u{270B}",
+        "\u{1F44D}",
+        "\u{1F44E}",
+        "\u{1F64C}",
+        "\u{1F64F}",
+        "\u{270C}",
+        "\u{1F44F}",
+        "\u{1F91D}",
+        "\u{1F4AA}",
+        "\u{1F46B}",
+        "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}",
+    ] {
+        assert!(
+            glyphs.contains(g.trim_end_matches('\u{FE0F}')),
+            "catalog missing {g:?}"
+        );
+    }
+    assert!(
+        cat.entries.iter().all(|e| !e
+            .glyph
+            .chars()
+            .any(|c| (0x1F3FB..=0x1F3FF).contains(&(c as u32)))),
+        "skin-tone variants must stay out of the grid"
+    );
+}

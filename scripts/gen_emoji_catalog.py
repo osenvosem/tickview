@@ -29,6 +29,8 @@ GROUPS = {
 }
 GROUP_ORDER = ["Smileys", "Animals", "Food", "Activity", "Travel", "Objects", "Symbols", "Flags"]
 
+SKINTONE_SELECTORS = {"1F3FB", "1F3FC", "1F3FD", "1F3FE", "1F3FF"}
+
 REPO = Path(__file__).resolve().parent.parent
 OUT_DIR = REPO / "crates" / "app" / "assets" / "openmoji"
 
@@ -43,9 +45,13 @@ def main() -> int:
         group = GROUPS.get(e["group"])
         if group is None:
             continue
-        if e.get("skintone") or e.get("skintone_combination"):
-            continue
         hexcode = e["hexcode"]
+        # Drop skin-tone VARIANTS only (hexcode contains a tone selector).
+        # Bases stay in: skintone_combination "single" marks the tone-capable
+        # base itself, and excluding it removed every hand, person, couple and
+        # family from the picker.
+        if any(part in SKINTONE_SELECTORS for part in hexcode.split("-")):
+            continue
         if not (svg_dir / f"{hexcode}.svg").is_file():
             missing.append(hexcode)
             continue
