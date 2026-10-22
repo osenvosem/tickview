@@ -508,6 +508,14 @@ pub fn replay_delay_ms(speed: f64) -> u64 {
     (1_000.0 / speed).floor().max(15.0) as u64
 }
 
+/// Width of the hover-values tooltip box: the widest line plus 8 px side
+/// padding, never narrower than 200 px nor wider than the plot (TV sizes
+/// the box to its contents).
+#[must_use]
+pub fn values_tooltip_width(widest_line: f32, plot_width: f32) -> f32 {
+    (widest_line + 16.0).max(200.0).min(plot_width)
+}
+
 /// Draw the chart; returns requested app actions.
 pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     let mut ev = ChartEvent::default();
@@ -893,7 +901,19 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 fmt_price(cd.c[i])
             );
             let line3 = format!("{chg:+.2} ({pct:+.2}%)  VOL {}", fmt_price(cd.v[i]));
-            let bw = 200.0f32;
+            let w1 = p
+                .layout_no_wrap(line1.clone(), font_sm.clone(), pal.text)
+                .rect
+                .width();
+            let w2 = p
+                .layout_no_wrap(line2.clone(), font.clone(), pal.text)
+                .rect
+                .width();
+            let w3 = p
+                .layout_no_wrap(line3.clone(), font.clone(), dir)
+                .rect
+                .width();
+            let bw = values_tooltip_width(w1.max(w2).max(w3), plot.width());
             let bh = 56.0f32;
             let mut br =
                 Rect::from_min_size(Pos2::new(pos.x + 14.0, pos.y + 14.0), Vec2::new(bw, bh));
@@ -1853,6 +1873,90 @@ fn draw_volume(
 mod tests {
     use super::*;
     use ta::Bar;
+
+    #[test]
+    fn values_tooltip_widens_for_long_ohlc_lines() {
+        // BTC-sized prices overflow the old fixed 200 px box (TV parity).
+        assert_eq!(values_tooltip_width(260.0, 800.0), 276.0);
+        assert_eq!(values_tooltip_width(120.0, 800.0), 200.0);
+        assert_eq!(values_tooltip_width(1_000.0, 800.0), 800.0);
+    }
+
+    #[test]
+    fn hover_values_tooltip_box_contains_its_text() {
+        // Render the real tooltip for BTC-scale prices: the box must be as
+        // wide as the widest OHLC line, not the old fixed 200 px.
+        let ctx = egui::Context::default();
+        let bars: Vec<_> = (0..50usize)
+            .map(|i| ta::Bar {
+                t: i as i64 * 60_000,
+                o: 85_000.0 + i as f64 * 10.0,
+                h: 85_100.0 + i as f64 * 10.0,
+                l: 84_900.0 + i as f64 * 10.0,
+                c: 85_050.0 + i as f64 * 10.0,
+                v: 12_614_000.0,
+            })
+            .collect();
+        let cd = Candles::from_bars(&bars);
+        let mut st = ChartState::new("BTCUSDT", "1D");
+        let pos = Pos2::new(700.0, 300.0);
+        let mut t = 0.0f64;
+        let mut last_shapes = Vec::new();
+        for k in 0..14 {
+            let events = if k == 0 {
+                vec![egui::Event::PointerMoved(pos)]
+            } else {
+                vec![]
+            };
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0, 700.0))),
+                time: Some(t),
+                events,
+                ..Default::default()
+            };
+            t += 0.05;
+            let mut out = ctx.run_ui(raw, |ui| {
+                let _ = crate::chart::ui(ui, &mut st, &cd);
+            });
+            out.textures_delta.clear();
+            last_shapes = out.shapes;
+        }
+        let widest = last_shapes.iter().find_map(|s| match &s.shape {
+            egui::Shape::Rect(r) if (250.0..=600.0).contains(&r.rect.width()) => {
+                Some(r.rect.width())
+            }
+            _ => None,
+        });
+        assert!(
+            widest.is_some_and(|w| w > 200.0),
+            "tooltip box stayed at the fixed 200 px"
+        );
+        // All tooltip text starts inside the box and ends before its edge.
+        let bx = last_shapes
+            .iter()
+            .find_map(|s| match &s.shape {
+                egui::Shape::Rect(r) if (250.0..=600.0).contains(&r.rect.width()) => Some(r.rect),
+                _ => None,
+            })
+            .unwrap();
+        let mut checked = 0;
+        for s in &last_shapes {
+            if let egui::Shape::Text(t) = &s.shape
+                && t.pos.y > bx.min.y
+                && t.pos.y < bx.max.y
+                && t.pos.x >= bx.min.x
+            {
+                let end = t.pos.x + t.galley.rect.width();
+                assert!(
+                    end <= bx.max.x - 4.0,
+                    "tooltip text overflows box: ends at {end} > edge {}",
+                    bx.max.x
+                );
+                checked += 1;
+            }
+        }
+        assert!(checked >= 3, "tooltip lines not found inside box");
+    }
 
     fn ui_candles() -> Candles {
         Candles::from_bars(&[
