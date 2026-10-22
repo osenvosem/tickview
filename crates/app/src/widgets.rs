@@ -51,7 +51,15 @@ pub fn icon_button(
     } else {
         p.faint
     };
-    icon.paint(ui.painter(), rect.shrink(7.0), color, 1.55);
+    // Square buttons shrink 7px per side (10px glyph in a 24px button —
+    // right for wide command-bar buttons). Row buttons are near-square:
+    // fill the box instead so row glyphs match the rest of the app.
+    let pad = if (rect.width() - rect.height()).abs() < 2.0 {
+        4.0
+    } else {
+        7.0
+    };
+    icon.paint(ui.painter(), rect.shrink(pad), color, 1.55);
     if active {
         let bar = egui::Rect::from_min_size(
             egui::pos2(rect.left() + 4.0, rect.bottom() - 2.0),
