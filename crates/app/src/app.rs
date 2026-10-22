@@ -149,6 +149,15 @@ impl Tab {
     }
 }
 
+/// The selected-object edit toolbar shows whenever a drawing is selected and
+/// drawings are visible. It survives background reloads (live polling, older
+/// history) — anchors are timestamp-keyed, so hiding it mid-poll was a
+/// random-disappearance bug.
+#[must_use]
+pub fn tab_toolbar_visible(tab: &Tab) -> bool {
+    !tab.drawings_hidden && tab.chart.selection.primary().is_some()
+}
+
 /// Active drawing tool (drawing engine lands in Phase 2).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -3441,9 +3450,7 @@ impl TickView {
                     );
                 }
 
-                let toolbar_visible = !self.tabs[ti].drawings_hidden
-                    && !self.tabs[ti].loading
-                    && self.tabs[ti].chart.selection.primary().is_some();
+                let toolbar_visible = tab_toolbar_visible(&self.tabs[ti]);
                 if toolbar_visible {
                     let selection = self.tabs[ti].chart.selection.clone();
                     let drawings = self.tabs[ti].chart.drawings.clone();
@@ -4442,6 +4449,25 @@ fn write_bmp(path: &std::path::Path, img: &egui::ColorImage) -> std::io::Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn toolbar_survives_background_reload() {
+        let sym = Symbol::new("AAPL", "NASDAQ", marketdata::SymbolKind::Stock, "USD");
+        let mut tab = Tab::new(
+            1,
+            sym,
+            Interval::parse("1d").unwrap(),
+            ChartType::Candles,
+            false,
+            vec![],
+        );
+        tab.loading = true;
+        assert!(!tab_toolbar_visible(&tab), "no selection yet");
+        tab.chart.selection.select(7);
+        assert!(tab_toolbar_visible(&tab), "toolbar vanished during reload");
+        tab.drawings_hidden = true;
+        assert!(!tab_toolbar_visible(&tab), "hidden drawings kept toolbar");
+    }
 
     #[test]
     fn tail_merge_replaces_overlap() {
