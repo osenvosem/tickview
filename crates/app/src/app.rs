@@ -21,9 +21,8 @@ use tickchart::{
 use crate::drawing_toolbar::{self, ToolbarAction};
 use crate::icons::Icon;
 use crate::store::{self, SavedConfig};
-use crate::theme::{
-    self, Palette, ThemeMode, font_medium, font_mono, font_regular, font_semibold, type_size,
-};
+use crate::symbolsearch;
+use crate::theme::{self, Palette, ThemeMode, font_mono, font_regular, font_semibold, type_size};
 use crate::toolpanel::{self, PanelState};
 use crate::widgets;
 
@@ -758,12 +757,8 @@ pub struct TickView {
     pub watchlist: Vec<Symbol>,
     pub quotes: BTreeMap<String, (f64, f64)>,
 
-    pub search_q: String,
     pub watch_q: String,
-    pub search_results: Vec<Symbol>,
-    pub search_open: bool,
-    pub search_focus: bool,
-    pub search_sel: usize,
+    pub search: symbolsearch::SymbolSearch,
 
     pub study_q: String,
     pub template_q: String,
@@ -1079,12 +1074,8 @@ impl TickView {
             next_tab_id,
             watchlist,
             quotes: BTreeMap::new(),
-            search_q: String::new(),
             watch_q: String::new(),
-            search_results: Vec::new(),
-            search_open: false,
-            search_focus: false,
-            search_sel: 0,
+            search: symbolsearch::SymbolSearch::default(),
             study_q: String::new(),
             template_q: String::new(),
             editor: None,
@@ -1169,10 +1160,10 @@ impl TickView {
         if let Ok(scene) = std::env::var("TICKVIEW_SCENE") {
             match scene.as_str() {
                 "search" => {
-                    me.search_q = "AAPL".to_owned();
+                    me.search.q = "a".to_owned();
                     me.refresh_search();
-                    me.search_open = true;
-                    me.search_focus = true;
+                    me.search.open = true;
+                    me.search.focus_req = true;
                 }
                 "indicators" => me.indicators_open = true,
                 "settings" => me.settings_open = true,
@@ -2085,7 +2076,7 @@ impl TickView {
 
     fn pick_search_symbol(&mut self, s: Symbol) {
         self.switch_symbol(s);
-        self.search_open = false;
+        self.search.open = false;
     }
 
     pub fn switch_symbol(&mut self, s: Symbol) {
@@ -2658,14 +2649,7 @@ impl TickView {
     }
 
     pub fn refresh_search(&mut self) {
-        self.search_results = if self.search_q.trim().is_empty() {
-            Vec::new()
-        } else {
-            search_with(&self.index, &self.search_q, 40).unwrap_or_default()
-        };
-        self.search_sel = self
-            .search_sel
-            .min(self.search_results.len().saturating_sub(1));
+        self.search.refresh(&self.index, &self.watchlist);
     }
 
     pub(crate) fn persist(&mut self) {
@@ -2865,13 +2849,13 @@ impl TickView {
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
         let esc = ctx.input(|i| i.key_pressed(Key::Escape));
         if esc {
-            let dialog_open = self.search_open
+            let dialog_open = self.search.open
                 || self.indicators_open
                 || self.alerts_open
                 || self.settings_open
                 || self.editor.is_some();
             if dialog_open {
-                self.search_open = false;
+                self.search.open = false;
                 self.indicators_open = false;
                 self.alerts_open = false;
                 self.settings_open = false;
@@ -2930,8 +2914,8 @@ impl TickView {
             )
         });
         if search {
-            self.search_open = true;
-            self.search_focus = true;
+            self.search.open = true;
+            self.search.focus_req = true;
         }
         if new_tab {
             self.add_tab();
@@ -2965,9 +2949,9 @@ impl TickView {
     }
 
     pub(crate) fn open_search(&mut self) {
-        self.search_open = true;
-        self.search_focus = true;
-        self.search_sel = 0;
+        self.search.open = true;
+        self.search.focus_req = true;
+        self.search.sel = 0;
     }
 
     /// Select a drawing tool and remember it as its group's last-used tool.
@@ -3484,126 +3468,18 @@ impl TickView {
     }
 
     fn search_window(&mut self, ctx: &egui::Context, p: &Palette) {
-        if !self.search_open {
+        if !self.search.open {
             return;
         }
-        let mut open = true;
-        let title = "Symbol search";
-        let hint = "Search symbol, e.g. AAPL, BTCUSDT, EURUSD";
-        let mut win = egui::Window::new(title)
-            .open(&mut open)
-            .collapsible(false)
-            .auto_sized()
-            .default_width(500.0)
-            .frame(theme::menu_frame(p));
-        if let Some(off) = self.search_anchor.take() {
-            win = win.anchor(Align2::CENTER_TOP, off);
-        }
-        win.show(ctx, |ui| {
-            ui.set_width(500.0);
-            let re = ui.add(
-                egui::TextEdit::singleline(&mut self.search_q)
-                    .hint_text(hint)
-                    .desired_width(f32::INFINITY)
-                    .font(font_regular(type_size::BODY)),
-            );
-            if self.search_focus {
-                re.request_focus();
-                self.search_focus = false;
-            }
-            if re.changed() {
-                self.refresh_search();
-            }
-            if re.has_focus()
-                && ui.input(|i| i.key_pressed(Key::Enter))
-                && let Some(s) = self.search_results.get(self.search_sel).cloned()
-            {
-                self.pick_search_symbol(s);
-            }
-            if re.has_focus() {
-                if ui.input(|i| i.key_pressed(Key::ArrowDown)) {
-                    self.search_sel =
-                        (self.search_sel + 1).min(self.search_results.len().saturating_sub(1));
-                }
-                if ui.input(|i| i.key_pressed(Key::ArrowUp)) {
-                    self.search_sel = self.search_sel.saturating_sub(1);
-                }
-            }
-            widgets::hline(ui, p);
-            let results: Vec<Symbol> = if self.search_q.trim().is_empty() {
-                self.watchlist.clone()
-            } else {
-                self.search_results.clone()
-            };
-            let mut pick: Option<Symbol> = None;
-            egui::ScrollArea::vertical()
-                .max_height(360.0)
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    if results.is_empty() {
-                        widgets::empty_state(
-                            ui,
-                            p,
-                            "No symbols found",
-                            "Try a ticker, company name, or crypto pair.",
-                        );
-                    }
-                    for (i, s) in results.iter().enumerate() {
-                        let selected = i == self.search_sel;
-                        let (rect, resp) = ui
-                            .allocate_exact_size(vec2(ui.available_width(), 42.0), Sense::click());
-                        if selected || resp.hovered() {
-                            ui.painter().rect_filled(
-                                rect,
-                                egui::CornerRadius::same(3),
-                                if selected { p.selection } else { p.hover },
-                            );
-                        }
-                        let badge_w = (s.exchange.len() as f32 * 6.3 + 10.0).max(42.0);
-                        let badge = egui::Rect::from_min_size(
-                            rect.left_top() + vec2(8.0, 12.0),
-                            vec2(badge_w, 18.0),
-                        );
-                        ui.painter()
-                            .rect_filled(badge, egui::CornerRadius::same(3), p.panel_alt);
-                        ui.painter().text(
-                            badge.center(),
-                            Align2::CENTER_CENTER,
-                            &s.exchange,
-                            font_medium(type_size::TINY),
-                            p.muted,
-                        );
-                        let tx = badge.right() + 10.0;
-                        ui.painter().text(
-                            egui::pos2(tx, rect.center().y - 7.0),
-                            Align2::LEFT_CENTER,
-                            &s.ticker,
-                            font_semibold(type_size::BODY),
-                            p.text,
-                        );
-                        let desc = if s.description.is_empty() {
-                            format!("{:?}", s.kind)
-                        } else {
-                            s.description.clone()
-                        };
-                        ui.painter().text(
-                            egui::pos2(tx, rect.center().y + 8.0),
-                            Align2::LEFT_CENTER,
-                            desc,
-                            font_regular(type_size::TINY),
-                            p.muted,
-                        );
-                        if resp.clicked() {
-                            pick = Some(s.clone());
-                        }
-                    }
-                });
-            if let Some(s) = pick {
-                self.pick_search_symbol(s);
-            }
-        });
-        if !open {
-            self.search_open = false;
+        if let Some(sym) = symbolsearch::show(
+            ctx,
+            p,
+            &mut self.search,
+            &self.index,
+            &self.watchlist,
+            self.search_anchor,
+        ) {
+            self.pick_search_symbol(sym);
         }
     }
 

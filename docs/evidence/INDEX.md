@@ -29,6 +29,13 @@ the `studies_metadata` wire payload.
 | `tv/drawings-bars-ghost.md` | Bars pattern and ghost feed reference |
 | `tv/drawings-table.md` | Editable table drawing reference |
 
+
+## Shell (`tv/`)
+
+| File | What it pins |
+|---|---|
+| `tv/symbol-search.md` | Symbol-search dialog layout, chip/exchange filtering, selection and keyboard behaviour |
+
 ## Studies (`tv/studies/`)
 
 58 per-study `studies_metadata` JSON files (`STD_*.json`): script id, display

@@ -57,6 +57,54 @@ impl SearchIndex {
     /// keeps its own watchlist for the empty state).
     #[must_use]
     pub fn search(&self, query: &str, limit: usize) -> Vec<Symbol> {
+        self.search_filtered(query, None, None, limit)
+    }
+
+    /// Same scoring and ordering as [`Self::search`], narrowed to `kinds`
+    /// (any kind when `None`) and a single `exchange` (any when `None`).
+    #[must_use]
+    pub fn search_filtered(
+        &self,
+        query: &str,
+        kinds: Option<&[SymbolKind]>,
+        exchange: Option<&str>,
+        limit: usize,
+    ) -> Vec<Symbol> {
+        self.matching(query, kinds, exchange)
+            .into_iter()
+            .take(limit)
+            .map(|(_, e)| Symbol {
+                ticker: e.ticker.clone(),
+                exchange: e.exchange.clone(),
+                kind: e.kind,
+                currency: e.currency.clone(),
+                description: e.name.clone(),
+            })
+            .collect()
+    }
+
+    /// Distinct exchanges matching `query` (+ optional `kinds`), sorted
+    /// case-insensitively so the list is stable regardless of refresh order.
+    #[must_use]
+    pub fn exchange_options(&self, query: &str, kinds: Option<&[SymbolKind]>) -> Vec<String> {
+        let mut out: Vec<String> = Vec::new();
+        for (_, e) in self.matching(query, kinds, None) {
+            if !out.iter().any(|x| x == &e.exchange) {
+                out.push(e.exchange.clone());
+            }
+        }
+        out.sort_by_key(|x| x.to_uppercase());
+        out
+    }
+
+    /// Scored, ranked matches (highest first, ticker tiebreak) with the same
+    /// kind/exchange narrowing as [`Self::search_filtered`].
+    fn matching(
+        &self,
+        query: &str,
+        kinds: Option<&[SymbolKind]>,
+        exchange: Option<&str>,
+    ) -> Vec<(i64, &SearchEntry)> {
         let q = query.trim().to_uppercase();
         if q.is_empty() {
             return Vec::new();
@@ -65,6 +113,16 @@ impl SearchIndex {
             .entries
             .iter()
             .filter_map(|e| {
+                if let Some(ks) = kinds {
+                    if !ks.contains(&e.kind) {
+                        return None;
+                    }
+                }
+                if let Some(x) = exchange {
+                    if !e.exchange.eq_ignore_ascii_case(x) {
+                        return None;
+                    }
+                }
                 let score = if e.ticker == q {
                     10_000
                 } else if e.ticker.starts_with(&q) {
@@ -79,16 +137,6 @@ impl SearchIndex {
             .collect();
         scored.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.ticker.cmp(&b.1.ticker)));
         scored
-            .into_iter()
-            .take(limit)
-            .map(|(_, e)| Symbol {
-                ticker: e.ticker.clone(),
-                exchange: e.exchange.clone(),
-                kind: e.kind,
-                currency: e.currency.clone(),
-                description: e.name.clone(),
-            })
-            .collect()
     }
 }
 
@@ -741,5 +789,47 @@ mod tests {
         let btc = idx.search("BTCUSDT", 1);
         assert_eq!(btc[0].exchange, "BINANCE"); // rank 1460 beats Gecko's 200
         assert_eq!(btc[0].description, "BTC");
+    }
+
+    #[test]
+    fn filtered_respects_kinds() {
+        let idx = default_index();
+        let crypto = idx.search_filtered("sol", Some(&[SymbolKind::Crypto]), None, 5);
+        assert_eq!(crypto[0].ticker, "SOLUSDT");
+        let stocks = idx.search_filtered("sol", Some(&[SymbolKind::Stock]), None, 5);
+        assert!(
+            stocks.iter().all(|s| s.kind == SymbolKind::Stock),
+            "stock filter leaked non-stocks: {stocks:?}"
+        );
+        assert!(!stocks.iter().any(|s| s.ticker == "SOLUSDT"));
+    }
+
+    #[test]
+    fn filtered_respects_exchange() {
+        let mut idx = default_index();
+        // Shape captured live 2026-10-22 from Kraken AssetPairs.
+        idx.extend(parse_kraken_pairs(&serde_json::json!({"result": {
+            "XXBTZUSD": {"altname": "XBTUSD", "wsname": "BTC/USD", "status": "online"},
+            "XXBTZEUR": {"altname": "XBTZEUR", "wsname": "BTC/EUR", "status": "online"}
+        }})));
+        let kraken = idx.search_filtered("btc", None, Some("KRAKEN"), 10);
+        assert!(!kraken.is_empty(), "expected Kraken rows");
+        assert!(
+            kraken.iter().all(|s| s.exchange == "KRAKEN"),
+            "exchange filter leaked: {kraken:?}"
+        );
+    }
+
+    #[test]
+    fn exchange_options_ranked_dedup() {
+        let idx = default_index();
+        let opts = idx.exchange_options("btcusdt", Some(&[SymbolKind::Crypto]));
+        assert!(opts.contains(&"BINANCE".to_string()), "got {opts:?}");
+        let mut sorted = opts.clone();
+        sorted.sort_by_key(|x| x.to_uppercase());
+        assert_eq!(opts, sorted, "options not alphabetically stable");
+        let mut dedup = opts.clone();
+        dedup.dedup();
+        assert_eq!(opts.len(), dedup.len(), "duplicate exchanges: {opts:?}");
     }
 }

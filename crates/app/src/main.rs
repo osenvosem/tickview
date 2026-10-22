@@ -9,6 +9,7 @@ mod drawing_toolbar;
 mod icon_sheet;
 mod icons;
 mod store;
+mod symbolsearch;
 mod theme;
 mod toolpanel;
 mod watchlist;

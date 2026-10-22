@@ -258,7 +258,7 @@ fn search(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     );
     let resp = widgets::search_field(&mut child, p, &mut app.watch_q, "Filter watchlist");
     if resp.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) && app.watch_q.len() > 1 {
-        app.search_q = app.watch_q.clone();
+        app.search.q = app.watch_q.clone();
         app.refresh_search();
         app.open_search_public();
     }
