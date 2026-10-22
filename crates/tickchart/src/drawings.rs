@@ -2141,7 +2141,9 @@ pub fn card_rect(anchor: Pos2, text: &str) -> Rect {
 /// Painted glyph size for an emoji drawing, scaled by the style width (1-8).
 #[must_use]
 pub fn emoji_size_px(width: f32) -> f32 {
-    16.0 + width.clamp(1.0, 8.0) * 4.0
+    // Double the legacy glyph size (32..96 px): at chart scale 16 px glyphs
+    // read as pin dots, and users want them as real emoji.
+    (16.0 + width.clamp(1.0, 8.0) * 4.0) * 2.0
 }
 
 /// App-registered glyph→texture resolver for Emoji drawings. The chart crate

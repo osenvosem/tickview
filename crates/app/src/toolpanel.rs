@@ -646,7 +646,9 @@ pub fn search_emoji_catalog(query: &str) -> Vec<usize> {
 const TAB_GLYPHS: [&str; 8] = ["😊", "🐶", "🍎", "⚽", "✈️", "💡", "❤️", "🏁"];
 
 /// Rasterization size (px) for each vendored OpenMoji SVG.
-const EMOJI_TEX: u32 = 64;
+/// Raster resolution for picker cells and chart emoji (up to 96 logical px,
+/// so 192 physical on Retina); textures are lazily cached per used glyph.
+const EMOJI_TEX: u32 = 128;
 
 /// Vendored OpenMoji color SVGs, one file per emoji, named by uppercase
 /// hex codepoints joined with hyphens (OpenMoji 17.0.0 upstream convention).

@@ -1987,10 +1987,10 @@ fn post_and_idea_cards_anchor_hit_and_serde() {
 
 #[test]
 fn emoji_glyph_scales_with_style_width_and_round_trips() {
-    assert_eq!(emoji_size_px(1.0), 20.0);
-    assert_eq!(emoji_size_px(8.0), 48.0);
-    assert_eq!(emoji_size_px(0.0), 20.0, "clamped low");
-    assert_eq!(emoji_size_px(12.0), 48.0, "clamped high");
+    assert_eq!(emoji_size_px(1.0), 40.0);
+    assert_eq!(emoji_size_px(8.0), 96.0);
+    assert_eq!(emoji_size_px(0.0), 40.0, "clamped low");
+    assert_eq!(emoji_size_px(12.0), 96.0, "clamped high");
 
     let sc = scene(false);
     let map =
