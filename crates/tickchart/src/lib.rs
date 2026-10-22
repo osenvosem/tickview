@@ -6,7 +6,6 @@
 pub mod barfmt;
 pub mod bars;
 pub mod chart;
-pub mod compare;
 pub mod datatools;
 pub mod drawings;
 pub mod painter;
@@ -19,7 +18,6 @@ pub use chart::{
     ChartEvent, ChartState, ImageTextures, Layer, Pane as ChartPane, PaneKind, ReplayState,
     replay_advance, replay_delay_ms,
 };
-pub use compare::CompareSeries;
 pub use drawings::{
     Anchor, DEFAULT_COLOR, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState,
     LineStyle, Measure, Selection, StyleEdit, anchor_at_with_snap_values, apply_style_edit,

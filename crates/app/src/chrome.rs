@@ -237,29 +237,6 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                 app.study_q.clear();
             }
 
-            let compare_symbol = app.tabs[app.active].compare_symbol.clone();
-            let compare_label = compare_symbol
-                .as_ref()
-                .map_or_else(|| "Compare".to_owned(), |s| s.ticker.clone());
-            if child.available_width() > 300.0
-                && widgets::command_button(
-                    &mut child,
-                    p,
-                    Some(Icon::Compare),
-                    &compare_label,
-                    compare_symbol.is_some(),
-                    true,
-                    if compare_symbol.is_some() {
-                        "Replace compare symbol"
-                    } else {
-                        "Compare another symbol"
-                    },
-                )
-                .clicked()
-            {
-                app.open_compare_search();
-            }
-
             let right = child.available_width();
             child.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 2.0;

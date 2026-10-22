@@ -7,7 +7,6 @@ use egui::{Align2, Color32, CornerRadius, FontId, Pos2, Rect, Response, Sense, S
 
 use crate::barfmt::{fmt_compact, fmt_price};
 use crate::bars::View;
-use crate::compare::CompareSeries;
 use crate::drawings::{self, Anchor, Drawing, DrawingToolState, Selection};
 use crate::painter::{self, ChartType, Palette};
 use crate::priceaxis::PriceAxis;
@@ -127,7 +126,6 @@ pub struct ChartState {
     selected_from_press: Option<u64>,
     /// Whether the last primary press happened with shift (rect-zoom arm).
     zoom_pending: bool,
-    pub compare: Option<CompareSeries>,
     /// Bar replay: hides bars after `cursor` and steps through history.
     pub replay: Option<ReplayState>,
     symbol_drawings: BTreeMap<String, Vec<Drawing>>,
@@ -166,8 +164,6 @@ pub struct ChartEvent {
     pub changed: bool,
     /// A drawing was completed; the app may reset to the cursor tool.
     pub drawing_completed: bool,
-    /// The compare legend was clicked; app should clear its compare symbol.
-    pub compare_removed: bool,
 }
 
 impl ChartState {
@@ -213,7 +209,6 @@ impl ChartState {
             suppress_empty_click: false,
             selected_from_press: None,
             zoom_pending: false,
-            compare: None,
             replay: None,
             symbol_drawings: BTreeMap::new(),
             crosshair_pos: None,
@@ -573,7 +568,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         (input_vs, input_ve),
         st.log_scale,
         price_rect.height(),
-        st.compare.as_ref(),
     )
     .with_offset(price_rect.min.y);
     handle_input(
@@ -598,7 +592,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             (vs, ve),
             st.log_scale,
             price_rect.height(),
-            st.compare.as_ref(),
         )
         .with_offset(price_rect.min.y),
         st.price_zoom,
@@ -633,17 +626,8 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
         let ax = apply_price_zoom(
-            pane_axis(
-                pane,
-                cd,
-                &st.panes,
-                pi,
-                (vs, ve),
-                st.log_scale,
-                r.height(),
-                st.compare.as_ref(),
-            )
-            .with_offset(r.min.y),
+            pane_axis(pane, cd, &st.panes, pi, (vs, ve), st.log_scale, r.height())
+                .with_offset(r.min.y),
             if pi == 0 { st.price_zoom } else { None },
         );
         let compact = pane.kind == PaneKind::Volume;
@@ -683,17 +667,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 );
             }
         }
-    }
-
-    if let Some(cmp) = &st.compare {
-        painter::draw_compare(
-            &p.with_clip_rect(price_rect),
-            &st.view,
-            &price_axis,
-            cd,
-            cmp,
-            painter::compare_color(),
-        );
     }
 
     let hide_drawings = st.drawings_hidden || st.tools.tool == drawings::DrawTool::Performance;
@@ -856,7 +829,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 (vs, ve),
                 st.log_scale,
                 r.height(),
-                st.compare.as_ref(),
             );
             let v = ax.price_of(pos.y);
             let tr =
@@ -969,7 +941,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
 
     // Legends (overlaid labels; clicking a name toggles the indicator).
     let mut toggled: Vec<(usize, TvId)> = Vec::new();
-    let mut remove_compare = false;
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
         let mut x = r.min.x + 4.0;
@@ -1005,28 +976,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 pal.text,
             );
             x = hr.max.x + 6.0;
-            if let Some(cmp) = &st.compare
-                && let Some(pct) = cmp.change_pct(cd, vs, ve)
-            {
-                let label = format!("■ {} {:+.2}%", cmp.symbol, pct);
-                let tr = p.text(
-                    Pos2::new(x, y),
-                    Align2::LEFT_TOP,
-                    &label,
-                    font_sm.clone(),
-                    painter::compare_color(),
-                );
-                let resp = ui.interact(
-                    tr.expand2(Vec2::new(2.0, 1.0)),
-                    ui.scope_id().with(("compare-legend", pi)),
-                    Sense::click(),
-                );
-                if resp.clicked() {
-                    remove_compare = true;
-                }
-                resp.on_hover_text("Click to remove compare");
-                x = tr.max.x + 6.0;
-            }
         }
         for l in &pane.layers {
             let d = def(l.id);
@@ -1063,10 +1012,6 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             );
             x = tr.max.x + 6.0;
         }
-    }
-    if remove_compare {
-        st.compare = None;
-        ev.compare_removed = true;
     }
     for (pi, id) in toggled {
         let vis = !st.panes[pi]
@@ -1780,12 +1725,11 @@ fn pane_axis(
     vis: (usize, usize),
     log: bool,
     height: f32,
-    compare: Option<&CompareSeries>,
 ) -> PriceAxis {
     let (vs, ve) = vis;
     match pane.kind {
         PaneKind::Price => {
-            let (lo, hi) = price_range(cd, panes, pi, vs, ve, compare);
+            let (lo, hi) = price_range(cd, panes, pi, vs, ve);
             price_axis_for(lo, hi, log, height)
         }
         PaneKind::Volume => {
@@ -1831,14 +1775,7 @@ fn pane_axis(
 }
 
 /// Visible high/low incl. price-pane overlay plots.
-fn price_range(
-    cd: &Candles,
-    panes: &[Pane],
-    pi: usize,
-    vs: usize,
-    ve: usize,
-    compare: Option<&CompareSeries>,
-) -> (f64, f64) {
+fn price_range(cd: &Candles, panes: &[Pane], pi: usize, vs: usize, ve: usize) -> (f64, f64) {
     let mut lo = f64::INFINITY;
     let mut hi = f64::NEG_INFINITY;
     for i in vs..ve {
@@ -1871,12 +1808,6 @@ fn price_range(
                 }
             }
         }
-    }
-    if let Some(cmp) = compare
-        && let Some((clo, chi)) = cmp.normalized_range(cd, vs, ve)
-    {
-        lo = lo.min(clo);
-        hi = hi.max(chi);
     }
     (lo, hi)
 }

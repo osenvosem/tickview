@@ -64,11 +64,6 @@ curated offline symbol index so search works before the network responds.
   Escape
   closes dialogs first, then the flyout or utility menu. Only tools the engine
   implements are listed.
-- Compare overlay: search from the command bar, normalized close line with a
-  percentage legend, and click the legend to remove it. Stored per tab and
-  restored on boot.
-- Additional chart styles and the compare overlay share the same price axis;
-  the axis expands to keep the normalized compare line in view.
 - Right watchlist with add/remove, filter, selection, quote change bars and a
   context menu; stale quotes fall back to cached daily closes.
 - Indicator browser and per-parameter editor for 83 TradingView-named studies,
@@ -87,7 +82,7 @@ curated offline symbol index so search works before the network responds.
   `⌘,`, `Esc`, `⌥T`/`⌥H`/`⌥J`/`⌥V`/`⌥C`/`⌥F`/`⇧⌥R` drawing tools, Space/arrows in
   replay).
 - Config v2 stores theme, watchlist, tabs, active tab, chart type, log scale,
-  alerts, indicator parameters, per-symbol drawings, compare symbol, study
+  alerts, indicator parameters, per-symbol drawings, study
   templates, global drawing-tool favorites, keep-drawing and magnet-strength
   modes, per-tab hidden drawings and the streaming preference; v1 configs
   migrate transparently.
@@ -98,7 +93,7 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|compare\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar` | open a dialog, proof sheet, or preset chart state for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar` | open a dialog, proof sheet, or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 
 ## Architecture
@@ -107,17 +102,17 @@ curated offline symbol index so search works before the network responds.
 |---|---|
 | `ta` | indicator engine: 83 TV-named studies, TV default params, golden-value tests, HTF resample + comparison context |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine, Binance kline websocket (`KlineStream`) |
-| `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, compare overlay, panes, crosshair, legend, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, panes, crosshair, legend, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
 
-`cargo test --workspace` passes 343 tests (6 ignored live-network smokes) and
+`cargo test --workspace` passes 394 tests (6 ignored live-network smokes) and
 `cargo clippy --workspace --all-targets` is clean. Dark and light builds were
 captured at 1440×900 and visually checked for the shell, tab strip, command
 bar, watchlist, status bar, RSI separate pane, indicator editor, settings,
-alerts and symbol search. Phase 2 was additionally checked with drawings and a
-compare overlay in dark/light, plus baseline, hollow-candle and columns styles.
+alerts and symbol search. Phase 2 was additionally checked with drawings
+in dark/light, plus baseline, hollow-candle and columns styles.
 Phase 3 was checked with the full drawing set, per-drawing styling toolbar,
 note bubble, channel fill, fib extension labels and the measure overlay in
 dark/light. Phase 4 added the brush, pitchfork/Schiff, regression-trend band
@@ -167,7 +162,8 @@ and Advance/Decline explicitly excluded (market-breadth feed out of scope).
 All 83 ids carry golden values against Python references, TV-wire-pinned
 defaults (including a fixed weighted-KST drift), and metadata-derived pane
 audits; context studies add session VWAP, HTF resampling and
-correlation/rank-correlation against the compare symbol. Whole-enum sweeps
+correlation/rank-correlation from the study context (chart-level compare is
+not offered). Whole-enum sweeps
 (`every_study_has_golden_defaults_and_meta_coverage`,
 `every_study_short_history_is_all_nan_or_finite`,
 `every_study_id_in_catalog_verified`, `every_study_is_addable_and_in_catalog`)

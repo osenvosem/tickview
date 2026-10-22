@@ -4,7 +4,6 @@ use egui::epaint::PathShape;
 use egui::{Color32, CornerRadius, FontId, Painter, Pos2, Rect, Stroke, Vec2};
 
 use crate::bars::View;
-use crate::compare::CompareSeries;
 use crate::priceaxis::PriceAxis;
 #[allow(unused_imports)]
 use ta::Candles;
@@ -100,13 +99,6 @@ impl Default for Palette {
     fn default() -> Self {
         Self::dark()
     }
-}
-
-/// Violet used for the compare overlay in both themes; distinct from the
-/// amber RSI/indicator series.
-#[must_use]
-pub const fn compare_color() -> Color32 {
-    Color32::from_rgb(0xC9, 0x8A, 0xFF)
 }
 
 #[must_use]
@@ -350,33 +342,6 @@ pub(crate) fn baseline_bands(points: &[Pos2], baseline_y: f32) -> (Vec<Vec<Pos2>
         }
     }
     (up, down)
-}
-
-/// Draw the timestamp-aligned compare line on the main price axis.
-pub fn draw_compare(
-    p: &Painter,
-    v: &View,
-    ax: &PriceAxis,
-    main: &Candles,
-    cmp: &CompareSeries,
-    color: Color32,
-) {
-    let (s, e) = v.visible();
-    let Some((main_base, cmp_base)) = cmp.baseline(main, s) else {
-        return;
-    };
-    let pts: Vec<Pos2> = (s..e)
-        .filter_map(|i| {
-            cmp.normalized_at(main, i, main_base, cmp_base)
-                .map(|val| Pos2::new(v.x_of(i), ax.y_of(val)))
-        })
-        .collect();
-    if pts.len() > 1 {
-        p.line(pts.clone(), Stroke::new(1.5f32, color));
-        if let Some(last) = pts.last() {
-            p.circle_filled(*last, 2.5, color);
-        }
-    }
 }
 
 fn close_path(data: &Candles, v: &View, ax: &PriceAxis, s: usize, e: usize) -> Vec<Pos2> {

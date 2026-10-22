@@ -14,8 +14,8 @@ use marketdata::{
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, StudyContext, TvId, def, defs};
 use tickchart::{
-    Anchor, ChartEvent, ChartState, ChartType, CompareSeries, DrawTool, Drawing, DrawingKind,
-    DrawingToolState, Measure, Selection,
+    Anchor, ChartEvent, ChartState, ChartType, DrawTool, Drawing, DrawingKind, DrawingToolState,
+    Measure, Selection,
 };
 
 use crate::drawing_toolbar::{self, ToolbarAction};
@@ -50,11 +50,6 @@ enum Job {
         limit: u32,
     },
     Quote(Box<Symbol>),
-    Compare {
-        tab: u64,
-        sym: Box<Symbol>,
-        iv: Interval,
-    },
     ReloadIndex,
 }
 
@@ -70,13 +65,6 @@ enum Msg {
     Quote {
         sym: Box<Symbol>,
         q: Result<Quote, String>,
-    },
-    Compare {
-        tab: u64,
-        sym: Box<Symbol>,
-        iv: Interval,
-        bars: Result<Vec<Bar>, String>,
-        cached: bool,
     },
     Stream {
         sym: Box<Symbol>,
@@ -100,7 +88,6 @@ pub struct Tab {
     pub error: Option<String>,
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
-    pub compare_symbol: Option<Symbol>,
     /// Drawings are locked against mouse editing.
     pub locked: bool,
     /// Drawings are hidden on this tab.
@@ -135,7 +122,6 @@ impl Tab {
             status: String::from("loading…"),
             error: None,
             pending,
-            compare_symbol: None,
             locked: false,
             drawings_hidden: false,
             indicators_hidden: false,
@@ -759,12 +745,6 @@ fn pdefault(kind: ParamKind) -> PVal {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SearchPurpose {
-    Symbol,
-    Compare,
-}
-
 pub struct TickView {
     job_tx: Sender<Job>,
     msg_rx: Receiver<Msg>,
@@ -784,7 +764,6 @@ pub struct TickView {
     pub search_open: bool,
     pub search_focus: bool,
     pub search_sel: usize,
-    search_purpose: SearchPurpose,
 
     pub study_q: String,
     pub template_q: String,
@@ -985,27 +964,6 @@ impl TickView {
                             let out = hub.quote(&sym).map_err(|e| e.to_string());
                             let _ = mt.send(Msg::Quote { sym, q: out });
                         }
-                        Job::Compare { tab, sym, iv } => {
-                            if let Ok(cached) = hub.cached(&sym, iv, None, 500)
-                                && !cached.is_empty()
-                            {
-                                let _ = mt.send(Msg::Compare {
-                                    tab,
-                                    sym: sym.clone(),
-                                    iv,
-                                    bars: Ok(cached),
-                                    cached: true,
-                                });
-                            }
-                            let out = hub.history(&sym, iv, None, 500).map_err(|e| e.to_string());
-                            let _ = mt.send(Msg::Compare {
-                                tab,
-                                sym,
-                                iv,
-                                bars: out,
-                                cached: false,
-                            });
-                        }
                         Job::ReloadIndex => {
                             let idx = refresh_remote_index(&agent);
                             let _ = mt.send(Msg::Index(idx));
@@ -1088,7 +1046,6 @@ impl TickView {
                 tab.indicators_locked = saved.indicators_locked;
                 tab.chart.indicators_locked = saved.indicators_locked;
                 tab.chart.values_tooltip = cfg.values_tooltip_long_press;
-                tab.compare_symbol = saved.compare.clone();
                 tabs.push(tab);
                 next_tab_id += 1;
             }
@@ -1128,7 +1085,6 @@ impl TickView {
             search_open: false,
             search_focus: false,
             search_sel: 0,
-            search_purpose: SearchPurpose::Symbol,
             study_q: String::new(),
             template_q: String::new(),
             editor: None,
@@ -1210,16 +1166,6 @@ impl TickView {
             me.tabs[me.active].pending.extend(pending);
         }
 
-        for ti in 0..me.tabs.len() {
-            if let Some(sym) = me.tabs[ti].compare_symbol.clone() {
-                let _ = me.job_tx.send(Job::Compare {
-                    tab: me.tabs[ti].id,
-                    sym: Box::new(sym),
-                    iv: me.tabs[ti].interval,
-                });
-            }
-        }
-
         if let Ok(scene) = std::env::var("TICKVIEW_SCENE") {
             match scene.as_str() {
                 "search" => {
@@ -1231,7 +1177,6 @@ impl TickView {
                 "indicators" => me.indicators_open = true,
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
-                "compare" => me.open_compare_search(),
                 "toolpanel" => {
                     me.tool = Tool::HLine;
                     me.tool_panel = PanelState::with_favorites(vec![Tool::Ray]);
@@ -1967,8 +1912,7 @@ impl TickView {
 
     /// `TICKVIEW_SCENE=studies*`: seed a representative study set per pane
     /// family for visual QA (`studiesprice`, `studiesvol`, `studiesosc`,
-    /// `studieshtf`). The HTF scene also opens a comparison symbol so the
-    /// correlation study has a second series.
+    /// `studieshtf`).
     fn seed_studies(&mut self, ti: usize, scene: &str) {
         let ids: &[TvId] = match scene {
             "studiesprice" => &[
@@ -2002,11 +1946,6 @@ impl TickView {
         };
         for id in ids {
             self.add_indicator(ti, *id, Params::with_defaults(def(*id)));
-        }
-        if scene == "studieshtf" {
-            let iv = self.tabs[ti].interval;
-            let sym = Symbol::new("MSFT", "NASDAQ", marketdata::SymbolKind::Stock, "USD");
-            self.request_compare(ti, sym, iv);
         }
     }
 
@@ -2148,49 +2087,8 @@ impl TickView {
         });
     }
 
-    fn request_compare(&mut self, ti: usize, sym: Symbol, iv: Interval) {
-        let Some(tab) = self.tabs.get_mut(ti) else {
-            return;
-        };
-        if tab.symbol == sym {
-            self.toast("The compared symbol must differ from the chart symbol");
-            return;
-        }
-        tab.compare_symbol = Some(sym.clone());
-        tab.chart.compare = None;
-        let _ = self.job_tx.send(Job::Compare {
-            tab: tab.id,
-            sym: Box::new(sym.clone()),
-            iv,
-        });
-        self.persist();
-    }
-
-    fn remove_compare(&mut self) {
-        let ti = self.active;
-        if self.tabs[ti].compare_symbol.take().is_some() {
-            self.tabs[ti].chart.compare = None;
-            self.persist();
-        }
-    }
-
-    pub fn open_compare_search(&mut self) {
-        self.search_purpose = SearchPurpose::Compare;
-        self.search_q.clear();
-        self.search_results.clear();
-        self.search_sel = 0;
-        self.search_open = true;
-        self.search_focus = true;
-    }
-
     fn pick_search_symbol(&mut self, s: Symbol) {
-        match self.search_purpose {
-            SearchPurpose::Symbol => self.switch_symbol(s),
-            SearchPurpose::Compare => {
-                let iv = self.tabs[self.active].interval;
-                self.request_compare(self.active, s, iv);
-            }
-        }
+        self.switch_symbol(s);
         self.search_open = false;
     }
 
@@ -2200,10 +2098,6 @@ impl TickView {
             return;
         }
         let tab = &mut self.tabs[ti];
-        if tab.compare_symbol.as_ref() == Some(&s) {
-            tab.compare_symbol = None;
-            tab.chart.compare = None;
-        }
         tab.symbol = s.clone();
         tab.chart.set_symbol(s.ticker.clone());
         tab.chart.view.right_offset = 0.0;
@@ -2229,9 +2123,6 @@ impl TickView {
         tab.exhausted = false;
         tab.error = None;
         self.request_history(ti, None, 500);
-        if let Some(sym) = self.tabs[ti].compare_symbol.clone() {
-            self.request_compare(ti, sym, iv);
-        }
         self.persist();
         self.restart_stream();
     }
@@ -2320,15 +2211,12 @@ impl TickView {
         let ax = self.anchors(tab_idx);
         let tab = &mut self.tabs[tab_idx];
         let visible = tab.chart.view.visible();
-        // Take the compare series out so the study context does not borrow
-        // the chart while layers are recomputed.
-        let cmp = tab.chart.compare.take();
         let iv = tab.interval.as_tv_str();
         let ctx = StudyContext {
             htfc: None,
             anchors: ax,
             visible: Some(visible),
-            comparison: cmp.as_ref().map(|c| &c.candles),
+            comparison: None,
             symbol: &tab.symbol.ticker,
             interval: &iv,
         };
@@ -2338,7 +2226,6 @@ impl TickView {
                 tab.chart.recompute_with(id, &tab.candles, &ctx);
             }
         }
-        tab.chart.compare = cmp;
     }
 
     fn drain(&mut self, ctx: &egui::Context) {
@@ -2506,42 +2393,6 @@ impl TickView {
                         self.quotes.insert(key, (q.last, q.change_pct));
                         self.alert_tick(&sym, q.last, ctx);
                     }
-                }
-                Msg::Compare {
-                    tab,
-                    sym,
-                    iv,
-                    bars,
-                    cached,
-                } => {
-                    let Some(ti) = self.tabs.iter().position(|t| t.id == tab) else {
-                        continue;
-                    };
-                    if self.tabs[ti].interval != iv
-                        || self.tabs[ti].compare_symbol.as_ref() != Some(&*sym)
-                    {
-                        continue;
-                    }
-                    match bars {
-                        Ok(bars) if !bars.is_empty() => {
-                            self.tabs[ti].chart.compare = Some(CompareSeries::new(
-                                sym.ticker.clone(),
-                                Candles::from_bars(&bars),
-                            ));
-                            // Correlation studies consume the comparison
-                            // series through StudyContext; refresh them now
-                            // that the second symbol has arrived.
-                            self.recompute(ti);
-                            if !cached {
-                                self.toast(format!("Comparing with {}", sym.ticker));
-                            }
-                        }
-                        Ok(_) => {}
-                        Err(e) => {
-                            self.toast(format!("Compare {}: {e}", sym.ticker));
-                        }
-                    }
-                    ctx.request_repaint();
                 }
                 Msg::Index(idx) => {
                     self.index = Arc::new(idx);
@@ -2858,7 +2709,6 @@ impl TickView {
                     drawings_hidden: tab.drawings_hidden,
                     indicators_hidden: tab.indicators_hidden,
                     indicators_locked: tab.indicators_locked,
-                    compare: tab.compare_symbol.clone(),
                 }
             })
             .collect();
@@ -2986,11 +2836,7 @@ impl TickView {
             || self.pending_table
             || self.pending_image
             || self.pending_studies.is_some()
-            || (self.data_frames < self.snap_after_data + 120
-                && self
-                    .tabs
-                    .iter()
-                    .any(|t| t.compare_symbol.is_some() && t.chart.compare.is_none()));
+            || (self.data_frames < self.snap_after_data + 120);
         let data_ready =
             self.data_frames >= self.snap_after_data && !self.tabs[self.active].loading;
         let ready =
@@ -3000,8 +2846,8 @@ impl TickView {
         }
         if !ready {
             if data_ready {
-                // Data is in; keep the clock alive while a late comparison
-                // series (or its failure) resolves, so the bounded wait ends.
+                // Data is in; keep the clock alive while late study data
+                // resolves, so the bounded wait ends.
                 ctx.request_repaint_after(std::time::Duration::from_millis(100));
             }
             return;
@@ -3123,7 +2969,6 @@ impl TickView {
     }
 
     pub(crate) fn open_search(&mut self) {
-        self.search_purpose = SearchPurpose::Symbol;
         self.search_open = true;
         self.search_focus = true;
         self.search_sel = 0;
@@ -3422,10 +3267,6 @@ impl TickView {
                     self.dirty_drawings = true;
                     self.save_at = Instant::now() + Duration::from_millis(350);
                 }
-                if ev.compare_removed {
-                    self.remove_compare();
-                    self.toast("Compare overlay removed");
-                }
                 if ev.load_more
                     && !self.tabs[ti].loading
                     && !self.tabs[ti].exhausted
@@ -3652,14 +3493,8 @@ impl TickView {
             return;
         }
         let mut open = true;
-        let title = match self.search_purpose {
-            SearchPurpose::Symbol => "Symbol search",
-            SearchPurpose::Compare => "Compare symbol",
-        };
-        let hint = match self.search_purpose {
-            SearchPurpose::Symbol => "Search symbol, e.g. AAPL, BTCUSDT, EURUSD",
-            SearchPurpose::Compare => "Compare with, e.g. SPY, QQQ, BTCUSDT",
-        };
+        let title = "Symbol search";
+        let hint = "Search symbol, e.g. AAPL, BTCUSDT, EURUSD";
         let mut win = egui::Window::new(title)
             .open(&mut open)
             .collapsible(false)

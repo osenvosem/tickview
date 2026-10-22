@@ -110,7 +110,6 @@ pub enum Icon {
     Alert,
     Layout,
     Indicators,
-    Compare,
     Candles,
     Watchlist,
     Star,
@@ -268,7 +267,6 @@ impl Icon {
         Self::Alert,
         Self::Layout,
         Self::Indicators,
-        Self::Compare,
         Self::Candles,
         Self::Watchlist,
         Self::Star,
@@ -426,7 +424,6 @@ impl Icon {
             Self::Alert => "alert",
             Self::Layout => "layout",
             Self::Indicators => "indicators",
-            Self::Compare => "compare",
             Self::Candles => "candles",
             Self::Watchlist => "watchlist",
             Self::Star => "favorite",
@@ -1241,22 +1238,6 @@ impl Icon {
                 ]);
                 dot(16.0, 7.0, 1.7);
             }
-            Self::Compare => {
-                path(&[
-                    (3.0, 16.0),
-                    (8.0, 12.0),
-                    (12.0, 14.0),
-                    (17.0, 8.0),
-                    (21.0, 10.0),
-                ]);
-                path(&[
-                    (3.0, 19.0),
-                    (8.0, 17.0),
-                    (12.0, 18.5),
-                    (17.0, 14.0),
-                    (21.0, 16.0),
-                ]);
-            }
             Self::Candles => {
                 line(7.0, 3.0, 7.0, 21.0);
                 round_rect(5.0, 7.0, 9.0, 17.0, 0.0);
@@ -1691,7 +1672,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 153);
+        assert_eq!(Icon::ALL.len(), 152);
     }
 
     #[test]

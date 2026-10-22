@@ -141,9 +141,6 @@ pub struct SavedTab {
     /// Study layers are locked against mouse editing (TV parity).
     #[serde(default)]
     pub indicators_locked: bool,
-    /// Optional compare overlay symbol.
-    #[serde(default)]
-    pub compare: Option<Symbol>,
 }
 
 impl SavedTab {
@@ -275,7 +272,6 @@ impl SavedConfig {
                     indicators_locked: false,
                     drawings: BTreeMap::new(),
                     indicators: Vec::new(),
-                    compare: None,
                 });
             }
         }
@@ -403,7 +399,6 @@ mod tests {
                 name: "Relative Strength Index (RSI)".into(),
                 params: vec![("length".into(), SavedVal::N(21.0))],
             }],
-            compare: None,
         });
         let json = serde_json::to_string(&cfg).unwrap();
         let back: SavedConfig = serde_json::from_str(&json).unwrap();
@@ -446,7 +441,6 @@ mod tests {
                 indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
-                compare: None,
             }],
             ..Default::default()
         };
@@ -476,8 +470,7 @@ mod tests {
                     "b": {"t": 1700086400, "price": 120.0},
                     "style": {"line": "Solid", "width": 1, "color": null, "fill": false, "fill_opacity": 20, "text": ""}
                 }]},
-                "indicators": [],
-                "compare": null
+                "indicators": []
             }]
         }"#;
         let cfg: SavedConfig = serde_json::from_str(json).unwrap();
@@ -542,7 +535,6 @@ mod tests {
                 indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
-                compare: None,
             }],
             ..Default::default()
         };
@@ -579,7 +571,6 @@ mod tests {
                 indicators_locked: false,
                 drawings: BTreeMap::from([("AAPL".into(), vec![drawing.clone()])]),
                 indicators: Vec::new(),
-                compare: None,
             }],
             ..Default::default()
         };
@@ -591,39 +582,6 @@ mod tests {
         assert_eq!(
             stored.visible_intervals,
             Some(vec!["1h".into(), "4h".into()])
-        );
-    }
-
-    #[test]
-    fn compare_symbol_round_trips() {
-        let cfg = SavedConfig {
-            tabs: vec![SavedTab {
-                symbol: sample_symbol(),
-                interval: "1D".into(),
-                chart_type: "Candles".into(),
-                log: false,
-                right_offset: 0.0,
-                spacing: 8.0,
-                drawings_locked: false,
-                drawings_hidden: false,
-                indicators_hidden: false,
-                indicators_locked: false,
-                drawings: BTreeMap::new(),
-                indicators: Vec::new(),
-                compare: Some(Symbol::new(
-                    "SPY",
-                    "NYSE",
-                    marketdata::SymbolKind::Etf,
-                    "USD",
-                )),
-            }],
-            ..Default::default()
-        };
-        let json = serde_json::to_string(&cfg).unwrap();
-        let back: SavedConfig = serde_json::from_str(&json).unwrap();
-        assert_eq!(
-            back.tabs[0].compare.as_ref().map(|s| s.ticker.as_str()),
-            Some("SPY")
         );
     }
 
@@ -650,7 +608,6 @@ mod tests {
             indicators_locked: false,
             drawings: BTreeMap::new(),
             indicators: Vec::new(),
-            compare: None,
         });
         cfg.active_tab = 99;
         cfg.migrate();
@@ -798,7 +755,6 @@ fn migrate_collapses_desynced_hline_vline_anchors() {
         indicators: Vec::new(),
         indicators_hidden: false,
         indicators_locked: false,
-        compare: None,
         drawings: Default::default(),
     };
     let a = tickchart::Anchor {
