@@ -9,13 +9,17 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 343 unit/golden tests
+cargo test --workspace               # 427 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
-The app opens at 1440×900. Quotes and history are keyless: Yahoo/Nasdaq/Binance/
-Frankfurter for live data, a local SQLite cache for instant warm starts, and a
-curated offline symbol index so search works before the network responds.
+The app opens at 1440×900. Quotes and history are keyless across eight
+sources — Nasdaq, Binance, Kraken, Coinbase, Yahoo, Frankfurter,
+ExchangeRate-API and CoinGecko — so every asset class (stocks/ETFs, indices
+including Yahoo's canonical globals, crypto, FX and commodity futures) has at
+least two independent live+historical feeds; a local SQLite cache gives instant
+warm starts, and a curated offline symbol index keeps search working before
+the network responds.
 
 ## Interface
 

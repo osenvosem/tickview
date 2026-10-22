@@ -122,14 +122,37 @@ impl Yahoo {
                 }
             }
             SymbolKind::Index => {
-                if sym.ticker.starts_with('^') {
-                    sym.ticker.clone()
-                } else {
-                    format!("^{}", sym.ticker)
+                let t = sym.ticker.strip_prefix('^').unwrap_or(&sym.ticker);
+                if let Some(c) = Self::index_canonical(t) {
+                    return c.to_string();
                 }
+                format!("^{}", t)
             }
             _ => sym.ticker.clone(),
         }
+    }
+
+    /// Canonical Yahoo tickers for curated index aliases (TV-style names that
+    /// 404 at Yahoo verbatim). Exact match on the uppercased input.
+    #[must_use]
+    pub fn index_canonical(t: &str) -> Option<&'static str> {
+        let u = t.to_ascii_uppercase();
+        Some(match u.as_str() {
+            "SPX" | "SPX500" | "SPX500USD" | "GSPC" => "^GSPC",
+            "IXIC" => "^IXIC",
+            "NDX" | "NAS100" => "^NDX",
+            "US30" | "DJIA" | "DJI" => "^DJI",
+            "RUT" => "^RUT",
+            "VIX" => "^VIX",
+            "DEU40" | "FRA40" | "DAX" => "^GDAXI",
+            "UKX" | "UK100" | "FTSE" => "^FTSE",
+            "SX5E" | "STOXX50" => "^STOXX50E",
+            "N225" | "NKY" => "^N225",
+            "HSI" => "^HSI",
+            "KS11" => "^KS11",
+            "SENSEX" | "BSESN" => "^BSESN",
+            _ => return None,
+        })
     }
 
     fn map_err(e: ureq::Error) -> DataError {
@@ -138,6 +161,33 @@ impl Yahoo {
             ureq::Error::StatusCode(code) => DataError::Http(code),
             other => DataError::Unavailable(other.to_string()),
         }
+    }
+
+    /// TV interval -> Yahoo chart interval. The API only accepts its
+    /// canonical set (`1m 2m 5m 15m 30m 60m 90m 1h 4h 1d 5d 1wk 1mo 3mo`);
+    /// TV-style `D`/`W`/`1M` strings are rejected with HTTP 400 (verified
+    /// live 2026-10-22). Anything else falls back to the TV string and lets
+    /// Yahoo surface its own error.
+    #[must_use]
+    pub fn yahoo_interval(iv: Interval) -> Option<&'static str> {
+        let s = match (iv.unit, iv.mult) {
+            (crate::Unit::Min, 1) => "1m",
+            (crate::Unit::Min, 2) => "2m",
+            (crate::Unit::Min, 5) => "5m",
+            (crate::Unit::Min, 15) => "15m",
+            (crate::Unit::Min, 30) => "30m",
+            (crate::Unit::Min, 60) => "60m",
+            (crate::Unit::Min, 90) => "90m",
+            (crate::Unit::Hour, 1) => "1h",
+            (crate::Unit::Hour, 4) => "4h",
+            (crate::Unit::Day, 1) => "1d",
+            (crate::Unit::Day, 5) => "5d",
+            (crate::Unit::Week, 1) => "1wk",
+            (crate::Unit::Month, 1) => "1mo",
+            (crate::Unit::Month, 3) => "3mo",
+            _ => return None,
+        };
+        Some(s)
     }
 
     /// Convert a decoded chart payload into ascending bars.
@@ -212,7 +262,10 @@ impl Yahoo {
 
     fn chart_url(&self, sym: &Symbol, iv: Interval, before: Option<i64>, limit: u32) -> String {
         let ysym = Self::yahoo_symbol(sym);
-        let ivs = iv.as_tv_str();
+        let ivs = match Self::yahoo_interval(iv) {
+            Some(s) => s.to_string(),
+            None => iv.as_tv_str(),
+        };
         match before {
             None => format!(
                 "{HOST}/v8/finance/chart/{ysym}?interval={ivs}&range=max&includePrePost=false"
@@ -250,6 +303,8 @@ impl Provider for Yahoo {
                 | SymbolKind::Index
                 | SymbolKind::Crypto
                 | SymbolKind::Fx
+                | SymbolKind::Futures
+                | SymbolKind::Commodity
         )
     }
 
@@ -350,6 +405,34 @@ mod tests {
             Yahoo::yahoo_symbol(&sym("EURUSD", SymbolKind::Fx)),
             "EURUSD=X"
         );
+        assert_eq!(Yahoo::yahoo_symbol(&sym("SPX", SymbolKind::Index)), "^GSPC");
+        assert_eq!(
+            Yahoo::yahoo_symbol(&sym("^GSPC", SymbolKind::Index)),
+            "^GSPC"
+        );
+        assert_eq!(
+            Yahoo::yahoo_symbol(&sym("SPX500USD", SymbolKind::Index)),
+            "^GSPC"
+        );
+        assert_eq!(
+            Yahoo::yahoo_symbol(&sym("DEU40", SymbolKind::Index)),
+            "^GDAXI"
+        );
+        assert_eq!(Yahoo::yahoo_symbol(&sym("FOO", SymbolKind::Index)), "^FOO");
+        assert_eq!(
+            Yahoo::yahoo_symbol(&sym("GC=F", SymbolKind::Commodity)),
+            "GC=F"
+        );
+        assert_eq!(Yahoo::index_canonical("spx"), Some("^GSPC"));
+        assert_eq!(Yahoo::index_canonical("FOO"), None);
+    }
+
+    #[test]
+    fn supports_futures_and_commodity() {
+        let y = Yahoo::new();
+        assert!(y.supports(&sym("GC=F", SymbolKind::Commodity)));
+        assert!(y.supports(&sym("CL=F", SymbolKind::Futures)));
+        assert!(!y.supports(&sym("X", SymbolKind::Cfd)));
     }
 
     #[test]
@@ -437,6 +520,31 @@ mod tests {
             100,
         );
         assert!(u2.contains("period1=") && u2.contains("period2=1792000000"));
+        assert_eq!(
+            Yahoo::yahoo_interval(Interval::parse("D").unwrap()),
+            Some("1d")
+        );
+        assert_eq!(
+            Yahoo::yahoo_interval(Interval::parse("1W").unwrap()),
+            Some("1wk")
+        );
+        assert_eq!(
+            Yahoo::yahoo_interval(Interval::parse("1M").unwrap()),
+            Some("1mo")
+        );
+        assert_eq!(
+            Yahoo::yahoo_interval(Interval::parse("1h").unwrap()),
+            Some("1h")
+        );
+        assert_eq!(Yahoo::yahoo_interval(Interval::parse("3h").unwrap()), None);
+        let u3 = y.chart_url(
+            &sym("GC=F", SymbolKind::Commodity),
+            Interval::parse("D").unwrap(),
+            None,
+            50,
+        );
+        assert!(u3.contains("/v8/finance/chart/GC=F?"), "{u3}");
+        assert!(u3.contains("interval=1d"), "{u3}");
     }
 
     #[test]

@@ -4,7 +4,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+use crate::coinbase::Coinbase;
+use crate::coingecko::CoinGecko;
+use crate::erapi::ErApi;
 use crate::frankfurter::Frankfurter;
+use crate::kraken::Kraken;
 use crate::nasdaq::Nasdaq;
 use crate::yahoo::Yahoo;
 use crate::{Bar, Binance, DataError, Interval, Provider, Quote, Symbol};
@@ -21,8 +25,15 @@ impl Default for Router {
         Self::new(vec![
             Box::new(Nasdaq::new()),
             Box::new(Binance::new()),
-            Box::new(Frankfurter::new()),
+            Box::new(Kraken::new()),
+            Box::new(Coinbase::new()),
+            // Yahoo before Frankfurter: Yahoo quotes update intra-day while
+            // Frankfurter settles daily (ECB reference rates).
             Box::new(Yahoo::new()),
+            Box::new(Frankfurter::new()),
+            Box::new(ErApi::new()),
+            // CoinGecko last: free tier is heavily rate-limited.
+            Box::new(CoinGecko::new()),
         ])
     }
 }
@@ -263,9 +274,9 @@ mod tests {
     }
 
     #[test]
-    fn default_router_has_four_providers_and_crypto_coverage() {
+    fn default_router_has_eight_providers_and_crypto_coverage() {
         let r = Router::default();
-        assert_eq!(r.providers.len(), 4);
+        assert_eq!(r.providers.len(), 8);
         assert_eq!(
             r.finest_interval_for(&Symbol::new(
                 "BTCUSDT",
@@ -276,5 +287,73 @@ mod tests {
             60
         );
         assert_eq!(r.finest_interval_for(&stock()), 60);
+    }
+
+    #[test]
+    fn default_router_candidate_chains() {
+        let r = Router::default();
+        let ids =
+            |s: &Symbol| -> Vec<&'static str> { r.candidates(s).iter().map(|p| p.id()).collect() };
+        assert_eq!(
+            ids(&Symbol::new(
+                "BTCUSDT",
+                "BINANCE",
+                SymbolKind::Crypto,
+                "USDT"
+            )),
+            ["binance", "kraken", "coinbase", "yahoo", "coingecko"]
+        );
+        assert_eq!(
+            ids(&Symbol::new("EURUSD", "FX", SymbolKind::Fx, "USD")),
+            ["kraken", "yahoo", "frankfurter", "erapi"]
+        );
+        assert_eq!(
+            ids(&Symbol::new("GC=F", "COMEX", SymbolKind::Commodity, "USD")),
+            ["yahoo"]
+        );
+    }
+
+    /// `Empty` (e.g. Kraken's unknown-pair answer) moves to the next provider
+    /// without cooldown — one bad pair must not blacklist a source.
+    #[test]
+    fn empty_falls_through_without_tripping() {
+        static CALLS_B: AtomicUsize = AtomicUsize::new(0);
+        struct Empt;
+        impl Provider for Empt {
+            fn id(&self) -> &'static str {
+                "empt"
+            }
+            fn supports(&self, _s: &Symbol) -> bool {
+                true
+            }
+            fn fetch_history(
+                &self,
+                _s: &Symbol,
+                _i: Interval,
+                _b: Option<i64>,
+                _l: u32,
+            ) -> Result<Vec<Bar>, DataError> {
+                Err(DataError::Empty("unknown pair".into()))
+            }
+            fn fetch_quote(&self, _s: &Symbol) -> Result<Quote, DataError> {
+                Err(DataError::Empty("unknown pair".into()))
+            }
+        }
+        let r = Router::new(vec![
+            Box::new(Empt),
+            Box::new(Fake {
+                id: "b",
+                kind: SymbolKind::Stock,
+                fail: false,
+                calls: &CALLS_B,
+            }),
+        ]);
+        assert_eq!(
+            r.fetch_history(&stock(), Interval::parse("D").unwrap(), None, 1)
+                .unwrap()
+                .len(),
+            1
+        );
+        assert!(r.alive("empt"));
     }
 }

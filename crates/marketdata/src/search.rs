@@ -164,6 +164,103 @@ pub fn parse_binance_symbols(json: &serde_json::Value) -> Vec<SearchEntry> {
         .collect()
 }
 
+const KRAKEN_FIAT: [&str; 16] = [
+    "USD", "USDT", "USDC", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "MXN", "ZAR", "SEK",
+    "NOK", "DKK", "TRY",
+];
+
+/// Decode Kraken `AssetPairs` (shape verified live 2026-10-22): entries are
+/// keyed by canonical name (`ZEURZUSD`), `wsname` carries the display pair
+/// ("BASE/QUOTE") and `altname` the query form (`EURUSD`, `XBTUSD`).
+pub fn parse_kraken_pairs(json: &serde_json::Value) -> Vec<SearchEntry> {
+    let Some(obj) = json.get("result").and_then(|r| r.as_object()) else {
+        return Vec::new();
+    };
+    obj.values()
+        .filter(|v| v.get("status").and_then(|s| s.as_str()) == Some("online"))
+        .filter_map(|v| {
+            let altname = v.get("altname")?.as_str()?.to_ascii_uppercase();
+            if altname.is_empty() {
+                return None;
+            }
+            let wsname = v.get("wsname")?.as_str()?;
+            let (base, quote) = wsname.split_once('/')?;
+            let (base, quote) = (base.to_ascii_uppercase(), quote.to_ascii_uppercase());
+            let base_fiat = KRAKEN_FIAT.contains(&base.as_str());
+            let quote_fiat = KRAKEN_FIAT.contains(&quote.as_str());
+            let (kind, rank) = if !base_fiat {
+                (SymbolKind::Crypto, 250)
+            } else if quote_fiat {
+                (SymbolKind::Fx, 200)
+            } else {
+                return None;
+            };
+            Some(SearchEntry {
+                ticker: altname,
+                name: if kind == SymbolKind::Crypto {
+                    base
+                } else {
+                    format!("{base} / {quote}")
+                },
+                exchange: "KRAKEN".into(),
+                kind,
+                currency: quote,
+                rank,
+            })
+        })
+        .collect()
+}
+
+/// Decode Coinbase Exchange `/products` (shape verified live 2026-10-22).
+pub fn parse_coinbase_products(json: &serde_json::Value) -> Vec<SearchEntry> {
+    let Some(arr) = json.as_array() else {
+        return Vec::new();
+    };
+    arr.iter()
+        .filter(|p| p.get("status").and_then(|s| s.as_str()) == Some("online"))
+        .filter_map(|p| {
+            let base = p.get("base_currency")?.as_str()?.to_ascii_uppercase();
+            let quote = p.get("quote_currency")?.as_str()?.to_ascii_uppercase();
+            if base.is_empty() || quote.is_empty() {
+                return None;
+            }
+            Some(SearchEntry {
+                ticker: format!("{base}{quote}"),
+                name: base,
+                exchange: "COINBASE".into(),
+                kind: SymbolKind::Crypto,
+                currency: quote,
+                rank: 240,
+            })
+        })
+        .collect()
+}
+
+/// Decode CoinGecko `coins/list` (`{id,symbol,name}`); USDT quoting keeps
+/// tickers uniform with the Binance convention, and every provider strips the
+/// suffix again when routing (`-USDT` products, Kraken altnames, id-map key).
+pub fn parse_coingecko_list(json: &serde_json::Value) -> Vec<SearchEntry> {
+    let Some(arr) = json.as_array() else {
+        return Vec::new();
+    };
+    arr.iter()
+        .filter_map(|c| {
+            let symbol = c.get("symbol")?.as_str()?.to_ascii_uppercase();
+            if symbol.is_empty() {
+                return None;
+            }
+            Some(SearchEntry {
+                ticker: format!("{symbol}USDT"),
+                name: c.get("name")?.as_str()?.to_string(),
+                exchange: "COINGECKO".into(),
+                kind: SymbolKind::Crypto,
+                currency: "USDT".into(),
+                rank: 200,
+            })
+        })
+        .collect()
+}
+
 /// Curated index set (Yahoo/Nasdaq syntax via exchange field).
 #[must_use]
 pub fn curated_indices() -> Vec<SearchEntry> {
@@ -182,6 +279,19 @@ pub fn curated_indices() -> Vec<SearchEntry> {
         ("US30", "Dow Jones 30 Index CFD", "FOREX.COM", 745),
         ("NAS100", "Nasdaq 100 Index CFD", "FOREX.COM", 740),
         ("SPX500USD", "S&P 500 Index CFD", "OANDA", 735),
+        ("^GSPC", "S&P 500", "SP", 895),
+        ("^IXIC", "Nasdaq Composite", "NASDAQ", 855),
+        ("^DJI", "Dow Jones Industrial Average", "DOWJONES", 850),
+        ("^NDX", "Nasdaq 100", "NASDAQ", 845),
+        ("^VIX", "CBOE Volatility Index", "CBOE", 805),
+        ("^RUT", "Russell 2000", "RUSSELL", 795),
+        ("^GDAXI", "DAX Performance Index", "ETR", 775),
+        ("^FTSE", "FTSE 100", "LSE", 765),
+        ("^STOXX50E", "EURO STOXX 50", "STOXX", 755),
+        ("^N225", "Nikkei 225", "OSE", 745),
+        ("^HSI", "Hang Seng Index", "HKG", 735),
+        ("^KS11", "KOSPI Composite", "KRX", 725),
+        ("^BSESN", "S&P BSE SENSEX", "BSE", 715),
     ]
     .into_iter()
     .map(|(t, n, x, r)| SearchEntry {
@@ -189,6 +299,33 @@ pub fn curated_indices() -> Vec<SearchEntry> {
         name: n.into(),
         exchange: x.into(),
         kind: SymbolKind::Index,
+        currency: "USD".into(),
+        rank: r,
+    })
+    .collect()
+}
+
+/// Exchange-traded commodity futures (Yahoo syntax; all live-verified 200
+/// 2026-10-22).
+#[must_use]
+pub fn curated_commodities() -> Vec<SearchEntry> {
+    [
+        ("GC=F", "Gold Futures", "COMEX", 800),
+        ("SI=F", "Silver Futures", "COMEX", 790),
+        ("HG=F", "Copper Futures", "COMEX", 780),
+        ("CL=F", "Crude Oil WTI Futures", "NYMEX", 770),
+        ("BZ=F", "Brent Crude Futures", "NYMEX", 760),
+        ("NG=F", "Natural Gas Futures", "NYMEX", 750),
+        ("ZW=F", "Wheat Futures", "CBOT", 740),
+        ("ZC=F", "Corn Futures", "CBOT", 730),
+        ("ZS=F", "Soybean Futures", "CBOT", 720),
+    ]
+    .into_iter()
+    .map(|(t, n, x, r)| SearchEntry {
+        ticker: t.into(),
+        name: n.into(),
+        exchange: x.into(),
+        kind: SymbolKind::Commodity,
         currency: "USD".into(),
         rank: r,
     })
@@ -329,13 +466,14 @@ pub fn curated_stocks() -> Vec<SearchEntry> {
     .collect()
 }
 
-/// Default offline index: curated stocks/ETFs, crypto, FX and indices (SEC/Binance
-/// lists refresh into this at app start).
+/// Default offline index: curated stocks/ETFs, commodities, crypto, FX and
+/// indices (SEC/Binance lists refresh into this at app start).
 #[must_use]
 pub fn default_index() -> SearchIndex {
     let mut idx = SearchIndex::default();
     idx.extend(curated_stocks());
     idx.extend(curated_indices());
+    idx.extend(curated_commodities());
     idx.extend(curated_fx());
     idx.extend(curated_crypto());
     idx
@@ -343,6 +481,9 @@ pub fn default_index() -> SearchIndex {
 
 const SEC_URL: &str = "https://www.sec.gov/files/company_tickers.json";
 const BINANCE_INFO_URL: &str = "https://api.binance.com/api/v3/exchangeInfo";
+const KRAKEN_PAIRS_URL: &str = "https://api.kraken.com/0/public/AssetPairs";
+const COINBASE_PRODUCTS_URL: &str = "https://api.exchange.coinbase.com/products";
+const COINGECKO_LIST_URL: &str = "https://api.coingecko.com/api/v3/coins/list";
 
 /// SEC requires an identified contact in the User-Agent.
 #[must_use]
@@ -368,6 +509,21 @@ pub fn refresh_remote_index(agent: &ureq::Agent) -> SearchIndex {
     if let Ok(mut r) = agent.get(BINANCE_INFO_URL).call() {
         if let Ok(j) = r.body_mut().read_json::<serde_json::Value>() {
             idx.extend(parse_binance_symbols(&j));
+        }
+    }
+    if let Ok(mut r) = agent.get(KRAKEN_PAIRS_URL).call() {
+        if let Ok(j) = r.body_mut().read_json::<serde_json::Value>() {
+            idx.extend(parse_kraken_pairs(&j));
+        }
+    }
+    if let Ok(mut r) = agent.get(COINBASE_PRODUCTS_URL).call() {
+        if let Ok(j) = r.body_mut().read_json::<serde_json::Value>() {
+            idx.extend(parse_coinbase_products(&j));
+        }
+    }
+    if let Ok(mut r) = agent.get(COINGECKO_LIST_URL).call() {
+        if let Ok(j) = r.body_mut().read_json::<serde_json::Value>() {
+            idx.extend(parse_coingecko_list(&j));
         }
     }
     idx
@@ -507,5 +663,83 @@ mod tests {
             r.iter()
                 .any(|s| s.description.to_uppercase().contains("MICRO"))
         );
+    }
+
+    #[test]
+    fn kraken_fixture_splits_crypto_and_fx() {
+        // Shape captured live 2026-10-22: entries keyed by canonical name,
+        // altname without slash, wsname with the display pair.
+        let j = serde_json::json!({"result": {
+            "XXBTZUSD": {"altname": "XBTUSD", "wsname": "XBT/USD", "status": "online"},
+            "ZEURZUSD": {"altname": "EURUSD", "wsname": "EUR/USD", "status": "online"},
+            "XETHUSD2": {"altname": "ETHUSD", "wsname": "ETH/USD", "status": "offline"},
+            "WOOTXBT": {"altname": "WOOTXBT", "wsname": "WOOT/XBT", "status": "online"}
+        }});
+        let e = parse_kraken_pairs(&j);
+        assert_eq!(e.len(), 3);
+        let btc = e.iter().find(|x| x.ticker == "XBTUSD").unwrap();
+        assert_eq!(btc.kind, SymbolKind::Crypto);
+        assert_eq!(btc.currency, "USD");
+        assert_eq!(btc.rank, 250);
+        let fx = e.iter().find(|x| x.ticker == "EURUSD").unwrap();
+        assert_eq!(fx.kind, SymbolKind::Fx);
+        assert_eq!(fx.rank, 200);
+        assert_eq!(fx.exchange, "KRAKEN");
+    }
+
+    #[test]
+    fn coinbase_fixture_keeps_online_products() {
+        // Shape captured live 2026-10-22 from /products.
+        let j = serde_json::json!([
+            {"id": "BTC-USDT", "base_currency": "BTC", "quote_currency": "USDT", "status": "online"},
+            {"id": "ZEN-BTC", "base_currency": "ZEN", "quote_currency": "BTC", "status": "delisted"},
+            {"id": "ETH-USD", "base_currency": "ETH", "quote_currency": "USD", "status": "online"}
+        ]);
+        let e = parse_coinbase_products(&j);
+        assert_eq!(e.len(), 2);
+        assert_eq!(e[0].ticker, "BTCUSDT");
+        assert_eq!(e[0].exchange, "COINBASE");
+        assert_eq!(e[0].rank, 240);
+        assert_eq!(e[1].ticker, "ETHUSD");
+    }
+
+    #[test]
+    fn coingecko_fixture_appends_usdt_quote() {
+        // Shape captured live 2026-10-22 from coins/list.
+        let j = serde_json::json!([
+            {"id": "bitcoin", "symbol": "btc", "name": "Bitcoin"},
+            {"id": "weird", "symbol": "", "name": "NoSymbol"}
+        ]);
+        let e = parse_coingecko_list(&j);
+        assert_eq!(e.len(), 1);
+        assert_eq!(e[0].ticker, "BTCUSDT");
+        assert_eq!(e[0].name, "Bitcoin");
+        assert_eq!(e[0].exchange, "COINGECKO");
+    }
+
+    #[test]
+    fn commodities_and_global_indices_curated() {
+        assert_eq!(curated_commodities().len(), 9);
+        assert_eq!(curated_indices().len(), 27);
+        let idx = default_index();
+        let gold = idx.search("gold", 3);
+        assert_eq!(gold[0].ticker, "GC=F");
+        assert_eq!(gold[0].kind, SymbolKind::Commodity);
+        let nikkei = idx.search("nikkei", 3);
+        assert_eq!(nikkei[0].ticker, "^N225");
+    }
+
+    #[test]
+    fn remote_parser_collisions_keep_binance_rank() {
+        let mut idx = SearchIndex::default();
+        idx.extend(parse_binance_symbols(&serde_json::json!({"symbols": [
+            {"symbol": "BTCUSDT", "status": "TRADING", "baseAsset": "BTC", "quoteAsset": "USDT"}
+        ]})));
+        idx.extend(parse_coingecko_list(&serde_json::json!([
+            {"id": "bitcoin", "symbol": "btc", "name": "Bitcoin"}
+        ])));
+        let btc = idx.search("BTCUSDT", 1);
+        assert_eq!(btc[0].exchange, "BINANCE"); // rank 1460 beats Gecko's 200
+        assert_eq!(btc[0].description, "BTC");
     }
 }

@@ -11,6 +11,7 @@ pub enum SymbolKind {
     Futures,
     Crypto,
     Fx,
+    Commodity,
     Cfd,
     Other,
 }

@@ -977,7 +977,7 @@ impl TickView {
         let watchlist: Vec<Symbol> = if cfg.watchlist.is_empty() {
             [
                 "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "SPY", "QQQ", "BTCUSDT", "ETHUSDT",
-                "EURUSD",
+                "EURUSD", "^GSPC", "GC=F",
             ]
             .iter()
             .map(|t| {
