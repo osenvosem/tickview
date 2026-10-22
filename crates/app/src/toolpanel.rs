@@ -597,7 +597,9 @@ pub fn emoji_catalog() -> &'static EmojiCatalog {
 }
 
 /// Rank entries against a whitespace-separated query; every token must match
-/// the CLDR name or a keyword tag. Best matches first, ties by catalog order.
+/// the CLDR name or a keyword tag, with prefix matching in both directions so
+/// stems and plurals agree ("hand" ~ "hands"). Best matches first, ties by
+/// catalog order.
 #[must_use]
 pub fn search_emoji_catalog(query: &str) -> Vec<usize> {
     let cat = emoji_catalog();
@@ -617,12 +619,22 @@ pub fn search_emoji_catalog(query: &str) -> Vec<usize> {
                 best = best.max(100);
             } else if name.split([' ', '-', '_', '\'']).any(|w| w.starts_with(t)) {
                 best = best.max(60);
+            } else if name
+                .split([' ', '-', '_', '\''])
+                .any(|w| w.len() >= 3 && t.starts_with(w))
+            {
+                // Stem/plural parity: "hands" must find "raised hand".
+                best = best.max(55);
             } else if name.contains(t) {
                 best = best.max(30);
             }
             for tag in &e.tags {
                 if tag == t {
                     best = best.max(50);
+                } else if tag.starts_with(t) {
+                    best = best.max(40);
+                } else if tag.len() >= 3 && t.starts_with(tag) {
+                    best = best.max(35);
                 } else if tag.contains(t) {
                     best = best.max(20);
                 }
@@ -2450,5 +2462,39 @@ fn catalog_covers_hands_people_and_families_without_tone_variants() {
             .chars()
             .any(|c| (0x1F3FB..=0x1F3FF).contains(&(c as u32)))),
         "skin-tone variants must stay out of the grid"
+    );
+}
+
+#[test]
+fn plural_and_stem_queries_find_hand_glyphs() {
+    let cat = emoji_catalog();
+    let glyph_at = |i: usize| cat.entries[i].glyph.replace('\u{FE0F}', "");
+    for query in ["hands", "hand"] {
+        let hits = search_emoji_catalog(query);
+        let glyphs: Vec<String> = hits.iter().map(|i| glyph_at(*i)).collect();
+        assert!(
+            glyphs.contains(&"\u{270B}".to_owned()),
+            "{query}: raised hand missing"
+        );
+        assert!(
+            glyphs.contains(&"\u{1F44D}".to_owned()),
+            "{query}: thumbs up missing"
+        );
+        assert!(
+            glyphs.contains(&"\u{1F91D}".to_owned()),
+            "{query}: handshake missing"
+        );
+    }
+    let thumbs: Vec<String> = search_emoji_catalog("thumbs")
+        .iter()
+        .map(|i| glyph_at(*i))
+        .collect();
+    assert!(
+        thumbs.contains(&"\u{1F44D}".to_owned()),
+        "thumbs up missing"
+    );
+    assert!(
+        thumbs.contains(&"\u{1F44E}".to_owned()),
+        "thumbs down missing"
     );
 }
