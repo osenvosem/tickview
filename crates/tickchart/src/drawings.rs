@@ -3180,7 +3180,12 @@ fn draw_one(
     }
 
     if selected || draft {
-        let mut handles = vec![pa, pb];
+        // TV shows one handle for HLine/VLine: their second anchor is a
+        // duplicate of the first.
+        let mut handles = match d.kind {
+            DrawingKind::HLine | DrawingKind::VLine => vec![pa],
+            _ => vec![pa, pb],
+        };
         if let Some(pc) = pc {
             handles.push(pc);
         }
@@ -5609,12 +5614,22 @@ pub fn handle_slot(points: &[Pos2], pos: Pos2, r: f32) -> Option<usize> {
 
 /// Move the anchor at `slot`; false when the slot does not exist on `d`.
 pub fn set_anchor(d: &mut Drawing, slot: usize, anchor: Anchor) -> bool {
+    // HLine/VLine store a redundant duplicate of their single anchor. Keep
+    // both in lockstep: dragging one handle used to move only that slot,
+    // leaving the line in place with a stray dot at the drop point.
+    let single = matches!(d.kind, DrawingKind::HLine | DrawingKind::VLine);
     match slot {
         0 => {
             d.a = anchor;
+            if single {
+                d.b = anchor;
+            }
             true
         }
         1 => {
+            if single {
+                d.a = anchor;
+            }
             d.b = anchor;
             true
         }
@@ -5635,5 +5650,36 @@ pub fn set_anchor(d: &mut Drawing, slot: usize, anchor: Anchor) -> bool {
                 false
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod anchor_sync_tests {
+    use super::*;
+
+    fn anchor(t: i64, price: f64) -> Anchor {
+        Anchor { t, price }
+    }
+
+    fn line(kind: DrawingKind, t: i64, price: f64) -> Drawing {
+        Drawing::new(1, kind, anchor(t, price), anchor(t, price))
+    }
+
+    #[test]
+    fn hline_vline_anchor_set_keeps_duplicate_in_lockstep() {
+        for kind in [DrawingKind::HLine, DrawingKind::VLine] {
+            let mut d = line(kind, 1000, 50.0);
+            assert!(set_anchor(&mut d, 0, anchor(2000, 60.0)));
+            assert_eq!(d.b, d.a, "{kind:?} slot 0 must sync b");
+            assert!(set_anchor(&mut d, 1, anchor(3000, 70.0)));
+            assert_eq!(d.a, d.b, "{kind:?} slot 1 must sync a");
+        }
+    }
+
+    #[test]
+    fn trendline_slots_stay_independent() {
+        let mut d = line(DrawingKind::TrendLine, 1000, 50.0);
+        assert!(set_anchor(&mut d, 1, anchor(3000, 70.0)));
+        assert_ne!(d.a, d.b);
     }
 }

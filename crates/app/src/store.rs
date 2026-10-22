@@ -279,6 +279,20 @@ impl SavedConfig {
                 });
             }
         }
+        // Legacy repair: older builds let a handle drag desync the duplicate
+        // anchor of HLine/VLine, leaving a stray dot. Collapse them back.
+        for tab in &mut self.tabs {
+            for list in tab.drawings.values_mut() {
+                for d in list {
+                    if matches!(
+                        d.kind,
+                        tickchart::DrawingKind::HLine | tickchart::DrawingKind::VLine
+                    ) {
+                        d.b = d.a;
+                    }
+                }
+            }
+        }
         self.version = VERSION;
         if self.tabs.is_empty() {
             self.active_tab = 0;
@@ -762,4 +776,47 @@ mod tests {
             );
         }
     }
+}
+
+#[test]
+fn migrate_collapses_desynced_hline_vline_anchors() {
+    let mut cfg = SavedConfig::default();
+    let sym = marketdata::Symbol {
+        ticker: "BTCUSDT".into(),
+        exchange: "BINANCE".into(),
+        kind: marketdata::SymbolKind::Crypto,
+        currency: "USDT".into(),
+        description: String::new(),
+    };
+    let mut tab = SavedTab {
+        symbol: sym.clone(),
+        interval: "1d".into(),
+        chart_type: "Candles".into(),
+        log: false,
+        right_offset: 0.0,
+        spacing: 8.0,
+        drawings_locked: false,
+        drawings_hidden: false,
+        indicators: Vec::new(),
+        indicators_hidden: false,
+        indicators_locked: false,
+        compare: None,
+        drawings: Default::default(),
+    };
+    let a = tickchart::Anchor {
+        t: 1000,
+        price: 10.0,
+    };
+    let b = tickchart::Anchor {
+        t: 2000,
+        price: 20.0,
+    };
+    let mut stray = tickchart::Drawing::new(8, tickchart::DrawingKind::VLine, a, b);
+    stray.b = b;
+    tab.drawings.insert(sym.ticker.clone(), vec![stray]);
+    cfg.tabs.push(tab);
+    cfg.migrate();
+    let d = &cfg.tabs[0].drawings[&sym.ticker.clone()][0];
+    assert_eq!(d.a.t, 1000);
+    assert_eq!(d.b, d.a, "stray duplicate anchor must collapse on load");
 }

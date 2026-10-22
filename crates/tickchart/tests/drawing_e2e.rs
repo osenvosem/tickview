@@ -1151,3 +1151,28 @@ fn arming_a_pen_deselects_so_handles_cannot_duplicate() {
     );
     h.release(empty, Modifiers::NONE);
 }
+
+#[test]
+fn vline_handle_drag_moves_the_line_not_just_a_dot() {
+    // Regression: dragging a VLine handle moved only one of the two stored
+    // anchors, so the line stayed put and a stray dot marked the drop.
+    let mut h = Harness::new(DrawTool::VLine);
+    let (lo, hi) = h.lo_hi();
+    let span = hi - lo;
+    let p1 = h.pt(h.cd.len() - 40, lo + span * 0.5);
+    h.click(p1);
+    assert_eq!(h.st.drawings.len(), 1);
+    let id = h.st.drawings[0].id;
+    let t0 = h.st.drawings[0].a.t;
+    h.st.tools.set_tool(DrawTool::Cursor);
+    let p2 = h.pt(h.cd.len() - 20, lo + span * 0.62);
+    h.drag(p1, p2); // press hits the line body -> whole-drawing drag
+    assert_eq!(h.st.drawings[0].a.t, h.st.drawings[0].b.t);
+    assert_ne!(h.st.drawings[0].a.t, t0, "vertical line did not move");
+    // Re-select and grab the (single) handle: line follows the drag.
+    h.click(p2);
+    let _ = id;
+    let q = p2 + egui::vec2(10.0, 0.0);
+    h.drag(p2, q);
+    assert_eq!(h.st.drawings[0].a, h.st.drawings[0].b);
+}
