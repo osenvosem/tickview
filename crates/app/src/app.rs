@@ -3449,7 +3449,6 @@ impl TickView {
                     tickchart::send_backward(&mut tab.chart.drawings, &ids);
                     changed = true;
                 }
-                ToolbarAction::Nudge(delta) => self.tabs[ti].chart.nudge_selection(delta),
             }
         }
         if changed {

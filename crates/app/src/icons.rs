@@ -1715,9 +1715,12 @@ impl Icon {
                 ));
             }
             Self::DragHandle => {
+                // TradingView grip: narrow 2x3 dot stack. Radii/spacing are
+                // sized for the 14 px paint box (dots land at ~1.3 px with
+                // ~2.3/2.9 px column/row gaps on screen).
                 for y in [7.0, 12.0, 17.0] {
-                    dot(8.0, y, 1.2);
-                    dot(16.0, y, 1.2);
+                    dot(10.0, y, 2.2);
+                    dot(14.0, y, 2.2);
                 }
             }
             Self::SelectMultiple => {
@@ -1879,6 +1882,49 @@ impl Icon {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn drag_handle_is_tv_six_dot_stack() {
+        let ctx = egui::Context::default();
+        let mut out = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(100.0, 100.0))),
+                ..Default::default()
+            },
+            |ui| {
+                Icon::DragHandle.paint(
+                    ui.painter(),
+                    Rect::from_min_size(Pos2::new(36.0, 36.0), vec2(14.0, 14.0)),
+                    Color32::WHITE,
+                    1.5,
+                );
+            },
+        );
+        out.textures_delta.clear();
+        let dots: Vec<Pos2> = out
+            .shapes
+            .iter()
+            .map(|cs| &cs.shape)
+            .filter_map(|s| match s {
+                Shape::Circle(c) => Some(c.center),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(dots.len(), 6, "TV grip is exactly six dots");
+        let xs: Vec<f32> = dots.iter().map(|p| p.x).collect();
+        let ys: Vec<f32> = dots.iter().map(|p| p.y).collect();
+        // Two narrow columns (gap < half the box) and three rows taller
+        // than the column gap - the vertical TradingView grip profile.
+        let gap_x = xs.iter().copied().fold(f32::NEG_INFINITY, f32::max)
+            - xs.iter().copied().fold(f32::INFINITY, f32::min);
+        let gap_y = ys.iter().copied().fold(f32::NEG_INFINITY, f32::max)
+            - ys.iter().copied().fold(f32::INFINITY, f32::min);
+        assert!(gap_x < 7.0, "columns too wide: {gap_x}");
+        assert!(
+            gap_y > gap_x * 1.5,
+            "stack not vertical: {gap_y} vs {gap_x}"
+        );
+    }
 
     #[test]
     fn icon_names_are_unique() {

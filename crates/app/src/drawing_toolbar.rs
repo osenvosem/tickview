@@ -85,6 +85,12 @@ pub enum Popup {
 #[derive(Clone, Debug, Default)]
 pub struct ToolbarState {
     pub popup: Popup,
+    /// User-dragged displacement of the floating toolbar, relative to its
+    /// default anchor above the selection. Persists while the same drawing
+    /// stays selected; the toolbar then moves independently of the drawing.
+    pub offset: Vec2,
+    /// Selection the offset belongs to (reset when it changes).
+    pub offset_owner: Option<u64>,
 }
 
 impl ToolbarState {
@@ -121,7 +127,6 @@ pub enum ToolbarAction {
     SendToBack,
     BringForward,
     SendBackward,
-    Nudge(Vec2),
 }
 
 pub struct ToolbarOutput {
@@ -154,11 +159,33 @@ impl<'a> ToolbarModel<'a> {
     }
 }
 
+/// Height of the floating toolbar strip.
+const BAR_H: f32 = 44.0;
+
+/// Keep a right-top anchored bar fully inside the canvas.
+#[must_use]
+fn clamp_bar_pos(mut pos: egui::Pos2, bounds: Rect, size: Vec2) -> egui::Pos2 {
+    pos.x = pos
+        .x
+        .clamp(bounds.left() + 8.0 + size.x, bounds.right() - 8.0);
+    pos.y = pos.y.clamp(
+        bounds.top() + 8.0,
+        (bounds.bottom() - 8.0 - size.y).max(bounds.top() + 8.0),
+    );
+    pos
+}
+
+/// Where the toolbar's right-top corner lands for a user offset.
+#[must_use]
+fn toolbar_anchor(bar: Rect, bounds: Rect, width: f32, offset: Vec2) -> egui::Pos2 {
+    clamp_bar_pos(bar.right_top() + offset, bounds, vec2(width, BAR_H))
+}
+
 #[must_use]
 pub fn bar_rect(bounds: Rect, width: f32, bbox: Option<Rect>) -> Rect {
     let width = width.min(bounds.width() - 32.0).max(120.0);
     let x = (bounds.right() - 16.0 - width).max(bounds.left() + 16.0);
-    let top = Rect::from_min_size(egui::pos2(x, bounds.top() + 16.0), vec2(width, 44.0));
+    let top = Rect::from_min_size(egui::pos2(x, bounds.top() + 16.0), vec2(width, BAR_H));
     // TV keeps the bar off the object it edits: if the default top-right
     // slot covers the selection, park the bar just below-right of it.
     if let Some(sel) = bbox
@@ -172,7 +199,7 @@ pub fn bar_rect(bounds: Rect, width: f32, bbox: Option<Rect>) -> Rect {
             bounds.left() + 16.0,
             (bounds.right() - 16.0 - width).max(bounds.left() + 16.0),
         );
-        return Rect::from_min_size(egui::pos2(x, y), vec2(width, 44.0));
+        return Rect::from_min_size(egui::pos2(x, y), vec2(width, BAR_H));
     }
     top
 }
@@ -265,6 +292,14 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
         + button_count.saturating_sub(1) as f32 * 4.0
         + 8.0;
     let bar = bar_rect(bounds, width, model.bbox);
+    // User-dragged offset applies only while the same drawing stays
+    // selected, so the toolbar no longer rides along with the drawing.
+    let offset_owner = primary.map(|drawing| drawing.id);
+    if state.offset_owner != offset_owner {
+        state.offset = Vec2::ZERO;
+        state.offset_owner = offset_owner;
+    }
+    let anchor_pos = toolbar_anchor(bar, bounds, width, state.offset);
     let locked_all = selected.iter().all(|drawing| drawing.locked);
     let hidden_all = selected.iter().all(|drawing| drawing.hidden);
     let mut exclusion = bar;
@@ -277,7 +312,7 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
     )))
     .order(Order::Foreground)
     .pivot(Align2::RIGHT_TOP)
-    .fixed_pos(bar.right_top())
+    .fixed_pos(anchor_pos)
     .constrain_to(bounds)
     .fade_in(false)
     .movable(false)
@@ -294,7 +329,9 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
                 ui.spacing_mut().item_spacing.x = 4.0;
                 ui.horizontal(|ui| {
                     if let Some(delta) = drag_handle(ui, p) {
-                        actions.push(ToolbarAction::Nudge(delta));
+                        // The grip moves the toolbar itself, never the
+                        // drawing (TV parity).
+                        state.offset += delta;
                     }
                     if widgets::icon_button(
                         ui,
@@ -417,7 +454,13 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
                 });
             });
     });
-    exclusion = union_rect(exclusion, area.response.rect);
+    // Popups hang from where the bar actually sits after a user drag.
+    let effective_bar = if area.response.rect.is_positive() {
+        area.response.rect
+    } else {
+        bar
+    };
+    exclusion = union_rect(exclusion, effective_bar);
 
     let popup = popup_rect_and_actions(
         ui,
@@ -427,7 +470,7 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
         &common,
         hidden_all,
         model.has_clipboard,
-        bar,
+        effective_bar,
         bounds,
     );
     actions.extend(popup.actions);
@@ -859,6 +902,23 @@ mod tests {
         assert_eq!(rect.height(), 44.0);
         assert_eq!(rect.right(), bounds.right() - 16.0);
         assert_eq!(rect.top(), bounds.top() + 16.0);
+    }
+
+    #[test]
+    fn user_offset_moves_bar_independently_of_anchor() {
+        let bounds = Rect::from_min_size(Pos2::ZERO, vec2(1000.0, 700.0));
+        let bar = bar_rect(bounds, 320.0, None);
+        let base = toolbar_anchor(bar, bounds, 320.0, Vec2::ZERO);
+        assert_eq!(base, bar.right_top());
+        let moved = toolbar_anchor(bar, bounds, 320.0, vec2(-120.0, 200.0));
+        assert_eq!(moved, base + vec2(-120.0, 200.0));
+        // Offsets that would push the bar off-canvas clamp inside it.
+        let pushed = toolbar_anchor(bar, bounds, 320.0, vec2(900.0, 900.0));
+        assert!(pushed.x <= bounds.right() - 8.0);
+        assert!(pushed.y + BAR_H <= bounds.bottom() - 8.0);
+        let up = toolbar_anchor(bar, bounds, 320.0, vec2(-900.0, -900.0));
+        assert!(up.x - 320.0 >= bounds.left() + 8.0);
+        assert!(up.y >= bounds.top() + 8.0);
     }
 
     #[test]
