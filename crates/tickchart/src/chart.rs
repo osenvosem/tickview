@@ -984,7 +984,9 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 .hover
                 .and_then(|i| {
                     l.data.plots.first().and_then(|pl| {
-                        (i < pl.series.len() && pl.series[i].is_finite()).then_some(pl.series[i])
+                        // `then_some` evaluates eagerly: a hover index
+                        // past the series would still index. `then` is lazy.
+                        (i < pl.series.len() && pl.series[i].is_finite()).then(|| pl.series[i])
                     })
                 })
                 .map(|v| format!(" {}", fmt_compact(v)))
