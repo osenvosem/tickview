@@ -4320,10 +4320,13 @@ fn truncate_to_width(p: &egui::Painter, text: &str, font: FontId, max_w: f32) ->
 
 /// Move both anchors by a bar-index delta and a price delta.
 pub fn move_drawing(d: &mut Drawing, from: Anchor, to: Anchor, cd: &Candles) -> bool {
-    let Some(from_i) = nearest_index(cd, from.t) else {
+    // Future-zone anchors (TV space right of the last bar) must map to
+    // extrapolated indices; clamping them both to the last bar made
+    // future drawings undraggable (delta always zero).
+    let Some(from_i) = nearest_index_ext(cd, from.t) else {
         return false;
     };
-    let Some(to_i) = nearest_index(cd, to.t) else {
+    let Some(to_i) = nearest_index_ext(cd, to.t) else {
         return false;
     };
     let di = to_i as i64 - from_i as i64;

@@ -1087,3 +1087,39 @@ fn drag_grabs_and_moves_selected_drawing() {
         "drag stuck active after release"
     );
 }
+
+#[test]
+fn vline_in_future_space_drags_both_directions() {
+    // A vertical line placed right of the last bar (TV future space) must
+    // drag deeper into the future AND back onto the bars. move_drawing once
+    // clamped both endpoints to the newest bar, so the delta was always 0.
+    let mut h = Harness::new(DrawTool::VLine);
+    let (lo, hi) = h.lo_hi();
+    let n = h.cd.len();
+    h.st.view.right_offset = 80.0; // room for future space on the right
+    h.frame(vec![]);
+    let x = h.st.view.x_of(n - 1) + 48.0; // 8 bars into future space
+    let p = Pos2::new(x, h.axis().y_of(lo + (hi - lo) * 0.5));
+    h.click(p);
+    assert_eq!(h.st.drawings.len(), 1, "vline not created in future space");
+    assert!(
+        h.st.drawings[0].a.t > h.cd.t[n - 1],
+        "anchor not in future zone"
+    );
+    h.st.tools.set_tool(DrawTool::Cursor);
+    let before = h.st.drawings[0].a.t;
+
+    h.hover(p + egui::vec2(1.0, 0.0));
+    h.press(p, Modifiers::default());
+    let moved = h.frame(vec![Event::PointerMoved(p + egui::vec2(30.0, 0.0))]);
+    h.release(p + egui::vec2(30.0, 0.0), Modifiers::NONE);
+    assert!(moved.changed, "future-space drag right ignored");
+    let right = h.st.drawings[0].a.t;
+    assert!(right > before, "vline stuck: {before} -> {right}");
+
+    h.press(p + egui::vec2(30.0, 0.0), Modifiers::default());
+    let moved = h.frame(vec![Event::PointerMoved(p - egui::vec2(30.0, 0.0))]);
+    h.release(p - egui::vec2(30.0, 0.0), Modifiers::NONE);
+    assert!(moved.changed);
+    assert!(h.st.drawings[0].a.t < right, "cannot drag back left");
+}
