@@ -977,7 +977,10 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             })
             .sum();
         let height = UTILITY_PAD * 2.0 + body;
-        let rect = popup_rect_for(anchor, UTILITY_W, height, content);
+        // Size the menu to its longest row (TV): labels and the trailing
+        // toggle must fit without clipping; never below the 216 px base.
+        let width = utility_menu_width(ui, &items);
+        let rect = popup_rect_for(anchor, width, height, content);
         let scrims = popover_scrims(rect, rail_rect, content);
         if scrim_clicked(ui, &scrims) {
             app.tool_panel.close_overlays();
@@ -1608,6 +1611,25 @@ fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<UtilityItem> {
     }
 }
 
+/// Utility-menu width: the 216 px base, grown so the longest label — plus
+/// its leading tick gutter and trailing toggle — fits without clipping (TV).
+#[must_use]
+fn utility_menu_width(ui: &egui::Ui, items: &[UtilityItem]) -> f32 {
+    let label_font = font_regular(13.0);
+    items.iter().fold(UTILITY_W, |width, item| {
+        let need = match item {
+            UtilityItem::Row { label, .. } => {
+                28.0 + text_width(ui, label, label_font.clone()) + 14.0
+            }
+            UtilityItem::Check { label, .. } => {
+                28.0 + text_width(ui, label, label_font.clone()) + 12.0 + 40.0 + 12.0
+            }
+            UtilityItem::Sep => 0.0,
+        };
+        width.max(need.ceil() + 1.0)
+    })
+}
+
 fn draw_utility_menu(
     ui: &egui::Ui,
     app: &mut TickView,
@@ -1659,17 +1681,30 @@ fn draw_utility_menu(
                                 if resp.hovered() {
                                     ui.painter().rect_filled(row, 4.0, p.menu_hover);
                                 }
-                                if *checked {
-                                    Icon::Check.paint(
-                                        ui.painter(),
-                                        Rect::from_center_size(
-                                            Pos2::new(row.left() + 12.0, row.center().y),
-                                            vec2(16.0, 16.0),
-                                        ),
-                                        p.menu_text,
-                                        1.4,
-                                    );
-                                }
+                                // TV-style trailing switch carries the state.
+                                let track = Rect::from_center_size(
+                                    Pos2::new(row.right() - 32.0, row.center().y),
+                                    vec2(40.0, 22.0),
+                                );
+                                ui.painter().rect_filled(
+                                    track,
+                                    11.0,
+                                    if *checked {
+                                        p.accent
+                                    } else {
+                                        p.menu_hover.linear_multiply(1.6).linear_multiply(0.9)
+                                    },
+                                );
+                                let knob_x = if *checked {
+                                    track.right() - 11.0
+                                } else {
+                                    track.left() + 11.0
+                                };
+                                ui.painter().circle_filled(
+                                    Pos2::new(knob_x, track.center().y),
+                                    8.0,
+                                    if *checked { Color32::WHITE } else { p.text },
+                                );
                                 ui.painter().text(
                                     Pos2::new(row.left() + 28.0, row.center().y),
                                     Align2::LEFT_CENTER,
@@ -1978,6 +2013,46 @@ mod tests {
 
     use super::*;
     use std::time::{Duration, Instant};
+
+    #[test]
+    fn utility_menu_width_fits_longest_label_and_toggle() {
+        let ctx = egui::Context::default();
+        let raw = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(1200.0, 800.0))),
+            ..Default::default()
+        };
+        let wcell = std::cell::Cell::new(0.0f32);
+        let tcell = std::cell::Cell::new(0.0f32);
+        let mut out = ctx.run_ui(raw, |ui| {
+            let items = vec![
+                UtilityItem::Row {
+                    label: "Remove 3 drawings".to_owned(),
+                    selected: false,
+                    selector: false,
+                },
+                UtilityItem::Sep,
+                UtilityItem::Check {
+                    label: "Always remove locked drawings",
+                    checked: false,
+                },
+            ];
+            wcell.set(utility_menu_width(ui, &items));
+            tcell.set(text_width(
+                ui,
+                "Always remove locked drawings",
+                font_regular(13.0),
+            ));
+        });
+        out.textures_delta.clear();
+        let w = wcell.get();
+        let text = tcell.get();
+        assert!(
+            w > UTILITY_W,
+            "long toggle row must widen the menu past {UTILITY_W}, got {w}"
+        );
+        // 28 gutter + text + 12 gap + 40 toggle + 12 right padding.
+        assert!(w >= 28.0 + text + 64.0, "menu still clips the toggle row");
+    }
 
     #[test]
     fn every_tool_is_reachable_from_the_panel_exactly_once() {
