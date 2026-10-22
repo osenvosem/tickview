@@ -1029,3 +1029,21 @@ fn drag_extends_past_last_bar_into_future_space() {
         h.st.view.x_of(last)
     );
 }
+
+#[test]
+fn backspace_deletes_selection_without_hover() {
+    // TV: the keyboard removes the selected drawing regardless of where the
+    // pointer is; the old code required hovering the chart at keypress.
+    let mut h = Harness::new(DrawTool::HLine);
+    let (lo, hi) = h.lo_hi();
+    let p = h.pt(h.cd.len() - 30, lo + (hi - lo) * 0.4);
+    h.click(p);
+    h.st.tools.set_tool(DrawTool::Cursor);
+    h.click(p);
+    assert!(!h.st.selection.is_empty(), "nothing selected");
+    h.hover(Pos2::new(-20.0, -20.0)); // pointer off the chart entirely
+    let ev = h.key(Key::Backspace);
+    assert!(ev.changed, "backspace without hover was ignored");
+    assert!(h.st.drawings.is_empty(), "drawing survived backspace");
+    assert!(h.st.selection.is_empty());
+}

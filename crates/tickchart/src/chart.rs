@@ -1173,29 +1173,33 @@ fn handle_input(
         st.tools.update_draft(anchor);
     }
 
-    if resp.hovered() {
-        if ctx.input(|i| i.key_pressed(egui::Key::Escape))
-            && (st.tools.draft.is_some()
-                || st.selection.primary().is_some()
-                || st.tools.measure.is_some()
-                || st.price_zoom.is_some()
-                || st.marquee.is_some())
-        {
-            st.tools.cancel();
-            st.selection.clear();
-            st.drag_drawing = None;
-            st.drag_anchor = None;
-            st.zoom_sel = None;
-            st.marquee = None;
-            st.price_zoom = None;
-        }
-        if !st.locked
-            && (ctx.input(|i| i.key_pressed(egui::Key::Delete))
-                || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
-            && drawings::delete_selected(&mut st.drawings, &mut st.selection)
-        {
-            ev.changed = true;
-        }
+    if resp.hovered()
+        && ctx.input(|i| i.key_pressed(egui::Key::Escape))
+        && (st.tools.draft.is_some()
+            || st.selection.primary().is_some()
+            || st.tools.measure.is_some()
+            || st.price_zoom.is_some()
+            || st.marquee.is_some())
+    {
+        st.tools.cancel();
+        st.selection.clear();
+        st.drag_drawing = None;
+        st.drag_anchor = None;
+        st.zoom_sel = None;
+        st.marquee = None;
+        st.price_zoom = None;
+    }
+
+    // TV: Backspace/Delete removes selected drawings no matter where the
+    // pointer sits, unless a widget (text field, picker) owns the keyboard.
+    if !st.locked
+        && !st.selection.is_empty()
+        && !ctx.egui_wants_keyboard_input()
+        && (ctx.input(|i| i.key_pressed(egui::Key::Delete))
+            || ctx.input(|i| i.key_pressed(egui::Key::Backspace)))
+        && drawings::delete_selected(&mut st.drawings, &mut st.selection)
+    {
+        ev.changed = true;
     }
 
     if resp.drag_started() {
