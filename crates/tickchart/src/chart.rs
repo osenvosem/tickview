@@ -851,7 +851,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
         // time tag
         if let Some(i) = st.hover {
-            let lbl = timeaxis::fmt_dt(cd.t[i]);
+            let lbl = timeaxis::fmt_dt(cd.t_at(i));
             let w = 78.0f32.min(plot_w);
             let tr = Rect::from_min_size(
                 Pos2::new(bar_x - w / 2.0, full.max.y - AXIS_H),
@@ -876,7 +876,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                     .is_some_and(|(p0, t0)| now - t0 >= 0.5 && p0.distance(pos) <= 3.0)
             })
         {
-            let i = st.hover.unwrap_or(0);
+            let i = st.hover.unwrap_or(0).min(cd.len().saturating_sub(1));
             let chg = cd.c[i] - cd.o[i];
             let pct = if cd.o[i] != 0.0 {
                 chg / cd.o[i] * 100.0
@@ -1240,7 +1240,7 @@ fn handle_input(
                         .find(|d| d.id == id && !d.locked)
                         .and_then(|d| {
                             let map = |a: Anchor| {
-                                let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
+                                let i = drawings::nearest_index_ext(cd, a.t).unwrap_or(0);
                                 Pos2::new(st.view.x_of(i), ax.y_of(a.price))
                             };
                             drawings::handle_slot(&d.screen_points(&map), pos, 6.0)
@@ -1397,7 +1397,7 @@ fn handle_input(
             let sel = Rect::from_two_pos(a, b);
             if sel.width() >= 8.0 && sel.height() >= 8.0 {
                 let map = |anchor: Anchor| {
-                    let i = drawings::nearest_index(cd, anchor.t).unwrap_or(0);
+                    let i = drawings::nearest_index_ext(cd, anchor.t).unwrap_or(0);
                     Pos2::new(st.view.x_of(i), ax.y_of(anchor.price))
                 };
                 let ids = st
@@ -1673,7 +1673,7 @@ fn hit_drawing(
         return None;
     }
     let map = |a: Anchor| {
-        let i = drawings::nearest_index(cd, a.t).unwrap_or(0);
+        let i = drawings::nearest_index_ext(cd, a.t).unwrap_or(0);
         Pos2::new(st.view.x_of(i), ax.y_of(a.price))
     };
     st.drawings

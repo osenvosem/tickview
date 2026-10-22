@@ -2179,7 +2179,7 @@ pub fn measure_summary(a: Anchor, b: Anchor, cd: &Candles) -> String {
 /// Screen position for a persisted anchor; `None` if its bar is gone.
 #[must_use]
 pub fn anchor_pos(a: Anchor, cd: &Candles, view: &View, axis: &PriceAxis) -> Option<Pos2> {
-    let i = nearest_index(cd, a.t)?;
+    let i = nearest_index_ext(cd, a.t)?;
     Some(Pos2::new(view.x_of(i), axis.y_of(a.price)))
 }
 
@@ -4196,7 +4196,8 @@ pub fn anchor_at_with_tolerance(
 ) -> Option<Anchor> {
     let i = view.index_at(pos.x)?;
     let price = axis.price_of(pos.y);
-    let price = if magnet {
+    // Past the last bar there is no OHLC to snap to; the price floats free.
+    let price = if magnet && i < cd.len() {
         snap_price_with_tolerance(
             price,
             [cd.o[i], cd.h[i], cd.l[i], cd.c[i]],
@@ -4207,7 +4208,10 @@ pub fn anchor_at_with_tolerance(
     } else {
         price
     };
-    Some(Anchor { t: cd.t[i], price })
+    Some(Anchor {
+        t: cd.t_at(i),
+        price,
+    })
 }
 
 /// Anchor with extra magnet candidates (visible study values at the
@@ -4225,7 +4229,11 @@ pub fn anchor_at_with_snap_values(
     let i = view.index_at(pos.x)?;
     let price = axis.price_of(pos.y);
     let price = if magnet {
-        let mut candidates: Vec<f64> = vec![cd.o[i], cd.h[i], cd.l[i], cd.c[i]];
+        let mut candidates: Vec<f64> = if i < cd.len() {
+            vec![cd.o[i], cd.h[i], cd.l[i], cd.c[i]]
+        } else {
+            Vec::new()
+        };
         if let Some(vs) = snap_values {
             candidates.extend_from_slice(vs);
         }
@@ -4245,7 +4253,10 @@ pub fn anchor_at_with_snap_values(
     } else {
         price
     };
-    Some(Anchor { t: cd.t[i], price })
+    Some(Anchor {
+        t: cd.t_at(i),
+        price,
+    })
 }
 
 /// Snap to the closest OHLC value when its screen y is within 8 px.
@@ -4328,13 +4339,36 @@ pub fn move_drawing(d: &mut Drawing, from: Anchor, to: Anchor, cd: &Candles) -> 
 }
 
 fn shift_anchor(anchor: &mut Anchor, di: i64, dp: f64, cd: &Candles) -> bool {
-    let Some(i) = nearest_index(cd, anchor.t) else {
+    if cd.t.is_empty() {
         return false;
+    }
+    let last = cd.t.len() as i64 - 1;
+    let i = nearest_index(cd, anchor.t).unwrap_or(0) as i64;
+    let shifted = i + di;
+    // Beyond the last bar, shift in time directly so drawings can live in
+    // future space (TV) instead of sticking to the newest candle.
+    anchor.t = if anchor.t > cd.t[last as usize] || shifted > last {
+        anchor.t + di * cd.interval_ms()
+    } else {
+        cd.t[shifted.max(0) as usize]
     };
-    let shifted = (i as i64 + di).clamp(0, cd.t.len() as i64 - 1) as usize;
-    anchor.t = cd.t[shifted];
     anchor.price += dp;
     true
+}
+
+/// Like [`nearest_index`], but timestamps beyond the last bar map to future
+/// bar indices so drawings can extend past the newest candle (TV).
+#[must_use]
+pub fn nearest_index_ext(cd: &Candles, t: i64) -> Option<usize> {
+    if cd.t.is_empty() {
+        return None;
+    }
+    let last = cd.t.len() - 1;
+    if t >= cd.t[last] {
+        let ivl = cd.interval_ms();
+        return Some(last + (((t - cd.t[last]) as f64 / ivl as f64).round().max(0.0)) as usize);
+    }
+    nearest_index(cd, t)
 }
 
 /// Nearest bar index for a timestamp, clamped to the available range.

@@ -1000,3 +1000,32 @@ fn drag_does_not_disturb_click_placement() {
     assert!(ev.drawing_completed, "click-click regression");
     assert_eq!(h.st.drawings.len(), 1);
 }
+
+#[test]
+fn drag_extends_past_last_bar_into_future_space() {
+    // TV: drawings are not glued to the newest candle; the empty future
+    // space right of the last bar accepts anchors and renders them there.
+    let mut h = Harness::new(DrawTool::TrendLine);
+    let (lo, hi) = h.lo_hi();
+    let span = hi - lo;
+    let last = h.cd.len() - 1;
+    let a = h.pt(last - 15, lo + span * 0.6);
+    let future_x = h.st.view.x_of(last) + 18.0;
+    let b = Pos2::new(future_x, h.axis().y_of(lo + span * 0.3));
+    let ev = h.drag(a, b);
+    assert!(ev.drawing_completed, "future drag did not complete");
+    let d = &h.st.drawings[0];
+    assert!(
+        d.b.t > h.cd.t[last],
+        "anchor B clamped to the last bar ({:?} <= {:?})",
+        d.b.t,
+        h.cd.t[last]
+    );
+    let px = tickchart::drawings::anchor_pos(d.b, &h.cd, &h.st.view, &h.axis()).unwrap();
+    assert!(
+        px.x > h.st.view.x_of(last) + 10.0,
+        "future anchor renders at the last bar: {} vs {}",
+        px.x,
+        h.st.view.x_of(last)
+    );
+}

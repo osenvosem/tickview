@@ -57,6 +57,30 @@ impl Candles {
     pub fn is_empty(&self) -> bool {
         self.o.is_empty()
     }
+    /// Bar spacing in milliseconds inferred from the timestamp range.
+    #[must_use]
+    pub fn interval_ms(&self) -> i64 {
+        if self.t.len() > 1 {
+            ((self.t[self.t.len() - 1] - self.t[0]) / (self.t.len() - 1) as i64).max(1)
+        } else {
+            60_000
+        }
+    }
+
+    /// Timestamp for bar index `i`; indices past the last bar extrapolate
+    /// (TV future space for drawings).
+    #[must_use]
+    pub fn t_at(&self, i: usize) -> i64 {
+        if self.t.is_empty() {
+            return 0;
+        }
+        let last = self.t.len() - 1;
+        if i <= last {
+            self.t[i]
+        } else {
+            self.t[last] + (i - last) as i64 * self.interval_ms()
+        }
+    }
 
     #[must_use]
     pub fn bar(&self, i: usize) -> Bar {

@@ -60,7 +60,9 @@ impl View {
         (start.min(self.count - 1), end.min(self.count))
     }
 
-    /// Nearest bar index for a plot-area x; `None` when no data.
+    /// Nearest bar index for a plot-area x; `None` when no data or left of
+    /// the oldest bar. Indices past the last bar are allowed so drawings can
+    /// extend into future space (TV); capped at a screen-width beyond data.
     #[must_use]
     pub fn index_at(&self, x: f32) -> Option<usize> {
         if self.count == 0 {
@@ -69,11 +71,11 @@ impl View {
         let last_x = self.x_of(self.count - 1);
         let d = ((last_x - x) / self.spacing).round();
         let i = (self.count as f32 - 1.0 - d).round() as i64;
-        if (0..self.count as i64).contains(&i) {
-            Some(i as usize)
-        } else {
-            None
+        if i < 0 {
+            return None;
         }
+        let cap = self.count as i64 + (self.width / self.spacing) as i64 + 16;
+        if i < cap { Some(i as usize) } else { None }
     }
 
     /// Zoom about a focal x, pinning the bar under the cursor when possible.
@@ -111,6 +113,7 @@ impl View {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ta::Candles;
 
     #[test]
     fn x_roundtrip_and_visible() {
@@ -124,10 +127,26 @@ mod tests {
         assert_eq!(v.x_of(98), 368.0);
         assert_eq!(v.index_at(376.0), Some(99));
         assert_eq!(v.index_at(367.9), Some(98));
-        assert_eq!(v.index_at(450.0), None); // right of last bar beyond clamp
+        // Future space (TV): past the last bar is addressable up to a cap.
+        assert_eq!(v.index_at(450.0), Some(108));
+        assert_eq!(v.index_at(5_000.0), None);
         let (s, e) = v.visible();
         assert_eq!(e, 100);
         assert!((49..=52).contains(&s), "visible start {s}");
+    }
+    #[test]
+    fn future_indices_extrapolate_time() {
+        let cd = Candles {
+            t: vec![0, 60_000, 120_000],
+            o: vec![1.0, 2.0, 3.0],
+            h: vec![1.0, 2.0, 3.0],
+            l: vec![1.0, 2.0, 3.0],
+            c: vec![1.0, 2.0, 3.0],
+            v: vec![1.0, 1.0, 1.0],
+        };
+        assert_eq!(cd.interval_ms(), 60_000);
+        assert_eq!(cd.t_at(1), 60_000);
+        assert_eq!(cd.t_at(5), 300_000);
     }
 
     #[test]
