@@ -916,12 +916,11 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     "Remove drawings",
                     false,
                 );
-                if remove.arrow_clicked {
+                if remove.arrow_clicked || remove.main_clicked {
+                    // TV: the trash button never deletes on press; it opens
+                    // the menu and removal happens only from a menu item.
                     app.tool_panel
                         .toggle_utility(UtilityMenu::Remove, remove.rect);
-                } else if remove.main_clicked {
-                    app.tool_panel.close_overlays();
-                    app.remove_all_drawings();
                 }
 
                 let remaining = ui.available_height() - GROUP_PAD;
