@@ -1292,10 +1292,13 @@ impl Default for DrawingStyle {
 
 impl DrawingStyle {
     #[must_use]
-    pub fn color_or(&self, pal: &Palette) -> Color32 {
+    pub fn color_or(&self, _pal: &Palette) -> Color32 {
         match self.color {
             Some([r, g, b, a]) => Color32::from_rgba_unmultiplied(r, g, b, a),
-            None => pal.text,
+            None => {
+                let [r, g, b, a] = DEFAULT_COLOR;
+                Color32::from_rgba_unmultiplied(r, g, b, a)
+            }
         }
     }
 
@@ -2279,10 +2282,8 @@ fn draw_one(
     };
     let map = |anchor: Anchor| map_opt(anchor).unwrap_or(Pos2::ZERO);
     let pc = d.c.and_then(map_opt);
-    let mut stroke = d.style.stroke(pal, selected);
-    if draft {
-        stroke.color = pal.line;
-    }
+    // Live draft previews render in the same default blue as finished drawings.
+    let stroke = d.style.stroke(pal, selected);
     let color = stroke.color;
     let width = stroke.width;
     let dash = dash_spec(d.style.line);
@@ -3892,6 +3893,9 @@ fn paint_gann_grid(p: &Painter, rect: Rect, stroke: Stroke, fill: bool, fill_col
     paint_line(p, rect.right_top(), rect.left_bottom(), stroke, None);
 }
 
+/// TradingView's default drawing color (#2962FF), used whenever a drawing
+/// carries no explicit style color.
+pub const DEFAULT_COLOR: [u8; 4] = [41, 98, 255, 255];
 pub const GANN_FAN_RATIOS: [f32; 9] = [0.125, 0.25, 1.0 / 3.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0];
 pub const GANN_FAN_LABELS: [&str; 9] = [
     "1/8", "1/4", "1/3", "1/2", "1/1", "2/1", "3/1", "4/1", "8/1",
@@ -4722,9 +4726,17 @@ mod tests {
     }
 
     #[test]
-    fn style_stroke_uses_palette_default_then_explicit_color() {
+    fn style_stroke_uses_tv_blue_default_then_explicit_color() {
         let pal = Palette::dark();
-        assert_eq!(DrawingStyle::default().color_or(&pal), pal.text);
+        assert_eq!(
+            DrawingStyle::default().color_or(&pal),
+            Color32::from_rgb(41, 98, 255)
+        );
+        // Fixed blue in both themes, like TV.
+        assert_eq!(
+            DrawingStyle::default().color_or(&Palette::light()),
+            Color32::from_rgb(41, 98, 255)
+        );
         let s = DrawingStyle {
             color: Some([255, 0, 0, 255]),
             ..DrawingStyle::default()

@@ -7,7 +7,9 @@ use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Rect, RichText, Sense,
     Stroke, Ui, Vec2, vec2,
 };
-use tickchart::{Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup, default_grid};
+use tickchart::{
+    DEFAULT_COLOR, Drawing, DrawingKind, LineStyle, Selection, StyleEdit, clamp_popup, default_grid,
+};
 
 use crate::icons::Icon;
 use crate::theme::{Palette, font_mono, font_regular, font_semibold, type_size};
@@ -575,7 +577,9 @@ fn popup_rect_and_actions(
                             let color = Color32::from_rgb(swatch[0], swatch[1], swatch[2]);
                             let (rect, resp) =
                                 ui.allocate_exact_size(vec2(15.0, 15.0), Sense::click());
-                            let active = common.color == Some(Some(swatch));
+                            // An unset color renders as TV blue; mark that swatch active.
+                            let current = common.color.map(|c| c.or(Some(DEFAULT_COLOR)));
+                            let active = current == Some(Some(swatch));
                             ui.painter().rect_filled(rect, 2.0, color);
                             ui.painter().rect_stroke(
                                 rect,

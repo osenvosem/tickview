@@ -21,10 +21,10 @@ pub use chart::{
 };
 pub use compare::CompareSeries;
 pub use drawings::{
-    Anchor, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState, LineStyle, Measure,
-    Selection, StyleEdit, anchor_at_with_snap_values, apply_style_edit, bring_forward, clamp_popup,
-    default_grid, delete_selected, duplicate, kind_defaults, next_id, raise_to_front,
-    send_backward, send_to_back, set_emoji_texture_resolver,
+    Anchor, DEFAULT_COLOR, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState,
+    LineStyle, Measure, Selection, StyleEdit, anchor_at_with_snap_values, apply_style_edit,
+    bring_forward, clamp_popup, default_grid, delete_selected, duplicate, kind_defaults, next_id,
+    raise_to_front, send_backward, send_to_back, set_emoji_texture_resolver,
 };
 
 pub use painter::{ChartType, Palette};

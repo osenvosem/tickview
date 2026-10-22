@@ -1883,6 +1883,43 @@ mod tests {
     }
 
     #[test]
+    fn default_drawing_paints_tv_blue() {
+        // Unstyled drawings render TradingView blue (#2962FF), not grey,
+        // in both themes.
+        for pal in [Palette::dark(), Palette::light()] {
+            let ctx = egui::Context::default();
+            let cd = ten_candles();
+            let mut st = ChartState::new("TEST", "1D");
+            st.palette = pal;
+            st.tools.set_tool(crate::drawings::DrawTool::TrendLine);
+            let a = Pos2::new(770.0, 300.0);
+            let b = Pos2::new(800.0, 260.0);
+            click(&ctx, &mut st, &cd, a);
+            click(&ctx, &mut st, &cd, b);
+            assert_eq!(st.drawings.len(), 1);
+            assert!(
+                st.drawings[0].style.color.is_none(),
+                "default must be unset"
+            );
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0, 700.0))),
+                ..Default::default()
+            };
+            let mut out = ctx.run_ui(raw, |ui| {
+                let _ = crate::chart::ui(ui, &mut st, &cd);
+            });
+            out.textures_delta.clear();
+            let blue = Color32::from_rgb(41, 98, 255);
+            let found = out
+                .shapes
+                .iter()
+                .filter(|s| matches!(&s.shape, egui::Shape::LineSegment { stroke, .. } if stroke.color == blue))
+                .count();
+            assert!(found >= 1, "no blue trend line shape in paint output");
+        }
+    }
+
+    #[test]
     fn hover_values_tooltip_box_contains_its_text() {
         // Render the real tooltip for BTC-scale prices: the box must be as
         // wide as the widest OHLC line, not the old fixed 200 px.
