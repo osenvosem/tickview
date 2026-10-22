@@ -1168,6 +1168,13 @@ fn handle_input(
     };
     let primary_pressed = ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary));
     let add_mod = ctx.input(|i| i.modifiers.command);
+
+    // TV: arming a pen and pressing the canvas deselects objects. Handles
+    // must never sit under an active drawing tool — grabbing one used to
+    // commit a duplicate while the original stayed in place.
+    if drawing_tool && primary_pressed && !st.selection.is_empty() {
+        st.selection.clear();
+    }
     if !primary_pressed && !resp.clicked() {
         st.selected_from_press = None;
         st.suppress_empty_click = false;

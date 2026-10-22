@@ -1123,3 +1123,31 @@ fn vline_in_future_space_drags_both_directions() {
     assert!(moved.changed);
     assert!(h.st.drawings[0].a.t < right, "cannot drag back left");
 }
+
+#[test]
+fn arming_a_pen_deselects_so_handles_cannot_duplicate() {
+    // TV: switching to a drawing tool drops the object selection; anchor
+    // handles must never be grabbable under an armed pen (that path used to
+    // commit a duplicate line while the original stayed put).
+    let mut h = Harness::new(DrawTool::TrendLine);
+    let (lo, hi) = h.lo_hi();
+    let span = hi - lo;
+    let a = h.pt(h.cd.len() - 70, lo + span * 0.3);
+    let b = h.pt(h.cd.len() - 30, lo + span * 0.6);
+    h.drag(a, b);
+    assert_eq!(h.st.drawings.len(), 1);
+    assert!(
+        h.st.selection.primary().is_some(),
+        "completed line not selected"
+    );
+    // Pen stays armed (keep-drawing): pressing the canvas must drop the
+    // selection before any new draft starts.
+    h.st.tools.set_tool(DrawTool::TrendLine);
+    let empty = h.pt(h.cd.len() - 50, lo + span * 0.15);
+    h.press(empty, Modifiers::default());
+    assert!(
+        h.st.selection.is_empty(),
+        "handles still live under armed pen"
+    );
+    h.release(empty, Modifiers::NONE);
+}
