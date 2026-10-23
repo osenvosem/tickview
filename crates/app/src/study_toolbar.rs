@@ -458,6 +458,9 @@ mod tests {
                 key: "on",
                 name: "On",
                 kind: ta::registry::ParamKind::Bool { def: true },
+                group: None,
+                legend: false,
+                active: ta::registry::Active::Always,
             }],
             plots: d.plots,
         };

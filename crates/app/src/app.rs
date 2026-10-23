@@ -1440,6 +1440,14 @@ impl TickView {
                 "studiesprice" | "studiesvol" | "studiesosc" | "studieshtf" => {
                     me.pending_studies = Some(scene.clone());
                 }
+                // RSI alone, with its legend row pinned: the pane decoration
+                // (guides, band, zone gradients) plus the bar for capture.
+                "rsi" => {
+                    me.pending_studies = Some(scene.clone());
+                    if me.tabs[me.active].chart.legend_pinned.is_none() {
+                        me.tabs[me.active].pending_study_bar = Some(TvId::Rsi);
+                    }
+                }
                 "editor" => {
                     me.indicators_open = false;
                     me.editor = Some(Editor::new(TvId::Rsi, me.tabs[me.active].id, None));
@@ -2153,6 +2161,7 @@ impl TickView {
                 TvId::AwesomeOscillator,
             ],
             "studyhover" => &[TvId::Rsi, TvId::Macd],
+            "rsi" => &[TvId::Rsi],
             _ => &[TvId::Vwap, TvId::CorrelationCoeff],
         };
         for id in ids {
@@ -4331,45 +4340,78 @@ impl TickView {
                 .num_columns(2)
                 .spacing([16.0, 8.0])
                 .show(ui, |ui| {
+                    // TV groups the inputs into titled sections and greys out
+                    // the ones the current settings make irrelevant; params
+                    // without a `group` stay a flat list, as before.
+                    let mut draft_params = Params::with_defaults(d);
                     for (i, param) in d.params.iter().enumerate() {
+                        draft_params.set(param.key, ed.draft[i]);
+                    }
+                    let mut shown_group: Option<Option<&'static str>> = None;
+                    for (i, param) in d.params.iter().enumerate() {
+                        if shown_group != Some(param.group) {
+                            shown_group = Some(param.group);
+                            if i > 0 {
+                                // Grids reject `add_space`; a blank row is the
+                                // section gap instead.
+                                ui.label("");
+                                ui.end_row();
+                            }
+                            if let Some(g) = param.group {
+                                ui.label(
+                                    RichText::new(g.to_uppercase())
+                                        .font(font_semibold(12.0))
+                                        .color(p.muted),
+                                );
+                                ui.end_row();
+                            }
+                        }
+                        let enabled = ta::registry::control_active(d, param, &draft_params);
+                        let name_color = if enabled { p.text } else { p.faint };
+                        if matches!(param.kind, ParamKind::Bool { .. }) {
+                            // TV puts the box in front of its label and leaves the
+                            // value column empty; a disabled rule ignores clicks.
+                            let mut b = ed.draft[i].b();
+                            let hit = widgets::checkbox(ui, p, &mut b, param.name);
+                            if hit.clicked() && enabled {
+                                ed.draft[i] = PVal::B(b);
+                            }
+                            ui.label("");
+                            ui.end_row();
+                            continue;
+                        }
                         ui.label(
                             RichText::new(param.name)
                                 .font(font_regular(type_size::BODY))
-                                .color(p.text),
+                                .color(name_color),
                         );
                         match param.kind {
                             ParamKind::Int { min, max, .. } => {
                                 let mut v = ed.draft[i].n() as i64;
-                                if ui
-                                    .add(egui::DragValue::new(&mut v).range(min..=max))
-                                    .changed()
-                                {
+                                let dv = egui::DragValue::new(&mut v).range(min..=max);
+                                if ui.add_enabled(enabled, dv).changed() {
                                     ed.draft[i] = PVal::N(v as f64);
                                 }
                             }
                             ParamKind::Float { min, max, step, .. } => {
                                 let mut v = ed.draft[i].n();
-                                if ui
-                                    .add(
-                                        egui::DragValue::new(&mut v)
-                                            .range(min..=max)
-                                            .speed(step.max(0.01)),
-                                    )
-                                    .changed()
-                                {
+                                let dv = egui::DragValue::new(&mut v)
+                                    .range(min..=max)
+                                    .speed(step.max(0.01));
+                                if ui.add_enabled(enabled, dv).changed() {
                                     ed.draft[i] = PVal::N(v);
                                 }
                             }
-                            ParamKind::Bool { .. } => {
-                                let mut b = ed.draft[i].b();
-                                if widgets::checkbox(ui, p, &mut b, "").changed() {
-                                    ed.draft[i] = PVal::B(b);
-                                }
-                            }
+                            ParamKind::Bool { .. } => {}
                             ParamKind::Enum { variants, .. } => {
                                 let idx = ed.draft[i].e() as usize;
+                                let sel = variants.get(idx).copied().unwrap_or("?");
                                 egui::ComboBox::from_id_salt(("pv", ed.id, i))
-                                    .selected_text(variants.get(idx).copied().unwrap_or("?"))
+                                    .selected_text(
+                                        RichText::new(sel)
+                                            .font(font_regular(type_size::BODY))
+                                            .color(name_color),
+                                    )
                                     .show_ui(ui, |ui| {
                                         for (vi, vn) in variants.iter().enumerate() {
                                             if ui.selectable_label(idx == vi, *vn).clicked() {
