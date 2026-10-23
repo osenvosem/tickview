@@ -300,6 +300,44 @@ pub struct Def {
     pub plots: &'static [PlotSpec],
 }
 
+/// Study inputs as legend text, in declaration order (`Params` is a
+/// `BTreeMap` and would sort alphabetically): `Int`/`Float` print integral
+/// values without decimals and others with two, `Enum` prints the variant
+/// label, `Bool` is omitted (TV's legend shows neither checkboxes nor names).
+#[must_use]
+pub fn inputs_summary(d: &Def, params: &Params) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    for spec in d.params {
+        if matches!(spec.kind, ParamKind::Bool { .. }) {
+            continue;
+        }
+        // `val` falls back to the spec default, so layers created with sparse
+        // params still show TV's full input list.
+        let v = params.val(d, spec.key);
+        match spec.kind {
+            ParamKind::Enum { variants, .. } => {
+                if let PVal::E(idx) = v {
+                    if let Some(name) = variants.get(usize::try_from(idx).unwrap_or(usize::MAX)) {
+                        parts.push((*name).to_owned());
+                    }
+                }
+            }
+            _ => {
+                let n = v.n();
+                if !n.is_finite() {
+                    continue;
+                }
+                if (n - n.round()).abs() < f64::EPSILON {
+                    parts.push(format!("{}", n as i64));
+                } else {
+                    parts.push(format!("{n:.2}"));
+                }
+            }
+        }
+    }
+    parts.join(" ")
+}
+
 /// Session anchor keys for VWAP (epoch-day / week / month bucket ids).
 #[derive(Clone, Debug)]
 pub struct Anchors {
@@ -2883,5 +2921,60 @@ mod gold_corr {
             &ctx(Some(&flat)),
         );
         assert!(out.plots[0].series.iter().all(|v| v.is_nan()));
+    }
+}
+
+#[cfg(test)]
+mod legend_text_tests {
+    use super::*;
+
+    #[test]
+    fn inputs_summary_follows_declaration_order_not_alphabetical() {
+        let d = def(TvId::Macd);
+        let params = Params::with_defaults(d);
+        // Registry truth: fast 12, slow 26, signal 9, source "close".
+        assert_eq!(inputs_summary(d, &params), "12 26 9 close");
+        // The keys are declared `fast, slow, signal, source`, so an
+        // alphabetical read of the BTreeMap would emit signal before slow —
+        // without this the assertion above would prove nothing.
+        let keys: Vec<&str> = d.params.iter().map(|s| s.key).collect();
+        let mut sorted = keys.clone();
+        sorted.sort_unstable();
+        assert_ne!(keys, sorted, "needs a non-alphabetical study: {keys:?}");
+    }
+
+    #[test]
+    fn inputs_summary_resolves_missing_keys_and_drops_bools() {
+        let d = def(TvId::Rsi);
+        // A layer created without overrides still shows TV's input list.
+        assert_eq!(inputs_summary(d, &Params::default()), "14 close");
+        let bool_only = Def {
+            id: TvId::Rsi,
+            tv_name: "Bool Only",
+            pane: d.pane,
+            scale: d.scale,
+            hlines: d.hlines,
+            params: &[ParamSpec {
+                key: "on",
+                name: "On",
+                kind: ParamKind::Bool { def: true },
+            }],
+            plots: d.plots,
+        };
+        assert_eq!(
+            inputs_summary(&bool_only, &Params::with_defaults(&bool_only)),
+            "",
+            "checkbox inputs never appear in the legend"
+        );
+    }
+
+    #[test]
+    fn inputs_summary_writes_integral_floats_without_decimals() {
+        let d = def(TvId::Alma);
+        // Registry truth: length 9, offset 0.85, sigma 6.0, source "close".
+        assert_eq!(
+            inputs_summary(d, &Params::with_defaults(d)),
+            "9 0.85 6 close"
+        );
     }
 }

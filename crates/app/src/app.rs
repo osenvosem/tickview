@@ -173,8 +173,14 @@ pub struct Tab {
     pub no_data: Vec<DeadIv>,
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
+    /// Studies that must come back hidden: the flags are applied in
+    /// `apply_pending`, because a layer does not exist before its data does.
+    pub pending_hidden: Vec<TvId>,
     /// Legend bar to pin once the restored studies are computed (QA).
     pub pending_study_bar: Option<TvId>,
+    /// Legend row to park the QA pointer on, so a screenshot shows a hovered
+    /// bar while another study stays pinned.
+    pub pending_hover_study: Option<TvId>,
     /// Open the study menu on the first frame with data (QA).
     pub pending_study_menu: bool,
     /// Drawings are locked against mouse editing.
@@ -217,6 +223,8 @@ impl Tab {
             pending_study_bar: None,
             pending_study_menu: false,
             locked: false,
+            pending_hidden: Vec::new(),
+            pending_hover_study: None,
             drawings_hidden: false,
             indicators_hidden: false,
             indicators_locked: false,
@@ -227,6 +235,35 @@ impl Tab {
 
     pub(crate) fn title(&self) -> String {
         format!("{}  {}", self.symbol.ticker, self.interval.as_tv_str())
+    }
+
+    /// Add the studies restored from disk once the first bars are in. Their
+    /// hidden flags are re-applied here: a layer does not exist before its data
+    /// does, so hiding a study any earlier was a no-op and its plots showed
+    /// through after the restore.
+    fn apply_pending(&mut self) {
+        if self.pending.is_empty() || self.candles.is_empty() {
+            return;
+        }
+        let ax = Anchors::from_ts(&self.candles.t);
+        let pending = std::mem::take(&mut self.pending);
+        let bar_id = self.pending_study_bar.take();
+        let restore_hidden = std::mem::take(&mut self.pending_hidden);
+        let hidden = self.indicators_hidden;
+        for (id, params) in pending {
+            self.chart.add_indicator(&self.candles, &ax, id, params);
+            if hidden {
+                self.chart.set_visible(id, false);
+            }
+        }
+        for id in restore_hidden {
+            self.chart.set_visible(id, false);
+        }
+        // Only a seeded QA scene pins its bar: a normal launch shows no bar,
+        // because TV reveals one on hover or click, not on load.
+        if let Some(id) = bar_id {
+            self.chart.legend_pinned.get_or_insert(id);
+        }
     }
 }
 
@@ -915,6 +952,11 @@ pub struct TickView {
     pending_annot: bool,
     pending_vwap: bool,
     pending_studies: Option<String>,
+    /// QA scenes force this study's legend row hot, so a screenshot can show a
+    /// hovered bar next to a pinned one.
+    qa_hover: Option<TvId>,
+    /// Frames the QA hover has been held; the capture waits for it to settle.
+    hover_settled: u8,
     pending_vprofile: bool,
     pending_barghost: bool,
     pending_table: bool,
@@ -1137,7 +1179,6 @@ impl TickView {
                     saved.log,
                     pending.clone(),
                 );
-                tab.pending_study_bar = pending.first().map(|(id, _)| *id);
                 if saved.spacing >= 2.0 {
                     tab.chart.view.spacing = saved.spacing;
                 }
@@ -1153,9 +1194,9 @@ impl TickView {
                 tab.indicators_locked = saved.indicators_locked;
                 tab.chart.indicators_locked = saved.indicators_locked;
                 tab.chart.values_tooltip = cfg.values_tooltip_long_press;
-                for id in hidden_ids {
-                    tab.chart.set_visible(id, false);
-                }
+                // A hidden study's plots can only be switched off once its layer
+                // exists, so the ids ride along with `pending`.
+                tab.pending_hidden = hidden_ids;
                 tabs.push(tab);
                 next_tab_id += 1;
             }
@@ -1262,6 +1303,8 @@ impl TickView {
             pending_annot: false,
             pending_vwap: false,
             pending_studies: None,
+            qa_hover: None,
+            hover_settled: 0,
             pending_vprofile: false,
             pending_barghost: false,
             pending_table: false,
@@ -1320,6 +1363,14 @@ impl TickView {
                         me.tabs[me.active].pending_study_bar = Some(TvId::Macd);
                     }
                     me.tabs[me.active].pending_study_menu = true;
+                }
+                // Two bars at once: MACD pinned by a click, RSI hovered.
+                "studyhover" => {
+                    me.pending_studies = Some("studyhover".to_owned());
+                    if me.tabs[me.active].chart.legend_pinned.is_none() {
+                        me.tabs[me.active].pending_study_bar = Some(TvId::Macd);
+                    }
+                    me.tabs[me.active].pending_hover_study = Some(TvId::Rsi);
                 }
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
@@ -2088,6 +2139,7 @@ impl TickView {
                 TvId::SmiErgodic,
                 TvId::AwesomeOscillator,
             ],
+            "studyhover" => &[TvId::Rsi, TvId::Macd],
             _ => &[TvId::Vwap, TvId::CorrelationCoeff],
         };
         for id in ids {
@@ -2520,7 +2572,7 @@ impl TickView {
                                 self.tabs[ti].error = None;
                                 let has_volume = self.tabs[ti].candles.v.iter().any(|v| *v > 0.0);
                                 self.tabs[ti].chart.set_volume_pane(has_volume);
-                                self.apply_pending(ti);
+                                self.tabs[ti].apply_pending();
                                 self.recompute(ti);
                             }
                         }
@@ -2578,7 +2630,7 @@ impl TickView {
                         self.tabs[ti].candles = Candles::from_bars(&bars);
                         self.tabs[ti].chart.view.count = bars.len();
                         self.tabs[ti].error = None;
-                        self.apply_pending(ti);
+                        self.tabs[ti].apply_pending();
                         self.recompute(ti);
                         self.alert_tick(&sym, bar.c, ctx);
                     }
@@ -2737,32 +2789,6 @@ impl TickView {
         if next + 1 >= n {
             rp.playing = false;
             self.toast("Reached last bar");
-        }
-    }
-
-    fn apply_pending(&mut self, ti: usize) {
-        if self.tabs[ti].pending.is_empty() || self.tabs[ti].candles.is_empty() {
-            return;
-        }
-        let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
-        let pending = std::mem::take(&mut self.tabs[ti].pending);
-        let bar_id = self.tabs[ti].pending_study_bar.take();
-        let tab = &mut self.tabs[ti];
-        let hidden = tab.indicators_hidden;
-        for (id, params) in pending {
-            tab.chart.add_indicator(&tab.candles, &ax, id, params);
-            if hidden {
-                tab.chart.set_visible(id, false);
-            }
-        }
-        if tab.chart.legend_pinned.is_none() {
-            tab.chart.legend_pinned = bar_id.or_else(|| {
-                tab.chart
-                    .panes
-                    .iter()
-                    .find(|p| !p.layers.is_empty())
-                    .map(|p| p.layers[0].id)
-            });
         }
     }
 
@@ -2983,7 +3009,6 @@ impl TickView {
                 }
                 MenuAction::AddIndicator => {
                     self.add_indicator(ti, id, Params::with_defaults(def(id)));
-                    self.tabs[ti].chart.legend_pinned = Some(id);
                     changed = true;
                 }
                 MenuAction::ToggleFavorite => {
@@ -3017,10 +3042,10 @@ impl TickView {
                     self.reopen_browser = true;
                 }
                 MenuAction::ToggleInputs => {
-                    let st = &mut self.tabs[ti].study_bar;
-                    match st.inputs_hidden.iter().position(|x| *x == id) {
-                        Some(at) => drop(st.inputs_hidden.remove(at)),
-                        None => st.inputs_hidden.push(id),
+                    let hidden = &mut self.tabs[ti].chart.legend_inputs_hidden;
+                    match hidden.iter().position(|x| *x == id) {
+                        Some(at) => drop(hidden.remove(at)),
+                        None => hidden.push(id),
                     }
                 }
             }
@@ -3040,9 +3065,6 @@ impl TickView {
     fn add_indicator(&mut self, ti: usize, id: TvId, params: Params) {
         if self.tabs[ti].candles.is_empty() {
             self.tabs[ti].pending.push((id, params));
-            if self.tabs[ti].chart.legend_pinned.is_none() {
-                self.tabs[ti].pending_study_bar.get_or_insert(id);
-            }
         } else {
             let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
             let tab = &mut self.tabs[ti];
@@ -3050,8 +3072,6 @@ impl TickView {
             if tab.indicators_hidden {
                 tab.chart.set_visible(id, false);
             }
-            // A study added to a chart with none shows its bar straight away.
-            tab.chart.legend_pinned.get_or_insert(id);
         }
         self.persist();
     }
@@ -3149,6 +3169,7 @@ impl TickView {
             || self.pending_table
             || self.pending_image
             || self.pending_studies.is_some()
+            || (self.qa_hover.is_some() && self.hover_settled < 3)
             || (self.data_frames < self.snap_after_data + 120);
         let data_ready =
             self.data_frames >= self.snap_after_data && !self.tabs[self.active].loading;
@@ -3409,6 +3430,7 @@ impl TickView {
         let n = self.tabs[ti].chart.remove_all_indicators();
         self.tabs[ti].indicators_hidden = false;
         self.tabs[ti].pending.clear();
+        self.tabs[ti].pending_hidden.clear();
         if n > 0 {
             self.toast(format!("Removed {n} indicators"));
         }
@@ -3523,6 +3545,10 @@ impl TickView {
 impl eframe::App for TickView {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
+        // QA scenes hold a legend row hot so a screenshot can show two bars.
+        if self.qa_hover.is_some() {
+            self.hover_settled = self.hover_settled.saturating_add(1);
+        }
         self.drain(&ctx);
         self.poll();
         self.replay_tick();
@@ -3659,6 +3685,9 @@ impl TickView {
                 }
 
                 let toolbar_visible = tab_toolbar_visible(&self.tabs[ti]);
+                // Input exclusion is rebuilt from the panels actually drawn this
+                // frame; a stale rect would keep swallowing chart pan and clicks.
+                self.tabs[ti].chart.hover_block = None;
                 if toolbar_visible {
                     let selection = self.tabs[ti].chart.selection.clone();
                     let drawings = self.tabs[ti].chart.drawings.clone();
@@ -3679,82 +3708,123 @@ impl TickView {
                     self.tabs[ti].chart.popup_rect = None;
                     self.tabs[ti].toolbar.popup = drawing_toolbar::Popup::None;
                 }
-                // Study legend actions bar + study menu. `chart_ui` recorded
-                // which legend row is hot (hover or pinned) and whether the
-                // legend was right-clicked this frame.
+                // Study legend actions bars + study menu. `chart_ui` reported
+                // every legend row this frame; TV shows a bar on each row that is
+                // hovered or selected, at the same time, so draw one per row.
                 if let Some((id, at)) = self.tabs[ti].chart.legend_menu_req.take() {
                     self.tabs[ti].study_bar.menu = Some((id, Some(at)));
                     self.tabs[ti].chart.legend_pinned = Some(id);
                 }
-                let mut study_id = self.tabs[ti]
-                    .chart
-                    .legend_hot
-                    .filter(|id| self.tab_has_layer(ti, *id));
-                // QA seeds only take effect once the legend row is on screen:
-                // before the panes have layers there is nothing to pin, and
-                // consuming the request early would drop it.
-                if let Some(id) = self.tabs[ti].pending_study_bar.take() {
+                // A seeded QA scene pins its bar only once the legend row is on
+                // screen: before the panes have layers there is nothing to pin,
+                // so hold the request until the layer exists.
+                if let Some(id) = self.tabs[ti].pending_study_bar {
                     if self.tab_has_layer(ti, id) {
-                        if self.tabs[ti].chart.legend_pinned.is_none() {
-                            self.tabs[ti].chart.legend_pinned = Some(id);
-                        }
-                        study_id = Some(id);
+                        self.tabs[ti].pending_study_bar = None;
+                        self.tabs[ti].chart.legend_pinned.get_or_insert(id);
                     }
                 }
-                if study_id.is_some() && std::mem::take(&mut self.tabs[ti].pending_study_menu) {
-                    let at = self.tabs[ti]
+                let mut rows: Vec<(TvId, egui::Rect)> = self.tabs[ti]
+                    .chart
+                    .legend_rows
+                    .iter()
+                    .filter(|r| r.hot)
+                    .filter(|r| self.tab_has_layer(ti, r.id))
+                    .map(|r| (r.id, r.rect))
+                    .collect();
+                let menu_id = self.tabs[ti].study_bar.menu.map(|(id, _)| id);
+                // TV keeps a study's bar up while its menu is open, even though
+                // the pointer has left the row by then.
+                if let Some(id) = menu_id.filter(|id| !rows.iter().any(|(r, _)| r == id)) {
+                    if let Some(rect) = self.tabs[ti]
                         .chart
-                        .legend_rect
-                        .map_or(egui::pos2(60.0, 120.0), |r| r.right_bottom());
-                    let id = study_id.unwrap_or(TvId::Macd);
-                    self.tabs[ti].study_bar.menu = Some((id, Some(at)));
-                }
-                match study_id {
-                    Some(id) => {
-                        let (params, visible, value, pane) = self.study_bar_inputs(ti, id);
-                        let favorite = self.study_favorites.contains(&id);
-                        let locked = self.tabs[ti].chart.indicators_locked;
-                        let anchor = self.tabs[ti].chart.legend_rect.unwrap_or_else(|| {
-                            egui::Rect::from_min_size(
-                                ui.max_rect().left_top() + vec2(8.0, 8.0),
-                                vec2(140.0, 18.0),
-                            )
-                        });
-                        let model = study_toolbar::Model {
-                            id,
-                            params: &params,
-                            visible,
-                            value,
-                            favorite,
-                            locked,
-                            pane,
-                        };
-                        let out_bar = study_toolbar::bar(
-                            ui,
-                            p,
-                            &mut self.tabs[ti].study_bar,
-                            &model,
-                            anchor,
-                            ui.max_rect(),
-                        );
-                        let excl = match self.tabs[ti].study_bar.menu_rect {
-                            Some(m) => out_bar.exclusion_rect.union(m),
-                            None => out_bar.exclusion_rect,
-                        };
-                        self.tabs[ti].chart.hover_block =
-                            Some(match self.tabs[ti].chart.hover_block {
-                                Some(prev) => prev.union(excl),
-                                None => excl,
-                            });
-                        self.apply_study_actions(ui, ti, id, out_bar.actions);
+                        .legend_rows
+                        .iter()
+                        .find(|r| r.id == id)
+                        .map(|r| r.rect)
+                    {
+                        rows.push((id, rect));
                     }
-                    // Keep an open menu while a study is still pinned: the
-                    // legend reports no hot row on frames before the panes have
-                    // layers (and while the pointer sits in the menu itself).
-                    None => {
-                        if self.tabs[ti].chart.legend_pinned.is_none() {
-                            self.tabs[ti].study_bar.menu = None;
+                }
+                // QA: hold a second row hot so the shot shows a hovered bar
+                // beside a pinned one without a live pointer.
+                if let Some(id) = self
+                    .qa_hover
+                    .filter(|id| !rows.iter().any(|(r, _)| r == id))
+                {
+                    if let Some(rect) = self.tabs[ti]
+                        .chart
+                        .legend_rows
+                        .iter()
+                        .find(|r| r.id == id)
+                        .map(|r| r.rect)
+                    {
+                        rows.push((id, rect));
+                    }
+                }
+                if std::mem::take(&mut self.tabs[ti].pending_study_menu) {
+                    match rows.first() {
+                        Some((id, rect)) => {
+                            self.tabs[ti].study_bar.menu = Some((*id, Some(rect.right_bottom())));
                         }
+                        // Nothing painted yet: retry next frame.
+                        None => self.tabs[ti].pending_study_menu = true,
+                    }
+                }
+                let mut excl: Option<egui::Rect> = None;
+                let mut hovered: Option<TvId> = None;
+                for (id, anchor) in rows {
+                    let (params, visible, value, pane) = self.study_bar_inputs(ti, id);
+                    let model = study_toolbar::Model {
+                        id,
+                        params: &params,
+                        visible,
+                        value,
+                        favorite: self.study_favorites.contains(&id),
+                        locked: self.tabs[ti].chart.indicators_locked,
+                        pane,
+                        selected: self.tabs[ti].chart.legend_pinned == Some(id),
+                        show_inputs: !self.tabs[ti].chart.legend_inputs_hidden.contains(&id),
+                    };
+                    let out_bar = study_toolbar::bar(
+                        ui,
+                        p,
+                        &mut self.tabs[ti].study_bar,
+                        &model,
+                        anchor,
+                        ui.max_rect(),
+                    );
+                    if out_bar.hovered {
+                        hovered = Some(id);
+                    }
+                    excl = Some(match excl {
+                        Some(prev) => prev.union(out_bar.exclusion_rect),
+                        None => out_bar.exclusion_rect,
+                    });
+                    self.apply_study_actions(ui, ti, id, out_bar.actions);
+                }
+                // The bar covers its own row: keep that row hot so the bar does
+                // not flicker while the pointer rests on it.
+                hovered = hovered.or(self.qa_hover);
+                self.tabs[ti].chart.legend_keep_hot = hovered;
+                if let Some(excl) = excl.filter(|r| r.is_positive()) {
+                    self.tabs[ti].chart.hover_block = Some(match self.tabs[ti].chart.hover_block {
+                        Some(prev) => prev.union(excl),
+                        None => excl,
+                    });
+                }
+                // A menu whose study was removed must not linger.
+                if let Some(mid) = menu_id {
+                    if !self.tab_has_layer(ti, mid) {
+                        self.tabs[ti].study_bar.menu = None;
+                    }
+                }
+                // Freeze the hover target for the screenshot once its row
+                // exists; before the panes paint there is nothing to hold hot.
+                if let Some(id) = self.tabs[ti].pending_hover_study {
+                    if self.tabs[ti].chart.legend_rows.iter().any(|r| r.id == id) {
+                        self.tabs[ti].pending_hover_study = None;
+                        self.qa_hover = Some(id);
                     }
                 }
             });
@@ -4971,5 +5041,51 @@ mod tests {
         assert_eq!(fit_interval_by(iv("1M"), offered), iv("1d"));
         // Nothing offered at all: keep what was asked for.
         assert_eq!(fit_interval_by(iv("5m"), |_| false), iv("5m"));
+    }
+
+    #[test]
+    fn restored_hidden_study_stays_hidden_when_bars_arrive() {
+        let sym = Symbol::new("AAPL", "NASDAQ", marketdata::SymbolKind::Stock, "USD");
+        let mut tab = Tab::new(
+            1,
+            sym,
+            Interval::parse("1d").unwrap(),
+            ChartType::Candles,
+            false,
+            vec![
+                (TvId::Macd, Params::with_defaults(def(TvId::Macd))),
+                (TvId::Rsi, Params::with_defaults(def(TvId::Rsi))),
+            ],
+        );
+        tab.pending_hidden = vec![TvId::Macd];
+        let bars: Vec<Bar> = (0..60)
+            .map(|i| Bar {
+                t: i as i64 * 60,
+                o: 100.0 + (i as f64).sin(),
+                h: 101.0 + (i as f64).sin(),
+                l: 99.0 + (i as f64).sin(),
+                c: 100.0 + (i as f64).cos(),
+                v: 1.0,
+            })
+            .collect();
+        tab.candles = Candles::from_bars(&bars);
+
+        // Study layers only exist once the bars are in, so the hidden flags
+        // have to be applied by this call and not at load.
+        tab.apply_pending();
+        let vis: Vec<(TvId, bool)> = tab
+            .chart
+            .panes
+            .iter()
+            .flat_map(|p| p.layers.iter().map(|l| (l.id, l.visible)))
+            .collect();
+        assert!(
+            vis.contains(&(TvId::Macd, false)),
+            "hidden study replotted: {vis:?}"
+        );
+        assert!(
+            vis.contains(&(TvId::Rsi, true)),
+            "visible study came back dimmed: {vis:?}"
+        );
     }
 }

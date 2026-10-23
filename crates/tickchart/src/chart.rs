@@ -13,8 +13,8 @@ use crate::priceaxis::PriceAxis;
 use crate::timeaxis;
 use ta::Candles;
 use ta::registry::{
-    Anchors, Output, Pane as TvPane, Params, PlotStyle, StudyContext, TvId, compute, compute_with,
-    def,
+    Anchors, Output, Pane as TvPane, Params, PlotData, PlotStyle, StudyContext, TvId, compute,
+    compute_with, def, inputs_summary,
 };
 
 /// One attached indicator instance.
@@ -76,6 +76,19 @@ impl ImageTextures {
     pub fn insert(&mut self, path: String, tex: egui::TextureHandle) {
         self.0.insert(path, tex);
     }
+}
+
+/// One study legend row as painted this frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LegendRow {
+    /// Study the row belongs to.
+    pub id: TvId,
+    /// Row rect: the actions bar is anchored on its top-left corner.
+    pub rect: Rect,
+    /// Hovered, selected, or kept alive by an open bar/menu over this row.
+    pub hot: bool,
+    /// Pinned by a click (TV's selection: the accent-bordered bar).
+    pub selected: bool,
 }
 
 /// Top-level widget state.
@@ -143,13 +156,18 @@ pub struct ChartState {
     pub indicators_locked: bool,
     /// (position, time) when the pointer became still, for long-press.
     hover_still: Option<(Pos2, f64)>,
-    /// Study whose legend is active (pinned, else hovered): the app draws the
-    /// actions bar for it and skips the plain legend label.
-    pub legend_hot: Option<TvId>,
+    /// Every legend row painted this frame, in pane order. TV can show an
+    /// actions bar on several rows at once (one selected + one hovered), so
+    /// the app needs the whole set, not a single slot.
+    pub legend_rows: Vec<LegendRow>,
     /// Legend pinned by a click; survives pointer-out until a plot press.
     pub legend_pinned: Option<TvId>,
-    /// Screen rect of the active legend row — the actions bar's anchor.
-    pub legend_rect: Option<Rect>,
+    /// Set by the app: the study whose actions bar it drew under the pointer.
+    /// The bar covers its legend row, so without this the row would stop being
+    /// hot the moment the pointer moves onto the bar and the bar would flash.
+    pub legend_keep_hot: Option<TvId>,
+    /// Studies whose input list is hidden from the legend (TV's braces toggle).
+    pub legend_inputs_hidden: Vec<TvId>,
     /// Right-press landed on this study's legend this frame (id, pointer).
     pub legend_menu_req: Option<(TvId, Pos2)>,
     /// Decoded textures for Image drawings, keyed by file path.
@@ -258,9 +276,10 @@ impl ChartState {
             indicators_locked: false,
             images: ImageTextures::default(),
             hover_still: None,
-            legend_hot: None,
+            legend_rows: Vec::new(),
             legend_pinned: None,
-            legend_rect: None,
+            legend_keep_hot: None,
+            legend_inputs_hidden: Vec::new(),
             legend_menu_req: None,
         }
     }
@@ -565,11 +584,17 @@ impl ChartState {
     }
 
     /// Drop the legend anchor so a stale rect never pins the actions bar to a
-    /// study that was structurally changed.
+    /// study that was structurally changed, and forget input-hidden flags for
+    /// studies that no longer exist.
     fn clear_legend_anchor(&mut self) {
         self.legend_pinned = None;
-        self.legend_hot = None;
-        self.legend_rect = None;
+        self.legend_keep_hot = None;
+        self.legend_rows.clear();
+        self.legend_inputs_hidden.retain(|id| {
+            self.panes
+                .iter()
+                .any(|p| p.layers.iter().any(|l| l.id == *id))
+        });
     }
 
     /// Values of visible study layers at candle `i` for magnet snapping.
@@ -1205,17 +1230,18 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
     }
 
-    // Legends (overlaid labels). Hovering a study's legend makes it "hot": the
-    // app draws the actions bar in its place. A click pins that state so the bar
-    // survives the pointer leaving; a press on the plot unpins it (TV).
-    st.legend_hot = None;
-    st.legend_rect = None;
+    // Legends (overlaid labels). TV shows a plain row per study and swaps it
+    // for the app's actions bar while the row is hovered or selected. Several
+    // rows can be swapped at once (one selected + one hovered), so every row
+    // is reported in `legend_rows` and a row's text is skipped only while its
+    // own bar covers it. A click selects a row; a press on the plot deselects.
+    st.legend_rows.clear();
     st.legend_menu_req = None;
     // Mutations are collected in locals: `st.panes` is borrowed while iterating.
     let mut pinned = st.legend_pinned;
-    let mut hot_id: Option<TvId> = None;
-    let mut hot_rect: Option<Rect> = None;
+    let keep = st.legend_keep_hot;
     let mut menu_req: Option<(TvId, Pos2)> = None;
+    let mut rows: Vec<LegendRow> = Vec::new();
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
         let mut x = r.min.x + 4.0;
@@ -1254,34 +1280,58 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
         for l in &pane.layers {
             let d = def(l.id);
-            let name = d.tv_name;
-            let val = st
-                .hover
-                .and_then(|i| {
-                    l.data.plots.first().and_then(|pl| {
-                        // `then_some` evaluates eagerly: a hover index
-                        // past the series would still index. `then` is lazy.
-                        (i < pl.series.len() && pl.series[i].is_finite()).then(|| pl.series[i])
-                    })
-                })
-                .map(|v| format!(" {}", fmt_compact(v)))
-                .unwrap_or_default();
-            let label = format!("■ {name}{val}");
-            let col = if l.visible {
-                painter::rgb(d.plots[0].color)
-            } else {
-                pal.text
-            };
+            // TV's row: title, inputs, then one value per plotted series in its
+            // own colour. A hidden study keeps its row, greyed out.
+            let mut segs: Vec<(String, Color32)> = vec![(
+                d.tv_name.to_owned(),
+                if l.visible {
+                    pal.text_strong
+                } else {
+                    pal.text_dim
+                },
+            )];
+            if !st.legend_inputs_hidden.contains(&l.id) {
+                let inputs = inputs_summary(d, &l.params);
+                if !inputs.is_empty() {
+                    segs.push((inputs, pal.text_dim));
+                }
+            }
+            for (di, pl) in l.data.plots.iter().enumerate() {
+                if pl.default_hidden {
+                    continue;
+                }
+                // The hovered bar's value, else the plot's last finite one.
+                if let Some(v) = st
+                    .hover
+                    .and_then(|i| plot_value(pl, i))
+                    .or_else(|| last_finite(pl))
+                {
+                    segs.push((
+                        fmt_compact(v),
+                        if l.visible {
+                            d.plots.get(di).map_or(pal.text, |s| painter::rgb(s.color))
+                        } else {
+                            pal.text_dim
+                        },
+                    ));
+                }
+            }
+            // Measure before painting: the row rect anchors the actions bar and
+            // advances the x cursor, so it must not change when the row is hot.
+            let galleys: Vec<(std::sync::Arc<egui::Galley>, Color32)> = segs
+                .iter()
+                .map(|(t, c)| (p.layout_no_wrap(t.clone(), font_sm.clone(), *c), *c))
+                .collect();
+            let gaps = 6.0 * galleys.len().saturating_sub(1) as f32;
+            let width: f32 = galleys.iter().map(|(g, _)| g.size().x).sum::<f32>() + gaps;
             let tr = Rect::from_min_max(
                 Pos2::new(x - 2.0, y - 1.0),
-                Pos2::new(x + 8.0 + 7.0 * (name.len() + val.len()) as f32, y + 14.0),
+                Pos2::new(x + width + 2.0, y + 14.0),
             );
             let resp = ui.interact(tr, ui.scope_id().with(("legend", pi, l.id)), Sense::click());
-            let hot = pinned == Some(l.id) || (resp.hovered() && !st.indicators_locked);
-            if hot {
-                hot_id = Some(l.id);
-                hot_rect = Some(tr);
-            }
+            let hot = pinned == Some(l.id)
+                || keep == Some(l.id)
+                || (resp.hovered() && !st.indicators_locked);
             if resp.clicked() && !st.indicators_locked {
                 pinned = if pinned == Some(l.id) {
                     None
@@ -1293,21 +1343,24 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 pinned = Some(l.id);
                 menu_req = Some((l.id, resp.interact_pointer_pos().unwrap_or(tr.center())));
             }
-            // The hot row shows the actions bar instead of the plain label.
+            // A hot row is covered by the actions bar the app draws for it.
             if !hot {
-                p.text(
-                    Pos2::new(x, y),
-                    Align2::LEFT_TOP,
-                    &label,
-                    font_sm.clone(),
-                    col,
-                );
+                let mut gx = x;
+                for (g, c) in &galleys {
+                    p.galley(Pos2::new(gx, y), g.clone(), *c);
+                    gx += g.size().x + 6.0;
+                }
             }
+            rows.push(LegendRow {
+                id: l.id,
+                rect: tr,
+                hot,
+                selected: pinned == Some(l.id),
+            });
             x = tr.max.x + 6.0;
         }
     }
-    st.legend_hot = hot_id;
-    st.legend_rect = hot_rect;
+    st.legend_rows = rows;
     st.legend_menu_req = menu_req;
     st.legend_pinned = pinned;
 
@@ -1332,15 +1385,28 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             _ => st.hover_still = Some((pos, now)),
         }
     }
-    // A press on the plot unpins a pinned legend (TV). `legend_hot` is the
-    // verdict of this frame's legend pass, so pressing a row pins without being
-    // undone here.
-    if resp.clicked() && st.legend_hot.is_none() {
+    // A press on the plot deselects the pinned legend (TV). `legend_rows` is
+    // this frame's verdict, so pressing a row selects it without undoing it.
+    if resp.clicked() && !st.legend_rows.iter().any(|r| r.hot) {
         st.legend_pinned = None;
     }
     ev
 }
 
+/// Value of `plot` at candle `i`, when the series holds a finite value there.
+fn plot_value(plot: &PlotData, i: usize) -> Option<f64> {
+    (i < plot.series.len())
+        .then(|| plot.series[i])
+        .filter(|v| v.is_finite())
+}
+
+/// Last finite value of a series (TV shows it when the pointer is elsewhere).
+fn last_finite(plot: &PlotData) -> Option<f64> {
+    plot.series
+        .iter()
+        .rev()
+        .find_map(|&v| v.is_finite().then_some(v))
+}
 /// Decode a local image file into an RGBA color image (Image tool support).
 fn load_rgba_image(path: &str) -> Option<egui::ColorImage> {
     let bytes = std::fs::read(path).ok()?;
@@ -2308,11 +2374,6 @@ mod tests {
         };
         let mut ev = ChartEvent::default();
         let mut out = ctx.run_ui(raw, |ui| {
-            eprintln!(
-                "available={:?} max={:?}",
-                ui.available_rect_before_wrap(),
-                ui.max_rect()
-            );
             ev = crate::chart::ui(ui, st, cd);
         });
         out.textures_delta.clear();
@@ -2991,6 +3052,203 @@ mod tests {
         assert_eq!(
             st.view.right_offset, before,
             "wheel over an open overlay must not pan the chart"
+        );
+    }
+
+    #[test]
+    fn pinned_and_hovered_legend_rows_are_both_hot() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let ax = ta::registry::Anchors::from_ts(&cd.t);
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.add_indicator(&cd, &ax, TvId::Rsi, Params::with_defaults(def(TvId::Rsi)));
+        st.add_indicator(&cd, &ax, TvId::Macd, Params::with_defaults(def(TvId::Macd)));
+        st.legend_pinned = Some(TvId::Rsi);
+
+        frame(&ctx, &mut st, &cd, vec![]);
+        let macd_rect = st
+            .legend_rows
+            .iter()
+            .find(|r| r.id == TvId::Macd)
+            .expect("MACD row")
+            .rect;
+        frame(
+            &ctx,
+            &mut st,
+            &cd,
+            vec![egui::Event::PointerMoved(macd_rect.center())],
+        );
+
+        // TV keeps the selected study's bar up while another row is hovered.
+        let hot: Vec<TvId> = st
+            .legend_rows
+            .iter()
+            .filter(|r| r.hot)
+            .map(|r| r.id)
+            .collect();
+        assert!(hot.contains(&TvId::Rsi), "pinned row lost its bar: {hot:?}");
+        assert!(hot.contains(&TvId::Macd), "hovered row has no bar: {hot:?}");
+        let selected: Vec<TvId> = st
+            .legend_rows
+            .iter()
+            .filter(|r| r.selected)
+            .map(|r| r.id)
+            .collect();
+        assert_eq!(
+            selected,
+            vec![TvId::Rsi],
+            "only the clicked row carries the selection"
+        );
+        let anchors: Vec<Rect> = st
+            .legend_rows
+            .iter()
+            .filter(|r| r.hot)
+            .map(|r| r.rect)
+            .collect();
+        assert_eq!(anchors.len(), 2, "one bar per hot row: {anchors:?}");
+        assert_ne!(anchors[0], anchors[1], "bars must not stack on one row");
+    }
+
+    #[test]
+    fn keep_hot_holds_a_row_hot_without_hover() {
+        let ctx = egui::Context::default();
+        let cd = ten_candles();
+        let ax = ta::registry::Anchors::from_ts(&cd.t);
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.add_indicator(&cd, &ax, TvId::Rsi, Params::with_defaults(def(TvId::Rsi)));
+        st.add_indicator(&cd, &ax, TvId::Macd, Params::with_defaults(def(TvId::Macd)));
+
+        frame(&ctx, &mut st, &cd, vec![]);
+        assert!(
+            st.legend_rows.iter().all(|r| !r.hot),
+            "nothing hovered, nothing selected: {:?}",
+            st.legend_rows
+        );
+
+        // The app sets this while the pointer rests on the bar, which covers its
+        // own row; without it the bar would flicker out under the pointer.
+        st.legend_keep_hot = Some(TvId::Macd);
+        frame(&ctx, &mut st, &cd, vec![]);
+        assert!(
+            st.legend_rows.iter().any(|r| r.id == TvId::Macd && r.hot),
+            "kept-hot row must stay hot: {:?}",
+            st.legend_rows
+        );
+        assert!(
+            !st.legend_rows.iter().any(|r| r.id == TvId::Rsi && r.hot),
+            "keep-hot names one study only"
+        );
+    }
+
+    #[test]
+    fn hidden_study_keeps_its_legend_row() {
+        let ctx = egui::Context::default();
+        let cd = sixty_candles();
+        let ax = ta::registry::Anchors::from_ts(&cd.t);
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.add_indicator(&cd, &ax, TvId::Macd, Params::with_defaults(def(TvId::Macd)));
+
+        frame(&ctx, &mut st, &cd, vec![]);
+        assert_eq!(
+            st.legend_rows.iter().map(|r| r.id).collect::<Vec<_>>(),
+            vec![TvId::Macd]
+        );
+
+        // TV keeps the row of a hidden study: the eye has to stay reachable so
+        // the study can be shown again.
+        st.set_visible(TvId::Macd, false);
+        frame(&ctx, &mut st, &cd, vec![]);
+        assert!(
+            st.legend_rows.iter().any(|r| r.id == TvId::Macd),
+            "hidden study lost its row: {:?}",
+            st.legend_rows
+        );
+    }
+
+    /// Text shapes can arrive merged, so walk the tree.
+    fn collect_texts(shape: &egui::Shape, out: &mut Vec<(Pos2, String)>) {
+        match shape {
+            egui::Shape::Vec(shapes) => {
+                for s in shapes {
+                    collect_texts(s, out);
+                }
+            }
+            egui::Shape::Text(t) => out.push((t.pos, t.galley.text().to_owned())),
+            _ => {}
+        }
+    }
+
+    /// Enough bars that every MACD plot holds finite values.
+    fn sixty_candles() -> Candles {
+        let bars: Vec<_> = (0..60usize)
+            .map(|i| ta::Bar {
+                t: i as i64 * 60,
+                o: 100.0 + (i as f64 * 0.7).sin() * 5.0,
+                h: 103.0 + (i as f64 * 0.7).sin() * 5.0,
+                l: 97.0 + (i as f64 * 0.7).sin() * 5.0,
+                c: 100.0 + (i as f64 * 0.7).cos() * 5.0,
+                v: 1.0 + i as f64,
+            })
+            .collect();
+        Candles::from_bars(&bars)
+    }
+
+    #[test]
+    fn legend_row_lists_inputs_and_one_value_per_plot() {
+        let ctx = egui::Context::default();
+        let cd = sixty_candles();
+        let ax = ta::registry::Anchors::from_ts(&cd.t);
+        let mut st = ChartState::new("AAPL", "1D");
+        st.view.spacing = 40.0;
+        st.add_indicator(&cd, &ax, TvId::Macd, Params::with_defaults(def(TvId::Macd)));
+
+        frame(&ctx, &mut st, &cd, vec![]);
+        let row = st
+            .legend_rows
+            .iter()
+            .find(|r| r.id == TvId::Macd)
+            .expect("MACD row")
+            .rect;
+        let out = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0, 700.0))),
+                time: Some(2.0),
+                ..Default::default()
+            },
+            |ui| {
+                let _ = crate::chart::ui(ui, &mut st, &cd);
+            },
+        );
+        let mut texts: Vec<(Pos2, String)> = Vec::new();
+        for cs in &out.shapes {
+            collect_texts(&cs.shape, &mut texts);
+        }
+        texts.retain(|(pos, _)| row.expand(3.0).contains(*pos));
+        texts.sort_by(|a, b| {
+            a.0.x
+                .partial_cmp(&b.0.x)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        let strings: Vec<&str> = texts.iter().map(|(_, t)| t.as_str()).collect();
+        // TV's row: name, inputs, then one number per plotted series. No swatch
+        // character — the colour lives in the text itself.
+        assert_eq!(strings.first().copied(), Some("MACD"), "row: {strings:?}");
+        assert!(
+            strings.contains(&"12 26 9 close"),
+            "inputs missing from row: {strings:?}"
+        );
+        let values: Vec<&str> = strings
+            .iter()
+            .copied()
+            .filter(|t| t.parse::<f64>().is_ok())
+            .collect();
+        assert_eq!(
+            values.len(),
+            def(TvId::Macd).plots.len(),
+            "one value per plot: {strings:?}"
         );
     }
 

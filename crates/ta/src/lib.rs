@@ -12,7 +12,7 @@ pub mod rating;
 pub mod registry;
 pub use registry::{
     Anchors, Def, Output, Pane, Params, PlotData, PlotStyle, Scale, StudyContext, TvId, compute,
-    compute_with, def, defs, source_series,
+    compute_with, def, defs, inputs_summary, source_series,
 };
 pub mod series;
 pub mod trends;

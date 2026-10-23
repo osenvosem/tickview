@@ -37,14 +37,18 @@ the network responds.
   past the router's 60 s provider cooldown, so a transient limit never disables
   a timeframe for good. A symbol that cannot serve its saved resolution opens on
   the nearest offered one (coarser first).
-- Study legends behave like TradingView's: a row goes hot on hover and pins on
-  click (a plot press unpins it), and the hot row turns into an actions bar —
-  swatch, name, input summary, eye, gear, braces, trash, `⋯` — with the hovered
-  value painted past the bar's right border. `⋯` or a right-click opens the
-  study menu (alert at the hovered price, add indicator, favourite, `Visual
-  order ▸`, `Move to ▸`, copy, hide/show, remove). Starred studies land in the
-  indicator browser's `FAVOURITES` section and `⌥A` puts them all on the chart;
-  favourites and hidden studies persist (`docs/evidence/tv/study-legend-bar.md`).
+- Study legends behave like TradingView's: a cold row shows `name inputs` plus
+  one value per plotted series in its own colour (a hidden study keeps the row,
+  dimmed, and drops its plots). A row goes hot on hover and gets selected on
+  click (a plot press or `Esc` unpins it), and every hot row turns into its own
+  actions bar at the same time — the selected one with an accent border, a
+  hovered one with a hairline — swatch, name, input summary, eye, gear, braces,
+  trash, `⋯`, with the hovered value painted past the bar's right border. `⋯`
+  or a right-click opens the study menu (alert at the hovered price, add
+  indicator, favourite, `Visual order ▸`, `Move to ▸`, copy, hide/show, remove).
+  Nothing is pinned at launch. Starred studies land in the indicator browser's
+  `FAVOURITES` section and `⌥A` puts them all on the chart; favourites and
+  hidden studies persist (`docs/evidence/tv/study-legend-bar.md`).
 - Drawing tools: 94 rail tools across TradingView's eight drawing groups.
   Cursors include Cross and Eraser; trend tools cover lines, channels and four
   pitchfork variants; Gann/Fibonacci includes channel, time, fan, circle,

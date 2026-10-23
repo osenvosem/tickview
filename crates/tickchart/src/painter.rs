@@ -59,6 +59,10 @@ pub struct Palette {
     pub line: Color32,
     pub area_fill: Color32,
     pub grid: Color32,
+    /// Secondary legend text: inputs and dimmed (hidden) rows.
+    pub text_dim: Color32,
+    /// Primary legend text: study titles (TV's near-white / near-black).
+    pub text_strong: Color32,
     pub text: Color32,
     pub crosshair: Color32,
 }
@@ -74,6 +78,8 @@ impl Palette {
             line: Color32::from_rgb(0x3D, 0x7B, 0xFF),
             area_fill: Color32::from_rgba_premultiplied(0x3D, 0x7B, 0xFF, 0x2E),
             grid: Color32::from_rgb(0x1E, 0x26, 0x33),
+            text_dim: Color32::from_rgb(0x6B, 0x73, 0x82),
+            text_strong: Color32::from_rgb(0xD1, 0xD4, 0xDC),
             text: Color32::from_rgb(0x8A, 0x94, 0xA6),
             crosshair: Color32::from_rgb(0x5E, 0x68, 0x78),
         }
@@ -89,6 +95,8 @@ impl Palette {
             line: Color32::from_rgb(0x2F, 0x6B, 0xFF),
             area_fill: Color32::from_rgba_premultiplied(0x2F, 0x6B, 0xFF, 0x24),
             grid: Color32::from_rgb(0xED, 0xF0, 0xF5),
+            text_dim: Color32::from_rgb(0x78, 0x7B, 0x86),
+            text_strong: Color32::from_rgb(0x13, 0x17, 0x22),
             text: Color32::from_rgb(0x66, 0x70, 0x85),
             crosshair: Color32::from_rgb(0x98, 0xA2, 0xB3),
         }

@@ -8,26 +8,36 @@ this module implements.
 
 ## Legend hover / pin
 
-- A study legend row becomes **hot** while the pointer is over it and stays
-  **pinned** after a click until the plot area is pressed again.
-- While hot or pinned the plain `■ Name value` label is replaced by an actions
-  bar; every other row keeps its plain label.
+- Every study keeps a TradingView-style plain label while cold: **name** in the
+  strong text colour, then the input summary, then one value per plotted series
+  painted in that series' colour. A hidden study keeps its row and its values,
+  all dimmed, and its plots are not painted.
+- A row becomes **hot** while the pointer is over it, and stays **selected**
+  after a click until the plot area is pressed again (or `Esc`).
+- TradingView shows a bar on *every* hot row at the same time: the selected
+  study keeps its accent-bordered bar while another row is hovered with a
+  hairline border. Both bars anchor on their own row's rect.
+- A bar covers its own row, so `legend_keep_hot` names the study whose bar the
+  pointer is resting on; without it the bar would flicker out from under the
+  pointer.
 - Locked studies (`indicators_locked`) never become hot from hover.
-- Right-clicking a legend row pins it and opens the study menu at the pointer.
+- Right-clicking a legend row selects it and opens the study menu at the
+  pointer.
+- Nothing is pinned at launch: a bar appears only on hover or click.
 
 State lives in `ChartState` (`crates/tickchart/src/chart.rs`) so the chart
-engine owns hover/pin verdicts and the app only draws:
+engine owns hover/select verdicts and the app only draws:
 
 | Field | Meaning |
 |---|---|
-| `legend_hot` | row hot this frame (hover or pinned) |
-| `legend_pinned` | click-pinned study, survives pointer-out |
-| `legend_rect` | screen rect of the hot legend row (bar anchor) |
+| `legend_rows` | every row painted this frame: `{id, rect, hot, selected}` |
+| `legend_pinned` | click-selected study, survives pointer-out |
+| `legend_keep_hot` | study whose bar the pointer covers (anti-flicker) |
 | `legend_menu_req` | right-click request `(study, point)` for this frame |
 
 `remove_indicator`, `remove_all_indicators`, `move_indicator` and
-`set_volume_pane` clear `legend_pinned`/`legend_rect`: a stale anchor would
-otherwise float a bar for a study that is gone.
+`set_volume_pane` clear `legend_pinned`/`legend_keep_hot` and drop the row: a
+stale anchor would otherwise float a bar for a study that is gone.
 
 ## Actions bar
 
@@ -86,15 +96,18 @@ fails when the hover point is moved off the row.
 
 ## Persistence (config v2)
 
-- `study_favorites: Vec<String>` — TradingView study names, in favourite order;
-  unknown names drop on load.
 - `SavedIndicator.hidden: bool` — a study that was hidden stays hidden across
-  restarts and template apply (`#[serde(default)]`, so older files load).
+  restarts and template apply (`#[serde(default)]`, so older files load). The
+  flag cannot be applied at load, because a study layer only exists once its
+  bars have arrived: the ids ride in `Tab::pending_hidden` and are applied in
+  `Tab::apply_pending` (regression test
+  `restored_hidden_study_stays_hidden_when_bars_arrive`).
 
-Behaviour proof: `docs/screenshots/parity/browser-favourites-dark.png` was
-captured from a config holding `study_favorites = ["MACD", "Relative Strength
-Index (RSI)"]` with the RSI entry `hidden: true`; the RSI pane renders empty
-(restored hidden) and the browser shows the `FAVOURITES` section with both rows.
+Behaviour proof: `hidden-macd-dark.png` was captured from a config whose MACD
+entry had `hidden: true` next to a visible RSI. The MACD pane renders empty and
+its legend row is dimmed, while RSI plots and value colours are untouched.
+`browser-favourites-dark.png` additionally shows the browser's `FAVOURITES`
+section for the same pair.
 
 ## Capturing
 
@@ -104,17 +117,25 @@ TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_SCENE=studybar \
   TICKVIEW_SNAPSHOT=studybar-dark.png ./target/debug/tickview
 ```
 
-`TICKVIEW_SCENE=studymenu` opens the study menu next to the bar. QA seeds only
-take effect once the legend row exists on screen — before the first bar batch
-there is nothing to pin, and consuming the request earlier dropped it.
+`TICKVIEW_SCENE=studymenu` opens the study menu next to the bar;
+`TICKVIEW_SCENE=studyhover` seeds RSI + MACD, selects MACD and holds the RSI
+row hot, which is the two-bars-at-once shot. QA seeds only take effect once the
+legend row exists on screen: the requests stay pending until the row is painted
+instead of being consumed and dropped.
+
+For the hidden-restore shot, run once to create the config, set `hidden: true`
+on the MACD entry in `$TICKVIEW_CONFIG_DIR/config.json`, then run again with
+`TICKVIEW_SNAPSHOT=hidden-macd.png` (no scene: nothing pinned, nothing hovered).
 
 ## Screenshots
 
 | File | Content |
 |---|---|
-| `studybar-dark.png` / `studybar-light.png` | pinned MACD bar: swatch, name, `12 26 9 close`, eye/gear/braces/trash/`⋯`, value past the border |
+| `studybar-dark.png` / `studybar-light.png` | selected MACD bar (accent border): swatch, name, `12 26 9 close`, eye/gear/braces/trash/`⋯`, value past the border; the RSI row below keeps its plain label `Relative Strength Index (RSI) 14 close 67.38` |
+| `studyhover-dark.png` / `studyhover-light.png` | two bars at once: selected MACD with the accent border, hovered RSI with a hairline border, each anchored on its own row |
 | `studymenu-dark.png` / `studymenu-light.png` | full study menu open under the bar, `⋯` tinted |
-| `browser-favourites-dark.png` | indicator browser with `FAVOURITES` and a study restored hidden |
+| `hidden-macd.png` | MACD restored with `hidden: true`: empty pane, dimmed row, visible RSI beside it |
+| `browser-favourites-dark.png` | indicator browser with the `FAVOURITES` section |
 
 ## Known deviations
 

@@ -10,7 +10,7 @@ use eframe::egui::{
     self, Align2, CornerRadius, Id, Layout, Margin, Order, PopupCloseBehavior, Pos2, Rect,
     RichText, Sense, Stroke, Ui, vec2,
 };
-use ta::registry::{Def, PVal, ParamKind, Params, TvId, def};
+use ta::registry::{Def, Params, TvId, def, inputs_summary};
 use tickchart::chart::{MoveTarget, OrderDir, PaneKind};
 use tickchart::painter;
 
@@ -39,8 +39,6 @@ pub enum MenuAction {
 pub struct State {
     /// `⋯`/right-click menu open for this study; `Some(pos)` = right-click point.
     pub menu: Option<(TvId, Option<Pos2>)>,
-    /// Studies whose input list is hidden from the legend (TV's braces toggle).
-    pub inputs_hidden: Vec<TvId>,
     /// Rect of the menu this frame, so chart input stays suppressed under it.
     pub menu_rect: Option<Rect>,
 }
@@ -57,50 +55,18 @@ pub struct Model<'a> {
     pub locked: bool,
     /// Pane the study currently occupies; marks the matching `Move to` row.
     pub pane: Option<PaneKind>,
+    /// The bar belongs to the study the user clicked (TV's accent border).
+    pub selected: bool,
+    /// TV's braces toggle: the input list is part of the row.
+    pub show_inputs: bool,
 }
 
 pub struct Output {
     pub actions: Vec<MenuAction>,
     /// Bar + menu rects: chart pan/zoom and clicks are suppressed in here.
     pub exclusion_rect: Rect,
-}
-
-/// Inputs as legend text in declaration order (`Params` is a `BTreeMap` and
-/// would sort alphabetically): `Int`/`Float` (integral → no decimals, else
-/// two), `Enum` → variant label, `Bool` omitted.
-#[must_use]
-pub fn inputs_summary(d: &Def, params: &Params) -> String {
-    let mut parts: Vec<String> = Vec::new();
-    for spec in d.params {
-        if matches!(spec.kind, ParamKind::Bool { .. }) {
-            continue;
-        }
-        let Some(v) = params.get(spec.key) else {
-            continue;
-        };
-        match spec.kind {
-            ParamKind::Enum { variants, .. } => {
-                if let PVal::E(idx) = v {
-                    if let Some(name) = variants.get(usize::try_from(idx).unwrap_or(usize::MAX)) {
-                        parts.push((*name).to_owned());
-                    }
-                }
-            }
-            _ => {
-                if let PVal::N(n) = v {
-                    if !n.is_finite() {
-                        continue;
-                    }
-                    if (n - n.round()).abs() < f64::EPSILON {
-                        parts.push(format!("{}", n as i64));
-                    } else {
-                        parts.push(format!("{n:.2}"));
-                    }
-                }
-            }
-        }
-    }
-    parts.join(" ")
+    /// The pointer sits on the bar, so its row must stay hot next frame.
+    pub hovered: bool,
 }
 
 /// `"MACD (12, 26, 9)"`, or the bare name when there are no inputs to show.
@@ -150,7 +116,7 @@ pub fn move_items(current: Option<PaneKind>) -> Vec<(&'static str, MoveTarget, b
 pub fn bar(ui: &Ui, p: &Palette, st: &mut State, m: &Model, anchor: Rect, bounds: Rect) -> Output {
     let d = def(m.id);
     let inputs = inputs_summary(d, m.params);
-    let show_inputs = !st.inputs_hidden.contains(&m.id) && !inputs.is_empty();
+    let show_inputs = m.show_inputs && !inputs.is_empty();
     let label_width = (d.tv_name.chars().count() as f32 * 7.5 + 8.0).min(200.0);
     let inputs_width = (inputs.chars().count() as f32 * 6.5 + 6.0).min(180.0);
     let inputs_open = st.menu.is_some_and(|(id, _)| id == m.id);
@@ -168,7 +134,10 @@ pub fn bar(ui: &Ui, p: &Palette, st: &mut State, m: &Model, anchor: Rect, bounds
             ui.spacing_mut().item_spacing.x = 4.0;
             egui::Frame::new()
                 .fill(p.panel)
-                .stroke(Stroke::new(1.0, p.hairline))
+                .stroke(Stroke::new(
+                    1.0,
+                    if m.selected { p.accent } else { p.hairline },
+                ))
                 .corner_radius(CornerRadius::same(6))
                 .inner_margin(Margin::symmetric(6, 3))
                 .show(ui, |ui| {
@@ -229,17 +198,17 @@ pub fn bar(ui: &Ui, p: &Palette, st: &mut State, m: &Model, anchor: Rect, bounds
                         {
                             actions.push(MenuAction::OpenSettings);
                         }
-                        let braces_tip = if st.inputs_hidden.contains(&m.id) {
-                            "Show inputs in legend"
-                        } else {
+                        let braces_tip = if m.show_inputs {
                             "Hide inputs in legend"
+                        } else {
+                            "Show inputs in legend"
                         };
                         if widgets::icon_button(
                             ui,
                             p,
                             Icon::Source,
                             vec2(24.0, 24.0),
-                            st.inputs_hidden.contains(&m.id),
+                            !m.show_inputs,
                             true,
                             braces_tip,
                         )
@@ -306,6 +275,7 @@ pub fn bar(ui: &Ui, p: &Palette, st: &mut State, m: &Model, anchor: Rect, bounds
     Output {
         actions,
         exclusion_rect: union(bar_rect, st.menu_rect.unwrap_or(Rect::NOTHING)),
+        hovered: area.response.hovered(),
     }
 }
 
@@ -457,39 +427,17 @@ mod tests {
             favorite: false,
             locked: false,
             pane,
+            selected: false,
+            show_inputs: true,
         }
     }
 
     #[test]
-    fn inputs_summary_follows_declaration_order_not_alphabetical() {
+    fn titled_wraps_the_inputs_and_falls_back_to_the_name() {
         let d = def(TvId::Macd);
         let params = Params::with_defaults(d);
-        // Registry truth: fast 12, slow 26, signal 9, source "close".
-        assert_eq!(inputs_summary(d, &params), "12 26 9 close");
         assert_eq!(titled(d, &params), "MACD (12 26 9 close)");
-        // The keys are declared `fast, slow, signal, source`, so an
-        // alphabetical read of the BTreeMap would emit signal before slow —
-        // without this the assertion above would prove nothing.
-        let keys: Vec<&str> = d.params.iter().map(|s| s.key).collect();
-        let mut sorted = keys.clone();
-        sorted.sort_unstable();
-        assert_ne!(keys, sorted, "needs a non-alphabetical study: {keys:?}");
-    }
-
-    #[test]
-    fn inputs_summary_drops_bools_and_formats_floats() {
-        let d = def(TvId::Rsi);
-        let params = Params::with_defaults(d);
-        let summary = inputs_summary(d, &params);
-        assert!(!summary.is_empty(), "RSI has a period input");
-        assert!(
-            summary
-                .split(' ')
-                .all(|p| !p.contains("true") && !p.contains("false")),
-            "bools must not appear: {summary}"
-        );
-        // A study whose only inputs are booleans yields nothing, and `titled`
-        // then falls back to the bare name.
+        // A study whose only inputs are booleans has nothing to wrap.
         let bool_only = Def {
             id: TvId::Rsi,
             tv_name: "Bool Only",
@@ -499,24 +447,13 @@ mod tests {
             params: &[ta::registry::ParamSpec {
                 key: "on",
                 name: "On",
-                kind: ParamKind::Bool { def: true },
+                kind: ta::registry::ParamKind::Bool { def: true },
             }],
             plots: d.plots,
         };
-        let empty = Params::with_defaults(&bool_only);
-        assert_eq!(inputs_summary(&bool_only, &empty), "");
-        assert_eq!(titled(&bool_only, &empty), "Bool Only");
-    }
-
-    #[test]
-    fn inputs_summary_writes_integral_floats_without_decimals() {
-        let d = def(TvId::Alma);
-        let params = Params::with_defaults(d);
-        // Registry truth: length 9, offset 0.85, sigma 6.0, source "close".
-        assert_eq!(inputs_summary(d, &params), "9 0.85 6 close");
         assert_eq!(
-            titled(d, &params),
-            "Arnaud Legoux Moving Average (9 0.85 6 close)"
+            titled(&bool_only, &Params::with_defaults(&bool_only)),
+            "Bool Only"
         );
     }
 

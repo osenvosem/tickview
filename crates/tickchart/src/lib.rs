@@ -15,8 +15,8 @@ pub mod timeaxis;
 pub use barfmt::{fmt_compact, fmt_price};
 pub use chart::ui as chart_ui;
 pub use chart::{
-    ChartEvent, ChartState, ImageTextures, Layer, MoveTarget, OrderDir, Pane as ChartPane,
-    PaneKind, ReplayState, replay_advance, replay_delay_ms,
+    ChartEvent, ChartState, ImageTextures, Layer, LegendRow, MoveTarget, OrderDir,
+    Pane as ChartPane, PaneKind, ReplayState, replay_advance, replay_delay_ms,
 };
 pub use drawings::{
     Anchor, DEFAULT_COLOR, DrawTool, Drawing, DrawingKind, DrawingStyle, DrawingToolState,
