@@ -524,6 +524,37 @@ pub fn values_tooltip_width(widest_line: f32, plot_width: f32) -> f32 {
     (widest_line + 16.0).max(200.0).min(plot_width)
 }
 
+/// Screen rectangles for every pane, top to bottom. Painting and input share
+/// this layout so the visible divider and the drag hit area cannot drift.
+fn pane_rects(panes: &[Pane], plot: Rect) -> Vec<Rect> {
+    let mut rects = Vec::with_capacity(panes.len());
+    let mut y = plot.min.y;
+    for pane in panes {
+        let h = (plot.height() * pane.height_frac).max(40.0);
+        rects.push(Rect::from_min_size(
+            Pos2::new(plot.min.x, y),
+            Vec2::new(plot.width(), h),
+        ));
+        y += h;
+    }
+    rects
+}
+
+/// Index of the pane boundary under `pos`, if that split may be resized.
+/// Drawing tools own the pointer, and locking indicators freezes the study
+/// split exactly as it does for the drag itself.
+fn pane_separator_at(st: &ChartState, rects: &[Rect], pos: Pos2) -> Option<usize> {
+    if st.tools.tool.is_tool() {
+        return None;
+    }
+    rects
+        .iter()
+        .take(rects.len().saturating_sub(1))
+        .enumerate()
+        .find(|(i, r)| !(st.indicators_locked && *i >= 1) && (pos.y - r.max.y).abs() <= SEP_HIT)
+        .map(|(i, _)| i)
+}
+
 /// Draw the chart; returns requested app actions.
 pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     let mut ev = ChartEvent::default();
@@ -546,16 +577,8 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
     let p = ui.painter().clone();
 
     // Pane rectangles.
-    let mut rects: Vec<(usize, Rect)> = Vec::with_capacity(st.panes.len());
-    let mut y = plot.min.y;
-    for (i, pane) in st.panes.iter().enumerate() {
-        let h = (plot_h * pane.height_frac).max(40.0);
-        rects.push((
-            i,
-            Rect::from_min_size(Pos2::new(plot.min.x, y), Vec2::new(plot_w, h)),
-        ));
-        y += h;
-    }
+    let pane_areas = pane_rects(&st.panes, plot);
+    let rects: Vec<(usize, Rect)> = pane_areas.iter().copied().enumerate().collect();
 
     // Input needs the current price-pane mapping before pan/zoom is applied.
     let (input_vs, input_ve) = st.view.visible();
@@ -576,6 +599,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         st,
         cd,
         plot,
+        &pane_areas,
         price_rect,
         &input_axis,
         &mut ev,
@@ -666,6 +690,53 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                     neg,
                 );
             }
+        }
+    }
+
+    // Pane dividers: a quiet full-width rule with a centered grip, promoted
+    // to the accent color while hovered or dragged. This is what makes the
+    // invisible split points discoverable; the hit area itself is unchanged.
+    let pointer = ui.input(|i| i.pointer.hover_pos());
+    let over_popup = st
+        .popup_rect
+        .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
+    for i in 0..pane_areas.len().saturating_sub(1) {
+        let y = pane_areas[i].max.y;
+        let hovered = !over_popup
+            && pointer.is_some_and(|pos| {
+                full.contains(pos) && pane_separator_at(st, &pane_areas, pos) == Some(i)
+            });
+        let active = st.drag_pane == Some(i) || hovered;
+        let resizable = !st.tools.tool.is_tool() && !(st.indicators_locked && i >= 1);
+        if active {
+            // Soft halo under the rule so the grabbed split reads instantly.
+            p.line_segment(
+                [Pos2::new(full.min.x, y), Pos2::new(full.max.x, y)],
+                Stroke::new(4.0, pal.line.gamma_multiply(0.28)),
+            );
+        }
+        p.line_segment(
+            [Pos2::new(full.min.x, y), Pos2::new(full.max.x, y)],
+            Stroke::new(
+                if active { 1.5 } else { 1.0 },
+                if active {
+                    pal.line
+                } else {
+                    pal.crosshair.gamma_multiply(0.75)
+                },
+            ),
+        );
+        if resizable {
+            let grip_w = if active { 36.0 } else { 26.0 };
+            p.rect_filled(
+                Rect::from_center_size(Pos2::new(plot.center().x, y), Vec2::new(grip_w, 3.0)),
+                CornerRadius::same(2),
+                if active {
+                    pal.line
+                } else {
+                    pal.crosshair.gamma_multiply(0.9)
+                },
+            );
         }
     }
 
@@ -1079,7 +1150,8 @@ fn handle_input(
     resp: &Response,
     st: &mut ChartState,
     cd: &Candles,
-    full: Rect,
+    plot: Rect,
+    pane_areas: &[Rect],
     price_rect: Rect,
     ax: &PriceAxis,
     ev: &mut ChartEvent,
@@ -1224,23 +1296,9 @@ fn handle_input(
             && let Some(pos) = press
             && !drawing_tool
         {
-            let plot_h = (full.height() - AXIS_H).max(50.0);
-            let mut y = full.min.y;
-            for (i, pane) in st
-                .panes
-                .iter()
-                .enumerate()
-                .take(st.panes.len().saturating_sub(1))
-            {
-                y += (plot_h * pane.height_frac).max(40.0);
-                if (pos.y - y).abs() <= SEP_HIT {
-                    // Locking indicators freezes the study-area split too (TV).
-                    if !(st.indicators_locked && i >= 1) {
-                        st.drag_pane = Some(i);
-                    }
-                    break;
-                }
-            }
+            // The visible divider and this hit area come from the same
+            // rectangles, so grabbing the line always grabs the split.
+            st.drag_pane = pane_separator_at(st, pane_areas, pos);
             if st.drag_pane.is_none() && price_rect.contains(pos) {
                 let handle_hit = if st.selection.len() == 1
                     && st.tools.draft.is_none()
@@ -1383,7 +1441,7 @@ fn handle_input(
         } else if let Some(dp) = st.drag_pane {
             if dp < st.panes.len().saturating_sub(1) {
                 let dy = resp.drag_delta().y;
-                let total = (full.height() - AXIS_H).max(1.0);
+                let total = plot.height().max(1.0);
                 let df = (dy / total).clamp(-0.3, 0.3);
                 st.panes[dp].height_frac = (st.panes[dp].height_frac + df).max(0.08);
                 st.panes[dp + 1].height_frac = (st.panes[dp + 1].height_frac - df).max(0.08);
@@ -1633,12 +1691,15 @@ fn handle_input(
         && !over_popup
         && !drawing_tool
         && let Some(pos) = pointer
-        && price_rect.contains(pos)
     {
-        if st.drag_drawing.is_some() || st.drag_anchor.is_some() {
-            ctx.set_cursor_icon(egui::CursorIcon::Grabbing);
-        } else if hit_drawing(st, cd, ax, pos, price_rect).is_some() {
-            ctx.set_cursor_icon(egui::CursorIcon::PointingHand);
+        if st.drag_pane.is_some() || pane_separator_at(st, pane_areas, pos).is_some() {
+            ctx.set_cursor_icon(egui::CursorIcon::ResizeVertical);
+        } else if price_rect.contains(pos) {
+            if st.drag_drawing.is_some() || st.drag_anchor.is_some() {
+                ctx.set_cursor_icon(egui::CursorIcon::Grabbing);
+            } else if hit_drawing(st, cd, ax, pos, price_rect).is_some() {
+                ctx.set_cursor_icon(egui::CursorIcon::PointingHand);
+            }
         }
     } else if drawing_tool
         && resp.hovered()
@@ -2802,6 +2863,154 @@ mod tests {
         assert!((st.panes[2].height_frac - 0.28).abs() < 1e-6);
         let sum: f32 = st.panes.iter().map(|p| p.height_frac).sum();
         assert!((sum - 1.0).abs() < 1e-6);
+    }
+
+    fn test_plot() -> Rect {
+        Rect::from_min_size(Pos2::ZERO, Vec2::new(900.0 - AXIS_W, 700.0 - AXIS_H))
+    }
+
+    #[test]
+    fn pane_layout_is_contiguous() {
+        let mut st = ChartState::new("AAPL", "1D");
+        st.panes.push(Pane {
+            kind: PaneKind::Indicator(TvId::Rsi),
+            layers: Vec::new(),
+            height_frac: 0.2,
+        });
+        st.relayout_default();
+        let rects = pane_rects(&st.panes, test_plot());
+        assert_eq!(rects.len(), st.panes.len());
+        for pair in rects.windows(2) {
+            assert!((pair[0].max.y - pair[1].min.y).abs() < 1e-3);
+            assert!((pair[0].width() - pair[1].width()).abs() < 1e-3);
+        }
+    }
+
+    #[test]
+    fn pane_separator_hit_test_follows_painted_layout() {
+        let st = ChartState::new("AAPL", "1D");
+        let rects = pane_rects(&st.panes, test_plot());
+        let boundary = rects[0].max.y;
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, boundary)),
+            Some(0)
+        );
+        // The old hit test subtracted the time axis a second time, leaving
+        // the grab area about 18 px above the painted edge.
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, boundary - 18.0)),
+            None
+        );
+    }
+
+    #[test]
+    fn pane_separator_hit_test_respects_lock_and_drawing_tools() {
+        let mut st = ChartState::new("AAPL", "1D");
+        st.panes.push(Pane {
+            kind: PaneKind::Indicator(TvId::Rsi),
+            layers: Vec::new(),
+            height_frac: 0.2,
+        });
+        st.relayout_default();
+        let rects = pane_rects(&st.panes, test_plot());
+        let price_volume = rects[0].max.y;
+        let study_split = rects[1].max.y;
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, price_volume)),
+            Some(0)
+        );
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, study_split)),
+            Some(1)
+        );
+
+        st.indicators_locked = true;
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, price_volume)),
+            Some(0),
+            "price/volume split stays available when indicators are locked"
+        );
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, study_split)),
+            None,
+            "locking indicators freezes study splits"
+        );
+
+        st.indicators_locked = false;
+        st.tools.set_tool(crate::drawings::DrawTool::TrendLine);
+        assert_eq!(
+            pane_separator_at(&st, &rects, Pos2::new(400.0, price_volume)),
+            None,
+            "an armed drawing tool owns the pointer"
+        );
+    }
+
+    #[test]
+    fn dragging_pane_divider_resizes_panes() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        let boundary = pane_rects(&st.panes, test_plot())[0].max.y;
+        let before = (st.panes[0].height_frac, st.panes[1].height_frac);
+        drag(
+            &ctx,
+            &mut st,
+            &cd,
+            Pos2::new(400.0, boundary),
+            Pos2::new(400.0, boundary + 40.0),
+            egui::Modifiers::default(),
+        );
+        assert!(st.panes[0].height_frac > before.0 + 0.03);
+        assert!(st.panes[1].height_frac < before.1 - 0.03);
+        let sum: f32 = st.panes.iter().map(|p| p.height_frac).sum();
+        assert!((sum - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn hovering_pane_divider_requests_vertical_resize_cursor() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        let _ = frame(&ctx, &mut st, &cd, Vec::new());
+        let mut found = false;
+        for y in (0..=700).map(|y| y as f32) {
+            let out = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(400.0, y));
+            if out.platform_output.cursor_icon == egui::CursorIcon::ResizeVertical {
+                found = true;
+                break;
+            }
+        }
+        assert!(found, "no vertical resize cursor along the pane divider");
+    }
+
+    #[test]
+    fn hovered_pane_divider_paints_its_accent_halo() {
+        let ctx = egui::Context::default();
+        let cd = ui_candles();
+        let mut st = ChartState::new("AAPL", "1D");
+        let _ = frame(&ctx, &mut st, &cd, Vec::new());
+        let mut divider_y = None;
+        for y in (0..=700).map(|y| y as f32) {
+            let out = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(400.0, y));
+            if out.platform_output.cursor_icon == egui::CursorIcon::ResizeVertical {
+                divider_y = Some(y);
+                break;
+            }
+        }
+        let y = divider_y.expect("vertical resize cursor along the pane divider");
+        // Adjacent frames at the same x: the hovered split gains its halo and
+        // nothing else (the rule and grip are painted either way).
+        let quiet = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(400.0, y - 40.0))
+            .shapes
+            .len();
+        let hovered = run_pointer_move(&ctx, &mut st, &cd, Pos2::new(400.0, y))
+            .shapes
+            .len();
+        assert_eq!(
+            hovered,
+            quiet + 1,
+            "hovered split gains only its accent halo (y={y})"
+        );
     }
 
     #[allow(clippy::too_many_arguments)]

@@ -9,7 +9,7 @@ painter.
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 427 unit/golden tests
+cargo test --workspace               # 453 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -80,6 +80,12 @@ the network responds.
 - Indicator browser and per-parameter editor for 83 TradingView-named studies,
   with automatic price/volume/separate-pane placement, session VWAP,
   higher-timeframe resampling and comparison-input correlation studies.
+- Every pane boundary is a visible splitter: a full-width rule with a centre
+  grip, promoted to accent blue while hovered or dragged, and the pointer turns
+  into a vertical resize cursor over it. Drag to rebalance any two adjacent
+  panes (minimum 40 px each); locking indicators freezes the study splits but
+  keeps the price/volume boundary live, and armed drawing tools keep the
+  crosshair instead. Proof: `docs/screenshots/pane-dividers-{dark,light}.png`.
 - Alerts for crossing above/below a price, polled against live quotes and
   persisted across restarts.
 - Live data: Binance crypto symbols stream closed bars over a websocket
