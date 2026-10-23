@@ -215,6 +215,10 @@ impl Provider for Coinbase {
             max_history_bars: 100_000,
         }
     }
+
+    fn supports_interval(&self, _sym: &Symbol, iv: Interval) -> bool {
+        Self::coinbase_granularity(iv).is_some()
+    }
 }
 
 #[cfg(test)]

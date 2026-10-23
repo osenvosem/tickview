@@ -218,6 +218,11 @@ impl Provider for Kraken {
             max_history_bars: 100_000,
         }
     }
+
+    /// Kraken has no 5m resolution, so the coarse 60 s floor is not enough.
+    fn supports_interval(&self, _sym: &Symbol, iv: Interval) -> bool {
+        Self::kraken_interval(iv).is_some()
+    }
 }
 
 #[cfg(test)]

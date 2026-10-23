@@ -34,7 +34,7 @@ pub use interval::{Interval, Unit};
 pub use kraken::Kraken;
 pub use nasdaq::Nasdaq;
 pub use provider::{Provider, ProviderCaps, Quote};
-pub use router::Router;
+pub use router::{Router, default_supports_interval};
 pub use search::{SearchEntry, SearchIndex, default_index, refresh_remote_index, search_with};
 pub use stream::{KlineStream, kline_interval};
 pub use symbol::{Symbol, SymbolKind};

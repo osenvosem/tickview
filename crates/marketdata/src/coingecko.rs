@@ -282,6 +282,11 @@ impl Provider for CoinGecko {
             max_history_bars: 8_000,
         }
     }
+
+    /// Free chart endpoint only serves 1h and 1d.
+    fn supports_interval(&self, _sym: &Symbol, iv: Interval) -> bool {
+        Self::chart_window(iv, 1).is_some()
+    }
 }
 
 #[cfg(test)]

@@ -61,7 +61,8 @@ impl Router {
             .or_insert_with(Instant::now) = Instant::now();
     }
 
-    /// True when this error should push the request to the next provider.
+    /// True when a quote error should push the request to the next provider.
+    /// History pre-filters on capability instead, so only quotes stop here.
     fn falls_through(e: &DataError) -> bool {
         !matches!(e, DataError::NotSupported(_))
     }
@@ -82,7 +83,21 @@ impl Router {
             .collect()
     }
 
-    /// Try every supporting provider in priority order; cooldown hard failures.
+    /// True when at least one provider that takes `sym` can serve `interval`.
+    /// Pure capability: cooldowns are ignored, so a rate limit never reads as
+    /// "no data" (that is what the toolbar greys out).
+    #[must_use]
+    pub fn supports_interval(&self, sym: &Symbol, interval: Interval) -> bool {
+        self.providers
+            .iter()
+            .filter(|p| p.supports(sym))
+            .any(|p| p.supports_interval(sym, interval))
+    }
+
+    /// Try every capable provider in priority order; cooldown hard failures.
+    /// Providers that cannot serve `interval` are skipped, and that verdict is
+    /// only reported when nobody could serve it - a real failure from a capable
+    /// provider is never masked by a later "not supported".
     pub fn fetch_history(
         &self,
         sym: &Symbol,
@@ -90,20 +105,25 @@ impl Router {
         before: Option<i64>,
         limit: u32,
     ) -> Result<Vec<Bar>, DataError> {
+        if !self.providers.iter().any(|p| p.supports(sym)) {
+            return Err(DataError::Unavailable(format!("no provider for {sym}")));
+        }
+        if !self.supports_interval(sym, interval) {
+            return Err(DataError::NotSupported("no provider serves this interval"));
+        }
         let cands = self.candidates(sym);
-        let mut last = DataError::Unavailable(format!("no provider for {sym}"));
+        let mut last = DataError::Unavailable(format!("{sym} providers are cooling down"));
         for p in cands {
+            if !p.supports_interval(sym, interval) {
+                continue;
+            }
             match p.fetch_history(sym, interval, before, limit) {
                 Ok(bars) => return Ok(bars),
                 Err(e) => {
                     if Self::trips_on(&e) {
                         self.trip(p.id());
                     }
-                    if Self::falls_through(&e) {
-                        last = e;
-                        continue;
-                    }
-                    return Err(e);
+                    last = e;
                 }
             }
         }
@@ -143,10 +163,19 @@ impl Router {
     }
 }
 
+/// Interval capability of the shipped provider set, cached so a UI frame does
+/// not rebuild eight agents. The app's hub is `Router::default()`, so this
+/// matches what the chart would actually try. No network, no cooldown state.
+#[must_use]
+pub fn default_supports_interval(sym: &Symbol, interval: Interval) -> bool {
+    static SHIPPED: std::sync::LazyLock<Router> = std::sync::LazyLock::new(Router::default);
+    SHIPPED.supports_interval(sym, interval)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::SymbolKind;
+    use crate::{ProviderCaps, SymbolKind};
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     struct Fake {
@@ -355,5 +384,126 @@ mod tests {
             1
         );
         assert!(r.alive("empt"));
+    }
+
+    /// A source limited to intervals at or above `floor_secs`, always failing.
+    struct Floored {
+        id: &'static str,
+        kind: SymbolKind,
+        floor_secs: u64,
+        err: DataError,
+        calls: &'static AtomicUsize,
+    }
+
+    impl Provider for Floored {
+        fn id(&self) -> &'static str {
+            self.id
+        }
+        fn supports(&self, sym: &Symbol) -> bool {
+            sym.kind == self.kind
+        }
+        fn caps(&self) -> ProviderCaps {
+            ProviderCaps {
+                min_interval_secs: self.floor_secs,
+                max_history_bars: 1_000,
+            }
+        }
+        fn fetch_history(
+            &self,
+            _s: &Symbol,
+            _i: Interval,
+            _b: Option<i64>,
+            _l: u32,
+        ) -> Result<Vec<Bar>, DataError> {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            Err(self.err.clone())
+        }
+        fn fetch_quote(&self, _s: &Symbol) -> Result<Quote, DataError> {
+            Err(self.err.clone())
+        }
+    }
+
+    /// The FX intraday case: Yahoo answers "no bars", the daily-only source
+    /// behind it says "not supported". The user needs to see the real failure,
+    /// and the daily-only source must not even be asked.
+    #[test]
+    fn real_failure_beats_a_later_not_supported() {
+        static CALLS_FAST: AtomicUsize = AtomicUsize::new(0);
+        static CALLS_DAILY: AtomicUsize = AtomicUsize::new(0);
+        let r = Router::new(vec![
+            Box::new(Floored {
+                id: "fast",
+                kind: SymbolKind::Stock,
+                floor_secs: 60,
+                err: DataError::Empty("no bars".into()),
+                calls: &CALLS_FAST,
+            }),
+            Box::new(Floored {
+                id: "daily",
+                kind: SymbolKind::Stock,
+                floor_secs: 86_400,
+                err: DataError::NotSupported("intraday"),
+                calls: &CALLS_DAILY,
+            }),
+        ]);
+        let err = r
+            .fetch_history(&stock(), Interval::parse("5m").unwrap(), None, 10)
+            .unwrap_err();
+        assert!(matches!(err, DataError::Empty(_)), "{err:?}");
+        assert_eq!(CALLS_FAST.load(Ordering::SeqCst), 1);
+        assert_eq!(CALLS_DAILY.load(Ordering::SeqCst), 0);
+        assert!(r.supports_interval(&stock(), Interval::parse("5m").unwrap()));
+    }
+
+    #[test]
+    fn no_capable_provider_reports_not_supported_untouched() {
+        static CALLS: AtomicUsize = AtomicUsize::new(0);
+        let r = Router::new(vec![Box::new(Floored {
+            id: "daily",
+            kind: SymbolKind::Stock,
+            floor_secs: 86_400,
+            err: DataError::Empty("no bars".into()),
+            calls: &CALLS,
+        })]);
+        assert!(!r.supports_interval(&stock(), Interval::parse("5m").unwrap()));
+        let err = r
+            .fetch_history(&stock(), Interval::parse("5m").unwrap(), None, 10)
+            .unwrap_err();
+        assert!(matches!(err, DataError::NotSupported(_)), "{err:?}");
+        assert_eq!(CALLS.load(Ordering::SeqCst), 0);
+        // Same provider, supported interval: asked normally.
+        assert!(r.supports_interval(&stock(), Interval::parse("D").unwrap()));
+        assert!(matches!(
+            r.fetch_history(&stock(), Interval::parse("D").unwrap(), None, 10)
+                .unwrap_err(),
+            DataError::Empty(_)
+        ));
+        assert_eq!(CALLS.load(Ordering::SeqCst), 1);
+    }
+
+    /// Cooldowns must not grey out the toolbar: a tripped provider still means
+    /// the interval is offered, just currently rate-limited.
+    #[test]
+    fn cooldown_keeps_interval_supported() {
+        static CALLS: AtomicUsize = AtomicUsize::new(0);
+        let r = Router::new(vec![Box::new(Floored {
+            id: "daily",
+            kind: SymbolKind::Stock,
+            floor_secs: 60,
+            err: DataError::RateLimited,
+            calls: &CALLS,
+        })]);
+        assert!(matches!(
+            r.fetch_history(&stock(), Interval::parse("5m").unwrap(), None, 10)
+                .unwrap_err(),
+            DataError::RateLimited
+        ));
+        assert!(r.supports_interval(&stock(), Interval::parse("5m").unwrap()));
+        // Provider is tripped, so the request finds no live candidate.
+        assert!(matches!(
+            r.fetch_history(&stock(), Interval::parse("5m").unwrap(), None, 10)
+                .unwrap_err(),
+            DataError::Unavailable(_)
+        ));
     }
 }

@@ -196,6 +196,10 @@ impl Provider for Binance {
             max_history_bars: 1_000_000,
         }
     }
+
+    fn supports_interval(&self, _sym: &Symbol, iv: Interval) -> bool {
+        Self::binance_interval(iv).is_some()
+    }
 }
 
 #[cfg(test)]

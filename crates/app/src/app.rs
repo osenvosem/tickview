@@ -9,7 +9,8 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 use eframe::egui::{self, Align2, Color32, Key, RichText, Sense, Stroke, vec2};
 use marketdata::{
     AlertManager, Bar, CandleCache, Condition, DataHub, Interval, Quote, Router, SearchIndex,
-    Symbol, SymbolKind, default_index, refresh_remote_index, search_with,
+    Symbol, SymbolKind, default_index, default_supports_interval, refresh_remote_index,
+    search_with,
 };
 use ta::Candles;
 use ta::registry::{Anchors, PVal, ParamKind, Params, StudyContext, TvId, def, defs};
@@ -38,6 +39,87 @@ pub const INTERVALS: [(&str, &str); 8] = [
     ("1w", "W"),
     ("1M", "M"),
 ];
+
+/// The toolbar resolutions as parsed intervals, fine to coarse.
+fn toolbar_intervals() -> impl DoubleEndedIterator<Item = Interval> {
+    INTERVALS
+        .iter()
+        .filter_map(|(code, _)| Interval::parse(code))
+}
+
+/// Nearest offered resolution to `want`, coarser first (a wider window is the
+/// least surprising fallback), then the finer side. `want` itself when nothing
+/// is offered - an honest error beats silently changing what was asked for.
+fn fit_interval_by(want: Interval, offered: impl Fn(Interval) -> bool) -> Interval {
+    if offered(want) {
+        return want;
+    }
+    toolbar_intervals()
+        .filter(|iv| iv.secs() > want.secs())
+        .chain(
+            toolbar_intervals()
+                .rev()
+                .filter(|iv| iv.secs() < want.secs()),
+        )
+        .find(|iv| offered(*iv))
+        .unwrap_or(want)
+}
+
+/// Fit `want` to what the shipped providers can serve for `symbol`.
+fn fit_interval(symbol: &Symbol, want: Interval) -> Interval {
+    fit_interval_by(want, |iv| default_supports_interval(symbol, iv))
+}
+
+/// How long a failed resolution stays greyed: longer than the router's 60 s
+/// provider cooldown, so a rate limit gets a fresh chance before the button
+/// lights up again.
+const DEAD_IV_TTL: Duration = Duration::from_secs(90);
+
+/// A resolution whose most recent full-page load failed, with the reason the
+/// providers gave. Greyed in the toolbar until it loads or the mark ages out.
+pub struct DeadIv {
+    pub iv: Interval,
+    pub at: Instant,
+    pub why: String,
+}
+
+impl DeadIv {
+    #[must_use]
+    fn fresh(&self) -> bool {
+        self.at.elapsed() < DEAD_IV_TTL
+    }
+}
+
+/// Why the toolbar greys `iv` out for `symbol`; `None` when it is offered.
+/// Static capability first (no shipped provider serves the resolution), then
+/// the last load failure for it.
+fn interval_block(symbol: &Symbol, dead: &[DeadIv], iv: Interval) -> Option<String> {
+    let ivs = iv.as_tv_str();
+    if !default_supports_interval(symbol, iv) {
+        return Some(format!("{} has no {} data", symbol.ticker, ivs));
+    }
+    dead.iter()
+        .find(|d| d.iv == iv && d.fresh())
+        .map(|d| format!("{} {}: {}", symbol.ticker, ivs, d.why))
+}
+
+/// The toolbar segments for a symbol, index-aligned with `INTERVALS`: label
+/// plus why it is greyed out (`None` = clickable).
+pub(crate) fn interval_segments(
+    symbol: &Symbol,
+    no_data: &[DeadIv],
+) -> Vec<crate::widgets::Seg<'static>> {
+    INTERVALS
+        .iter()
+        .filter_map(|(code, label)| {
+            let iv = Interval::parse(code)?;
+            Some(match interval_block(symbol, no_data, iv) {
+                Some(reason) => crate::widgets::Seg::off(label, reason),
+                None => crate::widgets::Seg::on(label),
+            })
+        })
+        .collect()
+}
 
 #[derive(Clone)]
 enum Job {
@@ -85,6 +167,9 @@ pub struct Tab {
     pub exhausted: bool,
     pub status: String,
     pub error: Option<String>,
+    /// Resolutions whose last full-page load failed; greyed in the toolbar with
+    /// the providers' reason until one loads or the mark ages out.
+    pub no_data: Vec<DeadIv>,
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
     /// Drawings are locked against mouse editing.
@@ -120,6 +205,7 @@ impl Tab {
             exhausted: false,
             status: String::from("loading…"),
             error: None,
+            no_data: Vec::new(),
             pending,
             locked: false,
             drawings_hidden: false,
@@ -991,8 +1077,10 @@ impl TickView {
         let mut next_tab_id = 1;
         if cfg.tabs.is_empty() {
             let symbol = cfg.symbol.clone().unwrap_or_else(default_symbol);
-            let interval =
-                Interval::parse(&cfg.interval).unwrap_or_else(|| Interval::parse("1d").unwrap());
+            let interval = fit_interval(
+                &symbol,
+                Interval::parse(&cfg.interval).unwrap_or_else(|| Interval::parse("1d").unwrap()),
+            );
             let chart_type = match cfg.chart_type {
                 1 => ChartType::Bars,
                 2 => ChartType::Line,
@@ -1011,8 +1099,11 @@ impl TickView {
             next_tab_id += 1;
         } else {
             for saved in &cfg.tabs {
-                let interval = Interval::parse(&saved.interval)
-                    .unwrap_or_else(|| Interval::parse("1d").unwrap());
+                let interval = fit_interval(
+                    &saved.symbol,
+                    Interval::parse(&saved.interval)
+                        .unwrap_or_else(|| Interval::parse("1d").unwrap()),
+                );
                 let pending = saved
                     .indicators
                     .iter()
@@ -1043,6 +1134,22 @@ impl TickView {
                 tab.chart.values_tooltip = cfg.values_tooltip_long_press;
                 tabs.push(tab);
                 next_tab_id += 1;
+            }
+        }
+
+        // QA hook: grey named resolutions on every tab so the unavailable
+        // interval state can be screenshotted (`TICKVIEW_DEAD_IVS=5m,1h`).
+        if let Ok(list) = std::env::var("TICKVIEW_DEAD_IVS") {
+            for tab in &mut tabs {
+                for code in list.split(',') {
+                    if let Some(iv) = Interval::parse(code.trim()) {
+                        tab.no_data.push(DeadIv {
+                            iv,
+                            at: Instant::now(),
+                            why: "QA".into(),
+                        });
+                    }
+                }
             }
         }
         let active = cfg.active_tab.min(tabs.len().saturating_sub(1));
@@ -2092,6 +2199,13 @@ impl TickView {
         tab.chart.view.count = 0;
         tab.exhausted = false;
         tab.error = None;
+        tab.no_data.clear();
+        // The new symbol may not serve the resolution the chart was on.
+        let fit = fit_interval(&s, tab.interval);
+        if fit != tab.interval {
+            tab.interval = fit;
+            tab.chart.interval = fit.as_tv_str();
+        }
         self.request_history(ti, None, 500);
         self.persist();
         self.restart_stream();
@@ -2139,7 +2253,7 @@ impl TickView {
     }
 
     pub fn add_tab_with_symbol(&mut self, symbol: Symbol) {
-        let interval = self.tabs[self.active].interval;
+        let interval = fit_interval(&symbol, self.tabs[self.active].interval);
         let id = self.next_tab_id;
         self.next_tab_id += 1;
         self.tabs.push(Tab::new(
@@ -2237,6 +2351,7 @@ impl TickView {
                     }
                     match bars {
                         Ok(bars) => {
+                            self.tabs[ti].no_data.retain(|d| d.iv != iv);
                             if before.is_some() {
                                 if bars.is_empty() {
                                     self.tabs[ti].exhausted = true;
@@ -2362,6 +2477,18 @@ impl TickView {
                             }
                         }
                         Err(e) => {
+                            // Nothing served this resolution: grey it out and
+                            // keep the providers' reason for the tooltip. Only a
+                            // full-page failure counts - paging past the start of
+                            // history is not "no data".
+                            if before.is_none() {
+                                self.tabs[ti].no_data.retain(|d| d.iv != iv && d.fresh());
+                                self.tabs[ti].no_data.push(DeadIv {
+                                    iv,
+                                    at: Instant::now(),
+                                    why: e.clone(),
+                                });
+                            }
                             self.tabs[ti].error = Some(e);
                             self.tabs[ti].status = String::from("error");
                         }
@@ -4375,5 +4502,76 @@ mod tests {
         assert_eq!(pasted, vec![2]);
         assert_eq!(selection.ids().iter().copied().collect::<Vec<_>>(), vec![2]);
         assert!((drawings[1].a.price - 101.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn greyed_resolutions_explain_themselves() {
+        let iv = |s: &str| Interval::parse(s).unwrap();
+        // Shipped providers cover the whole toolbar for a plain stock.
+        let aapl = Symbol::new("AAPL", "NASDAQ", SymbolKind::Stock, "USD");
+        for code in INTERVALS.iter().map(|(c, _)| iv(c)) {
+            assert_eq!(interval_block(&aapl, &[], code), None, "{code:?}");
+        }
+        // A kind nobody serves greys everything, with the reason named.
+        let orphan = Symbol::new("XYZ", "NOWHERE", SymbolKind::Cfd, "USD");
+        let tip = interval_block(&orphan, &[], iv("1d")).unwrap();
+        assert!(tip.contains("XYZ") && tip.contains("D"), "{tip}");
+        // A resolution the last full-page load failed for is greyed, reason
+        // and all, and only that resolution.
+        let dead = |why: &str| {
+            vec![DeadIv {
+                iv: iv("5m"),
+                at: Instant::now(),
+                why: why.into(),
+            }]
+        };
+        let tip = interval_block(&aapl, &dead("rate limited"), iv("5m")).unwrap();
+        assert!(
+            tip.contains("AAPL") && tip.contains("5m") && tip.contains("rate limited"),
+            "{tip}"
+        );
+        assert_eq!(interval_block(&aapl, &dead("rate limited"), iv("1h")), None);
+        // An aged mark stops blocking: a transient limit cannot grey forever.
+        let stale = vec![DeadIv {
+            iv: iv("5m"),
+            at: Instant::now() - DEAD_IV_TTL - Duration::from_secs(1),
+            why: "rate limited".into(),
+        }];
+        assert_eq!(interval_block(&aapl, &stale, iv("5m")), None);
+    }
+
+    #[test]
+    fn toolbar_segments_stay_aligned_with_their_labels() {
+        let iv5 = Interval::parse("5m").unwrap();
+        let aapl = Symbol::new("AAPL", "NASDAQ", SymbolKind::Stock, "USD");
+        let dead = vec![DeadIv {
+            iv: iv5,
+            at: Instant::now(),
+            why: "rate limited".into(),
+        }];
+        let segs = interval_segments(&aapl, &dead);
+        assert_eq!(segs.len(), INTERVALS.len());
+        for (seg, (_, label)) in segs.iter().zip(INTERVALS) {
+            assert_eq!(seg.label, label);
+        }
+        let i = INTERVALS
+            .iter()
+            .position(|(c, _)| Interval::parse(c) == Some(iv5))
+            .unwrap();
+        assert!(segs[i].disabled.is_some(), "dead 5m was clickable");
+        assert!(segs[(i + 1) % segs.len()].disabled.is_none());
+    }
+
+    #[test]
+    fn fit_interval_prefers_the_nearest_coarser_resolution() {
+        let iv = |s: &str| Interval::parse(s).unwrap();
+        let offered = |i: Interval| i == iv("1h") || i == iv("1d");
+        assert_eq!(fit_interval_by(iv("1h"), offered), iv("1h"));
+        assert_eq!(fit_interval_by(iv("5m"), offered), iv("1h"));
+        assert_eq!(fit_interval_by(iv("1m"), offered), iv("1h"));
+        // Nothing coarser exists: fall back to the finer side.
+        assert_eq!(fit_interval_by(iv("1M"), offered), iv("1d"));
+        // Nothing offered at all: keep what was asked for.
+        assert_eq!(fit_interval_by(iv("5m"), |_| false), iv("5m"));
     }
 }

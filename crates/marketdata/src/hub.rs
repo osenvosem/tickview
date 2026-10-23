@@ -12,6 +12,12 @@ pub trait BarsSource {
         before: Option<i64>,
         limit: u32,
     ) -> Result<Vec<Bar>, DataError>;
+
+    /// Whether the source can serve `iv` for `sym` at all (capability, not
+    /// liveness). Sources without interval limits keep this `true`.
+    fn supports_interval(&self, _sym: &Symbol, _iv: Interval) -> bool {
+        true
+    }
 }
 
 impl BarsSource for Router {
@@ -23,6 +29,10 @@ impl BarsSource for Router {
         limit: u32,
     ) -> Result<Vec<Bar>, DataError> {
         Router::fetch_history(self, sym, iv, before, limit)
+    }
+
+    fn supports_interval(&self, sym: &Symbol, iv: Interval) -> bool {
+        Router::supports_interval(self, sym, iv)
     }
 }
 
@@ -42,6 +52,12 @@ impl<S: BarsSource> DataHub<S> {
     #[must_use]
     pub fn new(source: S, cache: CandleCache) -> Self {
         Self { source, cache }
+    }
+
+    /// Whether the configured sources can serve `iv` for `sym`; no network.
+    #[must_use]
+    pub fn supports_interval(&self, sym: &Symbol, iv: Interval) -> bool {
+        self.source.supports_interval(sym, iv)
     }
 
     #[must_use]

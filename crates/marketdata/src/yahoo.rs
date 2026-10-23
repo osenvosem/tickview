@@ -375,6 +375,10 @@ impl Provider for Yahoo {
             max_history_bars: 80_000,
         }
     }
+
+    fn supports_interval(&self, _sym: &Symbol, iv: Interval) -> bool {
+        Self::yahoo_interval(iv).is_some()
+    }
 }
 
 #[cfg(test)]

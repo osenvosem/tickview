@@ -2,7 +2,7 @@
 
 use eframe::egui::{self, Align2, CornerRadius, Layout, Margin, Sense, Stroke, vec2};
 
-use crate::app::{INTERVALS, TickView};
+use crate::app::{INTERVALS, TickView, interval_segments};
 use crate::icons::Icon;
 use crate::theme::{
     Palette, font_medium, font_mono, font_regular, font_semibold, space, type_size,
@@ -163,14 +163,17 @@ pub fn command_bar(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
 
             widgets::vline(&mut child, p, space::COMMAND_H);
 
-            let labels: Vec<&str> = INTERVALS.iter().map(|(_, label)| *label).collect();
             let current = INTERVALS
                 .iter()
                 .position(|(code, _)| {
                     marketdata::Interval::parse(code) == Some(app.tabs[app.active].interval)
                 })
                 .unwrap_or(5);
-            if let Some(i) = widgets::segmented(&mut child, p, &labels, current)
+            // Grey the resolutions this symbol cannot serve - plus any the last
+            // load failed for - and explain each reason on hover.
+            let tab = &app.tabs[app.active];
+            let segs = interval_segments(&tab.symbol, &tab.no_data);
+            if let Some(i) = widgets::segmented(&mut child, p, &segs, current)
                 && let Some(iv) = marketdata::Interval::parse(INTERVALS[i].0)
             {
                 app.switch_interval(iv);

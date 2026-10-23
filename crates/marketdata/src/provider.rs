@@ -32,6 +32,15 @@ pub trait Provider: Send + Sync {
 
     fn supports(&self, sym: &Symbol) -> bool;
 
+    /// Can this provider serve bars for `sym` at `iv`? Static capability
+    /// only: interval tables and depth limits, never network or cooldown state,
+    /// so a rate limit does not read as "no data".
+    fn supports_interval(&self, sym: &Symbol, iv: Interval) -> bool {
+        let _ = sym;
+        let caps = self.caps();
+        caps.max_history_bars > 0 && iv.secs() >= caps.min_interval_secs
+    }
+
     /// Bars in ascending time order, up to `limit`, strictly before `before`
     /// (unix secs) when provided.
     fn fetch_history(
@@ -98,5 +107,31 @@ mod tests {
             1
         );
         assert_eq!(p.caps().min_interval_secs, 60);
+    }
+
+    /// The trait floor follows `caps()`; live providers override with their
+    /// exact interval tables, so resolution holes (Kraken has no 5m, Coinbase
+    /// no 4h, CoinGecko only 1h/1d) and daily-only sources show up honestly.
+    #[test]
+    fn interval_capability_uses_provider_tables() {
+        let iv = |s: &str| Interval::parse(s).unwrap();
+        let crypto = Symbol::new("BTCUSDT", "BINANCE", crate::SymbolKind::Crypto, "USDT");
+        let fx = Symbol::new("GBPUSD", "FX", crate::SymbolKind::Fx, "USD");
+        let stock = Symbol::new("AAPL", "NASDAQ", crate::SymbolKind::Stock, "USD");
+        let dummy: Box<dyn Provider> = Box::new(Dummy);
+        assert!(dummy.supports_interval(&crypto, iv("1m")));
+        assert!(crate::Binance::new().supports_interval(&crypto, iv("5m")));
+        assert!(crate::Kraken::new().supports_interval(&crypto, iv("15m")));
+        assert!(!crate::Kraken::new().supports_interval(&crypto, iv("5m")));
+        assert!(crate::Coinbase::new().supports_interval(&crypto, iv("1h")));
+        assert!(!crate::Coinbase::new().supports_interval(&crypto, iv("4h")));
+        assert!(crate::CoinGecko::new().supports_interval(&crypto, iv("1d")));
+        assert!(!crate::CoinGecko::new().supports_interval(&crypto, iv("15m")));
+        assert!(crate::Yahoo::new().supports_interval(&fx, iv("5m")));
+        assert!(!crate::Frankfurter::new().supports_interval(&fx, iv("1h")));
+        assert!(crate::Frankfurter::new().supports_interval(&fx, iv("1d")));
+        assert!(!crate::Nasdaq::new().supports_interval(&stock, iv("5m")));
+        // Quotes-only source never serves bars.
+        assert!(!crate::ErApi::new().supports_interval(&fx, iv("1d")));
     }
 }

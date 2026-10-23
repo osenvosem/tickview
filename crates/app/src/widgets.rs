@@ -194,31 +194,64 @@ pub fn checkbox(ui: &mut Ui, p: &Palette, checked: &mut bool, label: &str) -> eg
     resp
 }
 
-/// A TradingView-style interval segmented control. Returns the clicked index.
-pub fn segmented(ui: &mut Ui, p: &Palette, labels: &[&str], selected: usize) -> Option<usize> {
+/// One segment of a segmented control.
+pub struct Seg<'a> {
+    pub label: &'a str,
+    /// `Some(reason)` greys the segment out and explains it on hover.
+    pub disabled: Option<String>,
+}
+
+impl<'a> Seg<'a> {
+    /// A clickable segment.
+    #[must_use]
+    pub fn on(label: &'a str) -> Self {
+        Self {
+            label,
+            disabled: None,
+        }
+    }
+
+    /// A greyed segment with the reason it is unavailable.
+    #[must_use]
+    pub fn off(label: &'a str, reason: impl Into<String>) -> Self {
+        Self {
+            label,
+            disabled: Some(reason.into()),
+        }
+    }
+}
+
+/// A TradingView-style interval segmented control. Returns the clicked index;
+/// greyed segments never fire, and say why on hover.
+pub fn segmented(ui: &mut Ui, p: &Palette, segs: &[Seg<'_>], selected: usize) -> Option<usize> {
     let compact = ui.available_width() < 700.0;
     let w = if compact { 27.0 } else { 31.0 };
     let h = 26.0;
     let mut picked = None;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        for (i, label) in labels.iter().enumerate() {
+        for (i, seg) in segs.iter().enumerate() {
             let (rect, resp) = ui.allocate_exact_size(vec2(w, h), Sense::click());
             let active = i == selected;
+            // The live selection stays legible even when it has no data: it
+            // reports current state, and the banner already carries the reason.
+            let off = seg.disabled.is_some() && !active;
             if active {
                 ui.painter().rect_filled(
                     rect.shrink2(vec2(2.0, 3.0)),
                     CornerRadius::same(space::RADIUS as u8),
                     p.selection,
                 );
-            } else if resp.hovered() {
+            } else if resp.hovered() && !off {
                 ui.painter().rect_filled(
                     rect.shrink2(vec2(2.0, 3.0)),
                     CornerRadius::same(space::RADIUS as u8),
                     p.hover,
                 );
             }
-            let color = if active || resp.hovered() {
+            let color = if off {
+                p.faint
+            } else if active || resp.hovered() {
                 p.text
             } else {
                 p.muted
@@ -226,7 +259,7 @@ pub fn segmented(ui: &mut Ui, p: &Palette, labels: &[&str], selected: usize) -> 
             ui.painter().text(
                 rect.center(),
                 Align2::CENTER_CENTER,
-                *label,
+                seg.label,
                 if active {
                     font_semibold(type_size::SMALL)
                 } else {
@@ -244,7 +277,9 @@ pub fn segmented(ui: &mut Ui, p: &Palette, labels: &[&str], selected: usize) -> 
                     p.accent,
                 );
             }
-            if resp.clicked() {
+            if let Some(reason) = seg.disabled.as_deref() {
+                resp.on_hover_text(reason);
+            } else if resp.clicked() {
                 picked = Some(i);
             }
         }

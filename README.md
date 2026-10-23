@@ -30,6 +30,13 @@ the network responds.
   styles (candles, hollow candles, bars, columns, line, area, baseline, Heikin
   Ashi), log scale, and a status bar with provider state, bar count, UTC clock
   and active tool.
+- Resolutions the active symbol cannot serve are greyed out and refuse clicks:
+  either no shipped provider offers that resolution, or the last full-page load
+  failed for it (the hover text carries the providers' reason, e.g. `GBPUSD 5m:
+  rate limited`). Marks clear when the resolution loads and expire after 90 s,
+  past the router's 60 s provider cooldown, so a transient limit never disables
+  a timeframe for good. A symbol that cannot serve its saved resolution opens on
+  the nearest offered one (coarser first).
 - Drawing tools: 94 rail tools across TradingView's eight drawing groups.
   Cursors include Cross and Eraser; trend tools cover lines, channels and four
   pitchfork variants; Gann/Fibonacci includes channel, time, fan, circle,
@@ -99,6 +106,7 @@ the network responds.
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
 | `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar` | open a dialog, proof sheet, or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
+| `TICKVIEW_DEAD_IVS=5m,1h` | grey those resolutions on every tab, for screenshotting the unavailable state |
 
 ## Architecture
 
