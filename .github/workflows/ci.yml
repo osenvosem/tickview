@@ -15,11 +15,13 @@ jobs:
   checks:
     name: Lints, tests, generated artifacts
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
       # X11/Wayland development files: winit/rfd link against these on Linux.
       - name: System dependencies
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -52,3 +54,4 @@ jobs:
 
       - name: Release build
         run: cargo build --release --locked
+        timeout-minutes: 40

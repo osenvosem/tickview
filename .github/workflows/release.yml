@@ -23,6 +23,7 @@ jobs:
   bump:
     name: Version bump
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     outputs:
       version: ${{ steps.bump.outputs.version }}
       sha: ${{ steps.commit.outputs.sha }}
@@ -32,6 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Compute and apply the next version
+        timeout-minutes: 10
         id: bump
         run: |
           if [ -n "${{ inputs.version }}" ]; then
@@ -41,6 +43,7 @@ jobs:
           fi
 
       - name: Commit and tag
+        timeout-minutes: 10
         id: commit
         run: |
           VERSION="${{ steps.bump.outputs.version }}"
@@ -59,6 +62,7 @@ jobs:
     name: ${{ matrix.label }}
     needs: bump
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +105,7 @@ jobs:
       # winit/rfd link against these on Linux; the ARM64 row also proves the
       # glibc baseline stays installable there.
       - name: System dependencies (Linux)
+        timeout-minutes: 10
         if: matrix.family == 'linux'
         run: |
           sudo apt-get update
@@ -113,12 +118,15 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Add Rust target
+        timeout-minutes: 5
         run: rustup target add ${{ matrix.target }}
 
       - name: Build release binary
+        timeout-minutes: 45
         run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Package tar.gz (Linux)
+        timeout-minutes: 10
         if: matrix.family == 'linux'
         shell: bash
         env:
@@ -131,28 +139,31 @@ jobs:
           tar czf "dist/${STAGE}.tar.gz" "$STAGE"
 
       - name: Package .deb (Linux)
+        timeout-minutes: 20
         if: matrix.family == 'linux'
         shell: bash
         env:
           VERSION: ${{ needs.bump.outputs.version }}
         run: |
           cargo install cargo-deb --locked
-          (cd crates/app && cargo deb --target ${{ matrix.target }} --no-build --no-strip)
+          cargo deb -p tickview --target ${{ matrix.target }} --no-build --no-strip
           mv "target/${{ matrix.target }}/debian/"tickview_*.deb \
             "dist/tickview-${VERSION}-linux-${{ matrix.arch }}.deb"
 
       - name: Package .rpm (Linux)
+        timeout-minutes: 20
         if: matrix.family == 'linux'
         shell: bash
         env:
           VERSION: ${{ needs.bump.outputs.version }}
         run: |
           cargo install cargo-generate-rpm --locked
-          (cd crates/app && cargo generate-rpm --target ${{ matrix.target }})
+          cargo generate-rpm -p crates/app --target ${{ matrix.target }}
           mv "target/${{ matrix.target }}/generate-rpm/"tickview-*.rpm \
             "dist/tickview-${VERSION}-linux-${{ matrix.arch }}.rpm"
 
       - name: Package .dmg and .zip (macOS)
+        timeout-minutes: 20
         if: matrix.family == 'macos'
         shell: bash
         env:
@@ -163,6 +174,7 @@ jobs:
             "target/${{ matrix.target }}/release/tickview" "$VERSION" "${{ matrix.arch }}" dist
 
       - name: Package .zip (Windows)
+        timeout-minutes: 10
         if: matrix.family == 'windows'
         shell: pwsh
         run: |
@@ -175,6 +187,7 @@ jobs:
           Compress-Archive -Path $Stage -DestinationPath "dist/$Stage.zip"
 
       - uses: actions/upload-artifact@v7
+        timeout-minutes: 15
         with:
           name: dist-${{ matrix.family }}-${{ matrix.arch }}
           path: dist/
@@ -185,6 +198,7 @@ jobs:
     name: GitHub release
     needs: [bump, build]
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -192,6 +206,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download built artifacts
+        timeout-minutes: 10
         uses: actions/download-artifact@v8
         with:
           pattern: dist-*
@@ -199,6 +214,7 @@ jobs:
           merge-multiple: true
 
       - name: Assemble release notes
+        timeout-minutes: 10
         env:
           VERSION: ${{ needs.bump.outputs.version }}
         run: |
@@ -242,6 +258,7 @@ jobs:
           cat NOTES.md
 
       - name: Publish
+        timeout-minutes: 10
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.bump.outputs.version }}

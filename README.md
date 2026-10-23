@@ -61,12 +61,14 @@ crates/app/pack/macos/make-dmg.sh \
 # Linux .deb / .rpm (on Linux).
 cargo install cargo-deb cargo-generate-rpm
 cargo build --release
-(cd crates/app && cargo deb --no-build)
-(cd crates/app && cargo generate-rpm)
+cargo deb -p tickview --no-build --no-strip
+cargo generate-rpm -p crates/app
 ```
 
-Package metadata lives in `crates/app/Cargo.toml`
-(`[package.metadata.deb]`, `[package.metadata.generate-rpm]`); the menu entry
+Run both packaging commands from the repository root: `-p` selects the app
+crate, and asset sources in `[package.metadata.deb]` /
+`[package.metadata.generate-rpm]` resolve against `crates/app` (hence
+`../../THIRD_PARTY_NOTICES.md` for the repo-root notices file). The menu entry
 and icon live in `crates/app/pack/`.
 
 ## Releasing
