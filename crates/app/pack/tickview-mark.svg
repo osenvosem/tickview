@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="TickView">
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="#0E1622" stroke="#243349" stroke-width="4"/>
+  <g stroke-linecap="round">
+    <path d="M78 44v168" stroke="#26A69A" stroke-width="8"/>
+    <rect x="60" y="96" width="36" height="84" rx="6" fill="#26A69A"/>
+    <path d="M128 36v176" stroke="#EF5350" stroke-width="8"/>
+    <rect x="110" y="68" width="36" height="92" rx="6" fill="#EF5350"/>
+    <path d="M178 60v152" stroke="#26A69A" stroke-width="8"/>
+    <rect x="160" y="116" width="36" height="72" rx="6" fill="#26A69A"/>
+  </g>
+  <path d="M40 168c26 0 30-56 56-56s30 40 56 40 26-52 64-56" fill="none" stroke="#FFB300" stroke-width="10" stroke-linecap="round"/>
+</svg>

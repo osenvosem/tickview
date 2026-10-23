@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TickView
+GenericName=Charting terminal
+Comment=TradingView-parity charts in Rust + egui
+Exec=tickview
+Icon=tickview
+Terminal=false
+Keywords=chart;charts;trading;markets;candles;technical analysis;
+StartupNotify=true

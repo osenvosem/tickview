@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "Repo tooling: study-metadata parity check and re-scrape"
+description = "Repo tooling: parity manifest checks, status tables, app-icon rendering"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,3 +13,5 @@ workspace = true
 ta = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+resvg = "0.48.1"
+image = { version = "0.25", default-features = false, features = ["png"] }

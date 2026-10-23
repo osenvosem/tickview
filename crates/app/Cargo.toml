@@ -5,6 +5,8 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+homepage = "https://github.com/osenvosem/tickview"
+repository = "https://github.com/osenvosem/tickview"
 
 [lints]
 workspace = true
@@ -24,3 +26,57 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 resvg = "0.48.1"
 include_dir = "0.7.4"
 rfd = "0.17.2"
+
+# Linux packaging. The dependency lists are explicit (not `$auto`) so the
+# produced packages do not depend on which -dev packages happen to be
+# installed on the build runner: X11 libs are dlopened by winit and the GL
+# loader, but a desktop session still needs them at runtime.
+[package.metadata.deb]
+name = "tickview"
+maintainer = "osenvosem <osenvosem@users.noreply.github.com>"
+copyright = "2026 osenvosem"
+section = "utils"
+priority = "optional"
+# Code is MIT; the binary embeds OFL fonts and CC BY-SA OpenMoji artwork.
+license = "MIT AND OFL-1.1 AND CC-BY-SA-4.0"
+license-files = ["../../LICENSE", "../../THIRD_PARTY_NOTICES.md", "assets/openmoji/LICENSE.txt"]
+depends = "libc6, libx11-6, libxcb1, libxkbcommon0, libwayland-client0, libgl1, libegl1"
+recommends = "xdg-desktop-portal"
+extended-description = """\
+TradingView-parity charting terminal in Rust + egui: multi-tab charts, eight
+interval and eight series styles, 83 TradingView-named studies, the full
+drawing catalog, watchlist, alerts and bar replay.
+
+Alpha quality. Market data comes from free, keyless public endpoints (Yahoo,
+Nasdaq, Binance, Coinbase, Kraken, CoinGecko, Frankfurter, ExchangeRate-API);
+nothing here is investment advice and no market data is redistributed."""
+assets = [
+    ["target/release/tickview", "usr/bin/", "755"],
+    ["pack/tickview.desktop", "usr/share/applications/tickview.desktop", "644"],
+    ["pack/tickview-mark.svg", "usr/share/icons/hicolor/scalable/apps/tickview.svg", "644"],
+    ["pack/tickview-mark.png", "usr/share/icons/hicolor/1024x1024/apps/tickview.png", "644"],
+    ["../../THIRD_PARTY_NOTICES.md", "usr/share/doc/tickview/THIRD_PARTY_NOTICES.md", "644"],
+]
+
+[package.metadata.generate-rpm]
+auto-req = "no"
+license = "MIT AND OFL-1.1 AND CC-BY-SA-4.0"
+assets = [
+    { source = "target/release/tickview", dest = "/usr/bin/tickview", mode = "755" },
+    { source = "pack/tickview.desktop", dest = "/usr/share/applications/tickview.desktop", mode = "644" },
+    { source = "pack/tickview-mark.svg", dest = "/usr/share/icons/hicolor/scalable/apps/tickview.svg", mode = "644" },
+    { source = "pack/tickview-mark.png", dest = "/usr/share/icons/hicolor/1024x1024/apps/tickview.png", mode = "644" },
+    { source = "../../THIRD_PARTY_NOTICES.md", dest = "/usr/share/doc/tickview/THIRD_PARTY_NOTICES.md", mode = "644" },
+]
+
+[package.metadata.generate-rpm.requires]
+glibc = "*"
+libX11 = "*"
+libxcb = "*"
+libxkbcommon = "*"
+libwayland-client = "*"
+mesa-libGL = "*"
+libglvnd-egl = "*"
+
+[package.metadata.generate-rpm.recommends]
+xdg-desktop-portal = "*"
