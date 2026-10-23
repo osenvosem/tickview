@@ -356,6 +356,8 @@ fn input_row(ui: &mut Ui, p: &Palette, s: &mut SymbolSearch, w: f32) -> bool {
                     .color(p.faint),
             )
             .desired_width(field.width() - 24.0)
+            .min_size(vec2(field.width() - 24.0, INPUT_ROW_H - 8.0))
+            .align(Align2::LEFT_CENTER)
             .frame(egui::Frame::NONE)
             .text_color(p.text)
             .font(font_regular(14.0)),
@@ -984,5 +986,77 @@ mod tests {
     fn avatar_color_is_stable_and_in_set() {
         assert_eq!(avatar_color("BTCUSDT"), avatar_color("BTCUSDT"));
         assert!(AVATAR_COLORS.contains(&avatar_color("AAPL")));
+    }
+
+    /// The query TextEdit must own the whole field interior and centre galley
+    /// + caret in it, not ride the top of the row.
+    #[test]
+    fn query_field_caret_is_vertically_centered() {
+        let ctx = egui::Context::default();
+        ctx.set_pixels_per_point(1.0);
+        let p = Palette::dark();
+        let mut s = SymbolSearch {
+            open: true,
+            focus_req: true,
+            q: "AAPL".to_owned(),
+            ..Default::default()
+        };
+        let idx = SearchIndex::default();
+        let wl = vec![sym("AAPL")];
+        s.refresh(&idx, &wl);
+        let mut out = egui::FullOutput::default();
+        for i in 0..3 {
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(pos2(0.0, 0.0), vec2(1440.0, 900.0))),
+                time: Some(0.1 * f64::from(i + 1)),
+                focused: true,
+                ..Default::default()
+            };
+            out = ctx.run_ui(raw, |ui| {
+                let _ = show(ui.ctx(), &p, &mut s, &idx, &wl, None);
+            });
+            out.textures_delta.clear();
+        }
+        let ime = out
+            .platform_output
+            .ime
+            .expect("focused TextEdit reports IME output");
+        // The field is the rounded `p.panel` fill `input_row` paints behind the
+        // TextEdit; egui's IME rect is the galley/caret rect, so the field rect
+        // is what tells us whether the text is optically centred.
+        let field = out
+            .shapes
+            .iter()
+            .filter_map(|cs| match &cs.shape {
+                egui::Shape::Rect(r)
+                    if r.fill == p.panel
+                        && r.corner_radius == CornerRadius::same(8)
+                        && r.rect.width() > 500.0 =>
+                {
+                    Some(r.rect)
+                }
+                _ => None,
+            })
+            .next()
+            .expect("query field background is painted");
+        assert!(
+            field.height() >= INPUT_ROW_H - 8.0,
+            "query field should be 40px tall: {field:?}"
+        );
+        assert!(
+            (ime.cursor_rect.center().y - field.center().y).abs() <= 1.5,
+            "caret should sit at the field centre: field={field:?} caret={:?}",
+            ime.cursor_rect,
+        );
+        assert!(
+            (ime.rect.center().y - field.center().y).abs() <= 1.5,
+            "text should sit at the field centre: field={field:?} text={:?}",
+            ime.rect,
+        );
+        assert!(
+            ime.rect.height() >= 12.0,
+            "galley should occupy a full text row: {:?}",
+            ime.rect,
+        );
     }
 }
