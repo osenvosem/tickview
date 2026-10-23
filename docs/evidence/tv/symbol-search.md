@@ -1,6 +1,6 @@
 # Symbol search parity evidence
 
-- Target: TradingView Desktop 3.4.1 symbol-search dialog (`⌘K`).
+- Target: the reference desktop app (version 3.4.1) symbol-search dialog (`⌘K`).
 - Card: fixed 840x680 (clamped to viewport minus gutter on small screens),
   8px radius, anchored top-centre at `y = 92`, not movable, not resizable,
   no title bar, no window scrollbar.
@@ -42,7 +42,7 @@ Offline search is therefore asserted at the code and test level, not by a
 sandboxed GUI run.
 - Screenshots: `docs/screenshots/parity/search-dark.png`,
   `docs/screenshots/parity/search-light.png` (`TICKVIEW_SCENE=search
-  TICKVIEW_THEME=<dark|light>`, query `a`, 1440x900). A live TradingView
+  TICKVIEW_THEME=<dark|light>`, query `a`, 1440x900). A live reference-app
   screenshot is still pending; it needs a manual capture from the desktop app.
 - Regression tests:
   - `symbolsearch::tests::chip_kind_mapping`

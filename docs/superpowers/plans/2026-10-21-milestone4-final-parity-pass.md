@@ -4,11 +4,11 @@
 
 **Goal:** Integrate the completed milestone branches, regenerate every parity artifact, and run the final side-by-side review so the manifest, docs, screenshots, and gates all agree.
 
-**Architecture:** Merge `feat/m3-study-catalog` into `main` (clean merge verified; base = M2 merge commit). All regeneration happens on `main`: STATUS from the manifest, an evidence index over `docs/evidence/`, fresh dark/light screenshots, then a written side-by-side review against TV reference evidence. No new product features — M4 only integrates, regenerates, and verifies.
+**Architecture:** Merge `feat/m3-study-catalog` into `main` (clean merge verified; base = M2 merge commit). All regeneration happens on `main`: STATUS from the manifest, an evidence index over `docs/evidence/`, fresh dark/light screenshots, then a written side-by-side review against the reference evidence. No new product features — M4 only integrates, regenerates, and verifies.
 
 **Tech Stack:** Rust workspace (`ta`, `tickchart`, `marketdata`, `app`/`tickview`, `xtask`), `cargo`, egui screenshot hook (`TICKVIEW_SNAPSHOT` + `TICKVIEW_CONFIG_DIR`), markdown docs.
 
-**Spec:** `docs/superpowers/specs/2026-10-20-tradingview-full-parity-design.md` (§14 Milestone 4, §15 Acceptance Criteria)
+**Spec:** `docs/superpowers/specs/2026-10-20-reference-app-full-parity-design.md` (§14 Milestone 4, §15 Acceptance Criteria)
 
 ## Global Constraints
 
@@ -24,7 +24,7 @@
 - Excluded-without-reason entries — xtask parity validation is the pin; task 2 runs it on the merged tree.
 - Screenshots taken before data/comparison arrive — use the warm-cache two-pass pattern; task 3 verifies each image shows content, not a SYNCING frame.
 - Dead actions in integrated UI — toolbar/menu coverage already pinned by `every_tool_is_wired_and_in_catalog` and `every_study_is_addable_and_in_catalog`; task 1 re-runs them post-merge.
-- Reference drift — final review doc cites the specific TV evidence file per area; task 4.
+- Reference drift — final review doc cites the specific reference evidence file per area; task 4.
 
 ---
 
@@ -60,7 +60,7 @@
 **Files:**
 - Create: `docs/parity/final-review.md`
 
-- [x] **Step 1:** Write `final-review.md`: one section per review area (drawing UI + selection toolbar, icon set, Gann fan geometry, representative studies — price/volume/oscillator/HTF-correlation), each citing the screenshot pair and the TV reference evidence file (`docs/evidence/tv/gann-fan.md`, `drawings-*.md`, `studies-catalog-notes.md`, `docs/evidence/tv-studies-defaults.json`), with an explicit verdict line (match / deviation + reason).
+- [x] **Step 1:** Write `final-review.md`: one section per review area (drawing UI + selection toolbar, icon set, Gann fan geometry, representative studies — price/volume/oscillator/HTF-correlation), each citing the screenshot pair and the reference evidence file (`docs/evidence/tv/gann-fan.md`, `drawings-*.md`, `studies-catalog-notes.md`, `docs/evidence/tv-studies-defaults.json`), with an explicit verdict line (match / deviation + reason).
 - [x] **Step 2:** Commit — `git add docs/screenshots/parity docs/parity/final-review.md && git commit -m "docs: milestone 4 final side-by-side parity review"`.
 
 ### Task 5: Final gate + acceptance checklist

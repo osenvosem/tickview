@@ -1,15 +1,15 @@
-# Patterns / Elliott / cycles family — TV evidence
+# Patterns / Elliott / cycles family — reference evidence
 
-Source: TradingView 3.4.1 left toolbar (captured 2026-10-20) + TV docs
+Source: the reference app (version 3.4.1) left toolbar (captured 2026-10-20) + reference docs
 (<https://www.tradingview.com/support/solutions/43000501976-xabcd-pattern/>
 and sibling pages). Golden harness:
 `crates/tickchart/tests/drawing_goldens.rs` (`run_pattern` derives hits as
-consecutive-pivot segment midpoints; TV selects a pattern on any connecting
+consecutive-pivot segment midpoints; the reference selects a pattern on any connecting
 line).
 
-## Anchor counts (TV catalog = TickView, all confirmed)
+## Anchor counts (reference catalog = TickView, all confirmed)
 
-| Kind | TV id | Anchors | Pivot labels |
+| Kind | Reference id | Anchors | Pivot labels |
 |---|---|---|---|
 | Xabcd | `LineTool5PointsPattern` | 5 | X A B C D |
 | Cypher | `LineToolCypherPattern` | 5 | X A B C D |
@@ -26,11 +26,11 @@ line).
 | TimeCycles | `LineToolTimeCycles` | 2 | — |
 | SineLine | `LineToolSineLine` | 3 | — |
 
-Elliott kinds carry a leading `0` label for the origin pivot; TV labels the
+Elliott kinds carry a leading `0` label for the origin pivot; the reference labels the
 waves 1..n at the pivots after the origin — TickView labels every pivot,
 equivalent information, documented here.
 
-## Hit-test fixes (TV: any painted stroke selects)
+## Hit-test fixes (reference: any painted stroke selects)
 
 - `CyclicLines` — previously only the a→b→c anchor polyline; now the circle
   through the three anchors **and** the three center spokes select.
@@ -44,7 +44,7 @@ Patterns keep the shared connected-pivot polyline hit path.
 
 ## Tests
 
-- `pattern_anchor_counts_and_labels_match_tv` — anchors == TV; pattern label
+- `pattern_anchor_counts_and_labels_match_tv` — anchors == reference; pattern label
   count == anchor count.
 - `pattern_family_geometry_hits_and_misses` / `..._holds_on_log_axis` — all
   11 pattern kinds (every segment midpoint hits, 20px off-segment misses) +

@@ -1,20 +1,21 @@
 # Study legend actions bar and study menu
 
-Reference: TradingView Desktop 3.4.1 legend behaviour, as reproduced in this
-build. Screenshots are 1440×900 dark/light captures of this app
-(`docs/screenshots/parity/`), not of TradingView; the row set and interaction
-model below were taken from the TradingView desktop app and are the behaviour
+Reference: the reference desktop app 3.4.1 legend behaviour, as reproduced in
+this build. Screenshots are 1440×900 dark/light captures of this app
+(`docs/screenshots/parity/`), not of a popular trading app; the row set and
+interaction model below were taken from the reference desktop app and are the
+behaviour
 this module implements.
 
 ## Legend hover / pin
 
-- Every study keeps a TradingView-style plain label while cold: **name** in the
+- Every study keeps a reference-app-style plain label while cold: **name** in the
   strong text colour, then the input summary, then one value per plotted series
   painted in that series' colour. A hidden study keeps its row and its values,
   all dimmed, and its plots are not painted.
 - A row becomes **hot** while the pointer is over it, and stays **selected**
   after a click until the plot area is pressed again (or `Esc`).
-- TradingView shows a bar on *every* hot row at the same time: the selected
+- The reference app shows a bar on *every* hot row at the same time: the selected
   study keeps its accent-bordered bar while another row is hovered with a
   hairline border. Both bars anchor on their own row's rect.
 - A bar covers its own row, so `legend_keep_hot` names the study whose bar the
@@ -49,7 +50,7 @@ stale anchor would otherwise float a bar for a study that is gone.
    else two), `Enum` → variant label, `Bool` omitted
 4. eye (hide/show; disabled while indicators are locked)
 5. gear (open the parameter editor)
-6. braces (TV's toggle: hide the input list from the legend)
+6. braces (the reference app's toggle: hide the input list from the legend)
 7. trash (remove the study)
 8. `⋯` (study menu; stays tinted while the menu is open)
 9. the hovered (or last finite) first-plot value, painted **past** the bar's
@@ -89,7 +90,7 @@ viewport edge: uncapped, the menu grows as wide as the space right of the anchor
 So the popup sets an explicit `width` (`widgets::MENU_MAX_W`, 340 pt) and
 `widgets::menu_item` / `widgets::menu_submenu` clamp their row to the same band;
 the menu keeps a menu's size at any window width. `widgets::menu_label` lays each
-label out as a single row and elides it with `…` past the row, the way TV does
+label out as a single row and elides it with `…` past the row, the way the reference app does
 (`Add indicator/strategy on Relative Strength Index (RSI)…`).
 
 `Popup::new` starts in egui's `OpenKind::Open` (always open), which computes
@@ -106,12 +107,12 @@ way (`widgets::menu_submenu` sets a 180–240 pt band). Tests:
 
 - The star lives in the menu and on each `ON THIS CHART` row of the indicator
   browser.
-- `FAVOURITES` in the browser lists starred studies (TV order), with an unstar
+- `FAVOURITES` in the browser lists starred studies (the reference app's order), with an unstar
   button and an add-to-chart button for starred studies that are not on the
   chart.
 - `⌥A` adds every favourite to the active chart and toasts the count.
 - `Esc` closes overlays innermost-out: study menu → pinned legend bar → dialog.
-- Adding a study pins its bar (TV shows the bar for a study it just added), so
+- Adding a study pins its bar (the reference app shows the bar for a study it just added), so
   the bar is reachable without hunting for the legend row.
 
 ## Persistence (config v2)
@@ -144,7 +145,7 @@ TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_SCENE=studymenu TICKVIEW_THEME=dark \
 ```
 
 `TICKVIEW_SCENE=studymenu` opens the study menu next to the bar;
-`TICKVIEW_STUDY_MENU="<TV name>"` picks which seeded study owns it (MACD by
+`TICKVIEW_STUDY_MENU="<reference name>"` picks which seeded study owns it (MACD by
 default). `TICKVIEW_SCENE=studyhover` seeds RSI + MACD, selects MACD and holds
 the RSI row hot, which is the two-bars-at-once shot. QA seeds only take effect
 once the legend row exists on screen: the requests stay pending until the row is

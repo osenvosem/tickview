@@ -28,7 +28,7 @@ drawings/tools) and §10 (persistence).
   unchanged.
 - 148 existing workspace tests stay green; `ta`, `marketdata` untouched.
 - Palette tokens drive defaults; no hard-coded theme colors in new code except
-  the fixed TradingView swatch row in the settings toolbar.
+  the fixed reference swatch row in the settings toolbar.
 - No new dependencies; egui painting/widgets already in the workspace.
 
 ## Review Focus
@@ -496,7 +496,7 @@ git commit -m "feat(app): complete drawing rail, icons, lock and persistence"
   - `pub enum StyleEdit { Color([u8; 4]), Width(u8), Line(LineStyle), FillOpacity(u8), Text(String) }`
   - `pub fn apply_style_edit(d: &mut Drawing, edit: StyleEdit)` (width clamped 1–4, opacity clamped 0–80).
   - `pub fn clamp_popup(anchor: Pos2, bounds: Rect, size: Vec2) -> Pos2` (shifts the popup left/up at the right/bottom edges, never outside `bounds`).
-  - `pub const SWATCHES: [[u8; 4]; 8]` in `app.rs` (TV palette: `#2962FF`, `#26A69A`, `#EF5350`, `#FF6D00`, `#FFEB3B`, `#9C27B0`, `#FFFFFF`, `#787B86`).
+  - `pub const SWATCHES: [[u8; 4]; 8]` in `app.rs` (reference palette: `#2962FF`, `#26A69A`, `#EF5350`, `#FF6D00`, `#FFEB3B`, `#9C27B0`, `#FFFFFF`, `#787B86`).
   - The floating `egui::Area` anchored at `clamp_popup(drawing_toolbar_pos, central_panel_rect, panel_size)` with:
     - a kind label and color swatches (click → `StyleEdit::Color`),
     - width 1–4 segmented buttons (`StyleEdit::Width`),

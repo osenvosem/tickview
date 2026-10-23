@@ -1,6 +1,6 @@
-//! TradingView-style grouped drawing tool rail and floating selector.
+//! Reference-app-style grouped drawing tool rail and floating selector.
 //!
-//! The rail mirrors TradingView's eight-group layout. Each group button
+//! The rail mirrors the reference app's eight-group layout. Each group button
 //! selects its remembered tool on a first click; once that tool is active the
 //! button opens a content-sized floating flyout. The 11 px arrow always opens
 //! or closes the flyout. The Icons group opens the emoji picker instead.
@@ -26,7 +26,7 @@ pub struct ToolGroup {
     pub sections: &'static [(&'static str, &'static [Tool])],
 }
 
-/// The grouped rail, in TradingView order. Only tools the drawing engine
+/// The grouped rail, in reference-app order. Only tools the drawing engine
 /// implements appear here; nothing is listed as a dead menu item.
 pub const GROUPS: &[ToolGroup] = &[
     ToolGroup {
@@ -513,7 +513,7 @@ impl PanelState {
     }
 }
 
-// TradingView geometry, mirrored from the live desktop renderer.
+// Reference-app geometry, mirrored from the live desktop renderer.
 const RAIL_ICON: f32 = 28.0;
 const RAIL_PILL: Vec2 = vec2(36.0, 34.0);
 const ARROW_W: f32 = 11.0;
@@ -533,7 +533,7 @@ const UTILITY_ROW_H: f32 = 32.0;
 const UTILITY_PAD: f32 = 6.0;
 const UTILITY_SEP_H: f32 = 13.0;
 
-/// Emoji picker geometry (TradingView-style panel: search, tabs, grouped grid).
+/// Emoji picker geometry (reference-app-style panel: search, tabs, grouped grid).
 const PICKER_W: f32 = 460.0;
 const PICKER_H: f32 = 560.0;
 const PICKER_COLS: usize = 9;
@@ -542,7 +542,7 @@ const PICKER_HEAD_H: f32 = 26.0;
 const PICKER_TAB: f32 = 28.0;
 const PICKER_SEARCH_H: f32 = 30.0;
 
-/// Category tab names, TradingView order.
+/// Category tab names, reference-app order.
 pub const EMOJI_GROUPS: [&str; 8] = [
     "Smileys", "Animals", "Food", "Activity", "Travel", "Objects", "Symbols", "Flags",
 ];
@@ -929,7 +929,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
                     false,
                 );
                 if remove.arrow_clicked || remove.main_clicked {
-                    // TV: the trash button never deletes on press; it opens
+                    // Reference app: the trash button never deletes on press; it opens
                     // the menu and removal happens only from a menu item.
                     app.tool_panel
                         .toggle_utility(UtilityMenu::Remove, remove.rect);
@@ -989,7 +989,7 @@ pub fn tool_panel(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
             })
             .sum();
         let height = UTILITY_PAD * 2.0 + body;
-        // Size the menu to its longest row (TV): labels and the trailing
+        // Size the menu to its longest row (reference app): labels and the trailing
         // toggle must fit without clipping; never below the 216 px base.
         let width = utility_menu_width(ui, &items);
         let rect = popup_rect_for(anchor, width, height, content);
@@ -1301,7 +1301,7 @@ fn flyout_height(group: usize) -> f32 {
         height += FLYOUT_HEADER_H + tools.len() as f32 * FLYOUT_ROW_H;
     }
     if group == 0 {
-        // Eraser divider + values-tooltip divider and row (TV cursors menu).
+        // Eraser divider + values-tooltip divider and row (cursors menu).
         height += FLYOUT_DIVIDER_H * 2.0 + UTILITY_ROW_H;
     }
     height
@@ -1406,7 +1406,7 @@ fn flyout_contents(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, group: us
         }
         section_header(ui, p, title);
         for tool in *tools {
-            // TV separates Eraser from the cursor modes.
+            // The reference app separates Eraser from the cursor modes.
             if cursors && *tool == Tool::Eraser {
                 section_rule(ui, p);
             }
@@ -1421,7 +1421,7 @@ fn flyout_contents(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, group: us
     }
 }
 
-/// TV: "Values tooltip on long press" checkbox row under the cursors.
+/// Reference app: "Values tooltip on long press" checkbox row under the cursors.
 fn values_tooltip_row(ui: &mut egui::Ui, app: &mut TickView, p: &Palette) {
     let (row, resp) =
         ui.allocate_exact_size(vec2(ui.available_width(), UTILITY_ROW_H), Sense::click());
@@ -1556,12 +1556,12 @@ fn flyout_row(ui: &mut egui::Ui, app: &mut TickView, p: &Palette, tool: Tool, ro
         .on_hover_text(tool.label());
 }
 
-/// One row in a rail utility menus (TV `PopupMenu` parity).
+/// One row in a rail utility menus (`PopupMenu` parity with the reference app).
 enum UtilityItem {
     Row {
         label: String,
         selected: bool,
-        /// Selector rows (TV magnet modes) render taller, like flyout rows.
+        /// Selector rows (magnet modes) render taller, like flyout rows.
         selector: bool,
     },
     Sep,
@@ -1624,7 +1624,7 @@ fn utility_items(menu: UtilityMenu, app: &TickView) -> Vec<UtilityItem> {
 }
 
 /// Utility-menu width: the 216 px base, grown so the longest label — plus
-/// its leading tick gutter and trailing toggle — fits without clipping (TV).
+/// its leading tick gutter and trailing toggle — fits without clipping (reference app).
 #[must_use]
 fn utility_menu_width(ui: &egui::Ui, items: &[UtilityItem]) -> f32 {
     let label_font = font_regular(13.0);
@@ -1693,7 +1693,7 @@ fn draw_utility_menu(
                                 if resp.hovered() {
                                     ui.painter().rect_filled(row, 4.0, p.menu_hover);
                                 }
-                                // TV-style trailing switch carries the state.
+                                // Reference-style trailing switch carries the state.
                                 let track = Rect::from_center_size(
                                     Pos2::new(row.right() - 32.0, row.center().y),
                                     vec2(40.0, 22.0),
@@ -2086,7 +2086,7 @@ mod tests {
     }
 
     #[test]
-    fn rail_matches_tradingviews_eight_drawing_groups() {
+    fn rail_matches_reference_app_eight_drawing_groups() {
         let names: Vec<&str> = GROUPS.iter().map(|group| group.name).collect();
         assert_eq!(
             names,
@@ -2107,7 +2107,7 @@ mod tests {
     }
 
     #[test]
-    fn section_order_and_headers_match_tradingview() {
+    fn section_order_and_headers_match_reference_app() {
         let headers = |group: usize| -> Vec<&str> {
             GROUPS[group]
                 .sections
@@ -2145,7 +2145,7 @@ mod tests {
         assert_eq!(
             GROUPS[6].sections[1].1,
             [Tool::Post, Tool::Idea],
-            "CONTENT subcategory per TV annotation menu"
+            "CONTENT subcategory per the reference annotation menu"
         );
     }
 
@@ -2408,7 +2408,7 @@ mod tests {
     }
 
     #[test]
-    fn tradingview_shortcut_hints_are_wired_for_existing_tools() {
+    fn reference_app_shortcut_hints_are_wired_for_existing_tools() {
         assert_eq!(Tool::TrendLine.shortcut(), Some("⌥T"));
         assert_eq!(Tool::HLine.shortcut(), Some("⌥H"));
         assert_eq!(Tool::HRay.shortcut(), Some("⌥J"));

@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "source": {
-  "target": "TradingView Desktop 3.4.1",
+  "target": "the reference desktop app 3.4.1",
   "wire": "docs/evidence/tv-studies-defaults.json",
   "meta_dir": "docs/evidence/tv/studies"
  },

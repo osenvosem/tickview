@@ -1,13 +1,13 @@
-# Trend family — TV geometry audit (Milestone 2, Task 4)
+# Trend family — reference geometry audit (Milestone 2, Task 4)
 
-Source: TradingView 3.4.1 bundle catalog (`docs/evidence/tv/drawings-catalog.json`),
+Source: the reference app (version 3.4.1) bundle catalog (`docs/evidence/tv/drawings-catalog.json`),
 captured 2026-10-20. Verified via golden harness
 `crates/tickchart/tests/drawing_goldens.rs` on a deterministic 200-bar fixture,
 linear and log price axes, plus themed screenshots.
 
-## TV ids, labels, anchors
+## Reference ids, labels, anchors
 
-| TradingView id | TV label | Anchors | TickView kind |
+| Reference id | Label | Anchors | TickView kind |
 |---|---|---|---|
 | `LineToolTrendLine` | Trendline | 2 | `TrendLine` |
 | `LineToolRay` | Ray | 2 | `Ray` |
@@ -27,7 +27,7 @@ linear and log price axes, plus themed screenshots.
 | `LineToolSchiffPitchfork` | Modified Schiff pitchfork | 3 | `ModifiedSchiffPitchfork` |
 | `LineToolInsidePitchfork` | Inside pitchfork | 3 | `InsidePitchfork` |
 
-Anchor counts asserted by `tv_anchor_counts_match_implementation`. Note the TV
+Anchor counts asserted by `tv_anchor_counts_match_implementation`. Note the reference
 naming trap: bundle id `SchiffPitchfork2` carries the label "Schiff pitchfork"
 while plain `SchiffPitchfork` is the *Modified* Schiff — the manifest maps ids
 by label semantics accordingly.
@@ -53,8 +53,8 @@ by label semantics accordingly.
 - Pitchfork family: median from origin h along d = ((s1−h)+(s2−h))/2 plus two
   parallels through s1, s2, all clipped to plot; side rails dashed.
   - `Pitchfork`: h=a, s1=b, s2=c.
-  - `SchiffPitchfork` (TV `SchiffPitchfork2`): h=a+d/2, s1=a+(b−a)/2, s2=a+(c−a)/2.
-  - `ModifiedSchiffPitchfork` (TV `SchiffPitchfork`): h=a+(b−a)/2, s1=b, s2=c.
+  - `SchiffPitchfork` (bundle id `SchiffPitchfork2`): h=a+d/2, s1=a+(b−a)/2, s2=a+(c−a)/2.
+  - `ModifiedSchiffPitchfork` (bundle id `SchiffPitchfork`): h=a+(b−a)/2, s1=b, s2=c.
   - `InsidePitchfork`: h=s1=a+(b−a)/2, s2=a+(c−a)/2.
 
 All hit expectations are computed in the harness from these definitions (never

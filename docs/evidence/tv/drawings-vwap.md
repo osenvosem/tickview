@@ -1,8 +1,8 @@
 # Anchored VWAP (`LineToolAnchoredVWAP`)
 
-Source: TradingView 3.4.1 (captured 2026-10-20), live inspection plus official
-docs. TV lists the tool in the drawing toolbar's forecasting group; the bundle
-minifies the series math, so the formula is taken from TV's documented
+Source: the reference app (version 3.4.1, captured 2026-10-20), live inspection plus
+official docs. The reference lists the tool in the drawing toolbar's forecasting group;
+the bundle minifies the series math, so the formula is taken from documented
 behavior and confirmed against the rendered curve.
 
 ## Formula
@@ -13,11 +13,11 @@ vwap_k    = Σ_{i=a..k} typical_i · volume_i / Σ_{i=a..k} volume_i
 ```
 
 `a` is the anchor bar; the series runs from the anchor to the last bar.
-TV recomputes this from chart data on every update and persists only the
+The reference recomputes this from chart data on every update and persists only the
 anchor, not the series - TickView matches: `datatools::anchored_vwap` computes
 at paint/hit time, nothing is stored in the drawing.
 
-Edge cases confirmed on live TV:
+Edge cases confirmed on the live reference:
 
 - Bars before the anchor contribute nothing.
 - Bars with zero accumulated volume emit no point (the curve starts at the
@@ -25,7 +25,7 @@ Edge cases confirmed on live TV:
 
 ## Rendering and interaction
 
-- Polyline from the anchor to the right edge, TV default color, 1.5 px.
+- Polyline from the anchor to the right edge, reference default color, 1.5 px.
 - End label shows the latest VWAP value at the price axis side.
 - Selection hits the painted curve (±6 px), not the anchor dot alone.
 

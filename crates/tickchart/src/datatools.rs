@@ -2,7 +2,7 @@
 //! history.
 //!
 //! Values are computed live from `Candles` at paint/hit time; nothing is
-//! persisted, matching TradingView, which recomputes these series from the
+//! persisted, matching the reference app, which recomputes these series from the
 //! chart data instead of storing generated arrays.
 
 use ta::Candles;
@@ -10,7 +10,7 @@ use ta::Candles;
 /// Running anchored VWAP: `Σ(typical·volume) / Σ volume` with
 /// `typical = (high + low + close) / 3`, one point per bar from `start`
 /// (inclusive) to the last bar. Empty when `start` is past the end; bars with
-/// zero accumulated volume emit no point (TV waits for volume).
+/// zero accumulated volume emit no point (the reference app waits for volume).
 #[must_use]
 pub fn anchored_vwap(cd: &Candles, start: usize) -> Vec<(usize, f64)> {
     let n = cd.h.len();
@@ -51,10 +51,10 @@ pub struct Profile {
     pub max_volume: f64,
 }
 
-/// Default bin count, matching TV's volume-profile default.
+/// Default bin count, matching the reference volume-profile default.
 pub const DEFAULT_ROWS: usize = 24;
 
-/// Volume profile over bars `from..=to` (TV close-only assignment: each bar's
+/// Volume profile over bars `from..=to` (reference close-only assignment: each bar's
 /// volume lands in the bin containing its close). `None` on empty/invalid
 /// range or flat zero-volume history.
 #[must_use]
@@ -126,7 +126,7 @@ pub fn volume_profile(cd: &Candles, from: usize, to: usize, rows: usize) -> Opti
     })
 }
 
-/// Select an anchored VWAP by its painted polyline (TV: the curve selects).
+/// Select an anchored VWAP by its painted polyline (reference: the curve selects).
 #[must_use]
 pub fn vwap_hit(
     cd: &Candles,
@@ -152,7 +152,7 @@ pub fn vwap_hit(
 /// Shared paint/hit geometry: profile over the drawing's bar range, the
 /// histogram's right edge x and its max bar width in px. Fixed-range anchors
 /// to the range's right bar; anchored profiles extend to the plot's right
-/// edge (TV: the histogram hugs the right side).
+/// edge (reference: the histogram hugs the right side).
 #[must_use]
 pub fn profile_geom(
     cd: &Candles,
@@ -172,7 +172,7 @@ pub fn profile_geom(
 }
 
 /// Select a volume profile by its painted rows: POC row and value-area bins
-/// hit (TV: the histogram body selects, thin tails do not).
+/// hit (reference: the histogram body selects, thin tails do not).
 #[must_use]
 pub fn profile_hit(
     cd: &Candles,

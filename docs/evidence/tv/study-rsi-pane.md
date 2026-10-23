@@ -2,13 +2,13 @@
 
 Source of truth: `docs/evidence/tv/studies/STD_RSI.json` (`defaults.bands`,
 `defaults.filledAreasStyle`, `filledAreas`, `inputs`, `styles`, `plots`) from
-TradingView's `all_studies_metadata` payload for `STD;RSI`. Screenshots in
+the reference app's `all_studies_metadata` payload for `STD;RSI`. Screenshots in
 `docs/screenshots/parity/rsi-pane-{dark,light}.png` and
 `rsi-editor-{dark,light}.png` are 2880×1800 captures of this app.
 
 ## Pane decoration
 
-| TV key | Value | Ours |
+| Wire key | Value | Ours |
 |---|---|---|
 | `defaults.bands[0]` | 70, `#787B86`, linestyle 2 | `GuideSpec { value: 70, color: GRAY, dash: true }` |
 | `defaults.bands[1]` | 50, `rgba(120,123,134,0.5)` | `GuideSpec { value: 50, alpha: 128, dash: true }` |
@@ -18,14 +18,14 @@ TradingView's `all_studies_metadata` payload for `STD;RSI`. Screenshots in
 | `fill_2` | gradient, `plot_0`..`plot_1`, 0→30, `rgba(242,54,69,1)`→`rgba(242,54,69,0)` | `FillSpec::Gradient { plot: 0, near: 30, far: 0, color: CRIMSON, alpha: 255 }` |
 | `fill_3` (+`plot_3`/`plot_4`) | Bollinger band fill, hidden unless the Bollinger smoothing variant is on | the two Bollinger plots exist only for `ma_type = 2`; no separate fill spec |
 
-TV anchors the zone gradients between `plot_0` (RSI) and a hidden `plot_1`
+The reference anchors the zone gradients between `plot_0` (RSI) and a hidden `plot_1`
 pinned at 70/0; we keep the thresholds as the `near`/`far` constants instead of
 materialising a constant series — the visible result is the same, and the
 gradient still has to follow the RSI line, not the threshold.
 
 The ramp is per-column: alpha `0` at `near`, `alpha` at `far`, linear in
 between (`decor::gradient_alpha`), so at the pane's usual ~80 ceiling the
-overbought wash tops out around 33% — TV's subtlety, not a solid slab. A run
+overbought wash tops out around 33% — the reference's subtlety, not a solid slab. A run
 breaks on `NaN` or on a value that leaves `[near, far]`, so the wash never bleeds
 through the neutral zone.
 
@@ -39,7 +39,7 @@ through the neutral zone.
   `rm_1`/`rm_2` in `TVScriptMetaInfoExprs`. Modelled as
   `ParamSpec { group, legend, active }` with `Active::NotVariant` and
   `Active::IsVariant`, rendered as greyed-but-present controls.
-- `legend: false` on `ma_type`/`bb_std`/timeframe inputs reproduces TV's legend
+- `legend: false` on `ma_type`/`bb_std`/timeframe inputs reproduces the reference legend
   summary `14 close`, which omits the smoothing type and multiplier.
 
 ## Paint path
@@ -69,7 +69,7 @@ pins it.
   (regression for the slice-order panic that `tests/hover_future.rs` tripped),
   and vertex premultiplication.
 - `cargo test -p app study_toolbar` — `titled_wraps_the_inputs_and_falls_back_to_the_name`
-  keeps the legend summary in TV's `14 close` shape.
+  keeps the legend summary in the `14 close` shape.
 - Screenshots: `rsi-pane-{dark,light}.png` show the guides, the 30–70 band and
   both zone washes; `rsi-editor-{dark,light}.png` show the `RSI SETTINGS` /
   `SMOOTHING` sections with `BB StdDev` greyed out while `Type = SMA`.

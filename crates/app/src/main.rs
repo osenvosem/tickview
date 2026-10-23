@@ -1,4 +1,4 @@
-//! TickView — a native TradingView-class charting workstation.
+//! TickView — a native reference-class charting workstation.
 //!
 //! Layout: `theme` (tokens) → `icons`/`widgets` (chrome vocabulary) →
 //! `chrome`/`watchlist` (shell) → `app` (state and top-level layout).

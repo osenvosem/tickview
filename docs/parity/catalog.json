@@ -25,7 +25,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -47,7 +47,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -69,7 +69,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -91,7 +91,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -113,7 +113,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -135,7 +135,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -157,7 +157,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -179,7 +179,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -201,7 +201,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -223,7 +223,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -246,7 +246,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -268,7 +268,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -290,7 +290,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -312,7 +312,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -334,7 +334,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -356,7 +356,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -378,7 +378,7 @@
     "docs/screenshots/parity/trend-dark.png",
     "docs/screenshots/parity/trend-light.png"
    ],
-   "notes": "TV geometry contract + hit fixes; see evidence doc."
+   "notes": "Reference geometry contract + hit fixes; see evidence doc."
   },
   {
    "kind": "drawing",
@@ -399,7 +399,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "TV level set 0..100%; screen-space levels (log-axis placement noted divergence in evidence)."
+   "notes": "Reference level set 0..100%; screen-space levels (log-axis placement noted divergence in evidence)."
   },
   {
    "kind": "drawing",
@@ -420,7 +420,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "Levels project from c along a->b price delta; TV ratio set incl. 1.272+."
+   "notes": "Levels project from c along a->b price delta; reference ratio set incl. 1.272+."
   },
   {
    "kind": "drawing",
@@ -441,7 +441,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "Rails = base a->b shifted by ratio*(c-a); TV ratio set."
+   "notes": "Rails = base a->b shifted by ratio*(c-a); reference ratio set."
   },
   {
    "kind": "drawing",
@@ -483,7 +483,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "TV anchors=2; TickView reduced from 3 to 2. Rays from origin to ratio points on vertical through b."
+   "notes": "Reference anchors=2; TickView reduced from 3 to 2. Rays from origin to ratio points on vertical through b."
   },
   {
    "kind": "drawing",
@@ -525,7 +525,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "Radii base+(outer-base)*ratio around a; TV ratio set incl. 161.8%."
+   "notes": "Radii base+(outer-base)*ratio around a; reference ratio set incl. 161.8%."
   },
   {
    "kind": "drawing",
@@ -546,7 +546,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "TV anchors=3; TickView raised from 2 to 3. Growth spiral radius*turn-fraction."
+   "notes": "Reference anchors=3; TickView raised from 2 to 3. Growth spiral radius*turn-fraction."
   },
   {
    "kind": "drawing",
@@ -567,7 +567,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "Swept arcs between |a-b| and |a-c| radii at TV ratios."
+   "notes": "Swept arcs between |a-b| and |a-c| radii at reference ratios."
   },
   {
    "kind": "drawing",
@@ -630,7 +630,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "TV 'Gann box': rect + quarter grid + diagonals."
+   "notes": "Reference 'Gann box': rect + quarter grid + diagonals."
   },
   {
    "kind": "drawing",
@@ -672,7 +672,7 @@
     "docs/evidence/tv/drawings-gannfib.md",
     "docs/screenshots/parity/gannfib-dark.png"
    ],
-   "notes": "TV 'Gann square': grid + complex rays from origin corner to far-edge fractions (1/8..7/8)."
+   "notes": "Reference 'Gann square': grid + complex rays from origin corner to far-edge fractions (1/8..7/8)."
   },
   {
    "kind": "drawing",
@@ -718,7 +718,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 5-pivot XABCD; segment-midpoint hit path."
+   "notes": "Reference 5-pivot XABCD; segment-midpoint hit path."
   },
   {
    "kind": "drawing",
@@ -739,7 +739,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 5-pivot Cypher; shared connected-pivot renderer."
+   "notes": "Reference 5-pivot Cypher; shared connected-pivot renderer."
   },
   {
    "kind": "drawing",
@@ -760,7 +760,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 5 anchors (LS,H,RS + 2 neckline)."
+   "notes": "Reference 5 anchors (LS,H,RS + 2 neckline)."
   },
   {
    "kind": "drawing",
@@ -781,7 +781,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 4-pivot ABCD."
+   "notes": "Reference 4-pivot ABCD."
   },
   {
    "kind": "drawing",
@@ -802,7 +802,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 5-pivot triangle (A..E)."
+   "notes": "Reference 5-pivot triangle (A..E)."
   },
   {
    "kind": "drawing",
@@ -823,7 +823,7 @@
     "docs/evidence/tv/drawings-patterns.md",
     "docs/screenshots/parity/patterns-dark.png"
    ],
-   "notes": "TV 5-pivot three drives."
+   "notes": "Reference 5-pivot three drives."
   },
   {
    "kind": "drawing",
@@ -1140,7 +1140,7 @@
     "docs/evidence/tv/drawings-vwap.md",
     "docs/screenshots/parity/vwap-dark.png"
    ],
-   "notes": "TV recomputes VWAP from chart data; we compute at paint/hit time, nothing persisted. Zero-volume bars emit no point."
+   "notes": "The reference recomputes VWAP from chart data; we compute at paint/hit time, nothing persisted. Zero-volume bars emit no point."
   },
   {
    "kind": "drawing",
@@ -1204,7 +1204,7 @@
     "docs/evidence/tv/drawings-forecast.md",
     "docs/screenshots/parity/forecast-dark.png"
    ],
-   "notes": "Label now p1 -> p2 (+x.xx%) per TV."
+   "notes": "Label now p1 -> p2 (+x.xx%) per the reference."
   },
   {
    "kind": "drawing",
@@ -1225,7 +1225,7 @@
     "docs/evidence/tv/drawings-forecast.md",
     "docs/screenshots/parity/forecast-dark.png"
    ],
-   "notes": "Label now N bars per TV (was static text)."
+   "notes": "Label now N bars per the reference (was static text)."
   },
   {
    "kind": "drawing",
@@ -1246,7 +1246,7 @@
     "docs/evidence/tv/drawings-forecast.md",
     "docs/screenshots/parity/forecast-dark.png"
    ],
-   "notes": "Label now p · N bars per TV."
+   "notes": "Label now p · N bars per the reference."
   },
   {
    "kind": "drawing",
@@ -1804,8 +1804,8 @@
    "anchors": 2,
    "interaction": "two-point",
    "status": "verified",
-   "tests": ["tickchart/tests/drawing_e2e.rs::image_two_point_and_file_attach", "tickchart/tests/drawing_e2e.rs::image_file_attach_roundtrip", "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog", "app/src/toolpanel.rs::rail_matches_tradingviews_eight_drawing_groups"],
-   "evidence": ["research/tradingview-left-toolbar.md", "docs/screenshots/parity/image-dark.png"],
+   "tests": ["tickchart/tests/drawing_e2e.rs::image_two_point_and_file_attach", "tickchart/tests/drawing_e2e.rs::image_file_attach_roundtrip", "tickchart/tests/drawing_goldens.rs::every_kind_anchor_count_matches_tv_catalog", "app/src/toolpanel.rs::rail_matches_reference_app_eight_drawing_groups"],
+   "evidence": ["research/reference-app-left-toolbar.md", "docs/screenshots/parity/image-dark.png"],
    "notes": ""
   },
   {
@@ -1868,10 +1868,10 @@
     "app/src/toolpanel.rs::emoji_picker_categories_are_unique_and_populated"
    ],
    "evidence": [
-    "research/tradingview-left-toolbar.md",
+    "research/reference-app-left-toolbar.md",
     "docs/screenshots/parity/emojipicker-dark.png"
    ],
-   "notes": "Emoji placement via the Icons picker (TV font-icon group); monochrome outline glyphs."
+   "notes": "Emoji placement via the Icons picker (font-icon group); monochrome outline glyphs."
   },
   {
    "kind": "drawing",
@@ -1889,7 +1889,7 @@
     "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
    ],
    "evidence": [
-    "research/tradingview-left-toolbar.md",
+    "research/reference-app-left-toolbar.md",
     "docs/screenshots/parity/cursors-dark.png"
    ],
    "notes": "Single-click dot marker in the Cursors group."
@@ -1910,7 +1910,7 @@
     "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
    ],
    "evidence": [
-    "research/tradingview-left-toolbar.md",
+    "research/reference-app-left-toolbar.md",
     "docs/screenshots/parity/cursors-dark.png"
    ],
    "notes": "Presenter mode: dims everything except a spotlight circle; places no drawings."
@@ -1931,10 +1931,10 @@
     "tickchart/tests/drawing_goldens.rs::cursor_modes_place_no_drawings_except_dot"
    ],
    "evidence": [
-    "research/tradingview-left-toolbar.md",
+    "research/reference-app-left-toolbar.md",
     "docs/screenshots/parity/cursors-dark.png"
    ],
-   "notes": "TV Magic: hides all drawings while active; places no drawings."
+   "notes": "Magic mode: hides all drawings while active; places no drawings."
   },
   {
    "kind": "drawing",

@@ -26,7 +26,7 @@ const WEEK: i64 = 7 * DAY;
 const WEEK_ANCHOR: i64 = 4 * DAY;
 
 impl Interval {
-    /// Parse TradingView-style interval strings: `1s 15m 45m 1h 4h 12h D 1D W 1M 3M`.
+    /// Parse reference-app-style interval strings: `1s 15m 45m 1h 4h 12h D 1D W 1M 3M`.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         let s = s.trim();
@@ -112,7 +112,7 @@ impl Interval {
         }
     }
 
-    /// Canonical TV string (`15m`, `D`, `1M`).
+    /// Canonical provider wire string (`15m`, `D`, `1M`).
     #[must_use]
     pub fn as_tv_str(&self) -> String {
         match self.unit {

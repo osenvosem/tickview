@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the five drawing tools deferred from phase 3 (brush, Andrews + Schiff pitchfork, regression trend with bands, long/short position, crosshair-rectangle zoom modifier), and audit the 66-study default parameters against the TradingView `studies_metadata` wire payload captured locally.
+**Goal:** Land the five drawing tools deferred from phase 3 (brush, Andrews + Schiff pitchfork, regression trend with bands, long/short position, crosshair-rectangle zoom modifier), and audit the 66-study default parameters against the reference app's `studies_metadata` wire payload captured locally.
 
 **Architecture:** Extend the existing anchor-based drawing model in `crates/tickchart/src/drawings.rs` (kind/tool enums, `Draft` click state, geometry + hit-test + paint, serde-persisted `Drawing`). Drag-capture (brush) and the zoom-selection gesture live in `chart.rs::handle_input`; the app rail, icons and settings toolbar extend in `crates/app/src`. Study defaults get a committed evidence subset (`docs/evidence/`) plus a registry regression test in `ta`.
 
@@ -12,16 +12,16 @@
 
 ## Evidence grading (applies to every constant below)
 
-- **observed** — captured from this machine: TradingView Desktop 3.4.1.8194, asar evidence `ev_b6277758226b544f9acfa03248f67967ef241614a073ca5808616d97f40adb0d` (full record `/tmp/tv-app-analysis.json`), `studies_metadata` wire payload (246 metainfo entries, packs incl. `tv-basicstudies-280`) at `/tmp/tv-studies-metadata.json`.
-- **inference** — documented TradingView behavior; source-level constants are unreachable offline (network blocked; chart bundle loads remotely, not cached). Do not present inference-grade values as verified TV internals; a follow-up `analyze-web-bundle` pass can diff them when network returns.
+- **observed** — captured from this machine: the reference desktop app (version 3.4.1.8194), asar evidence `ev_b6277758226b544f9acfa03248f67967ef241614a073ca5808616d97f40adb0d` (full record `/tmp/tv-app-analysis.json`), `studies_metadata` wire payload (246 metainfo entries, packs incl. `tv-basicstudies-280`) at `/tmp/tv-studies-metadata.json`.
+- **inference** — documented reference-app behavior; source-level constants are unreachable offline (network blocked; chart bundle loads remotely, not cached). Do not present inference-grade values as verified internals of the reference app; a follow-up `analyze-web-bundle` pass can diff them when network returns.
 
 ## Global Constraints
 
 - No new crate dependencies; stable Rust; `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets` clean (workspace lints already deny correctness lints).
 - Config v2 serde stays backward compatible: every new `Drawing` field gets `#[serde(default)]` (`Vec` also `skip_serializing_if = "Vec::is_empty"`); old `config.json` must load unchanged.
 - Drawing anchors stay in `(timestamp, price)` space; screen geometry is derived per frame (`anchor_pos` returns `None` → whole drawing skipped, existing semantics).
-- Tool labels use TradingView naming (`PARITY.md` vocabulary): "Brush", "Pitchfork", "Schiff Pitchfork", "Regression Trend", "Long Position", "Short Position".
-- All new tools respect `ChartState::locked` exactly like phase-3 tools (no create/move while locked). The zoom-selection gesture is chart navigation, not drawing editing, so it keeps working while locked (parity with TV).
+- Tool labels use the reference naming (`PARITY.md` vocabulary): "Brush", "Pitchfork", "Schiff Pitchfork", "Regression Trend", "Long Position", "Short Position".
+- All new tools respect `ChartState::locked` exactly like phase-3 tools (no create/move while locked). The zoom-selection gesture is chart navigation, not drawing editing, so it keeps working while locked (parity with the reference app).
 - Percentages and prices format via `crate::barfmt::fmt_price` / existing patterns (`+140.00 (+4.67%)` style, two decimals, ASCII sign).
 
 ## Review Focus
@@ -217,7 +217,7 @@ fn position_rr_and_delta_format() {
 
 - [x] **Step 3: Implement paint:**
   - `Brush`: open `PathShape { closed: false }` over mapped `a + extra` (drop the tail at the first unmapped anchor; skip when fewer than two mapped points); style stroke; selection dots on first/last mapped points only.
-  - `Pitchfork`/`SchiffPitchfork`: median solid; both side lines dashed (`dash_spec(Dashed)` regardless of `style.line` — TV convention, inference-grade). Fill polygon `handle → side1_far → side2_far` when `style.fill`; additionally set `fill = false` default on finish for these kinds (helper `fn kind_defaults(kind: DrawingKind) -> DrawingStyle` used by `DrawingToolState::finish` — TV pitchforks default unfilled).
+  - `Pitchfork`/`SchiffPitchfork`: median solid; both side lines dashed (`dash_spec(Dashed)` regardless of `style.line` — reference convention, inference-grade). Fill polygon `handle → side1_far → side2_far` when `style.fill`; additionally set `fill = false` default on finish for these kinds (helper `fn kind_defaults(kind: DrawingKind) -> DrawingStyle` used by `DrawingToolState::finish` — pitchforks default unfilled).
   - `RegTrend`: center line + two band lines at `y ± half` (dotted) + `convex_polygon` band fill at `fill_opacity` when `style.fill`.
   - `LongPosition/ShortPosition`: horizontal strokes at entry/target/stop from `entry.x.max(plot.min.x)` to `plot.max.x`; profit rect `entry→target`, loss rect `stop→entry`, fills at opacity 40 with profit/loss colors (short: swapped semantics, same geometry); `fmt_price` tag left at each level (small bg chip); `position_delta` at right edge, right-aligned inside `plot` (`plot.max.x - 4`); center chip `R/R 1 : {rr:.2}` or `R/R —` when `position_rr` is `None`.
   - Brush draft: live polyline through `draft.extra` in the draft branch (stroke `pal.line`, existing draft styling).
@@ -276,7 +276,7 @@ fn position_rr_and_delta_format() {
 
 ---
 
-### Task 6: Study-default audit against the TV wire payload
+### Task 6: Study-default audit against the reference wire payload
 
 **Files:**
 - Create: `docs/evidence/tv-studies-defaults.json`
@@ -287,13 +287,13 @@ fn position_rr_and_delta_format() {
 - Produces: evidence JSON `{ "<meta_id>": {"name": "...", "inputs": {…}} }` restricted to ids matching registry studies (`"missing"` markers for unmatched, so coverage is auditable); test `registry_defaults_match_tv_wire`.
 - Consumes: `ta::registry::defs()`; source payload `/tmp/tv-studies-metadata.json` (machine-captured; the trimmed subset is committed so the test runs anywhere).
 
-- [x] **Step 1: Extract trimmed evidence** — for every `defs()` entry, resolve the metadata id (exact prefix match, preferred packs `tv-basicstudies-280` > `tv-corestudies-50` > `tv-prostudies-78`; id mapping follows the registry's TradingView ids — e.g. `Rsi→RSI`, `Psar→PSAR`, `Adx→DM`, `DonchianChannels→DONCH`, `Kst→KST`, `Vwap→VWAP`, `Macd→MACD`). Emit `docs/evidence/tv-studies-defaults.json` with each matched id's `name` + `defaults.inputs`; unmatched registry ids listed with `"missing": true`.
+- [x] **Step 1: Extract trimmed evidence** — for every `defs()` entry, resolve the metadata id (exact prefix match, preferred packs `tv-basicstudies-280` > `tv-corestudies-50` > `tv-prostudies-78`; id mapping follows the registry's reference ids — e.g. `Rsi→RSI`, `Psar→PSAR`, `Adx→DM`, `DonchianChannels→DONCH`, `Kst→KST`, `Vwap→VWAP`, `Macd→MACD`). Emit `docs/evidence/tv-studies-defaults.json` with each matched id's `name` + `defaults.inputs`; unmatched registry ids listed with `"missing": true`.
 
 - [x] **Step 2: Write `crates/ta/tests/tv_defaults.rs`** — load via `concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/evidence/tv-studies-defaults.json")`; for every def whose evidence exists and whose input key maps to a registry param (`length`, `increment`, `max value`, `start`, ROCLen…, `SigLen`, known enum strings like `"Anchor Period":"Session"`), compare against the registry default; failure messages carry the indicator id + key + both values. Run: expect drift failures listed per indicator.
 
 - [x] **Step 3: Fix registry defaults** to the observed wire values (already spot-verified: RSI `14`, MACD `12/26/9`, PSAR `0.02/0.02/0.2`, VWAP `Session`/`hlc3`, DONCH `20`, KST `10,15,20,30 / 10,10,10,15 / 9`). Where golden tests pinned old values, update those goldens (wire = source-grade observed). Re-run full `cargo test -p ta`.
 
-- [x] **Step 4: Green + commit** — `git add docs/evidence crates/ta && git commit -m "test(ta): pin study defaults against TradingView studies_metadata evidence"`.
+- [x] **Step 4: Green + commit** — `git add docs/evidence crates/ta && git commit -m "test(ta): pin study defaults against studies_metadata wire evidence"`.
 
 ---
 

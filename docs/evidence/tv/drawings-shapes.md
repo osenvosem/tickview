@@ -1,15 +1,15 @@
-# Geometric shapes family — TV evidence
+# Geometric shapes family — reference evidence
 
-Source: TradingView 3.4.1 left toolbar (captured 2026-10-20) + TV docs
+Source: the reference app (version 3.4.1) left toolbar (captured 2026-10-20) + reference docs
 (<https://www.tradingview.com/support/solutions/43000502039-shapes/>).
 Golden harness: `crates/tickchart/tests/drawing_goldens.rs`
-(`run_shapes_family`). TV selection semantics pinned here: a shape selects on
+(`run_shapes_family`). Reference selection semantics pinned here: a shape selects on
 its border always, and on its **interior when filled**; curves select along
 the drawn curve, not the anchor chords.
 
-## Anchors (TV catalog = TickView, all confirmed)
+## Anchors (reference catalog = TickView, all confirmed)
 
-| Kind | TV id | Anchors |
+| Kind | Reference id | Anchors |
 |---|---|---|
 | Brush | `LineToolBrush` | freehand |
 | Highlighter | `LineToolHighlighter` | freehand |
@@ -28,7 +28,7 @@ the drawn curve, not the anchor chords.
 | Curve | `LineToolBezierQuadro` | 3 |
 | DoubleCurve | `LineToolBezierCubic` | 4 |
 
-## Hit-test fixes (TV behavior)
+## Hit-test fixes (reference behavior)
 
 - `Rect` / `Ellipse` / `Circle` — filled interior now selects (border always
   did). Unfilled shapes stay border-only.
@@ -39,7 +39,7 @@ the drawn curve, not the anchor chords.
   (`arc_points` / `quadratic_points` / `cubic_points`, same math as paint);
   previously only the anchor chords selected.
 - `ArrowMarker` / `ArrowMarkUp` / `ArrowMarkDown` — glyph extent: within 16 px
-  of the anchor (TV glyph is ~14 px tall); previously a degenerate
+  of the anchor (the glyph is ~14 px tall); previously a degenerate
   zero-length polyline that only matched within 6 px.
 - `Brush` / `Highlighter` — full stroke trail `a → b → captured vertices`
   (the initial drag segment was missing from hit tests).
@@ -47,7 +47,7 @@ the drawn curve, not the anchor chords.
 
 ## Tests
 
-- `shape_anchor_counts_match_tv` — 12 fixed-count kinds vs TV catalog.
+- `shape_anchor_counts_match_tv` — 12 fixed-count kinds vs the reference catalog.
 - `shapes_family_geometry_hits_and_misses` / `..._holds_on_log_axis` —
   interiors (rect center, circle disc, ellipse center, triangle centroid,
   rotated-rect parallelogram), curve midpoints (arc circumcircle mid, parabola

@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Expand the parity manifest across every in-scope TradingView drawing tool, audit all 77 existing drawing kinds against TV anchor/geometry/interaction behavior, add the 7 missing drawings (Text, Anchored VWAP, Fixed-range and Anchored Volume Profile, Bars Pattern, Ghost Feed, Table), and reach `verified` status for all 84 in-scope catalog entries.
+**Goal:** Expand the parity manifest across every in-scope reference-app drawing tool, audit all 77 existing drawing kinds against reference anchor/geometry/interaction behavior, add the 7 missing drawings (Text, Anchored VWAP, Fixed-range and Anchored Volume Profile, Bars Pattern, Ghost Feed, Table), and reach `verified` status for all 84 in-scope catalog entries.
 
-**Architecture:** The extracted TV catalog (`docs/evidence/tv/drawings-catalog.json`) becomes the authority for tv_id, group, section, anchors, and scope; `docs/parity/catalog.json` carries one manifest entry per TV id and stays validated by `xtask parity`. Audit evidence for implemented kinds is a table-driven golden harness in `crates/tickchart/tests/drawing_goldens.rs` that verifies placement through the public `Drawing::hit` API at chart-space coordinates, plus generic anchor-count and serde round-trip sweeps. Data-derived tools (VWAP, volume profiles) compute from the `Candles` slice already threaded through `paint`/hit paths and persist only anchors/parameters — never generated arrays.
+**Architecture:** The extracted reference catalog (`docs/evidence/tv/drawings-catalog.json`) becomes the authority for tv_id, group, section, anchors, and scope; `docs/parity/catalog.json` carries one manifest entry per reference id and stays validated by `xtask parity`. Audit evidence for implemented kinds is a table-driven golden harness in `crates/tickchart/tests/drawing_goldens.rs` that verifies placement through the public `Drawing::hit` API at chart-space coordinates, plus generic anchor-count and serde round-trip sweeps. Data-derived tools (VWAP, volume profiles) compute from the `Candles` slice already threaded through `paint`/hit paths and persist only anchors/parameters — never generated arrays.
 
 **Tech Stack:** Rust 2024, egui/eframe 0.37, serde/serde_json, existing `tickchart`, `tickview` (app), `xtask` crates. No new dependencies.
 
-**Spec:** `docs/superpowers/specs/2026-10-20-tradingview-full-parity-design.md` (§6 manifest rules, §7.3 drawing golden tests, §9 drawing catalog, §11 engine changes, §12 persistence, §14 Milestone 2).
+**Spec:** `docs/superpowers/specs/2026-10-20-full-parity-design.md` (§6 manifest rules, §7.3 drawing golden tests, §9 drawing catalog, §11 engine changes, §12 persistence, §14 Milestone 2).
 
 ## Global Constraints
 
@@ -24,7 +24,7 @@
 
 ## Review Focus
 
-- A kind whose `points()` disagrees with TV's real anchor count finalizes on the wrong click — pinned by `every_kind_anchor_count_matches_tv_catalog` (Task 3, extended in audits).
+- A kind whose `points()` disagrees with the reference's real anchor count finalizes on the wrong click — pinned by `every_kind_anchor_count_matches_tv_catalog` (Task 3, extended in audits).
 - A data-derived drawing whose anchor falls outside the loaded candle range or an empty/short candle set must render nothing and never panic or produce NaN — pinned by `data_tools_survive_short_history` (Tasks 10–11).
 - Log-scale charts: geometry stays computed in price units and maps through `PriceAxis`; ratio placement must not shift on log — pinned by `case_hits_hold_on_log_axis` (Task 4).
 - Old configs saved before this milestone lack the new `grid`/`cells` fields and must load with defaults without data loss — pinned by `v2_payload_without_table_fields_loads` (Task 13).
@@ -34,9 +34,9 @@
 
 | File | Responsibility |
 |---|---|
-| `docs/evidence/tv/drawings-catalog.json` | Extracted TV drawing catalog: tv_id, label, group, section, shortcut, anchors, interaction, scope (new; authority table). |
-| `docs/evidence/tv/drawings-<family>.md` | Per-family audit evidence: formulas, TV doc links, divergences found, test ids (new ×6). |
-| `xtask/src/parity.rs` | Validation upgrade: workspace-root file reads, implemented-kind parsing, TV-catalog coverage, verified-coverage rule. |
+| `docs/evidence/tv/drawings-catalog.json` | Extracted reference drawing catalog: tv_id, label, group, section, shortcut, anchors, interaction, scope (new; authority table). |
+| `docs/evidence/tv/drawings-<family>.md` | Per-family audit evidence: formulas, reference doc links, divergences found, test ids (new ×6). |
+| `xtask/src/parity.rs` | Validation upgrade: workspace-root file reads, implemented-kind parsing, reference-catalog coverage, verified-coverage rule. |
 | `docs/parity/catalog.json` | Full 87-entry drawing manifest (expanded from seed). |
 | `crates/tickchart/tests/drawing_goldens.rs` | Table-driven golden harness: fixture, chart-space hit cases per kind, sweeps. |
 | `crates/tickchart/src/datatools.rs` | Anchored VWAP + volume profile math (POC/VAH/VAL, 70% value area). |
@@ -51,7 +51,7 @@
 
 ---
 
-### Task 1: Extracted TV drawing catalog evidence
+### Task 1: Extracted reference drawing catalog evidence
 
 **Files:**
 - Create: `docs/evidence/tv/drawings-catalog.json`
@@ -71,9 +71,9 @@
   - Shapes: `LineToolBrush` freehand, `LineToolHighlighter` freehand, `LineToolArrowMarker` 1, `LineToolArrow` 2, `LineToolArrowMarkUp` 1, `LineToolArrowMarkDown` 1, `LineToolRectangle` 2, `LineToolRotatedRectangle` 3, `LineToolPath` open-path, `LineToolCircle` 2, `LineToolEllipse` 2, `LineToolPolyline` open-path, `LineToolTriangle` 3, `LineToolArc` 3, `LineToolBezierQuadro` 3, `LineToolBezierCubic` 4.
   - Annotation: `LineToolText` 1, `LineToolTextNote` 1, `LineToolPriceNote` 1, `LineToolNote` 1, `LineToolTable` 2, `LineToolCallout` 1, `LineToolComment` 1, `LineToolPriceLabel` 1, `LineToolSignpost` 1, `LineToolFlagMark` 1, `LineToolImage` 2 excluded ("media object: out of scope per spec §4"), `LineToolTweet` 1 excluded ("social content object: out of scope per spec §4"), `LineToolIdea` 1 excluded ("social idea object: out of scope per spec §4").
   - Cursor-mode ids (`cursor`, `dot`, `arrow`, `demonstration`, `performance`, `eraser`) are interaction modes, not `LineTool*` drawings — record this scope decision in `drawings-catalog-notes.md`; they are not tools rows.
-- [x] **Step 4: Write `drawings-catalog-notes.md`** — method, source capture reference, cursor-mode scope decision, known anchor uncertainties (`LineToolHeadAndShoulders`, `LineToolTrianglePattern`, `LineToolProjection`, `LineToolFibSpeedResistanceFan`, `LineToolPrediction` — to be re-checked against live TV during their family audits).
+- [x] **Step 4: Write `drawings-catalog-notes.md`** — method, source capture reference, cursor-mode scope decision, known anchor uncertainties (`LineToolHeadAndShoulders`, `LineToolTrianglePattern`, `LineToolProjection`, `LineToolFibSpeedResistanceFan`, `LineToolPrediction` — to be re-checked against the live reference app during their family audits).
 - [x] **Step 5: Run to pass** — `cargo test -p xtask` → PASS.
-- [x] **Step 6: Commit** — `git add docs/evidence/tv/drawings-catalog.json docs/evidence/tv/drawings-catalog-notes.md xtask/src/parity.rs && git commit -m "docs: extract full TV drawing catalog with anchor facts"`
+- [x] **Step 6: Commit** — `git add docs/evidence/tv/drawings-catalog.json docs/evidence/tv/drawings-catalog-notes.md xtask/src/parity.rs && git commit -m "docs: extract full reference drawing catalog with anchor facts"`
 
 ### Task 2: Manifest validation upgrade
 
@@ -82,13 +82,13 @@
 
 **Interfaces:**
 - Consumes: `docs/evidence/tv/drawings-catalog.json` (Task 1).
-- Produces: `pub fn parse_kind_variants(src: &str) -> Vec<String>` — `DrawingKind` variant names between `pub enum DrawingKind {` and `}`; `pub fn validate_full(catalog_json: &str, tv_json: &str, kinds: &[String], evidence_exists: &impl Fn(&str) -> bool) -> Vec<String>` — all `validate_catalog` rules plus: every implemented kind has a drawing entry (match on `tickview_id`), every in-scope tv id has an entry, every excluded tv id is an `excluded` entry, no manifest drawing tv_id outside the TV catalog, `verified` drawing entries need ≥3 `tests` and ≥2 `evidence` paths with at least one ending `.png`.
+- Produces: `pub fn parse_kind_variants(src: &str) -> Vec<String>` — `DrawingKind` variant names between `pub enum DrawingKind {` and `}`; `pub fn validate_full(catalog_json: &str, tv_json: &str, kinds: &[String], evidence_exists: &impl Fn(&str) -> bool) -> Vec<String>` — all `validate_catalog` rules plus: every implemented kind has a drawing entry (match on `tickview_id`), every in-scope tv id has an entry, every excluded tv id is an `excluded` entry, no manifest drawing tv_id outside the reference catalog, `verified` drawing entries need ≥3 `tests` and ≥2 `evidence` paths with at least one ending `.png`.
 
 - [x] **Step 1: Write failing tests** — `parse_kind_variants_finds_gann_fan` (feed a truncated enum snippet, expect `GannFan`); `implemented_kind_without_entry_is_error` (kinds `["TrendLine"]`, empty drawings → error mentions `TrendLine`); `in_scope_tv_id_without_entry_is_error`; `excluded_tv_id_must_be_excluded_status`; `verified_drawing_needs_coverage` (tests len 2 → error; tests len 3 + evidence `["a.md","b.png"]` → clean).
 - [x] **Step 2: Run to fail** — `cargo test -p xtask` → new tests fail.
-- [x] **Step 3: Implement** in `parity.rs` — the rules above; `run()` also loads the TV catalog file and `crates/tickchart/src/drawings.rs` kinds (via `workspace_root()`) and feeds `validate_full`; keep `validate_str` for synthetic-input tests.
+- [x] **Step 3: Implement** in `parity.rs` — the rules above; `run()` also loads the reference catalog file and `crates/tickchart/src/drawings.rs` kinds (via `workspace_root()`) and feeds `validate_full`; keep `validate_str` for synthetic-input tests.
 - [x] **Step 4: Run to pass** — `cargo test -p xtask` → PASS (real-file `parity` command may report the un-expanded manifest; that is expected until Task 3 — do not wire the real-file catalog test yet).
-- [x] **Step 5: Commit** — `git add xtask/src/parity.rs && git commit -m "feat: validate manifest against TV catalog and kind coverage"`
+- [x] **Step 5: Commit** — `git add xtask/src/parity.rs && git commit -m "feat: validate manifest against reference catalog and kind coverage"`
 
 ### Task 3: Expand the manifest to the full drawing catalog
 
@@ -98,16 +98,16 @@
 - Modify: `docs/parity/STATUS.md` (regenerated)
 
 **Interfaces:**
-- Consumes: TV catalog (Task 1), validation (Task 2).
-- Produces: 87-entry `docs/parity/catalog.json`. `tickview_id` = the existing `DrawingKind` variant name, or the reserved future variant (`Text`, `AnchoredVwap`, `FixedRangeVolumeProfile`, `AnchoredVolumeProfile`, `BarsPattern`, `GhostFeed`, `Table`). `icon` = kebab `Icon::name()` id: existing tools keep theirs; new ids `note`, `anchored-vwap`, `volume-profile-fixed`, `volume-profile-anchored`, `bars-pattern`, `ghost-feed`, `table` (the existing `text` icon stays on `Tool::Text`). `anchors`/`interaction` copied from the TV catalog. Statuses: every entry `in-progress` except `LineToolGannFan`, which stays `verified` (its harness/persistence test ids are appended in Task 4).
-- Test: `xtask/src/parity.rs` — `real_manifest_covers_every_kind_and_tv_id`: reads `docs/parity/catalog.json`, TV catalog, and `drawings.rs` from `workspace_root()`, runs `validate_full` with a filesystem `evidence_exists` closure, asserts no errors.
+- Consumes: Reference catalog (Task 1), validation (Task 2).
+- Produces: 87-entry `docs/parity/catalog.json`. `tickview_id` = the existing `DrawingKind` variant name, or the reserved future variant (`Text`, `AnchoredVwap`, `FixedRangeVolumeProfile`, `AnchoredVolumeProfile`, `BarsPattern`, `GhostFeed`, `Table`). `icon` = kebab `Icon::name()` id: existing tools keep theirs; new ids `note`, `anchored-vwap`, `volume-profile-fixed`, `volume-profile-anchored`, `bars-pattern`, `ghost-feed`, `table` (the existing `text` icon stays on `Tool::Text`). `anchors`/`interaction` copied from the reference catalog. Statuses: every entry `in-progress` except `LineToolGannFan`, which stays `verified` (its harness/persistence test ids are appended in Task 4).
+- Test: `xtask/src/parity.rs` — `real_manifest_covers_every_kind_and_tv_id`: reads `docs/parity/catalog.json`, reference catalog, and `drawings.rs` from `workspace_root()`, runs `validate_full` with a filesystem `evidence_exists` closure, asserts no errors.
 
 - [x] **Step 1: Write the failing test** — `real_manifest_covers_every_kind_and_tv_id` as above; expect failure (77 kinds lack entries).
 - [x] **Step 2: Run to fail** — `cargo test -p xtask real_manifest` → FAIL listing missing ids.
-- [x] **Step 3: Expand `catalog.json`** — one entry per TV tool row; `group`/`name` from the TV catalog label; `notes` empty or short; 3 media ids `excluded` with their reasons; existing kinds `in-progress`; the 7 future kinds `in-progress`.
+- [x] **Step 3: Expand `catalog.json`** — one entry per reference tool row; `group`/`name` from the reference catalog label; `notes` empty or short; 3 media ids `excluded` with their reasons; existing kinds `in-progress`; the 7 future kinds `in-progress`.
 - [x] **Step 4: Run to pass** — `cargo test -p xtask` → PASS. Regenerate: `cargo run -p xtask -- parity --write`; commit `docs/parity/STATUS.md`.
 - [x] **Step 5: Verify report** — `docs/parity/STATUS.md` shows 87 drawings: 1 verified, 83 in-progress, 3 excluded; studies unchanged.
-- [x] **Step 6: Commit** — `git add docs/parity/catalog.json docs/parity/STATUS.md xtask/src/parity.rs && git commit -m "feat: expand drawing manifest to full TV catalog"`
+- [x] **Step 6: Commit** — `git add docs/parity/catalog.json docs/parity/STATUS.md xtask/src/parity.rs && git commit -m "feat: expand drawing manifest to full reference catalog"`
 
 ### Task 4: Golden harness + trend-family audit
 
@@ -129,11 +129,11 @@
 - Test ids used by manifest entries: `drawing_goldens::trend_family_geometry`, `drawing_goldens::case_hits_hold_on_log_axis`, plus existing per-kind unit ids already in the suite.
 
 - [x] **Step 1: Write the harness + failing trend test** — fixture, `Case`, `run_case`, `trend_cases()` with anchors at fixed `(t, price)` grid (e.g. a=(20, p40), b=(120, p70) where pNN = fixture price at bar NN); `trend_family_geometry` asserts every case; expect compile-fail→pass cycle per kind as geometry is confirmed (kinds already implemented should pass immediately — this task documents/pins them; a failing hit means a real geometry bug to fix in `drawings.rs`).
-- [x] **Step 2: Run** — `cargo test -p tickchart --test drawing_goldens` → iterate until PASS; any hit-test divergence is fixed in `drawings.rs` with a comment naming the TV behavior.
-- [x] **Step 3: Anchor-count audit** — for the 17 trend kinds assert `DrawingKind::points()` equals the TV catalog anchors inside `trend_family_geometry`; fix code or note divergence (with TV doc link) in `drawings-trend.md`.
-- [x] **Step 4: Evidence** — `drawings-trend.md`: per-kind TV label/id/anchors, projection direction rules (Ray forward only, Extended both, HRay right-only), TV doc links, divergence list, test ids.
+- [x] **Step 2: Run** — `cargo test -p tickchart --test drawing_goldens` → iterate until PASS; any hit-test divergence is fixed in `drawings.rs` with a comment naming the reference behavior.
+- [x] **Step 3: Anchor-count audit** — for the 17 trend kinds assert `DrawingKind::points()` equals the reference catalog anchors inside `trend_family_geometry`; fix code or note divergence (with reference doc link) in `drawings-trend.md`.
+- [x] **Step 4: Evidence** — `drawings-trend.md`: per-kind reference label/id/anchors, projection direction rules (Ray forward only, Extended both, HRay right-only), reference doc links, divergence list, test ids.
 - [x] **Step 5: Flip manifest** — 17 trend entries → `verified`; each `tests` ≥3 ids: `drawing_goldens::trend_family_geometry`, `drawing_goldens::case_hits_hold_on_log_axis`, plus one existing relevant unit id; each `evidence`: `docs/evidence/tv/drawings-trend.md` + `docs/screenshots/parity/trend-dark.png` (run the new `TICKVIEW_SCENE=trend` seed with `TICKVIEW_THEME=dark TICKVIEW_SNAPSHOT=...` at 1440×900 and save the capture).
-- [x] **Step 6: Gates + commit** — `cargo test --workspace && cargo clippy --workspace --all-targets && cargo fmt --all`; `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-trend.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit trend drawing family against TV geometry"` (run `cargo run -p xtask -- parity --write` before commit).
+- [x] **Step 6: Gates + commit** — `cargo test --workspace && cargo clippy --workspace --all-targets && cargo fmt --all`; `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-trend.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit trend drawing family against reference geometry"` (run `cargo run -p xtask -- parity --write` before commit).
 
 ### Task 5: Gann/Fib-family audit (15 kinds)
 
@@ -145,14 +145,14 @@
 
 **Interfaces:**
 - Consumes: Task 4 harness.
-- Produces: `gannfib_cases()` covering all 15 kinds: ratio-set kinds assert hits at computed ray/level positions (fib levels `0, .236, .382, .5, .618, .786, 1` for retracement; extension/channel/time kinds use their standard level sets from TV docs cited in the evidence md); arcs/circles/spiral assert hits on curve midpoints sampled from the geometry formula; `GannFan` case id `gann_fan_case` (9-ray ratio set, reuse `gann_price_uses_tv_ratios` math).
-- Note: `FibSpeedFan` TV anchors = 2 vs `points()` = 3 — resolve against TV docs/live during this audit; if TV is 2, change `points()` and the creation branch, update `new_kinds_report_points_and_drag`.
+- Produces: `gannfib_cases()` covering all 15 kinds: ratio-set kinds assert hits at computed ray/level positions (fib levels `0, .236, .382, .5, .618, .786, 1` for retracement; extension/channel/time kinds use their standard level sets from reference docs cited in the evidence md); arcs/circles/spiral assert hits on curve midpoints sampled from the geometry formula; `GannFan` case id `gann_fan_case` (9-ray ratio set, reuse `gann_price_uses_tv_ratios` math).
+- Note: `FibSpeedFan` reference anchors = 2 vs `points()` = 3 — resolve against reference docs/live during this audit; if the reference is 2, change `points()` and the creation branch, update `new_kinds_report_points_and_drag`.
 
 - [x] **Step 1: Write failing `gannfib_family_geometry`** with all 15 cases + anchor-count asserts.
 - [x] **Step 2: Run to fail** — `cargo test -p tickchart --test drawing_goldens gannfib` → FAIL.
 - [x] **Step 3: Implement/fix** until PASS (linear + log axis).
-- [x] **Step 4: Evidence + flip entries** — `drawings-gannfib.md` (ratio tables per kind, TV doc links, anchor resolutions, test ids); manifest flip with `evidence` incl. `docs/screenshots/parity/gannfib-dark.png` (add `TICKVIEW_SCENE=gannfib` seed: selected FibRetracement + GannFan + FibChannel; capture dark 1440×900).
-- [x] **Step 5: Gates + commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-gannfib.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit gann and fib drawing family against TV geometry"`
+- [x] **Step 4: Evidence + flip entries** — `drawings-gannfib.md` (ratio tables per kind, reference doc links, anchor resolutions, test ids); manifest flip with `evidence` incl. `docs/screenshots/parity/gannfib-dark.png` (add `TICKVIEW_SCENE=gannfib` seed: selected FibRetracement + GannFan + FibChannel; capture dark 1440×900).
+- [x] **Step 5: Gates + commit** — `git add crates/tickchart/tests/drawing_goldens.rs crates/tickchart/src/drawings.rs docs/evidence/tv/drawings-gannfib.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: audit gann and fib drawing family against reference geometry"`
 
 ### Task 6: Patterns/Elliott/cycles-family audit (14 kinds)
 
@@ -164,13 +164,13 @@
 
 **Interfaces:**
 - Consumes: harness; existing `pattern_labels()` for pivot text.
-- Produces: cases for Xabcd, Cypher, HeadShoulders, Abcd, TrianglePattern, ThreeDrives, 5 Elliott kinds, CyclicLines, TimeCycles, SineLine — hits on each connecting segment midpoint (chart-space via anchor pairs), misses off-segment; assert `pattern_labels()` length == catalog anchors for pattern kinds. Resolve `HeadShoulders`/`TrianglePattern` anchor counts against TV here (evidence notes).
+- Produces: cases for Xabcd, Cypher, HeadShoulders, Abcd, TrianglePattern, ThreeDrives, 5 Elliott kinds, CyclicLines, TimeCycles, SineLine — hits on each connecting segment midpoint (chart-space via anchor pairs), misses off-segment; assert `pattern_labels()` length == catalog anchors for pattern kinds. Resolve `HeadShoulders`/`TrianglePattern` anchor counts against the reference here (evidence notes).
 
 - [x] **Step 1: Failing `pattern_family_geometry`** — 11 pattern segment-midpoint hits + off-segment misses, cyclic/time/sine specials; run to fail.
 - [x] **Step 2: Implement/fix** — CyclicLines circle+spokes, TimeCycles verticals, SineLine curve (shared `sine_points`) hit paths; PASS linear + log.
-- [x] **Step 3: Anchor audit** — 14 kinds vs TV catalog (evidence `drawings-patterns.md`); pattern label count == anchors.
+- [x] **Step 3: Anchor audit** — 14 kinds vs reference catalog (evidence `drawings-patterns.md`); pattern label count == anchors.
 - [x] **Step 4: Evidence + seed + flip** — `drawings-patterns.md`, `TICKVIEW_SCENE=patterns` (selected XABCD + Elliott + sine) → `patterns-dark.png`, manifest → 46 verified.
-- [x] **Step 5: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit pattern and elliott drawing family against TV geometry"`.
+- [x] **Step 5: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit pattern and elliott drawing family against reference geometry"`.
 
 ### Task 7: Forecasting/measurement-family audit (7 existing kinds)
 
@@ -204,7 +204,7 @@
 - [x] **Step 1: Failing `shapes_family_geometry`** — interiors, curve midpoints, stroke trails, arrow shaft/head, marker glyph + anchor counts; run to fail (13 expected failures).
 - [x] **Step 2: Implement/fix** — fill-interior select for Rect/Ellipse/Circle/Triangle/RotatedRect (`rotated_rect_contains`), sampled-curve arms for Arc/Curve/DoubleCurve, 16px glyph markers, full brush trail; re-pinned `rectangle_hit_follows_tv_fill_semantics`; PASS linear + log.
 - [x] **Step 3: Evidence + seed + flip** — `drawings-shapes.md`, `TICKVIEW_SCENE=shapes` → `shapes-dark.png`, manifest → 69 verified.
-- [x] **Step 4: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit geometric shape drawings against TV"`.
+- [x] **Step 4: Gates + commit** — workspace tests, clippy 0, fmt; commit `"feat: audit geometric shape drawings against the reference"`.
 
 ### Task 9: Annotation-family audit + plain-Text kind
 
@@ -212,7 +212,7 @@
 - Modify: `crates/tickchart/src/drawings.rs` (new `DrawingKind::Text`, `DrawTool::Text`, `points`=1, `is_annotation` includes Text, hit = text bounds, paint = plain text, kind label "Text")
 - Modify: `crates/app/src/app.rs` (`Tool::Text => DrawTool::Text` instead of `Note`; new `Tool::Note` variant in enum+ALL+icon+label; `Tool::Note => DrawTool::Note`)
 - Modify: `crates/app/src/icons.rs` (new `Icon::Note` bubble glyph + name `"note"`)
-- Modify: `crates/app/src/toolpanel.rs` (TEXT AND NOTES section: `Text`, `Note`, `PriceNote`, `Pin`, … order per TV; flyout height test update)
+- Modify: `crates/app/src/toolpanel.rs` (TEXT AND NOTES section: `Text`, `Note`, `PriceNote`, `Pin`, … order per the reference; flyout height test update)
 - Modify: `crates/tickchart/tests/drawing_goldens.rs` (`annotation_cases()` + `annotation_family_geometry`)
 - Create: `docs/evidence/tv/drawings-annotation.md`
 - Modify: `docs/parity/catalog.json` (8 annotation entries + `LineToolText` → `verified`)
@@ -242,8 +242,8 @@ Steps: 1 failing `annotation_family_geometry` (Text hits text bounds; Note hits 
 - [x] **Step 1: Failing unit tests** — `datatools::vwap_hand_computed` (3-bar fixture, expected values exact to 1e-9) and `datatools::vwap_short_history_is_empty`.
 - [x] **Step 2: Run to fail**, 3 implement `anchored_vwap`, 4 run to pass.
 - [x] **Step 5: Failing golden case** — `vwap_case`: anchor at bar 40, hit at polyline midpoint (expected price computed in-test from fixture candles via `anchored_vwap`), miss 15 px off; `data_tools_survive_short_history`: VWAP + (Task 11) profiles render/hit with anchor past end and empty `Candles` without panic (paint through the public `paint` entry with a null-ish painter is not required — call hit + geometry fns).
-- [x] **Step 6: Wire kind/tool/icon/flyout**, capture `TICKVIEW_SCENE=vwap TICKVIEW_THEME=dark` → `docs/screenshots/parity/vwap-dark.png`; evidence `drawings-vwap.md` (formula ΣTP·V/ΣV, TV doc link, extends-to-right-edge behavior, no persisted arrays); manifest flip.
-- [x] **Step 7: Gates + commit** — `git add crates/tickchart/src/datatools.rs crates/tickchart/src/lib.rs crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs docs/evidence/tv/drawings-vwap.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: anchored VWAP drawing with TV value math"`
+- [x] **Step 6: Wire kind/tool/icon/flyout**, capture `TICKVIEW_SCENE=vwap TICKVIEW_THEME=dark` → `docs/screenshots/parity/vwap-dark.png`; evidence `drawings-vwap.md` (formula ΣTP·V/ΣV, reference doc link, extends-to-right-edge behavior, no persisted arrays); manifest flip.
+- [x] **Step 7: Gates + commit** — `git add crates/tickchart/src/datatools.rs crates/tickchart/src/lib.rs crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs docs/evidence/tv/drawings-vwap.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: anchored VWAP drawing with reference value math"`
 
 ### Task 11: Volume profiles (fixed range + anchored)
 
@@ -258,10 +258,10 @@ Steps: 1 failing `annotation_family_geometry` (Text hits text bounds; Note hits 
 - Modify: `docs/parity/catalog.json` (both entries → `verified`)
 
 **Interfaces:**
-- Produces: `datatools::ProfileRow { price_lo: f64, price_hi: f64, volume: f64, in_value_area: bool }`; `datatools::Profile { rows: Vec<ProfileRow>, poc: usize, vah: f64, val: f64, max_volume: f64 }`; `datatools::volume_profile(cd: &Candles, from: usize, to: usize, rows: usize) -> Option<Profile>` — equal-height price bins spanning [min low, max high] over `from..=to`, each bar's volume assigned to its close's bin (TV close-only assignment per docs; note alternative in evidence), 70% value area expanded from POC; `None` on empty range.
+- Produces: `datatools::ProfileRow { price_lo: f64, price_hi: f64, volume: f64, in_value_area: bool }`; `datatools::Profile { rows: Vec<ProfileRow>, poc: usize, vah: f64, val: f64, max_volume: f64 }`; `datatools::volume_profile(cd: &Candles, from: usize, to: usize, rows: usize) -> Option<Profile>` — equal-height price bins spanning [min low, max high] over `from..=to`, each bar's volume assigned to its close's bin (reference close-only assignment per docs; note alternative in evidence), 70% value area expanded from POC; `None` on empty range.
 - Default bin count `24` (constant `datatools::DEFAULT_ROWS`).
 
-Steps: 1 failing `profile_hand_computed_poc_and_value_area` (5-bar fixture with known close distribution; exact POC bin, VAH/VAL), 2 run-fail, 3 implement, 4 run-pass, 5 golden cases (fixed-range: hits on POC bar row + inside value area, miss above range; anchored: hits right-edge rows; reuse `data_tools_survive_short_history` extension for profiles), 6 wire tools/icons/flyout + `TICKVIEW_SCENE=vprofile TICKVIEW_THEME=dark` → `vprofile-dark.png` (seed fixed-range profile over 80 bars + anchored profile at n-60), evidence md (binning rule, 70% value area, POC/VAH/VAL labels, TV doc link), manifest flip, 7 gates + commit `"feat: fixed-range and anchored volume profile drawings"` (same file set).
+Steps: 1 failing `profile_hand_computed_poc_and_value_area` (5-bar fixture with known close distribution; exact POC bin, VAH/VAL), 2 run-fail, 3 implement, 4 run-pass, 5 golden cases (fixed-range: hits on POC bar row + inside value area, miss above range; anchored: hits right-edge rows; reuse `data_tools_survive_short_history` extension for profiles), 6 wire tools/icons/flyout + `TICKVIEW_SCENE=vprofile TICKVIEW_THEME=dark` → `vprofile-dark.png` (seed fixed-range profile over 80 bars + anchored profile at n-60), evidence md (binning rule, 70% value area, POC/VAH/VAL labels, reference doc link), manifest flip, 7 gates + commit `"feat: fixed-range and anchored volume profile drawings"` (same file set).
 
 ### Task 12: Bars pattern + Ghost feed
 
@@ -269,7 +269,7 @@ Steps: 1 failing `profile_hand_computed_poc_and_value_area` (5-bar fixture with 
 - Modify: `crates/tickchart/src/drawings.rs` (`DrawingKind::BarsPattern`, `DrawingKind::GhostFeed`; points 2; offset stored in `extra[0]` = anchor-relative (Δbars, Δprice); paint source range as ghost copy + original; hits on source range rect/edges)
 - Modify: `crates/app/src/app.rs` (`Tool::BarsPattern`, `Tool::GhostFeed`, draw_tool, labels, scene `barghost`)
 - Modify: `crates/app/src/icons.rs` (`Icon::BarsPattern` `"bars-pattern"`, `Icon::GhostFeed` `"ghost-feed"`)
-- Modify: `crates/app/src/toolpanel.rs` (FORECASTING section: Long, Short, Prediction, BarsPattern, GhostFeed, Sector per TV order; height test)
+- Modify: `crates/app/src/toolpanel.rs` (FORECASTING section: Long, Short, Prediction, BarsPattern, GhostFeed, Sector per reference order; height test)
 - Modify: `crates/tickchart/tests/drawing_goldens.rs` (`bars_ghost_cases`)
 - Create: `docs/evidence/tv/drawings-bars-ghost.md`
 - Modify: `docs/parity/catalog.json` (both entries → `verified`)
@@ -277,7 +277,7 @@ Steps: 1 failing `profile_hand_computed_poc_and_value_area` (5-bar fixture with 
 **Interfaces:**
 - Produces: bars-pattern renders candles in `a..b` duplicated at offset `extra[0] - a` (bars shift, price shift) in a translucent tint; ghost feed renders the full visible series shifted by the same offset; both keep `a`,`b` as the only persisted anchors (`extra[0]` = offset anchor; no copied arrays).
 
-Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-copy math (`datatools::offset_for(d) -> (i64, f64)` new fn, unit-tested); evidence records TV drag behavior + open questions; scene `barghost-dark.png`; commit `"feat: bars pattern and ghost feed drawings"`.
+Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-copy math (`datatools::offset_for(d) -> (i64, f64)` new fn, unit-tested); evidence records the reference drag behavior + open questions; scene `barghost-dark.png`; commit `"feat: bars pattern and ghost feed drawings"`.
 
 ### Task 13: Table drawing
 
@@ -285,7 +285,7 @@ Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-co
 - Modify: `crates/tickchart/src/drawings.rs` (`DrawingKind::Table`; points 2; new `Drawing` fields `#[serde(default, skip_serializing_if = "Option::is_none")] pub grid: Option<[u8; 2]>` and `#[serde(default, skip_serializing_if = "Vec::is_empty")] pub cells: Vec<String>`; default grid `[3,3]` via `default_grid()`; paint grid lines + cell text clipped to cells; hits anywhere in table rect)
 - Modify: `crates/app/src/app.rs` (`Tool::Table`, draw_tool, label "Table", icon `Icon::Table` `"table"`, scene `table` seed: 3×3 table with sample cells selected)
 - Modify: `crates/app/src/icons.rs` (`Icon::Table`)
-- Modify: `crates/app/src/toolpanel.rs` (TEXT AND NOTES section gains `Tool::Table` after Callout per TV order; height test)
+- Modify: `crates/app/src/toolpanel.rs` (TEXT AND NOTES section gains `Tool::Table` after Callout per reference order; height test)
 - Modify: `crates/app/src/drawing_toolbar.rs` (Settings popover: rows/cols steppers + focused cell text edit for `Table` kind; emit `ToolbarAction::Edit(StyleEdit::…)` — reuse existing settings plumbing)
 - Modify: `crates/app/src/store.rs` (`v2_payload_without_table_fields_loads`, `table_cells_round_trip`)
 - Modify: `crates/tickchart/tests/drawing_goldens.rs` (`table_case`)
@@ -300,7 +300,7 @@ Steps: Task 10 shape (steps 1–7): golden asserts source-range hits + offset-co
 - [x] **Step 2: Implement fields + kind**, run store tests to pass.
 - [x] **Step 3: Failing `table_case`** — hits at rect center + corners inset 2 px, miss outside; grid paint via existing painter path (no pixel assert).
 - [x] **Step 4: Wire tool/icon/flyout/settings popover**; `TICKVIEW_SCENE=table TICKVIEW_THEME=dark` → `table-dark.png`.
-- [x] **Step 5: Evidence** — `drawings-table.md`: TV table is an editable cell grid; rows/cols steppers match TV settings structure; record what was inferred (default 3×3, cell edit UX) as an open question validated against live TV.
+- [x] **Step 5: Evidence** — `drawings-table.md`: the reference table is an editable cell grid; rows/cols steppers match the reference settings structure; record what was inferred (default 3×3, cell edit UX) as an open question validated against the live reference app.
 - [x] **Step 6: Manifest flip + gates + commit** — `git add crates/tickchart/src/drawings.rs crates/tickchart/tests/drawing_goldens.rs crates/app/src/app.rs crates/app/src/icons.rs crates/app/src/toolpanel.rs crates/app/src/drawing_toolbar.rs crates/app/src/store.rs docs/evidence/tv/drawings-table.md docs/parity/catalog.json docs/parity/STATUS.md docs/screenshots/parity && git commit -m "feat: table drawing with editable cell grid"`
 
 ### Task 14: Whole-enum sweeps, manifest completion, reports, visual QA

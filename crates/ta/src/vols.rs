@@ -97,7 +97,7 @@ pub fn cmf(h: &[f64], l: &[f64], c: &[f64], v: &[f64], len: usize) -> Series {
     out
 }
 
-/// Money Flow Index on typical price (TV default 14).
+/// Money Flow Index on typical price (reference default 14).
 #[must_use]
 #[allow(clippy::needless_range_loop)]
 pub fn mfi(cd: &Candles, len: usize) -> Series {
@@ -135,7 +135,7 @@ pub fn mfi(cd: &Candles, len: usize) -> Series {
     out
 }
 
-/// Ease of Movement (`box_size` scales volume; TV auto-scales, we expose it).
+/// Ease of Movement (`box_size` scales volume; the app auto-scales, we expose it).
 #[must_use]
 #[allow(clippy::needless_range_loop)]
 pub fn ease_of_movement(cd: &Candles, len: usize, box_size: f64) -> Series {
@@ -167,7 +167,7 @@ pub fn vpt(c: &[f64], v: &[f64]) -> Series {
     out
 }
 
-/// PVI & DVI lines with EMA smoothings (TV defaults 5/20).
+/// PVI & DVI lines with EMA smoothings (reference defaults 5/20).
 #[must_use]
 pub fn pvi_dvi(c: &[f64], v: &[f64], short: usize, long: usize) -> PviDvi {
     let n = c.len();

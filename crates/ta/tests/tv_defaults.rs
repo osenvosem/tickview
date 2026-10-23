@@ -1,6 +1,6 @@
-//! Pin registry defaults against TradingView's `studies_metadata` wire
+//! Pin registry defaults against the reference app's `studies_metadata` wire
 //! payload (evidence committed at `docs/evidence/tv-studies-defaults.json`,
-//! captured from TradingView Desktop 3.4.1.8194 packs tv-basicstudies /
+//! captured from the reference app desktop 3.4.1.8194 packs tv-basicstudies /
 //! tv-corestudies / tv-prostudies). Numerical and boolean defaults must
 //! match; enum inputs are recorded in the evidence for manual review.
 
@@ -98,7 +98,7 @@ fn registry_defaults_match_tv_wire() {
     }
     assert!(
         drift.is_empty(),
-        "registry defaults drift from TV wire:\n{}",
+        "registry defaults drift from reference wire:\n{}",
         drift.join("\n")
     );
     assert!(

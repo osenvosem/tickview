@@ -1,5 +1,5 @@
 //! Regression: hovering into the empty "future" space right of the last bar
-//! must not panic. `index_at` intentionally yields indices past the data (TV
+//! must not panic. `index_at` intentionally yields indices past the data (reference
 //! parity), so every consumer has to treat them as "no value".
 
 use egui::{Context, Event, Pos2, Rect, Vec2};

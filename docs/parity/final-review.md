@@ -1,6 +1,6 @@
 # Milestone 4 — final side-by-side parity review
 
-TradingView Desktop 3.4.1.8194 vs TickView `main` @ d0593e0.
+Desktop 3.4.1.8194 of a popular trading app vs TickView `main` @ d0593e0.
 Screenshots: dark + light, 1440×900, regenerated on the integrated tree with
 isolated config dirs (`TICKVIEW_CONFIG_DIR`), each verified to show a settled
 (POLLING) chart, not a SYNCING frame.
@@ -12,7 +12,8 @@ Reference: `evidence/tv/drawings-catalog-notes.md`, `evidence/tv-live-re-2026-10
 
 Two-object multi-select shows the fixed top-right bar with pause, move,
 "2 objects" count, pin, z-order list, style/color, clone, hide, delete and the
-overflow menu — same structure and ordering as TV's selected-object bar;
+overflow menu — same structure and ordering as the reference app's selected-object
+bar;
 per-drawing style edits route through `drawing_toolbar::ToolbarAction`.
 Behavior is pinned by `crates/tickchart/src/chart.rs` toolbar tests and the
 M1 evidence (`evidence/tv/gann-fan.md` section on cursor behavior: pointer on
@@ -30,7 +31,8 @@ icons are original vector glyphs, one unique icon per drawing tool, all
 legible at 20 px. Uniqueness and tool coverage are enforced by
 `every_drawing_tool_has_a_unique_icon` and `every_tool_is_wired_and_in_catalog`.
 
-**Verdict: match** (TV's emoji Icons group and media tools are excluded by
+**Verdict: match** (the reference app's emoji Icons group and media tools are
+excluded by
 design, spec §4).
 
 ## 3. Gann fan geometry
@@ -39,7 +41,8 @@ Screenshots: `../screenshots/parity/gannf-dark.png`, `gannf-light.png`.
 Reference: `evidence/tv/gann-fan.md`.
 
 Fan from the dragged origin emits price rays labelled 1/1, 1/2, 1/3, 1/4 and
-time rays labelled 1/1, 2/1, 3/1, 4/1, 8/1 on the upper edge, matching TV's
+time rays labelled 1/1, 2/1, 3/1, 4/1, 8/1 on the upper edge, matching the
+reference app's
 ratio construction and label placement; selected state shows the origin handle.
 Geometry is verified across linear and log axes, zoom levels and drag
 directions by `crates/tickchart/tests/drawing_goldens.rs`.
@@ -63,7 +66,8 @@ Pane placement, legend titles and numeric defaults match the wire payload
 Python references across all families.
 
 **Verdict: match**, with two documented deviations:
-- Correlation studies use the active comparison symbol instead of TV's
+- Correlation studies use the active comparison symbol instead of the reference
+  app's
   literal `GOOG` default (single-symbol offline engine; documented in
   `studies-catalog-notes.md`).
 - Advance/Decline is excluded (market-breadth needs an external index feed,

@@ -1,13 +1,13 @@
-# Annotation family — TV evidence
+# Annotation family — reference evidence
 
-Source: TradingView 3.4.1 left toolbar (captured 2026-10-20) + TV docs
+Source: the reference app (version 3.4.1) left toolbar (captured 2026-10-20) + reference docs
 (<https://www.tradingview.com/support/solutions/43000501972-notes/>).
 Golden harness: `crates/tickchart/tests/drawing_goldens.rs`
 (`run_annotation_family`).
 
-## Anchors + mapping (TV catalog = TickView, all confirmed)
+## Anchors + mapping (reference catalog = TickView, all confirmed)
 
-| Kind | TV id | Anchors | TV interaction |
+| Kind | Reference id | Anchors | Reference interaction |
 |---|---|---|---|
 | Text | `LineToolText` | 1 | click + type (plain text, no bubble) |
 | Note | `LineToolTextNote` | 1 | click + type (bubble note) |
@@ -19,11 +19,11 @@ Golden harness: `crates/tickchart/tests/drawing_goldens.rs`
 | Signpost | `LineToolSignpost` | 1 | flag-on-pole glyph |
 | FlagMark | `LineToolFlagMark` | 1 | flag glyph |
 
-TV ships **two distinct single-anchor text tools**: plain `Text` (bare glyph
+The reference app ships **two distinct single-anchor text tools**: plain `Text` (bare glyph
 run at the anchor) and `Note` (rounded bubble). TickView previously collapsed
 both into the bubble `Note`; split here — new `DrawingKind::Text` /
 `DrawTool::Text` / `Tool::Text` paint plain text, new `Tool::Note` maps to the
-existing bubble kind. Toolbar order matches TV: Text, Note, Price note, Pin,
+existing bubble kind. Toolbar order matches the reference: Text, Note, Price note, Pin,
 Callout, Comment, Price label, Signpost, Flag mark.
 
 `LineToolTable` is audited in Task 13; `LineToolImage`/`LineToolTweet`/

@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the 1-second poller with true exchange websocket streaming for crypto (Binance kline), add TradingView-semantics bar replay driven by locally cached candles, and add named study templates (save/apply/delete the active tab's indicator set), per the RE findings in `docs/evidence/tv-live-re-2026-10-19.md`.
+**Goal:** Replace the 1-second poller with true exchange websocket streaming for crypto (Binance kline), add reference-semantics bar replay driven by locally cached candles, and add named study templates (save/apply/delete the active tab's indicator set), per the RE findings in `docs/evidence/tv-live-re-2026-10-19.md`.
 
 **Architecture:** New `crates/marketdata/src/stream.rs` owns a synchronous `tungstenite` kline client (Binance only; `SymbolKind::Crypto` + mapped intervals). The app gains one dedicated stream worker thread (same job/msg channel pattern as the four history workers) that emits `Msg::StreamBar`; the UI merges bars into `Tab::candles` in place and shows a `LIVE` badge. Bar replay lives as `ChartState::replay: Option<ReplayState>` in `tickchart` (cursor clamps the view right edge; paint dims the zone right of the cursor) with the timer/controls in the app. Study templates are pure config: `SavedConfig::study_templates` + UI actions in the indicators window.
 
 **Tech Stack:** Rust 2021 workspace, egui/eframe 0.37, serde, crossbeam-channel, ureq (unchanged), new dependency `tungstenite` (latest, sync TLS via `native-tls` default feature — matches ureq's TLS stack).
 
 **Evidence grading:**
-- **observed** — TV desktop 3.4.1 runtime + shipped JS (`docs/evidence/tv-live-re-2026-10-19.md`): replay toolbar semantics (`_replayApi`: autoplay delays list, speeds, step, jump-to-date, depth), TV session protocol (NOT used — production feeds come from Binance directly), Binance kline websocket message shape (public schema + our REST parse tests).
-- **inference** — exact TV replay UX details (dim overlay opacity, strip layout) chosen to match observed screenshots; documented as design choices.
+- **observed** — the reference desktop app (version 3.4.1) runtime + shipped JS (`docs/evidence/tv-live-re-2026-10-19.md`): replay toolbar semantics (`_replayApi`: autoplay delays list, speeds, step, jump-to-date, depth), reference session protocol (NOT used — production feeds come from Binance directly), Binance kline websocket message shape (public schema + our REST parse tests).
+- **inference** — exact replay UX details (dim overlay opacity, strip layout) chosen to match observed screenshots; documented as design choices.
 
 ## Global Constraints
 
@@ -54,7 +54,7 @@
 - Produces: `pub struct StudyTemplate { pub name: String, pub indicators: Vec<SavedIndicator> }` (Serialize/Deserialize/Clone/Debug); `SavedConfig::study_templates: Vec<StudyTemplate>` (`#[serde(default)]`); `SavedConfig::stream: bool` (`#[serde(default = "default_true")]`).
 - Consumes: existing `SavedIndicator { name: String, params: Vec<(String, SavedVal)> }`.
 
-- [ ] **Step 1: Write failing tests** — (a) v2 JSON without `study_templates`/`stream` deserializes with `templates.is_empty()` and `stream == true`; (b) template round-trip: name + two indicators with `SavedVal::N`/`B` params survives `to_string`→`from_str`; (c) duplicate template names allowed (TV parity: rename is UI's job).
+- [ ] **Step 1: Write failing tests** — (a) v2 JSON without `study_templates`/`stream` deserializes with `templates.is_empty()` and `stream == true`; (b) template round-trip: name + two indicators with `SavedVal::N`/`B` params survives `to_string`→`from_str`; (c) duplicate template names allowed (reference parity: rename is UI's job).
 - [ ] **Step 2: Verify compile failure** (`cargo test -p tickview`).
 - [ ] **Step 3: Implement** the two fields + struct.
 - [ ] **Step 4: Green + commit** — `cargo test -p tickview && cargo clippy -p tickview --all-targets`; commit `feat(app): study templates and stream toggle in config v2`.
@@ -152,7 +152,7 @@
 - [ ] **Step 1: Scene hook** — `TICKVIEW_SCENE=replay` + `TICKVIEW_STREAM=off`: after first data batch, enter replay armed (cursor = count-25, autoplay off).
 - [ ] **Step 2: Full verification** — `cargo fmt --all -- --check && cargo test --workspace && cargo clippy --workspace --all-targets && cargo build --release -p tickview`. Expected: all green.
 - [ ] **Step 3: Screenshots** — dark+light `docs/screenshots/phase5-replay-{dark,light}.png` (strip, cursor line, dim overlay, LIVE badge suppressed by stream-off env: status shows SYNCING — verify badge visible with one streaming shot `phase5-live-dark.png` no env override, BTCUSDT); read and inspect: dim covers right of cursor incl. volume pane, strip layout, badge text, icons legible.
-- [ ] **Step 4: Docs + ledger** — PARITY: new rows `Live streaming` (Done: Binance WS kline, LIVE badge, poll fallback; other markets polled), `Bar replay` (Done: local, TV-parity controls; deep historical replay via exchange pagination only), `Study templates` (Done); README: feature bullets + `TICKVIEW_SCENE=replay`, `TICKVIEW_STREAM`, updated test count; ledger entries + commit `docs: phase 5 live streaming, bar replay and study templates`.
+- [ ] **Step 4: Docs + ledger** — PARITY: new rows `Live streaming` (Done: Binance WS kline, LIVE badge, poll fallback; other markets polled), `Bar replay` (Done: local, reference-parity controls; deep historical replay via exchange pagination only), `Study templates` (Done); README: feature bullets + `TICKVIEW_SCENE=replay`, `TICKVIEW_STREAM`, updated test count; ledger entries + commit `docs: phase 5 live streaming, bar replay and study templates`.
 
 ---
 
@@ -160,4 +160,4 @@
 
 - Coverage: templates T1–T2; streaming T3–T4; replay T5–T6; QA T7. Review Focus 1→T4 guard, 2→T4 suppression/backoff, 3→T5 clamp + T6 shift, 4→T5 paint, 5→T1 config.
 - Stable symbols across tasks: `StudyTemplate`, `KlineStream::{connect,next_bar}`, `parse_kline_msg`, `Job::WatchStream`, `Msg::StreamBar`, `merge_live_bar`, `is_live`, `ReplayState`, `replay_right_offset`, `replay_at_live`, `index_for_time`, `delay_for`, `replay_step`.
-- Deliberately deferred: order book/depth heat, TV private-socket protocol usage (reference doc only), chart-sync "draw on all charts", mobile layout.
+- Deliberately deferred: order book/depth heat, the reference's private-socket protocol usage (reference doc only), chart-sync "draw on all charts", mobile layout.

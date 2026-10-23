@@ -1,4 +1,4 @@
-//! TradingView-style symbol search dialog (reverse-engineered from the live
+//! Reference-app-style symbol search dialog (reverse-engineered from the live
 //! site 2026-10-22): fixed card, category chips, an exchange ("sources")
 //! dropdown, and single-line rows with an accent highlight on the matched
 //! ticker substring.
@@ -39,7 +39,8 @@ const FOOTER_TEXT: &str = "Index updates on startup: SEC, Binance, Kraken, Coinb
 const NO_RESULTS_TITLE: &str = "No matching symbols";
 const NO_RESULTS_BODY: &str = "Try another ticker, name, or category.";
 
-/// Deterministic avatar fills for the letter fallback (TV ships logos; we have
+/// Deterministic avatar fills for the letter fallback (the reference app ships
+/// logos; we have
 /// no logo assets, so every row gets a brand-ish color derived from the ticker).
 const AVATAR_COLORS: [Color32; 8] = [
     Color32::from_rgb(0xF7, 0x93, 0x1A),
@@ -53,7 +54,7 @@ const AVATAR_COLORS: [Color32; 8] = [
 ];
 
 /// Category chip. Only categories the local index actually holds data for —
-/// TV's Bonds/Economy/Options tabs have no backing set here.
+/// the Bonds/Economy/Options tabs have no backing set here.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Chip {
     #[default]
@@ -123,7 +124,7 @@ pub struct SymbolSearch {
 }
 
 impl SymbolSearch {
-    /// Re-run filtering. `watchlist` backs the empty-query state (TV shows its
+    /// Re-run filtering. `watchlist` backs the empty-query state (the reference
     /// recommended list; we show what the user already follows).
     pub fn refresh(&mut self, index: &SearchIndex, watchlist: &[Symbol]) {
         if self.q.trim().is_empty() {
@@ -154,7 +155,7 @@ impl SymbolSearch {
         self.sel = 0;
     }
 
-    /// Move the selection, wrapping at both ends (TV wraps); no-op when empty.
+    /// Move the selection, wrapping at both ends; no-op when empty.
     pub fn cycle(&mut self, delta: i32) {
         let Ok(len) = i64::try_from(self.results.len()) else {
             return;
@@ -167,7 +168,7 @@ impl SymbolSearch {
     }
 }
 
-/// Row type label, mirroring TV's `"<type> <domain>"` literals.
+/// Row type label, mirroring the reference `"<type> <domain>"` literals.
 #[must_use]
 pub fn type_label(kind: SymbolKind) -> &'static str {
     match kind {
@@ -221,7 +222,7 @@ pub fn show(
         return None;
     }
     let vp = ctx.viewport_rect();
-    // TV's card is fixed 840x680; small viewports clamp to viewport - gutter.
+    // The card is fixed 840x680; small viewports clamp to viewport - gutter.
     let w = CARD_W.min((vp.width() - 80.0).max(360.0));
     let card_h = CARD_H.min((vp.height() - 60.0).max(320.0));
     let mut win = egui::Window::new("Symbol search")

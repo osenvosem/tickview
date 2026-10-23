@@ -1,6 +1,6 @@
-# Gann & Fibonacci drawing family — TV evidence
+# Gann & Fibonacci drawing family — reference evidence
 
-Source: TradingView 3.4.1 left toolbar (captured 2026-10-20) + TV docs
+Source: the reference app (version 3.4.1) left toolbar (captured 2026-10-20) + reference docs
 (<https://www.tradingview.com/support/solutions/43000502044-fibonacci-retracement/>
 and sibling pages per tool). Golden harness:
 `crates/tickchart/tests/drawing_goldens.rs`; expected points are derived in
@@ -8,17 +8,17 @@ the harness from the definitions below, never from production helpers.
 
 ## Anchor-count resolutions
 
-| TickView kind | TV id | TV anchors | TickView before | Resolution |
+| TickView kind | Reference id | Reference anchors | TickView before | Resolution |
 |---|---|---|---|---|
 | FibSpeedFan | `LineToolFibSpeedResistanceFan` | 2 | 3 | reduced to 2 (origin + far corner) |
-| FibSpiral | `LineToolFibSpiral` | 3 | 2 | raised to 3 (TV third click controls growth) |
+| FibSpiral | `LineToolFibSpiral` | 3 | 2 | raised to 3 (the third click controls growth) |
 | FibTime | `LineToolTrendBasedFibTime` | 3 | 3 | ok; third anchor reserved for trend control |
 
-All other kinds already matched TV (`gannfib_anchor_counts_match_tv`).
+All other kinds already matched the reference (`gannfib_anchor_counts_match_tv`).
 
-## Geometry per kind (TV definition → TickView implementation)
+## Geometry per kind (reference definition → TickView implementation)
 
-Common ratio sets (TV):
+Common ratio sets (reference):
 
 - fib levels: `0, 23.6, 38.2, 50, 61.8, 78.6, 100%`
 - fib time: `0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.618, 2.618`
@@ -27,7 +27,7 @@ Common ratio sets (TV):
 | Kind | Geometry | Notes |
 |---|---|---|
 | Fib | horizontal levels `lerp(a,b,ratio)` spanning the anchor x-range; 0.5 line bold | labels right of range |
-| FibExt | levels project from `c` along `b-a` price delta, ratios `.382…4.236`; guides a→b→c | TV `fib_extensions` ratio set |
+| FibExt | levels project from `c` along `b-a` price delta, ratios `.382…4.236`; guides a→b→c | `fib_extensions` ratio set |
 | FibChannel | base a→b plus rails shifted by `ratio*(c-a)` | fill between extremes |
 | FibTimeZone / FibTime | verticals at `a.x + (b.x-a.x)*ratio` (time set) | labels above plot |
 | FibSpeedFan | rays from `a` to ratio points on the vertical through `b`; dotted diagonal a→b | 2-anchor |
@@ -36,17 +36,17 @@ Common ratio sets (TV):
 | FibCircles | concentric circles, `r = |a-b| + (|a-c|-|a-b|)*ratio` | outer anchor optional |
 | FibSpiral | 3-turn growth spiral, `r(t) = |a-b|·t` | |
 | FibArcs | arcs swept between the a→b and a→c angles, radii `|a-b|→|a-c|` at ratios | |
-| GannBox | rect a..b + quarter grid (25/50/75%) + both diagonals | TV label "Gann box" |
-| GannSquareFixed | square side `max(|dx|,|dy|)` signed by b + quarter grid + diagonals | TV "Gann square fixed" |
-| GannSquare | GannBox grid + complex rays: origin corner to far-edge fractions `1/8, 1/4, 1/3, 1/2, 2/3, 3/4, 7/8` on both far edges (TV 1x1..1x8 / 2x1..8x1 family) | TV "Gann square" (`LineToolGannComplex`) |
-| GannFan | nine rays, ratios `1/8…8/1`, through the ratio price point at the end bar | M1 verified; M2 fix: rays now pass through `axis.y_of(price_ratio_point)` at `b.x` so log-axis slopes match TV |
+| GannBox | rect a..b + quarter grid (25/50/75%) + both diagonals | label "Gann box" |
+| GannSquareFixed | square side `max(|dx|,|dy|)` signed by b + quarter grid + diagonals | "Gann square fixed" |
+| GannSquare | GannBox grid + complex rays: origin corner to far-edge fractions `1/8, 1/4, 1/3, 1/2, 2/3, 3/4, 7/8` on both far edges (1x1..1x8 / 2x1..8x1 family) | "Gann square" (`LineToolGannComplex`) |
+| GannFan | nine rays, ratios `1/8…8/1`, through the ratio price point at the end bar | M1 verified; M2 fix: rays now pass through `axis.y_of(price_ratio_point)` at `b.x` so log-axis slopes match the reference |
 
 ## Known divergence (recorded)
 
 Level-type kinds (Fib retracement levels, channel rails, speed-fan ratios,
-wedge lines, time zones) interpolate linearly in **screen space**. TV places
-ratio levels at the axis position of the ratio *price*; the two agree exactly
-on linear axes. On log axes TickView levels sit slightly off the TV
+wedge lines, time zones) interpolate linearly in **screen space**. The reference app
+places ratio levels at the axis position of the ratio *price*; the two agree exactly
+on linear axes. On log axes TickView levels sit slightly off the reference
 positions (curvature of the log mapping). Left as a recorded gap for the
 axis-parity work; golden harness mirrors the shipped screen-space semantics on
 both axes.

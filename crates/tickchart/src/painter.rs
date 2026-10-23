@@ -9,7 +9,7 @@ use crate::priceaxis::PriceAxis;
 use ta::Candles;
 use ta::registry::PlotStyle;
 
-/// Chart type mirroring TradingView's main series styles.
+/// Chart type mirroring the reference app's main series styles.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ChartType {
     Candles,
@@ -49,7 +49,7 @@ impl ChartType {
     }
 }
 
-/// TV dark-theme palette.
+/// Reference dark-theme palette.
 #[derive(Clone, Copy, Debug)]
 pub struct Palette {
     pub bg: Color32,
@@ -61,7 +61,7 @@ pub struct Palette {
     pub grid: Color32,
     /// Secondary legend text: inputs and dimmed (hidden) rows.
     pub text_dim: Color32,
-    /// Primary legend text: study titles (TV's near-white / near-black).
+    /// Primary legend text: study titles (near-white / near-black).
     pub text_strong: Color32,
     pub text: Color32,
     pub crosshair: Color32,

@@ -1,7 +1,7 @@
 # Evidence index
 
-All TradingView reference evidence captured for the parity program lives here.
-TradingView Desktop 3.4.1.8194 (macOS), captured 2026-10-19/20 via the
+All reference-app evidence captured for the parity program lives here.
+Reference desktop app (version 3.4.1.8194, macOS), captured 2026-10-19/20 via the
 `tv-live-re` bundle plus its packed resources; study defaults additionally from
 the `studies_metadata` wire payload.
 
@@ -16,9 +16,9 @@ the `studies_metadata` wire payload.
 
 | File | What it pins |
 |---|---|
-| `tv/drawings-catalog.json` | TV drawing tool catalog: every `LineTool*` id, display name, group, anchor count |
+| `tv/drawings-catalog.json` | Reference drawing tool catalog: every `LineTool*` id, display name, group, anchor count |
 | `tv/drawings-catalog-notes.md` | Catalog extraction method, dedup/renames, exclusion decisions |
-| `tv/gann-fan.md` | Gann fan ratio geometry vs TV reference |
+| `tv/gann-fan.md` | Gann fan ratio geometry vs the reference |
 | `tv/drawings-trend.md` | Trend family (lines, channels, pitchforks) reference shapes/labels |
 | `tv/drawings-gannfib.md` | Fibonacci + Gann tool reference grids and labels |
 | `tv/drawings-forecast.md` | Long/short/position-forecast reference |

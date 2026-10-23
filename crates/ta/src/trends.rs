@@ -153,7 +153,7 @@ pub struct Ichimoku {
     pub span_b: Series,
 }
 
-/// Ichimoku (TV defaults 9/26/52, displacement 26; spans shifted ahead).
+/// Ichimoku (reference defaults 9/26/52, displacement 26; spans shifted ahead).
 #[must_use]
 #[allow(clippy::needless_range_loop)]
 pub fn ichimoku(
@@ -232,7 +232,7 @@ pub fn vortex(cd: &Candles, len: usize) -> Vortex {
     Vortex { plus, minus }
 }
 
-/// Aroon oscillator pair (TV Pine semantics): `100 * (period + offset)/period`
+/// Aroon oscillator pair (reference Pine semantics): `100 * (period + offset)/period`
 /// where offset is the bars since the extreme inside the window.
 #[must_use]
 pub fn aroon(h: &[f64], l: &[f64], period: usize) -> (Series, Series) {
@@ -265,7 +265,7 @@ pub fn aroon(h: &[f64], l: &[f64], period: usize) -> (Series, Series) {
 }
 
 /// Chandelier Exit: long stop = HH(period) − mult·ATR(atr_len), short stop
-/// mirrored from LL. ATR is RMA-smoothed true range (TV default).
+/// mirrored from LL. ATR is RMA-smoothed true range (reference default).
 #[must_use]
 pub struct Chandelier {
     pub long: Series,
@@ -314,7 +314,7 @@ pub fn choppiness(cd: &Candles, len: usize) -> Series {
     out
 }
 
-/// Volatility Stop (TV `STD;Volatility_Stop`): ATR bands around `src` with
+/// Volatility Stop (`STD;Volatility_Stop`): ATR bands around `src` with
 /// trend-flip ratcheting, like Supertrend but centered on the source series.
 #[must_use]
 pub struct VolStop {
@@ -399,7 +399,7 @@ pub fn fractals(cd: &Candles, left: usize, right: usize) -> (Series, Series) {
     (up, dn)
 }
 
-/// ZigZag pivots: `depth`-bar local extremes (TV `ta.pivothigh/low`) kept
+/// ZigZag pivots: `depth`-bar local extremes (`ta.pivothigh/low`) kept
 /// only when the move from the last accepted opposite pivot reaches
 /// `deviation` percent. Values sit on the pivot bar; confirmation happens
 /// `depth` bars later, so prefixes never repaint confirmed pivots.

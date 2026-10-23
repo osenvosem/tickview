@@ -1,9 +1,9 @@
 //! Golden geometry harness: deterministic fixture, chart-space hit cases
 //! verified through the public `Drawing::hit` API on linear and log axes.
 //!
-//! Hits are placed on the strokes each tool actually paints (TV behavior:
+//! Hits are placed on the strokes each tool actually paints (reference behavior:
 //! clicking any visible stroke selects). Expected points are derived in the
-//! harness from TV-documented definitions, never by calling the production
+//! harness from reference-documented definitions, never by calling the production
 //! geometry helpers, except where noted.
 
 use egui::{Pos2, Rect, Vec2};
@@ -98,7 +98,7 @@ fn off(sc: &Scene, i: usize, p: f64, dx: f32, dy: f32) -> (usize, f64) {
 }
 
 /// Chart-space point on the offset rail through `c` parallel to base p0→p1,
-/// at fraction `f` of the base's x span (TV parallel-channel definition).
+/// at fraction `f` of the base's x span (parallel-channel definition).
 fn rail_hit(sc: &Scene, a: (usize, f64), b: (usize, f64), c: (usize, f64), f: f32) -> (usize, f64) {
     let (pa, pb, pc) = (pt(sc, a.0, a.1), pt(sc, b.0, b.1), pt(sc, c.0, c.1));
     let dy = pc.y - (pa.y + (pb.y - pa.y) * ((pc.x - pa.x) / (pb.x - pa.x)));
@@ -110,7 +110,7 @@ fn rail_hit(sc: &Scene, a: (usize, f64), b: (usize, f64), c: (usize, f64), f: f3
     )
 }
 
-/// Rail midpoints of a pitchfork per TV definitions (screen space), returned
+/// Rail midpoints of a pitchfork per reference definitions (screen space), returned
 /// in chart space. Independent of `pitchfork_lines` internals.
 fn fork_hits(
     sc: &Scene,
@@ -416,7 +416,7 @@ fn scr_pt(sc: &Scene, x: f32, y: f32) -> Pos2 {
 fn gannfib_cases(sc: &Scene) -> Vec<Case> {
     let mut cases = Vec::new();
 
-    // Fib retracement: TV levels 0..100% as horizontal lines.
+    // Fib retracement: reference levels 0..100% as horizontal lines.
     {
         let (pa, pb) = (pt(sc, 20, 100.0), pt(sc, 120, 118.0));
         let xm = (pa.x + pb.x) * 0.5;
@@ -711,8 +711,8 @@ fn run_gannfib_family(sc: &Scene) {
     );
 }
 
-/// TV gann fan: nine ratio rays verified through the production selection
-/// path (`gann_fan_hit`), on linear and log axes. Ray targets are TV price
+/// Reference gann fan: nine ratio rays verified through the production selection
+/// path (`gann_fan_hit`), on linear and log axes. Ray targets are reference price
 /// ratios of the anchor price span.
 #[test]
 fn gann_fan_case_hits_tv_rays_both_axes() {
@@ -776,7 +776,7 @@ fn gannfib_anchor_counts_match_tv() {
     }
 }
 
-/// TV patterns connect consecutive pivots; clicking any segment selects.
+/// Reference patterns connect consecutive pivots; clicking any segment selects.
 /// Expected points are segment midpoints derived in chart space.
 fn run_pattern(sc: &Scene, kind: DrawingKind, pts: &[(usize, f64)]) -> Vec<String> {
     let mut errs = Vec::new();
@@ -1093,7 +1093,7 @@ fn gannfib_family_geometry_holds_on_log_axis() {
     run_gannfib_family(&scene(true));
 }
 
-/// TV selects risk/forecast boxes and range boxes anywhere inside the fill;
+/// The reference selects risk/forecast boxes and range boxes anywhere inside the fill;
 /// Sector is a filled wedge whose interior selects too.
 fn run_forecast_family(sc: &Scene) -> Vec<String> {
     let mut errs = Vec::new();
@@ -1225,7 +1225,7 @@ fn forecast_family_geometry_holds_on_log_axis() {
     );
 }
 
-/// TV shapes select on the border always and on the interior when filled;
+/// Reference shapes select on the border always and on the interior when filled;
 /// curves select along the sampled curve, not the anchor chords.
 fn run_shapes_family(sc: &Scene) -> Vec<String> {
     let mut errs = Vec::new();
@@ -1509,7 +1509,7 @@ fn text_kind_is_plain_and_note_kind_bubbles() {
     assert_eq!(DrawingKind::Note.label(), "Note");
 }
 
-/// TV annotations select on their rendered bounds: the text/bubble rect for
+/// Reference annotations select on their rendered bounds: the text/bubble rect for
 /// notes and labels, the glyph footprint for pins/marks.
 fn run_annotation_family(sc: &Scene) -> Vec<String> {
     let mut errs = Vec::new();
@@ -1580,7 +1580,7 @@ fn annotation_family_geometry_holds_on_log_axis() {
     );
 }
 
-/// TV anchored VWAP: polyline from anchor bar to the right edge; the curve
+/// Reference anchored VWAP: polyline from anchor bar to the right edge; the curve
 /// selects, 15 px away does not.
 #[test]
 fn vwap_case_hits_curve_and_misses_off() {
@@ -1860,7 +1860,7 @@ fn every_kind_has_geometry_and_hit_case() {
                 )
             }
         } else {
-            // TV: every drawing is selectable at an anchor or along its body.
+            // Reference app: every drawing is selectable at an anchor or along its body.
             let mut candidates = vec![pa, pb, Pos2::new((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5)];
             if let Some(c) = d.c {
                 let pc = map(c);
@@ -1907,7 +1907,7 @@ fn every_kind_anchor_count_matches_tv_catalog() {
             .iter()
             .find(|k| format!("{:?}", k) == tv_id)
             .unwrap_or_else(|| panic!("catalog tv_id {tv_id} has no TickView kind"));
-        // TV counts freehand/open-path tools as 0 anchors; TickView keeps a
+        // The reference counts freehand/open-path tools as 0 anchors; TickView keeps a
         // structural start anchor (sometimes two) for those kinds.
         if anchors == 0 {
             assert!(
@@ -1918,7 +1918,7 @@ fn every_kind_anchor_count_matches_tv_catalog() {
             assert_eq!(
                 u64::from(kind.points()),
                 anchors,
-                "{tv_id}: anchor-count drift vs TV catalog"
+                "{tv_id}: anchor-count drift vs the reference catalog"
             );
         }
         checked += 1;

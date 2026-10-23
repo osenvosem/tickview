@@ -52,7 +52,7 @@ impl Coinbase {
         format!("{}-{}", base.0, base.1)
     }
 
-    /// TV interval -> Coinbase granularity (secs); 4h/weekly/monthly don't
+    /// App interval -> Coinbase granularity (secs); 4h/weekly/monthly don't
     /// exist on this endpoint.
     #[must_use]
     pub fn coinbase_granularity(iv: Interval) -> Option<u32> {

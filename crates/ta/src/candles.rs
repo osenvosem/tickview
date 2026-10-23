@@ -68,7 +68,7 @@ impl Candles {
     }
 
     /// Timestamp for bar index `i`; indices past the last bar extrapolate
-    /// (TV future space for drawings).
+    /// (future space for drawings).
     #[must_use]
     pub fn t_at(&self, i: usize) -> i64 {
         if self.t.is_empty() {
@@ -180,7 +180,7 @@ mod tests {
     }
 }
 
-/// Heikin-Ashi transformation of a candle set (TV built-in chart type).
+/// Heikin-Ashi transformation of a candle set (built-in chart type).
 #[must_use]
 pub fn heikin_ashi(cd: &Candles) -> Candles {
     let n = cd.len();

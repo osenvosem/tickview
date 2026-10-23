@@ -1,6 +1,6 @@
 //! Adaptive price / compact number formatting for axes and legends.
 
-/// Adaptive price formatting, TradingView-style.
+/// Adaptive price formatting, reference-app-style.
 #[must_use]
 pub fn fmt_price(p: f64) -> String {
     if !p.is_finite() {
@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn compact_labels() {
-        assert_eq!(fmt_compact(1234.0), "1234"); // k-suffix only at >=10k, TV-style
+        assert_eq!(fmt_compact(1234.0), "1234"); // k-suffix only at >=10k, reference-style
         assert_eq!(fmt_compact(9999.0), "9999");
         assert_eq!(fmt_compact(1_500_000.0), "1.5M");
         assert_eq!(fmt_compact(2_000_000_000.0), "2B");

@@ -1,13 +1,13 @@
-# TickView ↔ TradingView parity status
+# TickView ↔ reference app parity status
 
-Source: TradingView 3.4.1 (captured 2026-10-20).
+Source: reference app 3.4.1 (captured 2026-10-20).
 
 Drawings: 91 verified, 0 in progress, 0 missing, 1 excluded (92 total).
 Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 
 ## Drawings
 
-| Name | TradingView id | TickView id | Icon | Status |
+| Name | Reference id | TickView id | Icon | Status |
 |---|---|---|---|---|
 | Trendline | `LineToolTrendLine` | `TrendLine` | `trend-line` | verified |
 | Ray | `LineToolRay` | `Ray` | `ray` | verified |
@@ -104,7 +104,7 @@ Studies: 83 verified, 0 in progress, 0 missing, 1 excluded (84 total).
 
 ## Studies
 
-| Name | TradingView id | TickView id | Icon | Status |
+| Name | Reference id | TickView id | Icon | Status |
 |---|---|---|---|---|
 | Accumulation/Distribution | `ACCD@tv` | `AccumulationDistribution` | `` | verified |
 | Awesome Oscillator | `AwesomeOscillator@tv` | `AwesomeOscillator` | `` | verified |

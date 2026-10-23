@@ -132,7 +132,7 @@ impl Yahoo {
         }
     }
 
-    /// Canonical Yahoo tickers for curated index aliases (TV-style names that
+    /// Canonical Yahoo tickers for curated index aliases (reference-style names that
     /// 404 at Yahoo verbatim). Exact match on the uppercased input.
     #[must_use]
     pub fn index_canonical(t: &str) -> Option<&'static str> {
@@ -163,10 +163,10 @@ impl Yahoo {
         }
     }
 
-    /// TV interval -> Yahoo chart interval. The API only accepts its
+    /// App interval -> Yahoo chart interval. The API only accepts its
     /// canonical set (`1m 2m 5m 15m 30m 60m 90m 1h 4h 1d 5d 1wk 1mo 3mo`);
-    /// TV-style `D`/`W`/`1M` strings are rejected with HTTP 400 (verified
-    /// live 2026-10-22). Anything else falls back to the TV string and lets
+    /// reference-style `D`/`W`/`1M` strings are rejected with HTTP 400 (verified
+    /// live 2026-10-22). Anything else falls back to the wire string and lets
     /// Yahoo surface its own error.
     #[must_use]
     pub fn yahoo_interval(iv: Interval) -> Option<&'static str> {
@@ -193,7 +193,7 @@ impl Yahoo {
     /// Convert a decoded chart payload into ascending bars.
     ///
     /// Rows whose OHLC are all null (exchange halts) are dropped; nulls inside an
-    /// otherwise-valid row become NaN so indicators see a hole, like TradingView.
+    /// otherwise-valid row become NaN so indicators see a hole, like the reference app.
     pub(crate) fn parse_chart(json: serde_json::Value) -> Result<Vec<Bar>, DataError> {
         let chart = json
             .get("chart")

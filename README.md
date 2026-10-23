@@ -1,6 +1,6 @@
-# TickView — TradingView-parity charts in Rust + egui
+# TickView — reference-app parity charts in Rust + egui
 
-Native macOS charting workstation rebuilt from analysis of TradingView Desktop
+Native macOS charting workstation rebuilt from analysis of a popular trading app's desktop build
 (REA disassembly/inventory in `research/`). The shell, chart engine and data
 layer are pure Rust: `eframe/egui`, `ureq`, `rusqlite`, and a custom chart
 painter.
@@ -30,6 +30,8 @@ account credentials, caches only public quotes and bars in
 `~/.config/tickview/` (`config.json`, `candles.sqlite`), and redistributes no
 market data. The app is alpha software and nothing it displays is investment
 advice.
+TickView is not affiliated with, endorsed by, or sponsored by the reference app's
+vendor; the app's name is a trademark of its owner.
 
 ## Build & run
 
@@ -109,7 +111,7 @@ checks and a release build.
   past the router's 60 s provider cooldown, so a transient limit never disables
   a timeframe for good. A symbol that cannot serve its saved resolution opens on
   the nearest offered one (coarser first).
-- Study legends behave like TradingView's: a cold row shows `name inputs` plus
+- Study legends behave like the reference app's: a cold row shows `name inputs` plus
   one value per plotted series in its own colour (a hidden study keeps the row,
   dimmed, and drops its plots). A row goes hot on hover and gets selected on
   click (a plot press or `Esc` unpins it), and every hot row turns into its own
@@ -121,7 +123,7 @@ checks and a release build.
   Nothing is pinned at launch. Starred studies land in the indicator browser's
   `FAVOURITES` section and `⌥A` puts them all on the chart; favourites and
   hidden studies persist (`docs/evidence/tv/study-legend-bar.md`).
-- Drawing tools: 94 rail tools across TradingView's eight drawing groups.
+- Drawing tools: 94 rail tools across the reference app's eight drawing groups.
   Cursors include Cross and Eraser; trend tools cover lines, channels and four
   pitchfork variants; Gann/Fibonacci includes channel, time, fan, circle,
   spiral, arc, wedge, pitchfan, Gann box/square/fan; Patterns includes XABCD,
@@ -132,23 +134,23 @@ checks and a release build.
   callouts, comments, pins, signposts, flags and images. Click to place (multi-point
   tools finish on the final click, Path/Polyline on double-click), select, drag
   to move, and Delete/Backspace to remove. Clicking a drawing shows a
-  TradingView-style selected-object bar fixed to the chart's top-right (44 px
+  reference-app-style selected-object bar fixed to the chart's top-right (44 px
   high, content-sized, 16 px inset): drag handle, multi-select, object name,
   clone, style, line width, color, settings (single selection), lock, hide,
   z-order and duplicate/copy/paste in the overflow menu, per-drawing interval
   visibility, and delete. Hovering a drawing in select mode shows the pointer
   cursor, dragging shows the grabbing cursor, and armed drawing tools keep the
-  crosshair. The Gann fan uses TradingView's ratio geometry (`1/8 1/4 1/3 1/2
+  crosshair. The Gann fan uses the reference app's ratio geometry (`1/8 1/4 1/3 1/2
   1/1 2/1 3/1 4/1 8/1`) with the drag line as `1/1` and rays extending forward
   only. Every drawing tool has its own original vector icon; review all of them
   with `TICKVIEW_SCENE=iconsheet` or in `docs/screenshots/parity/`. Lock,
   hide, remove-all, keep drawing, weak/strong magnet and zoom are functional.
   Per-drawing hidden/locked/interval state persists with serde defaults, so
   older configs load unchanged. Drawings are stored by
-  timestamp and persisted per symbol. Data-bound TV tools (volume profiles, anchored
+  timestamp and persisted per symbol. Data-bound reference-app tools (volume profiles, anchored
   VWAP, bars pattern, ghost feed, tables) are implemented; the Image tool places a
   two-point frame and attaches a local PNG/JPEG through the native file picker.
-- TradingView-style grouped tool rail: one button per tool family with a
+- reference-app-style grouped tool rail: one button per tool family with a
   two-target hit area. A first click selects the group's remembered tool after
   the 175 ms double-click window; a second click, double-click, arrow click or
   300 ms long press opens the selector. Flyouts are content-sized
@@ -161,7 +163,7 @@ checks and a release build.
   implements are listed.
 - Right watchlist with add/remove, filter, selection, quote change bars and a
   context menu; stale quotes fall back to cached daily closes.
-- Indicator browser and per-parameter editor for 83 TradingView-named studies,
+- Indicator browser and per-parameter editor for 83 reference-app-named studies,
   with automatic price/volume/separate-pane placement, session VWAP,
   higher-timeframe resampling and comparison-input correlation studies.
 - Every pane boundary is a visible splitter: a full-width rule with a centre
@@ -204,7 +206,7 @@ checks and a release build.
 
 | crate | role |
 |---|---|
-| `ta` | indicator engine: 83 TV-named studies, TV default params, golden-value tests, HTF resample + comparison context |
+| `ta` | indicator engine: 83 reference-app-named studies, reference-app default params, golden-value tests, HTF resample + comparison context |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine, Binance kline websocket (`KlineStream`) |
 | `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, panes, crosshair, legend hover/pin state + study reorder/move, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
@@ -226,22 +228,22 @@ plus shift-rectangle zoom, all verified in dark/light screenshots
 added Binance kline websocket streaming (protocol-level smoke: three closed 1m
 BTCUSDT bars over `stream.binance.com`), bar replay with transport controls
 and Space/arrow keys, and study templates, verified via
-`docs/screenshots/phase5-*.png`. Phase 6 added the TradingView-style grouped
-drawing tool panel with seven groups, all engine-supported TV tools, global
+`docs/screenshots/phase5-*.png`. Phase 6 added the reference-app-style grouped
+drawing tool panel with seven groups, all engine-supported reference-app tools, global
 favorites, long-press/double-click selector behavior, content-sized clamped
 flyouts and a functional utility rail; verified in dark/light via
 `TICKVIEW_SCENE=toolpanel` (`docs/screenshots/phase6-*.png`).
 
-Milestone 1 of the TradingView parity program (the drawing visual slice) is
+Milestone 1 of the reference-app parity program (the drawing visual slice) is
 complete: multi-select with marquee, per-drawing hide/lock/interval
 visibility, z-order/clone/copy/paste, the top-right selected-object bar,
-TradingView-ratio Gann fan, pointer/grabbing cursors, and a unique original
+reference-app-ratio Gann fan, pointer/grabbing cursors, and a unique original
 icon for all 91 drawing kinds. Proof: `docs/screenshots/parity/`
 (`TICKVIEW_SCENE=iconsheet|gannf|trend|toolbar`), `docs/evidence/tv/gann-fan.md`,
 and `docs/parity/STATUS.md` (generated by `cargo run -p xtask -- parity
 --write` from `docs/parity/catalog.json`; the Gann fan entry is `verified`).
 Milestone 2 (drawing catalog) is complete: the manifest mirrors the full
-TradingView drawing catalog — 87 entries, all 84 in-scope drawings `verified`
+reference drawing catalog — 87 entries, all 84 in-scope drawings `verified`
 and 3 explicitly excluded — covering the trend family (17 tools incl. all four
 pitchfork variants), the Gann/Fibonacci family (15 tools), the
 patterns/Elliott/cycles family (14 tools), the forecasting/measurement family
@@ -261,9 +263,9 @@ in `docs/screenshots/parity/`, plus per-tool evidence in
 `docs/evidence/tv/drawings-*.md`; `docs/parity/STATUS.md` is generated by
 `cargo run -p xtask -- parity --write` from `docs/parity/catalog.json`.
 Milestone 3 (study catalog) is complete: the manifest mirrors the full
-TradingView study catalog — 84 entries, all 83 registry studies `verified`
+reference study catalog — 84 entries, all 83 registry studies `verified`
 and Advance/Decline explicitly excluded (market-breadth feed out of scope).
-All 83 ids carry golden values against Python references, TV-wire-pinned
+All 83 ids carry golden values against Python references, reference-wire-pinned
 defaults (including a fixed weighted-KST drift), and metadata-derived pane
 audits; context studies add session VWAP, HTF resampling and
 correlation/rank-correlation from the study context (chart-level compare is
@@ -294,15 +296,15 @@ and utility menus block chart hover/pan/zoom under the pointer and their
 section dividers run edge-to-edge; the forecasting group now orders
 VOLUME-BASED before MEASURERS and the annotation group gains a CONTENT
 subcategory with Post (`LineToolTweet`) and Idea (`LineToolIdea`) cards; the
-eighth rail group Icons opens a TradingView-style emoji picker (460×560 px:
+eighth rail group Icons opens a reference-app-style emoji picker (460×560 px:
 search field, eight OpenMoji category tabs, virtualized grouped grid of 1,584
 full-color OpenMoji SVGs with natural wheel scrolling and tab click-jumps)
 placing `Emoji` drawings, which render from the same SVG atlas on the chart;
 the Cursors group
-gains Dot, Demonstration and Magic (TV performance) modes — dot placement,
+gains Dot, Demonstration and Magic (reference-app performance) modes — dot placement,
 spotlight dimming and drawing-hiding respectively — with the rail Magnet and
 Lock buttons wired to weak/strong snapping and selection locking. Manifest:
-92 TV ids, 90 drawings verified, 2 excluded (`LineToolImage`, duplicate
+92 reference ids, 90 drawings verified, 2 excluded (`LineToolImage`, duplicate
 arrow cursor). QA: dark/light captures for
 `TICKVIEW_SCENE=flyouttrend|flyoutfc|flyoutannot|emojipicker|flyoutcursors`
 in `docs/screenshots/parity/`.
