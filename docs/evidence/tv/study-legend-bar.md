@@ -154,6 +154,30 @@ For the hidden-restore shot, run once to create the config, set `hidden: true`
 on the MACD entry in `$TICKVIEW_CONFIG_DIR/config.json`, then run again with
 `TICKVIEW_SNAPSHOT=hidden-macd.png` (no scene: nothing pinned, nothing hovered).
 
+## Where the settings dialog closes to
+
+The gear on the bar (and `MenuAction::OpenSettings`) opens the parameter editor
+over the chart. The indicator browser is *not* part of that flow: the editor's
+`reopen_browser` flag is set only by the browser's own add path, so
+`Add`/`Cancel`/`X` from a gear-opened dialog returns to the chart, while a dialog
+that came out of the browser puts the browser back. Probe both directions:
+
+```sh
+# exit 0 when the gear path closes onto the chart
+TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_QA_GESTURE=settings-close \
+  ./target/debug/tickview
+
+# exit 0 when the browser path returns to the browser
+TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_QA_GESTURE=settings-close-browser \
+  ./target/debug/tickview
+```
+
+Each drives the real app under `Context::run_ui`, clicks `Cancel`, and fails
+(exit 3) if the browser state does not match the entrance. Synthesized clicks
+need the press and the release on separate frames inside egui's click window, and
+a label is only clickable once its painted position holds still for two frames (a
+fresh window lays itself out in a sizing pass first).
+
 ## Screenshots
 
 | File | Content |

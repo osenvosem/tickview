@@ -961,7 +961,9 @@ pub struct TickView {
     pending_barghost: bool,
     pending_table: bool,
     pending_image: bool,
-    /// ObjectsTree dialog to put back when the study editor closes.
+    /// Indicator browser to put back when the study editor closes. Set only
+    /// when the browser itself opened the editor, so a gear opened from the
+    /// legend closes back onto the chart.
     reopen_browser: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
@@ -3004,7 +3006,7 @@ impl TickView {
     }
 
     /// Turn legend-bar / study-menu choices into chart changes.
-    fn apply_study_actions(
+    pub(crate) fn apply_study_actions(
         &mut self,
         ui: &egui::Ui,
         ti: usize,
@@ -3049,8 +3051,9 @@ impl TickView {
                         .flat_map(|pane| pane.layers.iter())
                         .find(|l| l.id == id)
                         .map(|l| l.params.clone());
+                    // Launched from the legend/menu, not the browser: nothing to
+                    // come back to.
                     self.editor = Some(Editor::new(id, self.tabs[ti].id, params));
-                    self.reopen_browser = true;
                 }
                 MenuAction::ToggleInputs => {
                     let hidden = &mut self.tabs[ti].chart.legend_inputs_hidden;

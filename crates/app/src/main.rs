@@ -105,10 +105,189 @@ fn qa_gesture() -> ! {
     std::process::exit(i32::from(after <= baseline) * 3);
 }
 
+/// Global centres of every painted copy of `label`, so a harness can click one
+/// without hard-coding coordinates. Duplicates appear when the same study name is
+/// painted in more than one place (header and list row).
+fn qa_text_centres(out: &egui::FullOutput, label: &str) -> Vec<egui::Pos2> {
+    let mut hits: Vec<egui::Pos2> = Vec::new();
+    for cs in &out.shapes {
+        if let egui::Shape::Text(t) = &cs.shape
+            && t.galley.text() == label
+        {
+            let pos = t.pos + t.galley.size() * 0.5;
+            if !hits.contains(&pos) {
+                hits.push(pos);
+            }
+        }
+    }
+    hits
+}
+
+/// Headless QA: closing the study settings dialog lands back where it came
+/// from. `from_browser` picks the entrance — the legend gear's own
+/// `OpenSettings` action, or a click on an indicator-browser row. While the
+/// editor is up the browser must be out of the way; after `Cancel` the browser
+/// is open only if the browser was the entrance. Exits 0 on success, 3 on
+/// failure. `TICKVIEW_QA_GESTURE=settings-close` (gear) or
+/// `=settings-close-browser` (browser row).
+#[cfg(not(target_arch = "wasm32"))]
+fn qa_settings_close(from_browser: bool) -> ! {
+    use eframe::App;
+    use egui::{Event, Modifiers, Pos2, RawInput, Rect, Vec2};
+    const NAME: &str = "Relative Strength Index (RSI)";
+    let ctx = eframe::egui::Context::default();
+    ctx.set_pixels_per_point(1.0);
+    let mut app = app::TickView::new_with_ctx(&ctx);
+    let mut frame = eframe::Frame::_new_kittest();
+    let ti = app.active;
+    let mut t = 0.0f64;
+
+    macro_rules! paint {
+        ($t:expr, $events:expr) => {{
+            let mut out = ctx.run_ui(
+                RawInput {
+                    screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(1440.0, 900.0))),
+                    time: Some($t),
+                    events: $events,
+                    ..Default::default()
+                },
+                |ui| app.ui(ui, &mut frame),
+            );
+            out.textures_delta.clear();
+            out
+        }};
+    }
+    // Press and release on separate frames, inside egui's click window: the
+    // press has to be seen while the pointer already hovers the widget.
+    macro_rules! click {
+        ($pos:expr) => {{
+            let p = $pos;
+            t += 0.02;
+            let _ = paint!(
+                t,
+                vec![
+                    Event::PointerMoved(p),
+                    Event::PointerButton {
+                        pos: p,
+                        button: egui::PointerButton::Primary,
+                        pressed: true,
+                        modifiers: Modifiers::NONE,
+                    },
+                ]
+            );
+            t += 0.05;
+            paint!(
+                t,
+                vec![Event::PointerButton {
+                    pos: p,
+                    button: egui::PointerButton::Primary,
+                    pressed: false,
+                    modifiers: Modifiers::NONE,
+                }]
+            )
+        }};
+    }
+
+    // A fresh window lays out in a sizing pass first, so painted labels only mark
+    // clickable spots once their positions hold still for two consecutive frames.
+    macro_rules! wait_for {
+        ($label:expr) => {{
+            let mut prev: Vec<Pos2> = Vec::new();
+            let mut hit: Vec<Pos2> = Vec::new();
+            for _ in 0..20 {
+                t += 0.02;
+                let out = paint!(t, Vec::new());
+                let now = qa_text_centres(&out, $label);
+                if !now.is_empty() && now == prev {
+                    hit = now;
+                    break;
+                }
+                prev = now;
+            }
+            hit
+        }};
+    }
+
+    if from_browser {
+        app.indicators_open = true;
+        app.study_q = NAME.to_owned();
+        let rows = wait_for!(NAME);
+        if rows.is_empty() {
+            eprintln!("QA settings-close: the browser never listed {NAME}");
+            std::process::exit(3);
+        }
+        // The name is painted more than once (header, list row); the row is the
+        // one that adds the study, so try each copy until the editor opens.
+        for row in rows {
+            let _ = click!(row);
+            for _ in 0..10 {
+                if app.editor.is_some() {
+                    break;
+                }
+                t += 0.02;
+                let _ = paint!(t, Vec::new());
+            }
+            if app.editor.is_some() {
+                break;
+            }
+        }
+    } else {
+        // The gear's own action, not a hand-built dialog.
+        t += 0.02;
+        let mut out = ctx.run_ui(
+            RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(1440.0, 900.0))),
+                time: Some(t),
+                events: Vec::new(),
+                ..Default::default()
+            },
+            |ui| {
+                app.apply_study_actions(
+                    ui,
+                    ti,
+                    ta::registry::TvId::Rsi,
+                    vec![study_toolbar::MenuAction::OpenSettings],
+                );
+                app.ui(ui, &mut frame);
+            },
+        );
+        out.textures_delta.clear();
+    }
+    let opened = app.editor.is_some();
+    let hidden_while_editing = !app.indicators_open;
+
+    let cancels = wait_for!("Cancel");
+    if cancels.is_empty() {
+        eprintln!("QA settings-close: the editor never painted a Cancel button");
+        std::process::exit(3);
+    }
+    for cancel in cancels {
+        let _ = click!(cancel);
+        for _ in 0..4 {
+            t += 0.02;
+            let _ = paint!(t, Vec::new());
+        }
+        if app.editor.is_none() {
+            break;
+        }
+    }
+    let (editor, browser) = (app.editor.is_some(), app.indicators_open);
+    eprintln!(
+        "QA settings-close(from_browser={from_browser}): opened={opened} \
+         hidden_while_editing={hidden_while_editing} editor={editor} browser={browser}"
+    );
+    let ok = opened && hidden_while_editing && !editor && browser == from_browser;
+    std::process::exit(i32::from(!ok) * 3);
+}
+
 fn main() -> eframe::Result {
     #[cfg(not(target_arch = "wasm32"))]
-    if std::env::var_os("TICKVIEW_QA_GESTURE").is_some() {
-        qa_gesture();
+    if let Ok(gesture) = std::env::var("TICKVIEW_QA_GESTURE") {
+        match gesture.as_str() {
+            "settings-close" => qa_settings_close(false),
+            "settings-close-browser" => qa_settings_close(true),
+            _ => qa_gesture(),
+        }
     }
     let opts = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()

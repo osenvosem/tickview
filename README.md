@@ -126,6 +126,7 @@ the network responds.
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 | `TICKVIEW_STUDY_MENU="SMI Ergodic Indicator/Oscillator"` | which seeded study owns the `studymenu` capture (MACD by default) |
 | `TICKVIEW_DEAD_IVS=5m,1h` | grey those resolutions on every tab, for screenshotting the unavailable state |
+| `TICKVIEW_QA_GESTURE=1\|settings-close\|settings-close-browser` | headless interaction probe: drag-draw a trend line, or open the study settings dialog from the legend gear / a browser row, click `Cancel` and check where the focus lands; exits 3 on failure |
 
 ## Architecture
 
