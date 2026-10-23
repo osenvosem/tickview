@@ -50,8 +50,9 @@ audit findings (including the fixed weighted-KST drift).
 
 Rendered dark/light 1440×900 captures live in `docs/screenshots/parity/`;
 the written side-by-side review is `docs/parity/final-review.md`.
-`studybar-{dark,light}.png`, `studymenu-{dark,light}.png` and
-`browser-favourites-dark.png` cover the study legend actions bar, its menu and
+`studybar-{dark,light}.png`, `studymenu-{dark,light}.png`,
+`studymenu-long-{dark,light}.png` and `browser-favourites-dark.png` cover the
+study legend actions bar, its menu (including the width cap and label elision) and
 favourite/hidden persistence (see `tv/study-legend-bar.md`).
 
 ## Regenerating

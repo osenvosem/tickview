@@ -1359,8 +1359,19 @@ impl TickView {
                     }
                 }
                 "studymenu" => {
+                    // Any seeded study can own the menu; the default keeps the
+                    // MACD capture stable.
+                    let id = std::env::var("TICKVIEW_STUDY_MENU")
+                        .ok()
+                        .and_then(|n| {
+                            defs()
+                                .iter()
+                                .find(|d| d.tv_name.eq_ignore_ascii_case(n.trim()))
+                                .map(|d| d.id)
+                        })
+                        .unwrap_or(TvId::Macd);
                     if me.tabs[me.active].chart.legend_pinned.is_none() {
-                        me.tabs[me.active].pending_study_bar = Some(TvId::Macd);
+                        me.tabs[me.active].pending_study_bar = Some(id);
                     }
                     me.tabs[me.active].pending_study_menu = true;
                 }

@@ -1,7 +1,8 @@
 //! Small custom widgets used by the TickView chrome.
 
 use egui::{
-    Align2, Color32, CornerRadius, CursorIcon, Response, Sense, Stroke, StrokeKind, Ui, Vec2, vec2,
+    Align2, Color32, CornerRadius, CursorIcon, Pos2, Response, Sense, Stroke, StrokeKind, Ui, Vec2,
+    vec2,
 };
 
 use crate::icons::Icon;
@@ -287,6 +288,26 @@ pub fn segmented(ui: &mut Ui, p: &Palette, segs: &[Seg<'_>], selected: usize) ->
     picked
 }
 
+/// Widest a menu popup may become. Rows inside a popup ask for
+/// `available_width()`, which is unbounded there, so both the popup and its
+/// rows carry an explicit cap and long labels elide.
+pub const MENU_MAX_W: f32 = 340.0;
+
+/// One-line menu label, elided with an ellipsis past `max_w`.
+fn menu_label(ui: &Ui, p: &Palette, text: &str, at: Pos2, max_w: f32) {
+    let mut job = egui::text::LayoutJob::default();
+    job.append(
+        text,
+        0.0,
+        egui::text::TextFormat::simple(font_regular(type_size::BODY), p.text),
+    );
+    job.wrap.max_width = max_w.max(24.0);
+    job.wrap.max_rows = 1;
+    job.wrap.break_anywhere = true;
+    let galley = ui.painter().layout_job(job);
+    ui.painter().galley(at, galley, p.text);
+}
+
 /// A full-width popup menu row. Call inside `Popup::menu`.
 #[must_use]
 pub fn menu_item(
@@ -297,7 +318,7 @@ pub fn menu_item(
     shortcut: Option<&str>,
     selected: bool,
 ) -> Response {
-    let width = ui.available_width().max(210.0);
+    let width = ui.available_width().clamp(210.0, MENU_MAX_W);
     let (rect, resp) = ui.allocate_exact_size(vec2(width, 27.0), Sense::click());
     if resp.hovered() {
         ui.painter()
@@ -317,12 +338,12 @@ pub fn menu_item(
         icon.paint(ui.painter(), ir, color, 1.3);
         x += 22.0;
     }
-    ui.painter().text(
-        egui::pos2(x, rect.center().y),
-        Align2::LEFT_CENTER,
+    menu_label(
+        ui,
+        p,
         label,
-        font_regular(type_size::BODY),
-        p.text,
+        egui::pos2(x, rect.center().y),
+        rect.right() - x - if shortcut.is_some() { 58.0 } else { 12.0 },
     );
     if let Some(shortcut) = shortcut {
         ui.painter().text(
@@ -345,7 +366,7 @@ pub fn menu_submenu(
     label: &str,
     content: impl FnOnce(&mut Ui),
 ) {
-    let width = ui.available_width().max(210.0);
+    let width = ui.available_width().clamp(210.0, MENU_MAX_W);
     let (rect, resp) = ui.allocate_exact_size(vec2(width, 27.0), Sense::click());
     if resp.hovered() {
         ui.painter()
@@ -357,12 +378,12 @@ pub fn menu_submenu(
         icon.paint(ui.painter(), ir, p.muted, 1.3);
         x += 22.0;
     }
-    ui.painter().text(
-        egui::pos2(x, rect.center().y),
-        Align2::LEFT_CENTER,
+    menu_label(
+        ui,
+        p,
         label,
-        font_regular(type_size::BODY),
-        p.text,
+        egui::pos2(x, rect.center().y),
+        rect.right() - x - 28.0,
     );
     let arrow = egui::Rect::from_center_size(
         egui::pos2(rect.right() - 12.0, rect.center().y),
@@ -371,6 +392,7 @@ pub fn menu_submenu(
     Icon::ChevronRight.paint(ui.painter(), arrow, p.muted, 1.3);
     egui::containers::menu::SubMenu::default().show(ui, &resp, |ui| {
         ui.set_min_width(180.0);
+        ui.set_max_width(240.0);
         content(ui);
     });
 }

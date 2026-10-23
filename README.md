@@ -124,6 +124,7 @@ the network responds.
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
 | `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar\|studybar\|studymenu` | open a dialog, proof sheet, or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
+| `TICKVIEW_STUDY_MENU="SMI Ergodic Indicator/Oscillator"` | which seeded study owns the `studymenu` capture (MACD by default) |
 | `TICKVIEW_DEAD_IVS=5m,1h` | grey those resolutions on every tab, for screenshotting the unavailable state |
 
 ## Architecture

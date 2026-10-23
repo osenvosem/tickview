@@ -297,11 +297,18 @@ pub fn menu(
     let id = Id::unique(("study-menu", d.tv_name));
     let layer = egui::LayerId::new(Order::Foreground, id);
     let point = anchor.unwrap_or_else(|| ui.ctx().pointer_hover_pos().unwrap_or(Pos2::ZERO));
+    let mut open = true;
     let popup = egui::Popup::new(id, ui.ctx().clone(), point, layer)
         // `Menu` kind is what lets egui's `SubMenu` attach its flyouts.
         .kind(egui::PopupKind::Menu)
         .layout(Layout::top_down_justified(egui::Align::Min))
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
+        // Rows ask for the available width, which inside a popup runs to the
+        // viewport edge; a fixed width keeps the menu a menu.
+        .width(widgets::MENU_MAX_W)
+        // `Popup::new` is always-open, which discards egui's close verdict; the
+        // bool lets outside clicks and Escape veto it.
+        .open_bool(&mut open)
         .frame(theme::menu_frame(p));
     let favorite_label = if m.favorite {
         "Remove this indicator from favorites"
@@ -318,7 +325,6 @@ pub fn menu(
     let hide_label = if m.visible { "Hide" } else { "Show" };
     let hide_icon = if m.visible { Icon::EyeOff } else { Icon::Eye };
     if let Some(inner) = popup.show(|ui| {
-        ui.set_min_width(260.0);
         let mut close = false;
         if widgets::menu_item(ui, p, Some(Icon::Alert), &alert_label, None, false).clicked() {
             actions.push(MenuAction::AddAlert(m.value.unwrap_or(0.0)));
@@ -372,6 +378,10 @@ pub fn menu(
         }
     }) {
         st.menu_rect = Some(inner.response.rect);
+    }
+    if !open {
+        st.menu = None;
+        st.menu_rect = None;
     }
     actions
 }
@@ -515,7 +525,10 @@ mod tests {
             out.textures_delta.clear();
         }
         let menu_rect = st.menu_rect.expect("menu popup renders when open");
-        assert!(menu_rect.width() >= 260.0, "menu width: {menu_rect:?}");
+        assert!(
+            (260.0..=widgets::MENU_MAX_W + 20.0).contains(&menu_rect.width()),
+            "menu must stay menu-sized, not viewport-sized: {menu_rect:?}"
+        );
         let base_layers = ctx.memory(|m| m.layer_ids().count());
         let hover = out
             .shapes
@@ -580,6 +593,163 @@ mod tests {
                 "flyout is missing {label}: {texts:?}"
             );
         }
+    }
+
+    #[test]
+    fn menu_caps_its_width_and_elides_long_labels() {
+        let ctx = Context::default();
+        ctx.set_pixels_per_point(1.0);
+        let p = Palette::dark();
+        let id = TvId::SmiErgodic;
+        let params = Params::with_defaults(def(id));
+        let mut st = State {
+            menu: Some((id, Some(Pos2::new(120.0, 300.0)))),
+            ..Default::default()
+        };
+        let m = model(id, Some(PaneKind::Indicator(id)), &params);
+        let point = Pos2::new(120.0, 300.0);
+        let mut out = egui::FullOutput::default();
+        for i in 0..2 {
+            out = ctx.run_ui(
+                RawInput {
+                    time: Some(1.0 + f64::from(i)),
+                    ..screen()
+                },
+                |ui| {
+                    let _ = menu(ui, &p, &mut st, &m, Some(point));
+                },
+            );
+            out.textures_delta.clear();
+        }
+        let rect = st.menu_rect.expect("menu renders when open");
+        assert!(
+            rect.width() <= widgets::MENU_MAX_W + 20.0,
+            "menu stretched past its cap: {rect:?}"
+        );
+        let galley = out
+            .shapes
+            .iter()
+            .find_map(|cs| match &cs.shape {
+                egui::Shape::Text(t)
+                    if t.galley.text().starts_with("Add indicator/strategy on ") =>
+                {
+                    Some(t.galley.clone())
+                }
+                _ => None,
+            })
+            .expect("the add row is painted");
+        let glyphs: usize = galley.rows.iter().map(|r| r.glyphs.len()).sum();
+        assert_eq!(galley.rows.len(), 1, "long label must stay on one row");
+        assert!(
+            glyphs + 1 < galley.text().chars().count(),
+            "long label must elide instead of pushing the menu wide: {:?}",
+            galley.text()
+        );
+        assert!(
+            rect.min.x + galley.size().x <= rect.max.x,
+            "elided label overflows the menu: {:?} in {rect:?}",
+            galley.size()
+        );
+    }
+
+    #[test]
+    fn menu_closes_on_a_click_outside_it() {
+        let ctx = Context::default();
+        ctx.set_pixels_per_point(1.0);
+        let p = Palette::dark();
+        let params = Params::with_defaults(def(TvId::Macd));
+        let mut st = State {
+            menu: Some((TvId::Macd, Some(Pos2::new(200.0, 300.0)))),
+            ..Default::default()
+        };
+        let m = model(TvId::Macd, Some(PaneKind::Indicator(TvId::Macd)), &params);
+        let point = Pos2::new(200.0, 300.0);
+        let outside = Pos2::new(1200.0, 700.0);
+        for i in 0..2 {
+            let mut out = ctx.run_ui(
+                RawInput {
+                    time: Some(1.0 + f64::from(i)),
+                    ..screen()
+                },
+                |ui| {
+                    let _ = menu(ui, &p, &mut st, &m, Some(point));
+                },
+            );
+            out.textures_delta.clear();
+        }
+        assert!(
+            st.menu.is_some() && st.menu_rect.is_some(),
+            "menu is open before the click"
+        );
+        let press = egui::Event::PointerButton {
+            pos: outside,
+            button: egui::PointerButton::Primary,
+            pressed: true,
+            modifiers: egui::Modifiers::NONE,
+        };
+        let release = egui::Event::PointerButton {
+            pos: outside,
+            button: egui::PointerButton::Primary,
+            pressed: false,
+            modifiers: egui::Modifiers::NONE,
+        };
+        let mut t = 3.0;
+        // egui only treats a press and a release as one click when both land
+        // inside its click window, so the release arrives on the next frame.
+        for events in [
+            vec![egui::Event::PointerMoved(outside), press],
+            vec![release],
+        ] {
+            let mut out = ctx.run_ui(
+                RawInput {
+                    time: Some(t),
+                    events,
+                    ..screen()
+                },
+                |ui| {
+                    let _ = menu(ui, &p, &mut st, &m, Some(point));
+                },
+            );
+            out.textures_delta.clear();
+            t += 0.05;
+        }
+        assert!(
+            st.menu.is_none(),
+            "a click on the chart must close the menu"
+        );
+        assert!(st.menu_rect.is_none(), "a closed menu keeps no rect");
+    }
+
+    #[test]
+    fn escape_closes_the_menu() {
+        let ctx = Context::default();
+        ctx.set_pixels_per_point(1.0);
+        let p = Palette::dark();
+        let params = Params::with_defaults(def(TvId::Macd));
+        let mut st = State {
+            menu: Some((TvId::Macd, Some(Pos2::new(200.0, 300.0)))),
+            ..Default::default()
+        };
+        let m = model(TvId::Macd, Some(PaneKind::Indicator(TvId::Macd)), &params);
+        let point = Pos2::new(200.0, 300.0);
+        let mut out = ctx.run_ui(
+            RawInput {
+                time: Some(3.0),
+                events: vec![egui::Event::Key {
+                    key: egui::Key::Escape,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                }],
+                ..screen()
+            },
+            |ui| {
+                let _ = menu(ui, &p, &mut st, &m, Some(point));
+            },
+        );
+        out.textures_delta.clear();
+        assert!(st.menu.is_none(), "Escape must close the menu");
     }
 
     #[test]

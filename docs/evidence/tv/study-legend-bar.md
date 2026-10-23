@@ -82,6 +82,26 @@ attach the `▸` flyouts. A submenu test proves the flyout exists:
 asserts a second foreground layer appears containing the four order rows; it
 fails when the hover point is moved off the row.
 
+### Width and dismissal
+
+Rows inside an egui popup ask for `available_width()`, which there reaches the
+viewport edge: uncapped, the menu grows as wide as the space right of the anchor.
+So the popup sets an explicit `width` (`widgets::MENU_MAX_W`, 340 pt) and
+`widgets::menu_item` / `widgets::menu_submenu` clamp their row to the same band;
+the menu keeps a menu's size at any window width. `widgets::menu_label` lays each
+label out as a single row and elides it with `…` past the row, the way TV does
+(`Add indicator/strategy on Relative Strength Index (RSI)…`).
+
+`Popup::new` starts in egui's `OpenKind::Open` (always open), which computes
+egui's close verdict and then throws it away, so clicking the chart left the menu
+— and its `▸` flyouts — on screen. `.open_bool(&mut open)` hands the open state
+to egui instead: it writes `false` for `Esc` and for a click whose press happened
+while the menu was open, landed outside it, and found no submenu flyout open;
+`menu` then clears `State::menu` and `menu_rect`. The flyout is capped the same
+way (`widgets::menu_submenu` sets a 180–240 pt band). Tests:
+`menu_caps_its_width_and_elides_long_labels`,
+`menu_closes_on_a_click_outside_it`, `escape_closes_the_menu`.
+
 ## Favourites
 
 - The star lives in the menu and on each `ON THIS CHART` row of the indicator
@@ -115,13 +135,20 @@ section for the same pair.
 TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_SCENE=studybar \
   TICKVIEW_THEME=dark TICKVIEW_INDICATORS="MACD,Relative Strength Index (RSI)" \
   TICKVIEW_SNAPSHOT=studybar-dark.png ./target/debug/tickview
+
+# the menu on the longest study name in the catalog: proves the cap and elision
+TICKVIEW_CONFIG_DIR=$(mktemp -d) TICKVIEW_SCENE=studymenu TICKVIEW_THEME=dark \
+  TICKVIEW_STUDY_MENU="SMI Ergodic Indicator/Oscillator" \
+  TICKVIEW_INDICATORS="SMI Ergodic Indicator/Oscillator,Relative Strength Index (RSI)" \
+  TICKVIEW_SNAPSHOT=studymenu-long-dark.png ./target/debug/tickview
 ```
 
 `TICKVIEW_SCENE=studymenu` opens the study menu next to the bar;
-`TICKVIEW_SCENE=studyhover` seeds RSI + MACD, selects MACD and holds the RSI
-row hot, which is the two-bars-at-once shot. QA seeds only take effect once the
-legend row exists on screen: the requests stay pending until the row is painted
-instead of being consumed and dropped.
+`TICKVIEW_STUDY_MENU="<TV name>"` picks which seeded study owns it (MACD by
+default). `TICKVIEW_SCENE=studyhover` seeds RSI + MACD, selects MACD and holds
+the RSI row hot, which is the two-bars-at-once shot. QA seeds only take effect
+once the legend row exists on screen: the requests stay pending until the row is
+painted instead of being consumed and dropped.
 
 For the hidden-restore shot, run once to create the config, set `hidden: true`
 on the MACD entry in `$TICKVIEW_CONFIG_DIR/config.json`, then run again with
@@ -133,7 +160,8 @@ on the MACD entry in `$TICKVIEW_CONFIG_DIR/config.json`, then run again with
 |---|---|
 | `studybar-dark.png` / `studybar-light.png` | selected MACD bar (accent border): swatch, name, `12 26 9 close`, eye/gear/braces/trash/`⋯`, value past the border; the RSI row below keeps its plain label `Relative Strength Index (RSI) 14 close 67.38` |
 | `studyhover-dark.png` / `studyhover-light.png` | two bars at once: selected MACD with the accent border, hovered RSI with a hairline border, each anchored on its own row |
-| `studymenu-dark.png` / `studymenu-light.png` | full study menu open under the bar, `⋯` tinted |
+| `studymenu-dark.png` / `studymenu-light.png` | full study menu open under the bar, `⋯` tinted, 340 pt wide |
+| `studymenu-long-dark.png` / `studymenu-long-light.png` | the menu on `SMI Ergodic Indicator/Oscillator`: still 340 pt wide, both `Add …` rows elided with `…` |
 | `hidden-macd.png` | MACD restored with `hidden: true`: empty pane, dimmed row, visible RSI beside it |
 | `browser-favourites-dark.png` | indicator browser with the `FAVOURITES` section |
 
