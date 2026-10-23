@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks:
+    name: Lints, tests, generated artifacts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # X11/Wayland development files: winit/rfd link against these on Linux.
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwayland-dev libxkbcommon-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev pkg-config libegl1-mesa-dev libgl1-mesa-dev
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace --locked
+
+      # The parity manifest and the generated status table must agree with the
+      # evidence on disk, and the committed icon must match its SVG.
+      - name: Parity manifest and status table
+        run: |
+          cargo run -p xtask -- parity
+          cargo run -p xtask -- parity --write
+          git diff --exit-code docs/parity/STATUS.md
+
+      - name: App icon is up to date with its SVG
+        run: |
+          cargo run -p xtask -- icon --write
+          git diff --exit-code crates/app/pack/tickview-mark.png
+
+      - name: Release build
+        run: cargo build --release --locked

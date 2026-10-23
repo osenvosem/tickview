@@ -5,11 +5,37 @@ Native macOS charting workstation rebuilt from analysis of TradingView Desktop
 layer are pure Rust: `eframe/egui`, `ureq`, `rusqlite`, and a custom chart
 painter.
 
+## Download
+
+Installers are published as GitHub Releases on this repository. Each release
+ships 12 assets built from the exact tagged commit:
+
+| Platform | Formats | File names |
+| --- | --- | --- |
+| macOS 11+ (Apple Silicon) | `.dmg`, `.zip` | `tickview-<ver>-macos-arm64.*` |
+| macOS 11+ (Intel) | `.dmg`, `.zip` | `tickview-<ver>-macos-x86_64.*` |
+| Windows 10/11 x86_64 | `.zip` | `tickview-<ver>-windows-x86_64.zip` |
+| Windows on ARM | `.zip` | `tickview-<ver>-windows-arm64.zip` |
+| Linux x86_64 | `.deb`, `.rpm`, `.tar.gz` | `tickview-<ver>-linux-amd64.*` |
+| Linux ARM64 | `.deb`, `.rpm`, `.tar.gz` | `tickview-<ver>-linux-arm64.*` |
+
+macOS builds are ad-hoc signed (no Developer ID/notarization), so the first
+launch needs right-click → Open. Releases are marked prerelease until 1.0.
+
+## Data sources and disclaimer
+
+Every feed is free and keyless: Yahoo Finance, Nasdaq, Binance, Kraken,
+Coinbase, CoinGecko, Frankfurter and ExchangeRate-API. TickView stores no
+account credentials, caches only public quotes and bars in
+`~/.config/tickview/` (`config.json`, `candles.sqlite`), and redistributes no
+market data. The app is alpha software and nothing it displays is investment
+advice.
+
 ## Build & run
 
 ```sh
 cargo run --release -p tickview        # GUI
-cargo test --workspace               # 453 unit/golden tests
+cargo test --workspace               # 486 unit/golden tests
 cargo clippy --workspace --all-targets
 ```
 
@@ -20,6 +46,50 @@ including Yahoo's canonical globals, crypto, FX and commodity futures) has at
 least two independent live+historical feeds; a local SQLite cache gives instant
 warm starts, and a curated offline symbol index keeps search working before
 the network responds.
+
+### Packaging locally
+
+```sh
+# Regenerate the committed icon master after editing crates/app/pack/*.svg.
+cargo run -p xtask -- icon --write
+
+# macOS .dmg + .zip (after building for the target triple).
+cargo build --release --target aarch64-apple-darwin
+crates/app/pack/macos/make-dmg.sh \
+  target/aarch64-apple-darwin/release/tickview 0.1.0 arm64 dist
+
+# Linux .deb / .rpm (on Linux).
+cargo install cargo-deb cargo-generate-rpm
+cargo build --release
+(cd crates/app && cargo deb --no-build)
+(cd crates/app && cargo generate-rpm)
+```
+
+Package metadata lives in `crates/app/Cargo.toml`
+(`[package.metadata.deb]`, `[package.metadata.generate-rpm]`); the menu entry
+and icon live in `crates/app/pack/`.
+
+## Releasing
+
+Cut a release from the Actions tab by running **Release** with a semver
+`level` (patch/minor/major) or an explicit `version`:
+
+1. `scripts/bump-version.sh` takes the higher of the manifest version and the
+   newest `v*` tag, bumps it, rewrites `[workspace.package].version` (every
+   crate inherits it) and refreshes `Cargo.lock`; the commit and the
+   `v<version>` tag are pushed to the branch the workflow ran from.
+   Re-tagging an existing version is refused.
+2. Six build jobs compile `--release --locked --target <triple>` and package
+   Linux amd64/arm64 `.deb`/`.rpm`/`.tar.gz`, macOS arm64/x86_64
+   `.dmg`/`.zip`, and Windows x86_64/arm64 `.zip`.
+3. A publish job opens a prerelease containing all 12 assets plus notes
+   generated from the commit log since the previous tag.
+
+The workflow needs `contents: write` (already set) and `ubuntu-24.04-arm`
+runners, which are billable on private repositories.
+`.github/workflows/ci.yml` covers every push and PR with fmt, clippy
+(`-D warnings`), the full test suite, parity-manifest/status/icon freshness
+checks and a release build.
 
 ## Interface
 
@@ -236,3 +306,11 @@ arrow cursor). QA: dark/light captures for
 in `docs/screenshots/parity/`.
 
 `PARITY.md` tracks the shell surface and the 83-study indicator matrix.
+
+## License
+
+The code is MIT licensed (see `LICENSE`). Distributed artifacts embed third-party
+artwork and fonts: SIL Open Font License 1.1 fonts (Inter, IBM Plex Mono, Noto
+Emoji) and CC BY-SA 4.0 OpenMoji SVG glyphs. `THIRD_PARTY_NOTICES.md` records
+provenance for each and ships inside every installer, package and archive, next
+to a copy of `LICENSE`.

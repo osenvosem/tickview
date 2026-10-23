@@ -1,0 +1,253 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: Semver level to bump (ignored when explicit version is set)
+        type: choice
+        default: patch
+        choices: [patch, minor, major]
+      version:
+        description: Explicit version X.Y.Z (overrides level)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bump:
+    name: Version bump
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute and apply the next version
+        id: bump
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            ./scripts/bump-version.sh --write --set "${{ inputs.version }}"
+          else
+            ./scripts/bump-version.sh --write "${{ inputs.level }}"
+          fi
+
+      - name: Commit and tag
+        id: commit
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add Cargo.toml Cargo.lock
+            git commit -m "chore(release): v${VERSION}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+          echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.label }}
+    needs: bump
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Linux x86_64 (deb, rpm, tar.gz)
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            family: linux
+            arch: amd64
+          - label: Linux ARM64 (deb, rpm, tar.gz)
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            family: linux
+            arch: arm64
+          - label: macOS Apple Silicon (dmg, zip)
+            os: macos-latest
+            target: aarch64-apple-darwin
+            family: macos
+            arch: arm64
+          - label: macOS Intel (dmg, zip)
+            os: macos-latest
+            target: x86_64-apple-darwin
+            family: macos
+            arch: x86_64
+          - label: Windows x86_64 (zip)
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            family: windows
+            arch: x86_64
+          - label: Windows ARM64 (zip)
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+            family: windows
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump.outputs.sha }}
+
+      # winit/rfd link against these on Linux; the ARM64 row also proves the
+      # glibc baseline stays installable there.
+      - name: System dependencies (Linux)
+        if: matrix.family == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwayland-dev libxkbcommon-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev pkg-config libegl1-mesa-dev libgl1-mesa-dev
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package tar.gz (Linux)
+        if: matrix.family == 'linux'
+        shell: bash
+        env:
+          VERSION: ${{ needs.bump.outputs.version }}
+          STAGE: "tickview-${{ needs.bump.outputs.version }}-linux-${{ matrix.arch }}"
+        run: |
+          mkdir -p dist "$STAGE"
+          cp "target/${{ matrix.target }}/release/tickview" "$STAGE/"
+          cp LICENSE README.md THIRD_PARTY_NOTICES.md "$STAGE/"
+          tar czf "dist/${STAGE}.tar.gz" "$STAGE"
+
+      - name: Package .deb (Linux)
+        if: matrix.family == 'linux'
+        shell: bash
+        env:
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          cargo install cargo-deb --locked
+          (cd crates/app && cargo deb --target ${{ matrix.target }} --no-build --no-strip)
+          mv "target/${{ matrix.target }}/debian/"tickview_*.deb \
+            "dist/tickview-${VERSION}-linux-${{ matrix.arch }}.deb"
+
+      - name: Package .rpm (Linux)
+        if: matrix.family == 'linux'
+        shell: bash
+        env:
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          cargo install cargo-generate-rpm --locked
+          (cd crates/app && cargo generate-rpm --target ${{ matrix.target }})
+          mv "target/${{ matrix.target }}/generate-rpm/"tickview-*.rpm \
+            "dist/tickview-${VERSION}-linux-${{ matrix.arch }}.rpm"
+
+      - name: Package .dmg and .zip (macOS)
+        if: matrix.family == 'macos'
+        shell: bash
+        env:
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          mkdir -p dist
+          crates/app/pack/macos/make-dmg.sh \
+            "target/${{ matrix.target }}/release/tickview" "$VERSION" "${{ matrix.arch }}" dist
+
+      - name: Package .zip (Windows)
+        if: matrix.family == 'windows'
+        shell: pwsh
+        run: |
+          $Version = "${{ needs.bump.outputs.version }}"
+          $Arch = "${{ matrix.arch }}"
+          $Stage = "tickview-$Version-windows-$Arch"
+          New-Item -ItemType Directory -Force -Path dist, $Stage | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/tickview.exe" $Stage
+          Copy-Item LICENSE, README.md, THIRD_PARTY_NOTICES.md $Stage
+          Compress-Archive -Path $Stage -DestinationPath "dist/$Stage.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.family }}-${{ matrix.arch }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: GitHub release
+    needs: [bump, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Assemble release notes
+        env:
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          test "$(find artifacts -maxdepth 1 -type f | wc -l)" -eq 12 || {
+            echo "::error::expected 12 release assets, found $(find artifacts -maxdepth 1 -type f | wc -l)"
+            exit 1
+          }
+          prev="$(git tag --list 'v[0-9]*' --sort=-v:refname | sed -n 2p)"
+          {
+            echo "**TickView ${VERSION} - alpha.**"
+            echo
+            echo "TradingView-parity charting terminal in Rust + egui. This is alpha"
+            echo "software: expect rough edges, and back up any settings you care about"
+            echo "(\`~/.config/tickview/config.json\`) before upgrading."
+            echo
+            echo "Market data comes from free, keyless public endpoints (Yahoo Finance,"
+            echo "Nasdaq, Binance, Coinbase, Kraken, CoinGecko, Frankfurter,"
+            echo "ExchangeRate-API). TickView stores no account credentials and does not"
+            echo "redistribute any market data. Nothing in this app is investment advice."
+            echo
+            echo "### Assets"
+            echo
+            echo "| File | Platform |"
+            echo "| --- | --- |"
+            echo "| \`tickview-${VERSION}-macos-arm64.dmg\` / \`.zip\` | macOS 11+ (Apple Silicon) |"
+            echo "| \`tickview-${VERSION}-macos-x86_64.dmg\` / \`.zip\` | macOS 11+ (Intel) |"
+            echo "| \`tickview-${VERSION}-windows-x86_64.zip\` | Windows 10/11 64-bit |"
+            echo "| \`tickview-${VERSION}-windows-arm64.zip\` | Windows on ARM |"
+            echo "| \`tickview-${VERSION}-linux-amd64.deb\` / \`.rpm\` / \`.tar.gz\` | Linux x86_64 |"
+            echo "| \`tickview-${VERSION}-linux-arm64.deb\` / \`.rpm\` / \`.tar.gz\` | Linux ARM64 |"
+            echo
+            echo "macOS builds are ad-hoc signed, not notarized: right-click -> Open past"
+            echo "Gatekeeper on first launch."
+            if [ -n "$prev" ]; then
+              echo
+              echo "### Changes since ${prev}"
+              echo
+              git log --no-merges --pretty='- %s' "${prev}..HEAD"
+            fi
+          } >NOTES.md
+          cat NOTES.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          gh release create "v${VERSION}" \
+            --title "TickView ${VERSION} (alpha)" \
+            --notes-file NOTES.md \
+            --prerelease \
+            artifacts/*
