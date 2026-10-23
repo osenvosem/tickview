@@ -159,6 +159,8 @@ pub enum Icon {
     Dot,
     Demonstration,
     Magic,
+    Source,
+    Stack,
 }
 
 #[allow(dead_code)]
@@ -316,6 +318,8 @@ impl Icon {
         Self::Dot,
         Self::Demonstration,
         Self::Magic,
+        Self::Source,
+        Self::Stack,
     ];
 
     #[must_use]
@@ -473,6 +477,8 @@ impl Icon {
             Self::Dot => "dot",
             Self::Demonstration => "demonstration",
             Self::Magic => "magic",
+            Self::Source => "source",
+            Self::Stack => "stack",
         }
     }
 
@@ -1869,6 +1875,33 @@ impl Icon {
                 line(19.8, 9.2, 19.8, 11.6);
                 line(18.6, 10.4, 21.0, 10.4);
             }
+            Self::Source => {
+                // Curly braces: TV's "hide inputs in legend" toggle.
+                path(&[
+                    (9.0, 4.0),
+                    (7.0, 4.0),
+                    (7.0, 10.0),
+                    (5.0, 12.0),
+                    (7.0, 14.0),
+                    (7.0, 20.0),
+                    (9.0, 20.0),
+                ]);
+                path(&[
+                    (15.0, 4.0),
+                    (17.0, 4.0),
+                    (17.0, 10.0),
+                    (19.0, 12.0),
+                    (17.0, 14.0),
+                    (17.0, 20.0),
+                    (15.0, 20.0),
+                ]);
+            }
+            Self::Stack => {
+                // Layered panes: the study menu's "Visual order" parent row.
+                path(&[(12.0, 4.0), (20.0, 8.0), (12.0, 12.0), (4.0, 8.0)]);
+                path(&[(4.0, 12.0), (12.0, 16.0), (20.0, 12.0)]);
+                path(&[(4.0, 16.0), (12.0, 20.0), (20.0, 16.0)]);
+            }
         }
     }
 
@@ -1949,7 +1982,7 @@ mod tests {
 
     #[test]
     fn all_icons_are_constructed() {
-        assert_eq!(Icon::ALL.len(), 152);
+        assert_eq!(Icon::ALL.len(), 154);
     }
 
     #[test]

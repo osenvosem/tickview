@@ -336,6 +336,45 @@ pub fn menu_item(
     resp
 }
 
+/// A menu row that opens a submenu flyout to the right. Call inside a
+/// `PopupKind::Menu` popup (that tag is what lets egui's `SubMenu` attach).
+pub fn menu_submenu(
+    ui: &mut Ui,
+    p: &Palette,
+    icon: Option<Icon>,
+    label: &str,
+    content: impl FnOnce(&mut Ui),
+) {
+    let width = ui.available_width().max(210.0);
+    let (rect, resp) = ui.allocate_exact_size(vec2(width, 27.0), Sense::click());
+    if resp.hovered() {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(space::RADIUS as u8), p.hover);
+    }
+    let mut x = rect.left() + 12.0;
+    if let Some(icon) = icon {
+        let ir = egui::Rect::from_min_size(egui::pos2(x, rect.center().y - 7.0), Vec2::splat(14.0));
+        icon.paint(ui.painter(), ir, p.muted, 1.3);
+        x += 22.0;
+    }
+    ui.painter().text(
+        egui::pos2(x, rect.center().y),
+        Align2::LEFT_CENTER,
+        label,
+        font_regular(type_size::BODY),
+        p.text,
+    );
+    let arrow = egui::Rect::from_center_size(
+        egui::pos2(rect.right() - 12.0, rect.center().y),
+        Vec2::splat(10.0),
+    );
+    Icon::ChevronRight.paint(ui.painter(), arrow, p.muted, 1.3);
+    egui::containers::menu::SubMenu::default().show(ui, &resp, |ui| {
+        ui.set_min_width(180.0);
+        content(ui);
+    });
+}
+
 /// A hairline vertical separator for the command bar.
 pub fn vline(ui: &mut Ui, p: &Palette, height: f32) {
     let (rect, _) = ui.allocate_exact_size(vec2(13.0, height), Sense::hover());
