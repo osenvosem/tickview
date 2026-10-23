@@ -110,3 +110,22 @@ disagree, the bundle value is used and the conflict is recorded here:
 - Correlation studies use the active comparison series in place of TV's
   literal `GOOG` default; without a comparison they render as an empty
   (all-NaN) pane rather than guessing a second symbol.
+
+## RSI pane fidelity (post-M4 follow-up)
+
+- `STD;RSI` pane decoration ported from `studies/STD_RSI.json`: the 70/50/30
+  dashed guides (50 at half alpha), the 30-70 lavender band and the green
+  overbought / red oversold zone gradients. Mapping and rationale in
+  `study-rsi-pane.md`; paint code in `crates/tickchart/src/decor.rs`.
+- The MA of RSI (`plot_2`) and its Bollinger bands (`plot_3`/`plot_4`) are now
+  computed for every smoothing type, so the yellow line tracks the `Type`
+  dropdown and the bands appear only for "SMA + Bollinger Bands".
+- `ParamSpec` gained `group`, `legend` and `active`. The settings dialog renders
+  TV's titled sections (`RSI SETTINGS`, `SMOOTHING`, ...) and keeps controls the
+  active rules disable visible but greyed (`BB StdDev` while `Type = SMA`);
+  `legend: false` inputs stay out of the legend summary, which keeps TV's
+  `14 close` shape.
+- egui pitfall: mesh vertex colours are stored pre-multiplied. Passing raw rgb
+  with a small alpha erased the zone washes on the light theme and burned them
+  into near-solid slabs on the dark one; the corner colour now uses
+  `Color32::from_rgba_unmultiplied`.
