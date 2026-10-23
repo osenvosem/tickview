@@ -16,7 +16,7 @@ jobs:
     name: Lints, tests, generated artifacts
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # X11/Wayland development files: winit/rfd link against these on Linux.
       - name: System dependencies
