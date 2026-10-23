@@ -35,6 +35,7 @@ the `studies_metadata` wire payload.
 | File | What it pins |
 |---|---|
 | `tv/symbol-search.md` | Symbol-search dialog layout, chip/exchange filtering, selection and keyboard behaviour |
+| `tv/study-legend-bar.md` | Study legend hover/pin model, actions-bar contents, study-menu rows and what each does, favourites/`⌥A`, hidden-study persistence |
 
 ## Studies (`tv/studies/`)
 
@@ -49,6 +50,9 @@ audit findings (including the fixed weighted-KST drift).
 
 Rendered dark/light 1440×900 captures live in `docs/screenshots/parity/`;
 the written side-by-side review is `docs/parity/final-review.md`.
+`studybar-{dark,light}.png`, `studymenu-{dark,light}.png` and
+`browser-favourites-dark.png` cover the study legend actions bar, its menu and
+favourite/hidden persistence (see `tv/study-legend-bar.md`).
 
 ## Regenerating
 

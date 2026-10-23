@@ -37,6 +37,14 @@ the network responds.
   past the router's 60 s provider cooldown, so a transient limit never disables
   a timeframe for good. A symbol that cannot serve its saved resolution opens on
   the nearest offered one (coarser first).
+- Study legends behave like TradingView's: a row goes hot on hover and pins on
+  click (a plot press unpins it), and the hot row turns into an actions bar —
+  swatch, name, input summary, eye, gear, braces, trash, `⋯` — with the hovered
+  value painted past the bar's right border. `⋯` or a right-click opens the
+  study menu (alert at the hovered price, add indicator, favourite, `Visual
+  order ▸`, `Move to ▸`, copy, hide/show, remove). Starred studies land in the
+  indicator browser's `FAVOURITES` section and `⌥A` puts them all on the chart;
+  favourites and hidden studies persist (`docs/evidence/tv/study-legend-bar.md`).
 - Drawing tools: 94 rail tools across TradingView's eight drawing groups.
   Cursors include Cross and Eraser; trend tools cover lines, channels and four
   pitchfork variants; Gann/Fibonacci includes channel, time, fan, circle,
@@ -110,7 +118,7 @@ the network responds.
 |---|---|
 | `TICKVIEW_SNAPSHOT=/path/out.bmp` | capture the window, then exit |
 | `TICKVIEW_THEME=dark\|light\|system` | override the saved theme |
-| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar` | open a dialog, proof sheet, or preset chart state for visual QA |
+| `TICKVIEW_SCENE=search\|indicators\|settings\|alerts\|editor\|drawings\|measure\|toolpanel\|phase4drawings\|zoomrect\|replay\|iconsheet\|gannf\|toolbar\|studybar\|studymenu` | open a dialog, proof sheet, or preset chart state for visual QA |
 | `TICKVIEW_INDICATORS="Relative Strength Index (RSI),MACD"` | preload studies |
 | `TICKVIEW_DEAD_IVS=5m,1h` | grey those resolutions on every tab, for screenshotting the unavailable state |
 
@@ -120,7 +128,7 @@ the network responds.
 |---|---|
 | `ta` | indicator engine: 83 TV-named studies, TV default params, golden-value tests, HTF resample + comparison context |
 | `marketdata` | providers, router with circuit breaker, curated + remote search, SQLite cache, `DataHub`, alert engine, Binance kline websocket (`KlineStream`) |
-| `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, panes, crosshair, legend, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
+| `tickchart` | chart engine: axes, geometry, eight series styles, full drawing catalog (trend/Fib/Gann/patterns/Elliott/shapes/annotations), styles/lock/hide/measure/brush/regression/positions, panes, crosshair, legend hover/pin state + study reorder/move, last-price marks, rect zoom, bar-replay cursor, dark/light palettes |
 | `app` (`tickview`) | Graphite Terminal shell, tabs, command bar, watchlist, dialogs, persistence, data jobs |
 
 ## Verification
