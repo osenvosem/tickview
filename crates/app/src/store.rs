@@ -27,6 +27,9 @@ pub struct SavedIndicator {
     pub name: String,
     #[serde(default)]
     pub params: Vec<(String, SavedVal)>,
+    /// The study layer is present but its plots are hidden (TV eye toggle).
+    #[serde(default)]
+    pub hidden: bool,
 }
 /// A named, reusable indicator set for the active chart.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -66,7 +69,7 @@ impl SavedVal {
 
 impl SavedIndicator {
     #[must_use]
-    pub fn from_parts(name: &str, params: &Params) -> Self {
+    pub fn from_parts(name: &str, params: &Params, hidden: bool) -> Self {
         let d = defs().iter().find(|d| d.tv_name.eq_ignore_ascii_case(name));
         let params = d
             .map(|d| {
@@ -83,6 +86,7 @@ impl SavedIndicator {
         Self {
             name: name.to_owned(),
             params,
+            hidden,
         }
     }
 
@@ -191,6 +195,10 @@ pub struct SavedConfig {
     /// Drawing tools starred in the grouped tool panel.
     #[serde(default)]
     pub drawing_favorites: Vec<Tool>,
+    /// TradingView names of studies starred in the chart legend menu, in
+    /// favourite order (names, so unknown entries drop on load).
+    #[serde(default)]
+    pub study_favorites: Vec<String>,
     /// Show the values tooltip after the cursor rests on a bar (TV parity).
     #[serde(default = "default_true")]
     pub values_tooltip_long_press: bool,
@@ -226,6 +234,7 @@ impl Default for SavedConfig {
             study_templates: Vec::new(),
             stream: None,
             drawing_favorites: Vec::new(),
+            study_favorites: Vec::new(),
             values_tooltip_long_press: true,
             always_remove_locked: false,
             symbol: None,
@@ -398,6 +407,7 @@ mod tests {
             indicators: vec![SavedIndicator {
                 name: "Relative Strength Index (RSI)".into(),
                 params: vec![("length".into(), SavedVal::N(21.0))],
+                hidden: false,
             }],
         });
         let json = serde_json::to_string(&cfg).unwrap();
@@ -619,6 +629,7 @@ mod tests {
         let saved = SavedIndicator {
             name: "Relative Strength Index (RSI)".into(),
             params: vec![("length".into(), SavedVal::N(21.0))],
+            hidden: false,
         };
         let (id, params) = saved.to_params().expect("known study");
         assert_eq!(id, ta::registry::TvId::Rsi);
@@ -642,10 +653,12 @@ mod tests {
                 SavedIndicator {
                     name: "Relative Strength Index (RSI)".into(),
                     params: vec![("length".into(), SavedVal::N(21.0))],
+                    hidden: false,
                 },
                 SavedIndicator {
                     name: "Moving Average".into(),
                     params: vec![("short".into(), SavedVal::E(2))],
+                    hidden: true,
                 },
             ],
         });
@@ -721,7 +734,8 @@ mod tests {
         let defs = ta::registry::defs();
         assert_eq!(defs.len(), 83);
         for d in defs {
-            let saved = SavedIndicator::from_parts(d.tv_name, &ta::registry::Params::default());
+            let saved =
+                SavedIndicator::from_parts(d.tv_name, &ta::registry::Params::default(), false);
             let (id, _params) = saved.to_params().expect("dialog name resolves");
             assert_eq!(id, d.id, "{} resolves to wrong id", d.tv_name);
             assert_eq!(

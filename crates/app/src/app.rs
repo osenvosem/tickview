@@ -22,6 +22,7 @@ use tickchart::{
 use crate::drawing_toolbar::{self, ToolbarAction};
 use crate::icons::Icon;
 use crate::store::{self, SavedConfig};
+use crate::study_toolbar::{self, MenuAction};
 use crate::symbolsearch;
 use crate::theme::{self, Palette, ThemeMode, font_mono, font_regular, font_semibold, type_size};
 use crate::toolpanel::{self, PanelState};
@@ -172,6 +173,10 @@ pub struct Tab {
     pub no_data: Vec<DeadIv>,
     /// Indicators restored from disk, waiting for the first bar batch.
     pub pending: Vec<(TvId, Params)>,
+    /// Legend bar to pin once the restored studies are computed (QA).
+    pub pending_study_bar: Option<TvId>,
+    /// Open the study menu on the first frame with data (QA).
+    pub pending_study_menu: bool,
     /// Drawings are locked against mouse editing.
     pub locked: bool,
     /// Drawings are hidden on this tab.
@@ -181,6 +186,8 @@ pub struct Tab {
     /// Study layers are locked against mouse editing (TV lock indicators).
     pub indicators_locked: bool,
     pub toolbar: drawing_toolbar::ToolbarState,
+    /// Legend actions bar / study menu state for this tab.
+    pub study_bar: study_toolbar::State,
 }
 
 impl Tab {
@@ -207,11 +214,14 @@ impl Tab {
             error: None,
             no_data: Vec::new(),
             pending,
+            pending_study_bar: None,
+            pending_study_menu: false,
             locked: false,
             drawings_hidden: false,
             indicators_hidden: false,
             indicators_locked: false,
             toolbar: drawing_toolbar::ToolbarState::default(),
+            study_bar: study_toolbar::State::default(),
         }
     }
 
@@ -856,6 +866,8 @@ pub struct TickView {
     pub alert_price: f64,
     pub alert_cond: usize,
     pub toast: Option<(String, Instant)>,
+    /// Studies starred from the chart legend menu (TV favourites).
+    pub study_favorites: Vec<TvId>,
 
     pub theme: ThemeMode,
     pub palette: Palette,
@@ -907,6 +919,8 @@ pub struct TickView {
     pending_barghost: bool,
     pending_table: bool,
     pending_image: bool,
+    /// ObjectsTree dialog to put back when the study editor closes.
+    reopen_browser: bool,
     search_anchor: Option<egui::Vec2>,
     indicators_anchor: Option<egui::Vec2>,
     editor_anchor: Option<egui::Vec2>,
@@ -1104,10 +1118,16 @@ impl TickView {
                     Interval::parse(&saved.interval)
                         .unwrap_or_else(|| Interval::parse("1d").unwrap()),
                 );
-                let pending = saved
+                let pending: Vec<(TvId, Params)> = saved
                     .indicators
                     .iter()
                     .filter_map(|s| s.to_params())
+                    .collect();
+                let hidden_ids: Vec<TvId> = saved
+                    .indicators
+                    .iter()
+                    .filter(|s| s.hidden)
+                    .filter_map(|s| s.to_params().map(|(id, _)| id))
                     .collect();
                 let mut tab = Tab::new(
                     next_tab_id,
@@ -1115,8 +1135,9 @@ impl TickView {
                     interval,
                     saved.chart_type(),
                     saved.log,
-                    pending,
+                    pending.clone(),
                 );
+                tab.pending_study_bar = pending.first().map(|(id, _)| *id);
                 if saved.spacing >= 2.0 {
                     tab.chart.view.spacing = saved.spacing;
                 }
@@ -1132,6 +1153,9 @@ impl TickView {
                 tab.indicators_locked = saved.indicators_locked;
                 tab.chart.indicators_locked = saved.indicators_locked;
                 tab.chart.values_tooltip = cfg.values_tooltip_long_press;
+                for id in hidden_ids {
+                    tab.chart.set_visible(id, false);
+                }
                 tabs.push(tab);
                 next_tab_id += 1;
             }
@@ -1193,6 +1217,16 @@ impl TickView {
             alert_price: 0.0,
             alert_cond: 0,
             toast: None,
+            study_favorites: cfg
+                .study_favorites
+                .iter()
+                .filter_map(|n| {
+                    defs()
+                        .iter()
+                        .find(|d| d.tv_name.eq_ignore_ascii_case(n))
+                        .map(|d| d.id)
+                })
+                .collect(),
             theme: cfg.theme,
             palette,
             tool: Tool::Cursor,
@@ -1232,6 +1266,7 @@ impl TickView {
             pending_barghost: false,
             pending_table: false,
             pending_image: false,
+            reopen_browser: false,
             stream_tx: None,
             stream_shutdown: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             stream_key: None,
@@ -1273,6 +1308,19 @@ impl TickView {
                     me.search.focus_req = true;
                 }
                 "indicators" => me.indicators_open = true,
+                // The legend bar for a seeded study; the menu scene opens the
+                // study menu next to it.
+                "studybar" => {
+                    if me.tabs[me.active].chart.legend_pinned.is_none() {
+                        me.tabs[me.active].pending_study_bar = Some(TvId::Macd);
+                    }
+                }
+                "studymenu" => {
+                    if me.tabs[me.active].chart.legend_pinned.is_none() {
+                        me.tabs[me.active].pending_study_bar = Some(TvId::Macd);
+                    }
+                    me.tabs[me.active].pending_study_menu = true;
+                }
                 "settings" => me.settings_open = true,
                 "alerts" => me.alerts_open = true,
                 "toolpanel" => {
@@ -2698,6 +2746,7 @@ impl TickView {
         }
         let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
         let pending = std::mem::take(&mut self.tabs[ti].pending);
+        let bar_id = self.tabs[ti].pending_study_bar.take();
         let tab = &mut self.tabs[ti];
         let hidden = tab.indicators_hidden;
         for (id, params) in pending {
@@ -2705,6 +2754,15 @@ impl TickView {
             if hidden {
                 tab.chart.set_visible(id, false);
             }
+        }
+        if tab.chart.legend_pinned.is_none() {
+            tab.chart.legend_pinned = bar_id.or_else(|| {
+                tab.chart
+                    .panes
+                    .iter()
+                    .find(|p| !p.layers.is_empty())
+                    .map(|p| p.layers[0].id)
+            });
         }
     }
 
@@ -2790,6 +2848,11 @@ impl TickView {
         self.cfg.magnet_strong = self.magnet_strong;
         self.cfg.keep_drawing = self.keep_drawing;
         self.cfg.drawing_favorites = self.tool_panel.favorites().to_vec();
+        self.cfg.study_favorites = self
+            .study_favorites
+            .iter()
+            .map(|id| def(*id).tv_name.to_owned())
+            .collect();
         self.cfg.tabs = self
             .tabs
             .iter()
@@ -2800,6 +2863,7 @@ impl TickView {
                         indicators.push(store::SavedIndicator::from_parts(
                             def(layer.id).tv_name,
                             &layer.params,
+                            !layer.visible,
                         ));
                     }
                 }
@@ -2837,6 +2901,136 @@ impl TickView {
         self.persist();
     }
 
+    /// Apply the FAVOURITES star / Alt+A path: add `id` unless it is already on
+    /// the chart. Returns whether the chart changed.
+    fn add_favourite_study(&mut self, ti: usize, id: TvId) -> bool {
+        let present = self.tabs[ti]
+            .chart
+            .panes
+            .iter()
+            .any(|pane| pane.layers.iter().any(|l| l.id == id));
+        if present {
+            return false;
+        }
+        self.add_indicator(ti, id, Params::with_defaults(def(id)));
+        self.tabs[ti].chart.legend_pinned = Some(id);
+        true
+    }
+
+    /// Whether study `id` is a layer on tab `ti`.
+    fn tab_has_layer(&self, ti: usize, id: TvId) -> bool {
+        self.tabs[ti]
+            .chart
+            .panes
+            .iter()
+            .any(|pane| pane.layers.iter().any(|l| l.id == id))
+    }
+
+    /// Owned snapshot of what the legend bar needs for study `id`: params,
+    /// visibility, the hovered (else last) first-plot value and its pane.
+    fn study_bar_inputs(
+        &self,
+        ti: usize,
+        id: TvId,
+    ) -> (
+        Params,
+        bool,
+        Option<f64>,
+        Option<tickchart::chart::PaneKind>,
+    ) {
+        let mut out = (Params::with_defaults(def(id)), true, None, None);
+        let idx = self.tabs[ti]
+            .chart
+            .hover
+            .or_else(|| self.tabs[ti].candles.t.len().checked_sub(1))
+            .unwrap_or(usize::MAX);
+        for pane in &self.tabs[ti].chart.panes {
+            for l in &pane.layers {
+                if l.id != id {
+                    continue;
+                }
+                out.0 = l.params.clone();
+                out.1 = l.visible;
+                out.3 = Some(pane.kind);
+                for pl in &l.data.plots {
+                    if let Some(&v) = pl.series.get(idx) {
+                        if v.is_finite() {
+                            out.2 = Some(v);
+                            break;
+                        }
+                    }
+                }
+                return out;
+            }
+        }
+        out
+    }
+
+    /// Turn legend-bar / study-menu choices into chart changes.
+    fn apply_study_actions(
+        &mut self,
+        ui: &egui::Ui,
+        ti: usize,
+        id: TvId,
+        actions: Vec<MenuAction>,
+    ) {
+        let mut changed = false;
+        for action in actions {
+            match action {
+                MenuAction::AddAlert(price) => {
+                    self.alert_price = price;
+                    self.alerts_open = true;
+                }
+                MenuAction::AddIndicator => {
+                    self.add_indicator(ti, id, Params::with_defaults(def(id)));
+                    self.tabs[ti].chart.legend_pinned = Some(id);
+                    changed = true;
+                }
+                MenuAction::ToggleFavorite => {
+                    match self.study_favorites.iter().position(|f| *f == id) {
+                        Some(at) => drop(self.study_favorites.remove(at)),
+                        None => self.study_favorites.push(id),
+                    }
+                }
+                MenuAction::Reorder(dir) => {
+                    changed |= self.tabs[ti].chart.reorder_indicator(id, dir);
+                }
+                MenuAction::Move(target) => {
+                    changed |= self.tabs[ti].chart.move_indicator(id, target);
+                }
+                MenuAction::CopyText(text) => ui.ctx().copy_text(text),
+                MenuAction::ToggleVisible => self.toggle_indicator_visibility(ti, id),
+                MenuAction::Remove => {
+                    self.tabs[ti].chart.legend_pinned = None;
+                    self.remove_indicator(ti, id);
+                    changed = true;
+                }
+                MenuAction::OpenSettings => {
+                    let params = self.tabs[ti]
+                        .chart
+                        .panes
+                        .iter()
+                        .flat_map(|pane| pane.layers.iter())
+                        .find(|l| l.id == id)
+                        .map(|l| l.params.clone());
+                    self.editor = Some(Editor::new(id, self.tabs[ti].id, params));
+                    self.reopen_browser = true;
+                }
+                MenuAction::ToggleInputs => {
+                    let st = &mut self.tabs[ti].study_bar;
+                    match st.inputs_hidden.iter().position(|x| *x == id) {
+                        Some(at) => drop(st.inputs_hidden.remove(at)),
+                        None => st.inputs_hidden.push(id),
+                    }
+                }
+            }
+        }
+        if changed {
+            self.recompute(ti);
+        }
+        self.persist();
+    }
+
     fn remove_indicator(&mut self, ti: usize, id: TvId) {
         let _ = self.tabs[ti].chart.remove_indicator(id);
         self.recompute(ti);
@@ -2846,6 +3040,9 @@ impl TickView {
     fn add_indicator(&mut self, ti: usize, id: TvId, params: Params) {
         if self.tabs[ti].candles.is_empty() {
             self.tabs[ti].pending.push((id, params));
+            if self.tabs[ti].chart.legend_pinned.is_none() {
+                self.tabs[ti].pending_study_bar.get_or_insert(id);
+            }
         } else {
             let ax = Anchors::from_ts(&self.tabs[ti].candles.t);
             let tab = &mut self.tabs[ti];
@@ -2853,6 +3050,8 @@ impl TickView {
             if tab.indicators_hidden {
                 tab.chart.set_visible(id, false);
             }
+            // A study added to a chart with none shows its bar straight away.
+            tab.chart.legend_pinned.get_or_insert(id);
         }
         self.persist();
     }
@@ -2862,9 +3061,9 @@ impl TickView {
             .panes
             .iter()
             .flat_map(|pane| {
-                pane.layers
-                    .iter()
-                    .map(|l| store::SavedIndicator::from_parts(def(l.id).tv_name, &l.params))
+                pane.layers.iter().map(|l| {
+                    store::SavedIndicator::from_parts(def(l.id).tv_name, &l.params, !l.visible)
+                })
             })
             .collect()
     }
@@ -2881,11 +3080,18 @@ impl TickView {
         }
         self.tabs[ti].indicators_hidden = false;
         let mut applied = 0usize;
+        let mut hidden_ids = Vec::new();
         for ind in &tpl.indicators {
             if let Some((id, params)) = ind.to_params() {
                 self.add_indicator(ti, id, params);
+                if ind.hidden {
+                    hidden_ids.push(id);
+                }
                 applied += 1;
             }
+        }
+        for id in hidden_ids {
+            self.tabs[ti].chart.set_visible(id, false);
         }
         self.recompute(ti);
         self.persist();
@@ -2976,6 +3182,21 @@ impl TickView {
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
         let esc = ctx.input(|i| i.key_pressed(Key::Escape));
         if esc {
+            let ti = self.active;
+            // TV closes overlays innermost-out: study menu, then chart bar, then
+            // the dialog.
+            if self.tabs[ti].study_bar.menu.take().is_some() {
+                ctx.input_mut(|i| {
+                    i.consume_key(egui::Modifiers::NONE, Key::Escape);
+                });
+                return;
+            }
+            if self.tabs[ti].chart.legend_pinned.take().is_some() {
+                ctx.input_mut(|i| {
+                    i.consume_key(egui::Modifiers::NONE, Key::Escape);
+                });
+                return;
+            }
             let dialog_open = self.search.open
                 || self.indicators_open
                 || self.alerts_open
@@ -3030,6 +3251,24 @@ impl TickView {
         });
         if let Some(tool) = alt_tool {
             self.select_tool(tool);
+            return;
+        }
+        // TV: Alt+A adds every favourite study to the active chart.
+        if ctx.input(|i| i.modifiers.alt && !i.modifiers.command && i.key_pressed(Key::A)) {
+            let favs = self.study_favorites.clone();
+            let mut added = 0usize;
+            for id in favs {
+                if self.add_favourite_study(self.active, id) {
+                    added += 1;
+                }
+            }
+            self.recompute(self.active);
+            self.persist();
+            self.toast(if added == 0 {
+                "No favourite studies to add".to_owned()
+            } else {
+                format!("{added} favourite studies added")
+            });
             return;
         }
         let (search, new_tab, close_tab, settings) = ctx.input(|i| {
@@ -3440,6 +3679,84 @@ impl TickView {
                     self.tabs[ti].chart.popup_rect = None;
                     self.tabs[ti].toolbar.popup = drawing_toolbar::Popup::None;
                 }
+                // Study legend actions bar + study menu. `chart_ui` recorded
+                // which legend row is hot (hover or pinned) and whether the
+                // legend was right-clicked this frame.
+                if let Some((id, at)) = self.tabs[ti].chart.legend_menu_req.take() {
+                    self.tabs[ti].study_bar.menu = Some((id, Some(at)));
+                    self.tabs[ti].chart.legend_pinned = Some(id);
+                }
+                let mut study_id = self.tabs[ti]
+                    .chart
+                    .legend_hot
+                    .filter(|id| self.tab_has_layer(ti, *id));
+                // QA seeds only take effect once the legend row is on screen:
+                // before the panes have layers there is nothing to pin, and
+                // consuming the request early would drop it.
+                if let Some(id) = self.tabs[ti].pending_study_bar.take() {
+                    if self.tab_has_layer(ti, id) {
+                        if self.tabs[ti].chart.legend_pinned.is_none() {
+                            self.tabs[ti].chart.legend_pinned = Some(id);
+                        }
+                        study_id = Some(id);
+                    }
+                }
+                if study_id.is_some() && std::mem::take(&mut self.tabs[ti].pending_study_menu) {
+                    let at = self.tabs[ti]
+                        .chart
+                        .legend_rect
+                        .map_or(egui::pos2(60.0, 120.0), |r| r.right_bottom());
+                    let id = study_id.unwrap_or(TvId::Macd);
+                    self.tabs[ti].study_bar.menu = Some((id, Some(at)));
+                }
+                match study_id {
+                    Some(id) => {
+                        let (params, visible, value, pane) = self.study_bar_inputs(ti, id);
+                        let favorite = self.study_favorites.contains(&id);
+                        let locked = self.tabs[ti].chart.indicators_locked;
+                        let anchor = self.tabs[ti].chart.legend_rect.unwrap_or_else(|| {
+                            egui::Rect::from_min_size(
+                                ui.max_rect().left_top() + vec2(8.0, 8.0),
+                                vec2(140.0, 18.0),
+                            )
+                        });
+                        let model = study_toolbar::Model {
+                            id,
+                            params: &params,
+                            visible,
+                            value,
+                            favorite,
+                            locked,
+                            pane,
+                        };
+                        let out_bar = study_toolbar::bar(
+                            ui,
+                            p,
+                            &mut self.tabs[ti].study_bar,
+                            &model,
+                            anchor,
+                            ui.max_rect(),
+                        );
+                        let excl = match self.tabs[ti].study_bar.menu_rect {
+                            Some(m) => out_bar.exclusion_rect.union(m),
+                            None => out_bar.exclusion_rect,
+                        };
+                        self.tabs[ti].chart.hover_block =
+                            Some(match self.tabs[ti].chart.hover_block {
+                                Some(prev) => prev.union(excl),
+                                None => excl,
+                            });
+                        self.apply_study_actions(ui, ti, id, out_bar.actions);
+                    }
+                    // Keep an open menu while a study is still pinned: the
+                    // legend reports no hot row on frames before the panes have
+                    // layers (and while the pointer sits in the menu itself).
+                    None => {
+                        if self.tabs[ti].chart.legend_pinned.is_none() {
+                            self.tabs[ti].study_bar.menu = None;
+                        }
+                    }
+                }
             });
         if reset_tool {
             self.select_tool(Tool::Cursor);
@@ -3619,6 +3936,8 @@ impl TickView {
         let mut toggle: Option<TvId> = None;
         let mut remove: Option<TvId> = None;
         let mut add: Option<TvId> = None;
+        let mut fav: Option<TvId> = None;
+        let mut add_direct: Option<TvId> = None;
         let layers: Vec<(TvId, String, bool)> = {
             let tab = &self.tabs[ti];
             tab.chart
@@ -3688,6 +4007,69 @@ impl TickView {
                         .clicked()
                         {
                             remove = Some(*id);
+                        }
+                        let starred = self.study_favorites.contains(id);
+                        if widgets::icon_button(
+                            ui,
+                            p,
+                            Icon::Star,
+                            vec2(24.0, 24.0),
+                            starred,
+                            true,
+                            if starred { "Unstar" } else { "Star" },
+                        )
+                        .clicked()
+                        {
+                            fav = Some(*id);
+                        }
+                    });
+                });
+            }
+            widgets::hline(ui, p);
+            widgets::section_label(ui, p, "FAVOURITES");
+            if self.study_favorites.is_empty() {
+                ui.label(
+                    RichText::new("Nothing starred yet")
+                        .font(font_regular(type_size::SMALL))
+                        .color(p.faint),
+                );
+            }
+            for fid in self.study_favorites.clone() {
+                let fname = def(fid).tv_name;
+                let on_chart = self.tab_has_layer(ti, fid);
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new(fname)
+                            .font(font_regular(type_size::BODY))
+                            .color(if on_chart { p.text } else { p.muted }),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if widgets::icon_button(
+                            ui,
+                            p,
+                            Icon::Star,
+                            vec2(24.0, 24.0),
+                            true,
+                            true,
+                            "Unstar",
+                        )
+                        .clicked()
+                        {
+                            fav = Some(fid);
+                        }
+                        if !on_chart
+                            && widgets::icon_button(
+                                ui,
+                                p,
+                                Icon::Plus,
+                                vec2(24.0, 24.0),
+                                false,
+                                true,
+                                "Add to chart",
+                            )
+                            .clicked()
+                        {
+                            add_direct = Some(fid);
                         }
                     });
                 });
@@ -3801,6 +4183,20 @@ impl TickView {
         if let Some(id) = add {
             self.editor = Some(Editor::new(id, self.tabs[ti].id, None));
             self.indicators_open = false;
+            self.reopen_browser = true;
+        }
+        if let Some(id) = fav {
+            match self.study_favorites.iter().position(|f| *f == id) {
+                Some(at) => drop(self.study_favorites.remove(at)),
+                None => self.study_favorites.push(id),
+            }
+            self.persist();
+        }
+        if let Some(id) = add_direct {
+            if self.add_favourite_study(ti, id) {
+                self.recompute(ti);
+            }
+            self.persist();
         }
         if save_tpl {
             let name = std::mem::take(&mut self.template_q);
@@ -3924,10 +4320,12 @@ impl TickView {
                 self.add_indicator(ti, ed.id, params);
                 self.toast(format!("{} added", d.tv_name));
             }
-            self.indicators_open = true;
+            if std::mem::take(&mut self.reopen_browser) {
+                self.indicators_open = true;
+            }
         } else if !cancel && open {
             self.editor = Some(ed);
-        } else {
+        } else if std::mem::take(&mut self.reopen_browser) {
             self.indicators_open = true;
         }
     }
