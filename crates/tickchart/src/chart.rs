@@ -143,6 +143,15 @@ pub struct ChartState {
     pub indicators_locked: bool,
     /// (position, time) when the pointer became still, for long-press.
     hover_still: Option<(Pos2, f64)>,
+    /// Study whose legend is active (pinned, else hovered): the app draws the
+    /// actions bar for it and skips the plain legend label.
+    pub legend_hot: Option<TvId>,
+    /// Legend pinned by a click; survives pointer-out until a plot press.
+    pub legend_pinned: Option<TvId>,
+    /// Screen rect of the active legend row — the actions bar's anchor.
+    pub legend_rect: Option<Rect>,
+    /// Right-press landed on this study's legend this frame (id, pointer).
+    pub legend_menu_req: Option<(TvId, Pos2)>,
     /// Decoded textures for Image drawings, keyed by file path.
     pub images: ImageTextures,
 }
@@ -164,6 +173,35 @@ pub struct ChartEvent {
     pub changed: bool,
     /// A drawing was completed; the app may reset to the cursor tool.
     pub drawing_completed: bool,
+}
+
+/// Z-order / pane-order direction for a study.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OrderDir {
+    Front,
+    Forward,
+    Backward,
+    Back,
+}
+
+/// Destination of a study relocated from the study menu.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MoveTarget {
+    PricePane,
+    VolumePane,
+    NewPaneAbove,
+    NewPaneBelow,
+}
+
+impl MoveTarget {
+    /// The pane this target names outright; `None` for "make a new pane".
+    fn existing(self) -> Option<PaneKind> {
+        match self {
+            Self::PricePane => Some(PaneKind::Price),
+            Self::VolumePane => Some(PaneKind::Volume),
+            Self::NewPaneAbove | Self::NewPaneBelow => None,
+        }
+    }
 }
 
 impl ChartState {
@@ -220,6 +258,10 @@ impl ChartState {
             indicators_locked: false,
             images: ImageTextures::default(),
             hover_still: None,
+            legend_hot: None,
+            legend_pinned: None,
+            legend_rect: None,
+            legend_menu_req: None,
         }
     }
 
@@ -338,6 +380,7 @@ impl ChartState {
         if self.panes.len() != before {
             self.relayout_default();
         }
+        self.clear_legend_anchor();
         removed
     }
 
@@ -355,6 +398,7 @@ impl ChartState {
         if self.panes.len() != panes_before {
             self.relayout_default();
         }
+        self.clear_legend_anchor();
         n
     }
 
@@ -375,6 +419,157 @@ impl ChartState {
                 l.visible = vis;
             }
         }
+    }
+
+    /// Move a study in paint order (price/volume overlays) or pane order (own
+    /// study panes). Returns whether anything moved.
+    pub fn reorder_indicator(&mut self, id: TvId, dir: OrderDir) -> bool {
+        let Some((pi, li)) = self.locate_layer(id) else {
+            return false;
+        };
+        let moved = match self.panes[pi].kind {
+            PaneKind::Price | PaneKind::Volume => {
+                let n = self.panes[pi].layers.len();
+                let to = match dir {
+                    OrderDir::Front => Some(n - 1),
+                    OrderDir::Back => Some(0),
+                    OrderDir::Forward => (li + 1 < n).then_some(li + 1),
+                    OrderDir::Backward => li.checked_sub(1),
+                };
+                match to {
+                    Some(to) if to != li => {
+                        self.panes[pi].layers.swap(li, to);
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            PaneKind::Indicator(_) => {
+                // Own-pane studies reorder vertically among the study panes;
+                // heights are untouched, so no relayout.
+                let region: Vec<usize> = self
+                    .panes
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, p)| matches!(p.kind, PaneKind::Indicator(_)))
+                    .map(|(i, _)| i)
+                    .collect();
+                let pos = region.iter().position(|&i| i == pi);
+                // "Front"/"Forward" walk toward the top of the stack, which for
+                // panes is the first study pane and for layers the last painted.
+                let to = match (pos, dir) {
+                    (Some(_), OrderDir::Front) => region.first().copied(),
+                    (Some(pos), OrderDir::Forward) => {
+                        pos.checked_sub(1).and_then(|p| region.get(p).copied())
+                    }
+                    (Some(pos), OrderDir::Backward) => region.get(pos + 1).copied(),
+                    (Some(_), OrderDir::Back) => region.last().copied(),
+                    (None, _) => None,
+                };
+                match to {
+                    Some(to) if to != pi => {
+                        self.panes.swap(pi, to);
+                        true
+                    }
+                    _ => false,
+                }
+            }
+        };
+        if moved {
+            self.clear_legend_anchor();
+        }
+        moved
+    }
+
+    /// Relocate a study to another pane, keeping its params and computed data
+    /// (same candles and anchors, so no recompute). Returns whether it moved.
+    pub fn move_indicator(&mut self, id: TvId, target: MoveTarget) -> bool {
+        let Some((pi, li)) = self.locate_layer(id) else {
+            return false;
+        };
+        let own_slot = |panes: &[Pane]| match target {
+            MoveTarget::NewPaneAbove => Some(
+                panes
+                    .iter()
+                    .position(|p| p.kind == PaneKind::Price)
+                    .unwrap_or(0),
+            ),
+            MoveTarget::NewPaneBelow => Some(
+                panes
+                    .iter()
+                    .position(|p| p.kind == PaneKind::Price)
+                    .map_or(panes.len(), |i| i + 1),
+            ),
+            _ => None,
+        };
+        if match target.existing() {
+            Some(kind) => self.panes[pi].kind == kind,
+            None => {
+                self.panes[pi].kind == PaneKind::Indicator(id) && own_slot(&self.panes) == Some(pi)
+            }
+        } {
+            return false;
+        }
+        let layer = self.panes[pi].layers.remove(li);
+        let source_own = matches!(self.panes[pi].kind, PaneKind::Indicator(_));
+        if source_own {
+            self.panes.remove(pi);
+        }
+        match target.existing() {
+            Some(kind) => {
+                if let Some(p) = self.panes.iter_mut().find(|p| p.kind == kind) {
+                    p.layers.push(layer);
+                } else {
+                    // Both exist since `new`; keep the move lossless anyway.
+                    self.panes.push(Pane {
+                        kind,
+                        layers: vec![layer],
+                        height_frac: 0.18,
+                    });
+                }
+            }
+            None => {
+                let at = own_slot(&self.panes).unwrap_or(self.panes.len());
+                self.panes.insert(
+                    at,
+                    Pane {
+                        kind: PaneKind::Indicator(id),
+                        layers: vec![layer],
+                        height_frac: 0.2,
+                    },
+                );
+            }
+        }
+        if source_own || target.existing().is_none() {
+            self.relayout_default();
+        }
+        self.clear_legend_anchor();
+        true
+    }
+
+    /// The pane kind currently holding `id` — the menu marks this `Move to` row.
+    #[must_use]
+    pub fn study_pane_kind(&self, id: TvId) -> Option<PaneKind> {
+        self.panes
+            .iter()
+            .find(|p| p.layers.iter().any(|l| l.id == id))
+            .map(|p| p.kind)
+    }
+
+    /// Locate `(pane, layer)` of the study layer `id`.
+    fn locate_layer(&self, id: TvId) -> Option<(usize, usize)> {
+        self.panes
+            .iter()
+            .enumerate()
+            .find_map(|(pi, p)| p.layers.iter().position(|l| l.id == id).map(|li| (pi, li)))
+    }
+
+    /// Drop the legend anchor so a stale rect never pins the actions bar to a
+    /// study that was structurally changed.
+    fn clear_legend_anchor(&mut self) {
+        self.legend_pinned = None;
+        self.legend_hot = None;
+        self.legend_rect = None;
     }
 
     /// Values of visible study layers at candle `i` for magnet snapping.
@@ -1010,8 +1205,17 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
     }
 
-    // Legends (overlaid labels; clicking a name toggles the indicator).
-    let mut toggled: Vec<(usize, TvId)> = Vec::new();
+    // Legends (overlaid labels). Hovering a study's legend makes it "hot": the
+    // app draws the actions bar in its place. A click pins that state so the bar
+    // survives the pointer leaving; a press on the plot unpins it (TV).
+    st.legend_hot = None;
+    st.legend_rect = None;
+    st.legend_menu_req = None;
+    // Mutations are collected in locals: `st.panes` is borrowed while iterating.
+    let mut pinned = st.legend_pinned;
+    let mut hot_id: Option<TvId> = None;
+    let mut hot_rect: Option<Rect> = None;
+    let mut menu_req: Option<(TvId, Pos2)> = None;
     for (pi, pane) in st.panes.iter().enumerate() {
         let r = rects[pi].1;
         let mut x = r.min.x + 4.0;
@@ -1073,31 +1277,39 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Pos2::new(x + 8.0 + 7.0 * (name.len() + val.len()) as f32, y + 14.0),
             );
             let resp = ui.interact(tr, ui.scope_id().with(("legend", pi, l.id)), Sense::click());
-            if resp.clicked() && !st.indicators_locked {
-                toggled.push((pi, l.id));
+            let hot = pinned == Some(l.id) || (resp.hovered() && !st.indicators_locked);
+            if hot {
+                hot_id = Some(l.id);
+                hot_rect = Some(tr);
             }
-            p.text(
-                Pos2::new(x, y),
-                Align2::LEFT_TOP,
-                &label,
-                font_sm.clone(),
-                col,
-            );
+            if resp.clicked() && !st.indicators_locked {
+                pinned = if pinned == Some(l.id) {
+                    None
+                } else {
+                    Some(l.id)
+                };
+            }
+            if resp.secondary_clicked() {
+                pinned = Some(l.id);
+                menu_req = Some((l.id, resp.interact_pointer_pos().unwrap_or(tr.center())));
+            }
+            // The hot row shows the actions bar instead of the plain label.
+            if !hot {
+                p.text(
+                    Pos2::new(x, y),
+                    Align2::LEFT_TOP,
+                    &label,
+                    font_sm.clone(),
+                    col,
+                );
+            }
             x = tr.max.x + 6.0;
         }
     }
-    for (pi, id) in toggled {
-        let vis = !st.panes[pi]
-            .layers
-            .iter()
-            .find(|l| l.id == id)
-            .is_some_and(|l| l.visible);
-        for lay in &mut st.panes[pi].layers {
-            if lay.id == id {
-                lay.visible = vis;
-            }
-        }
-    }
+    st.legend_hot = hot_id;
+    st.legend_rect = hot_rect;
+    st.legend_menu_req = menu_req;
+    st.legend_pinned = pinned;
 
     if vs == 0 && cd.len() > 50 {
         ev.load_more = true;
@@ -1119,6 +1331,12 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             Some((p0, _)) if p0.distance(pos) <= 3.0 => {}
             _ => st.hover_still = Some((pos, now)),
         }
+    }
+    // A press on the plot unpins a pinned legend (TV). `legend_hot` is the
+    // verdict of this frame's legend pass, so pressing a row pins without being
+    // undone here.
+    if resp.clicked() && st.legend_hot.is_none() {
+        st.legend_pinned = None;
     }
     ev
 }
@@ -3216,4 +3434,127 @@ fn hide_show_and_remove_all_indicators() {
             .iter()
             .all(|p| matches!(p.kind, PaneKind::Price | PaneKind::Volume))
     );
+}
+
+#[test]
+fn reorder_and_move_studies_follow_pane_semantics() {
+    let bars: Vec<ta::Bar> = (0..40)
+        .map(|i| ta::Bar {
+            t: i as i64 * 60,
+            o: 100.0 + i as f64,
+            h: 101.0 + i as f64,
+            l: 99.0 + i as f64,
+            c: 100.5 + i as f64,
+            v: 10.0,
+        })
+        .collect();
+    let cd = Candles::from_bars(&bars);
+    let ax = Anchors::from_ts(&cd.t);
+    let mut st = ChartState::new("T".to_string(), "1D");
+    for id in [TvId::Macd, TvId::Rsi, TvId::Sma, TvId::Ema] {
+        st.add_indicator(&cd, &ax, id, Params::with_defaults(def(id)));
+    }
+    assert_eq!(st.study_pane_kind(TvId::Sma), Some(PaneKind::Price));
+    assert_eq!(
+        st.study_pane_kind(TvId::Macd),
+        Some(PaneKind::Indicator(TvId::Macd))
+    );
+
+    let region = |st: &ChartState| -> Vec<TvId> {
+        st.panes
+            .iter()
+            .filter_map(|p| match p.kind {
+                PaneKind::Indicator(id) => Some(id),
+                _ => None,
+            })
+            .collect()
+    };
+    assert_eq!(region(&st), vec![TvId::Macd, TvId::Rsi]);
+    assert!(
+        st.reorder_indicator(TvId::Macd, OrderDir::Back),
+        "MACD pane can go to the bottom"
+    );
+    assert_eq!(region(&st), vec![TvId::Rsi, TvId::Macd]);
+    assert!(st.reorder_indicator(TvId::Macd, OrderDir::Front));
+    assert_eq!(region(&st), vec![TvId::Macd, TvId::Rsi]);
+    assert!(
+        !st.reorder_indicator(TvId::Macd, OrderDir::Forward),
+        "already the topmost study pane"
+    );
+    assert!(st.reorder_indicator(TvId::Macd, OrderDir::Backward));
+    assert_eq!(region(&st), vec![TvId::Rsi, TvId::Macd]);
+    assert!(
+        !st.reorder_indicator(TvId::Rsi, OrderDir::Forward),
+        "RSI is already the topmost study pane"
+    );
+    assert!(st.reorder_indicator(TvId::Rsi, OrderDir::Back));
+    assert_eq!(region(&st), vec![TvId::Macd, TvId::Rsi]);
+    assert!(!st.reorder_indicator(TvId::Rsi, OrderDir::Back));
+
+    // Price overlays reorder in paint order (last layer paints on top).
+    let overlay = |st: &ChartState| -> Vec<TvId> {
+        st.panes
+            .iter()
+            .find(|p| p.kind == PaneKind::Price)
+            .map(|p| p.layers.iter().map(|l| l.id).collect())
+            .unwrap_or_default()
+    };
+    assert_eq!(overlay(&st), vec![TvId::Sma, TvId::Ema]);
+    assert!(st.reorder_indicator(TvId::Sma, OrderDir::Front));
+    assert_eq!(overlay(&st), vec![TvId::Ema, TvId::Sma]);
+    assert!(
+        !st.reorder_indicator(TvId::Sma, OrderDir::Front),
+        "already painted last"
+    );
+    assert!(st.reorder_indicator(TvId::Sma, OrderDir::Backward));
+    assert_eq!(overlay(&st), vec![TvId::Sma, TvId::Ema]);
+    assert!(!st.reorder_indicator(TvId::Sma, OrderDir::Back));
+    assert!(
+        !st.reorder_indicator(TvId::Vwap, OrderDir::Front),
+        "not on chart"
+    );
+
+    // Move into the price pane drops the study pane it leaves empty.
+    let panes_before = st.panes.len();
+    assert!(st.move_indicator(TvId::Macd, MoveTarget::PricePane));
+    assert_eq!(st.study_pane_kind(TvId::Macd), Some(PaneKind::Price));
+    assert_eq!(st.panes.len(), panes_before - 1);
+    assert!(
+        !st.move_indicator(TvId::Macd, MoveTarget::PricePane),
+        "already on the price pane"
+    );
+
+    // ...and back out into a fresh pane directly below Price, data intact.
+    assert!(st.move_indicator(TvId::Macd, MoveTarget::NewPaneBelow));
+    assert_eq!(
+        st.panes
+            .iter()
+            .position(|p| p.kind == PaneKind::Indicator(TvId::Macd)),
+        Some(1),
+        "new pane sits directly below Price"
+    );
+    assert!(
+        !st.move_indicator(TvId::Macd, MoveTarget::NewPaneBelow),
+        "already directly below Price"
+    );
+    let carried = st
+        .panes
+        .iter()
+        .find(|p| p.kind == PaneKind::Indicator(TvId::Macd))
+        .expect("MACD pane")
+        .layers[0]
+        .data
+        .plots
+        .len();
+    assert!(carried > 0, "params/data survive the relocation");
+    assert!(st.move_indicator(TvId::Macd, MoveTarget::NewPaneAbove));
+    assert_eq!(
+        st.panes
+            .iter()
+            .position(|p| p.kind == PaneKind::Indicator(TvId::Macd)),
+        Some(0),
+        "new pane sits above Price"
+    );
+    assert!(st.move_indicator(TvId::Rsi, MoveTarget::VolumePane));
+    assert_eq!(st.study_pane_kind(TvId::Rsi), Some(PaneKind::Volume));
 }
