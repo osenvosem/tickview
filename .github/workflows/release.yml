@@ -7,7 +7,10 @@ on:
         description: Semver level to bump (ignored when explicit version is set)
         type: choice
         default: patch
-        choices: [patch, minor, major]
+        choices:
+          - patch
+          - minor
+          - major
       version:
         description: Explicit version X.Y.Z (overrides level)
         required: false
