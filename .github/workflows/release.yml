@@ -4,13 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       level:
-        description: Semver level to bump (ignored when explicit version is set)
-        type: choice
+        description: Semver level to bump - patch, minor or major
+        required: false
         default: patch
-        choices:
-          - patch
-          - minor
-          - major
+        type: string
       version:
         description: Explicit version X.Y.Z (overrides level)
         required: false
