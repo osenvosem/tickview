@@ -7,6 +7,7 @@ pub mod barfmt;
 pub mod bars;
 pub mod chart;
 pub mod datatools;
+pub mod decor;
 pub mod drawings;
 pub mod painter;
 pub mod priceaxis;

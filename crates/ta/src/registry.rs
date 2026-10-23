@@ -144,6 +144,29 @@ pub struct ParamSpec {
     pub key: &'static str,
     pub name: &'static str,
     pub kind: ParamKind,
+    /// Section title in the settings dialog (`None` keeps the flat list).
+    pub group: Option<&'static str>,
+    /// Print the value in the legend input summary. TV hides helper inputs
+    /// (smoothing, BB multiplier, timeframe) from the legend.
+    pub legend: bool,
+    /// Enablement rule; a disabled control stays in the dialog, greyed out.
+    pub active: Active,
+}
+
+/// When a settings control is enabled, mirroring Pine's `active=` argument.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Active {
+    Always,
+    /// Enabled while the enum param `key` sits on any other variant.
+    NotVariant {
+        key: &'static str,
+        variant: &'static str,
+    },
+    /// Enabled only while the enum param `key` sits exactly on `variant`.
+    IsVariant {
+        key: &'static str,
+        variant: &'static str,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -300,6 +323,88 @@ pub struct Def {
     pub plots: &'static [PlotSpec],
 }
 
+/// A horizontal guide line in a study's pane (TV `hline`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GuideSpec {
+    pub value: f64,
+    /// `0xAARRGGBB`.
+    pub color: u32,
+    /// Extra alpha multiplier 0..=255 on top of `color`.
+    pub alpha: u8,
+    pub dash: bool,
+}
+
+/// A translucent region painted behind a study's plots (TV `fill`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FillSpec {
+    /// Flat band between two constant levels.
+    Band {
+        lo: f64,
+        hi: f64,
+        color: u32,
+        alpha: u8,
+    },
+    /// Vertical gradient between plot `plot` and the constant `near`, ramping to
+    /// `alpha` at `far` and fading to nothing at `near` (TV's zone gradient).
+    /// Columns where the series sits on the far side of `near` are skipped.
+    Gradient {
+        plot: usize,
+        near: f64,
+        far: f64,
+        color: u32,
+        alpha: u8,
+    },
+}
+
+/// Pane decorations for a study: guide lines plus fills.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PaneDecor {
+    pub guides: Vec<GuideSpec>,
+    pub fills: Vec<FillSpec>,
+}
+
+/// Whether a param's control is enabled given the current params.
+#[must_use]
+pub fn control_active(def: &Def, spec: &ParamSpec, params: &Params) -> bool {
+    let current = |key: &str| -> Option<&'static str> {
+        let ps = def.params.iter().find(|p| p.key == key)?;
+        match ps.kind {
+            ParamKind::Enum { variants, .. } => variants.get(params.e(def, key)).copied(),
+            _ => None,
+        }
+    };
+    match spec.active {
+        Active::Always => true,
+        Active::NotVariant { key, variant } => current(key) != Some(variant),
+        Active::IsVariant { key, variant } => current(key) == Some(variant),
+    }
+}
+
+/// Pane decorations for a study. Only RSI carries its captured decoration set
+/// (`docs/evidence/tv/studies/STD_RSI.json`); everything else falls back to
+/// dashed grey guides at its `hlines` values, which is how TV renders ordinary
+/// oscillator levels.
+#[must_use]
+pub fn decor(id: TvId) -> PaneDecor {
+    let d = def(id);
+    let mut guides: Vec<GuideSpec> = d
+        .hlines
+        .iter()
+        .map(|&v| GuideSpec {
+            value: v,
+            color: GRAY,
+            alpha: 255,
+            dash: true,
+        })
+        .collect();
+    let mut fills = Vec::new();
+    if id == TvId::Rsi {
+        guides = RSI_GUIDES.to_vec();
+        fills = RSI_FILLS.to_vec();
+    }
+    PaneDecor { guides, fills }
+}
+
 /// Study inputs as legend text, in declaration order (`Params` is a
 /// `BTreeMap` and would sort alphabetically): `Int`/`Float` print integral
 /// values without decimals and others with two, `Enum` prints the variant
@@ -308,6 +413,9 @@ pub struct Def {
 pub fn inputs_summary(d: &Def, params: &Params) -> String {
     let mut parts: Vec<String> = Vec::new();
     for spec in d.params {
+        if !spec.legend {
+            continue;
+        }
         if matches!(spec.kind, ParamKind::Bool { .. }) {
             continue;
         }
@@ -370,6 +478,9 @@ macro_rules! ip {
                 min: $mn,
                 max: $mx,
             },
+            group: None,
+            legend: true,
+            active: Active::Always,
         }
     };
 }
@@ -384,6 +495,9 @@ macro_rules! fp {
                 max: $mx,
                 step: $st,
             },
+            group: None,
+            legend: true,
+            active: Active::Always,
         }
     };
 }
@@ -393,6 +507,9 @@ macro_rules! ep {
             key: $k,
             name: $n,
             kind: ParamKind::Enum { def: $d, variants: &[$($v),+] },
+            group: None,
+            legend: true,
+            active: Active::Always,
         }
     };
     ($k:literal, $n:literal, $d:literal, $v:expr) => {
@@ -400,6 +517,9 @@ macro_rules! ep {
             key: $k,
             name: $n,
             kind: ParamKind::Enum { def: $d, variants: $v },
+            group: None,
+            legend: true,
+            active: Active::Always,
         }
     };
 }
@@ -410,6 +530,14 @@ macro_rules! pl {
             color: $c,
             style: PlotStyle::Line,
             default_hidden: false,
+        }
+    };
+    ($t:literal, $c:expr, hide) => {
+        PlotSpec {
+            title: $t,
+            color: $c,
+            style: PlotStyle::Line,
+            default_hidden: true,
         }
     };
     ($t:literal, $c:expr, $style:expr) => {
@@ -460,6 +588,68 @@ pub fn source_series(cd: &Candles, idx: usize) -> Vec<f64> {
 
 pub const GREEN: u32 = 0xFF_4C_AF_50;
 pub const YELLOW: u32 = 0xFF_FF_EE_58;
+/// TV's RSI-based MA yellow (`#FDD835`).
+pub const GOLD: u32 = 0xFF_FD_D8_35;
+/// TV's oversold red (`#F23645`).
+pub const CRIMSON: u32 = 0xFF_F2_36_45;
+
+/// Smoothing types offered by TV's RSI (index 2 also draws Bollinger Bands).
+pub const RSI_MA_VARIANTS: &[&str] = &[
+    "None",
+    "SMA",
+    "SMA + Bollinger Bands",
+    "EMA",
+    "SMMA (RMA)",
+    "WMA",
+    "VWMA",
+];
+
+/// Timeframe dropdown entries: `Chart` means "resolve on the chart timeframe".
+pub const RSI_TIMEFRAMES: &[&str] = &["Chart", "1m", "5m", "15m", "1H", "4H", "1D", "1W", "1M"];
+
+const RSI_GUIDES: &[GuideSpec] = &[
+    GuideSpec {
+        value: 70.0,
+        color: GRAY,
+        alpha: 255,
+        dash: true,
+    },
+    GuideSpec {
+        value: 50.0,
+        color: GRAY,
+        alpha: 128,
+        dash: true,
+    },
+    GuideSpec {
+        value: 30.0,
+        color: GRAY,
+        alpha: 255,
+        dash: true,
+    },
+];
+
+const RSI_FILLS: &[FillSpec] = &[
+    FillSpec::Band {
+        lo: 30.0,
+        hi: 70.0,
+        color: PURPLE,
+        alpha: 26,
+    },
+    FillSpec::Gradient {
+        plot: 0,
+        near: 70.0,
+        far: 100.0,
+        color: GREEN,
+        alpha: 255,
+    },
+    FillSpec::Gradient {
+        plot: 0,
+        near: 30.0,
+        far: 0.0,
+        color: CRIMSON,
+        alpha: 255,
+    },
+];
 
 const DEFS_PRICE: &[Def] = &[
     Def {
@@ -1035,10 +1225,105 @@ const DEFS_OSC: &[Def] = &[
         scale: Scale::Auto,
         hlines: &[30.0, 50.0, 70.0],
         params: &[
-            ip!("length", "Length", 14, 1, 5000),
-            ep!("source", "source", 0, SOURCE_VARIANTS),
+            ParamSpec {
+                key: "length",
+                name: "Length",
+                kind: ParamKind::Int {
+                    def: 14,
+                    min: 1,
+                    max: 5000,
+                },
+                group: Some("RSI Settings"),
+                legend: true,
+                active: Active::Always,
+            },
+            ParamSpec {
+                key: "source",
+                name: "Source",
+                kind: ParamKind::Enum {
+                    def: 0,
+                    variants: SOURCE_VARIANTS,
+                },
+                group: Some("RSI Settings"),
+                legend: true,
+                active: Active::Always,
+            },
+            ParamSpec {
+                key: "divergence",
+                name: "Calculate Divergence",
+                kind: ParamKind::Bool { def: false },
+                group: Some("RSI Settings"),
+                legend: false,
+                active: Active::Always,
+            },
+            ParamSpec {
+                key: "ma_type",
+                name: "Type",
+                kind: ParamKind::Enum {
+                    def: 1,
+                    variants: RSI_MA_VARIANTS,
+                },
+                group: Some("Smoothing"),
+                legend: false,
+                active: Active::Always,
+            },
+            ParamSpec {
+                key: "ma_len",
+                name: "Length",
+                kind: ParamKind::Int {
+                    def: 14,
+                    min: 1,
+                    max: 5000,
+                },
+                group: Some("Smoothing"),
+                legend: false,
+                active: Active::NotVariant {
+                    key: "ma_type",
+                    variant: "None",
+                },
+            },
+            ParamSpec {
+                key: "bb_std",
+                name: "BB StdDev",
+                kind: ParamKind::Float {
+                    def: 2.0,
+                    min: 0.001,
+                    max: 50.0,
+                    step: 0.5,
+                },
+                group: Some("Smoothing"),
+                legend: false,
+                active: Active::IsVariant {
+                    key: "ma_type",
+                    variant: "SMA + Bollinger Bands",
+                },
+            },
+            ParamSpec {
+                key: "timeframe",
+                name: "Timeframe",
+                kind: ParamKind::Enum {
+                    def: 0,
+                    variants: RSI_TIMEFRAMES,
+                },
+                group: Some("Calculation"),
+                legend: false,
+                active: Active::Always,
+            },
+            ParamSpec {
+                key: "wait_close",
+                name: "Wait for timeframe closes",
+                kind: ParamKind::Bool { def: true },
+                group: Some("Calculation"),
+                legend: false,
+                active: Active::Always,
+            },
         ],
-        plots: &[pl!("RSI", ORANGE)],
+        plots: &[
+            pl!("RSI", PURPLE),
+            pl!("RSI-based MA", GOLD),
+            pl!("Upper Bollinger Band", GREEN, hide),
+            pl!("Lower Bollinger Band", GREEN, hide),
+        ],
     },
     Def {
         id: TvId::Macd,
@@ -1965,7 +2250,32 @@ fn compute_id(
                 .collect();
             out(vec![vo])
         }
-        TvId::Rsi => out(vec![oscs::rsi(&src, p.i(defn, "length"))]),
+        TvId::Rsi => {
+            let rsi = oscs::rsi(&src, p.i(defn, "length"));
+            let kind = p.e(defn, "ma_type");
+            let mlen = p.i(defn, "ma_len").max(1);
+            // TV's smoothing dropdown; only "SMA + Bollinger Bands" (index 2)
+            // adds bands around the MA of the RSI.
+            let ma = match kind {
+                0 => series::nan_like(&rsi),
+                1 | 2 => series::sma(&rsi, mlen),
+                3 => series::ema(&rsi, mlen),
+                4 => series::rma(&rsi, mlen),
+                5 => series::wma(&rsi, mlen),
+                6 => series::vwma(&rsi, v, mlen),
+                _ => series::nan_like(&rsi),
+            };
+            let (up, low) = if kind == 2 {
+                let sd = series::stdev(&rsi, mlen);
+                let k = p.f(defn, "bb_std");
+                let up: Vec<f64> = (0..n).map(|i| ma[i] + sd[i] * k).collect();
+                let low: Vec<f64> = (0..n).map(|i| ma[i] - sd[i] * k).collect();
+                (up, low)
+            } else {
+                (series::nan_like(&rsi), series::nan_like(&rsi))
+            };
+            out(vec![rsi, ma, up, low])
+        }
         TvId::Macd => {
             let m = oscs::macd(
                 &src,
@@ -2958,6 +3268,9 @@ mod legend_text_tests {
                 key: "on",
                 name: "On",
                 kind: ParamKind::Bool { def: true },
+                group: None,
+                legend: false,
+                active: Active::Always,
             }],
             plots: d.plots,
         };
@@ -2976,5 +3289,204 @@ mod legend_text_tests {
             inputs_summary(d, &Params::with_defaults(d)),
             "9 0.85 6 close"
         );
+    }
+}
+
+/// TV's RSI as captured in `docs/evidence/tv/studies/STD_RSI.json`: four
+/// plots (line, MA of the line, Bollinger bands), the smoothing menu, and the
+/// pane decoration (guides at 70/50/30 plus the three fills).
+#[cfg(test)]
+mod rsi_wire_tests {
+    use super::*;
+    use crate::Bar;
+
+    fn candles(n: usize) -> (Candles, Anchors) {
+        let bars: Vec<Bar> = (0..n)
+            .map(|i| {
+                let drift = (i as f64 * 0.31).sin() * 8.0 + (i as f64 * 0.03).cos() * 3.0 + 50.0;
+                let c = drift + (i % 5) as f64 * 0.7;
+                Bar {
+                    t: (i as i64) * 86_400,
+                    o: c,
+                    h: c + 1.2,
+                    l: c - 1.2,
+                    c,
+                    v: 900.0 + (i % 11) as f64 * 140.0,
+                }
+            })
+            .collect();
+        let cd = Candles::from_bars(&bars);
+        let ax = Anchors::from_ts(&cd.t);
+        (cd, ax)
+    }
+
+    /// NaN-aware series equality: two series match when every position is either
+    /// NaN on both sides or equal to 1e-9.
+    fn same(a: &[f64], b: &[f64]) -> bool {
+        a.len() == b.len()
+            && a.iter()
+                .zip(b)
+                .all(|(x, y)| (x.is_nan() && y.is_nan()) || (x - y).abs() < 1e-9)
+    }
+
+    #[test]
+    fn default_params_plot_rsi_and_a_yellow_sma_of_it() {
+        let (cd, ax) = candles(300);
+        let d = def(TvId::Rsi);
+        let out = compute(TvId::Rsi, &Params::with_defaults(d), &cd, &ax);
+        let rsi = oscs::rsi(&cd.c, 14);
+        assert_eq!(out.plots.len(), 4);
+        assert_eq!(out.plots[0].title, "RSI");
+        assert_eq!(out.plots[0].color, PURPLE, "#7E57C2 on the wire");
+        assert!(same(&out.plots[0].series, &rsi));
+        assert_eq!(out.plots[1].title, "RSI-based MA");
+        assert_eq!(out.plots[1].color, GOLD, "#FDD835 on the wire");
+        assert!(same(&out.plots[1].series, &series::sma(&rsi, 14)));
+        assert!(
+            out.plots[2].default_hidden && out.plots[3].default_hidden,
+            "Bollinger bands exist but stay off for the plain SMA smoothing type"
+        );
+        assert!(out.plots[2].series.iter().all(|v| v.is_nan()));
+        assert!(out.plots[3].series.iter().all(|v| v.is_nan()));
+    }
+
+    #[test]
+    fn smoothing_menu_selects_the_average_of_the_line() {
+        let (cd, ax) = candles(300);
+        let d = def(TvId::Rsi);
+        let rsi = oscs::rsi(&cd.c, 14);
+        let expect: [(u32, Vec<f64>); 4] = [
+            (0, vec![f64::NAN; rsi.len()]),
+            (3, series::ema(&rsi, 14)),
+            (4, series::rma(&rsi, 14)),
+            (5, series::wma(&rsi, 14)),
+        ];
+        for (kind, want) in expect {
+            let mut p = Params::with_defaults(d);
+            p.set("ma_type", PVal::E(kind));
+            let out = compute(TvId::Rsi, &p, &cd, &ax);
+            assert!(
+                same(&out.plots[1].series, &want),
+                "smoothing type {kind} ({}) must average the line",
+                RSI_MA_VARIANTS[usize::try_from(kind).unwrap()],
+            );
+        }
+        // VWMA weights by volume, so it needs the candle volumes.
+        let mut p = Params::with_defaults(d);
+        p.set("ma_type", PVal::E(6));
+        let out = compute(TvId::Rsi, &p, &cd, &ax);
+        assert!(same(&out.plots[1].series, &series::vwma(&rsi, &cd.v, 14)));
+    }
+
+    #[test]
+    fn bollinger_variant_wraps_the_smoothed_line() {
+        let (cd, ax) = candles(300);
+        let d = def(TvId::Rsi);
+        let mut p = Params::with_defaults(d);
+        p.set("ma_type", PVal::E(2));
+        let out = compute(TvId::Rsi, &p, &cd, &ax);
+        let rsi = oscs::rsi(&cd.c, 14);
+        let basis = series::sma(&rsi, 14);
+        let sd = series::stdev(&rsi, 14);
+        let up: Vec<f64> = (0..rsi.len()).map(|i| basis[i] + sd[i] * 2.0).collect();
+        let low: Vec<f64> = (0..rsi.len()).map(|i| basis[i] - sd[i] * 2.0).collect();
+        assert!(same(&out.plots[2].series, &up), "upper = SMA + 2 * stdev");
+        assert!(same(&out.plots[3].series, &low), "lower = SMA - 2 * stdev");
+        // A different multiplier is honoured.
+        p.set("bb_std", PVal::N(3.0));
+        let out3 = compute(TvId::Rsi, &p, &cd, &ax);
+        let up3: Vec<f64> = (0..rsi.len()).map(|i| basis[i] + sd[i] * 3.0).collect();
+        assert!(same(&out3.plots[2].series, &up3));
+    }
+
+    #[test]
+    fn helper_inputs_are_enabled_only_when_they_apply() {
+        let d = def(TvId::Rsi);
+        let spec = |key: &str| d.params.iter().find(|s| s.key == key).unwrap();
+        let mut p = Params::with_defaults(d);
+        assert!(control_active(d, spec("ma_len"), &p));
+        assert!(
+            !control_active(d, spec("bb_std"), &p),
+            "BB StdDev is greyed out unless the smoothing type is Bollinger"
+        );
+        p.set("ma_type", PVal::E(2));
+        assert!(control_active(d, spec("ma_len"), &p));
+        assert!(control_active(d, spec("bb_std"), &p));
+        p.set("ma_type", PVal::E(0));
+        assert!(
+            !control_active(d, spec("ma_len"), &p),
+            "no smoothing type disables its length"
+        );
+        assert!(!control_active(d, spec("bb_std"), &p));
+    }
+
+    #[test]
+    fn decor_carries_the_captured_guides_and_fills() {
+        let d = decor(TvId::Rsi);
+        assert_eq!(
+            d.guides,
+            vec![
+                GuideSpec {
+                    value: 70.0,
+                    color: GRAY,
+                    alpha: 255,
+                    dash: true,
+                },
+                GuideSpec {
+                    value: 50.0,
+                    color: GRAY,
+                    alpha: 128,
+                    dash: true,
+                },
+                GuideSpec {
+                    value: 30.0,
+                    color: GRAY,
+                    alpha: 255,
+                    dash: true,
+                },
+            ],
+            "the middle band is the only half-alpha guide"
+        );
+        assert_eq!(
+            d.fills,
+            vec![
+                FillSpec::Band {
+                    lo: 30.0,
+                    hi: 70.0,
+                    color: PURPLE,
+                    alpha: 26,
+                },
+                FillSpec::Gradient {
+                    plot: 0,
+                    near: 70.0,
+                    far: 100.0,
+                    color: GREEN,
+                    alpha: 255,
+                },
+                FillSpec::Gradient {
+                    plot: 0,
+                    near: 30.0,
+                    far: 0.0,
+                    color: CRIMSON,
+                    alpha: 255,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn other_studies_get_plain_dashed_guides() {
+        let d = decor(TvId::Macd);
+        assert_eq!(
+            d.guides,
+            vec![GuideSpec {
+                value: 0.0,
+                color: GRAY,
+                alpha: 255,
+                dash: true,
+            }]
+        );
+        assert!(d.fills.is_empty());
+        assert!(decor(TvId::Sma).guides.is_empty(), "no hlines, no guides");
     }
 }

@@ -13,8 +13,8 @@ use crate::priceaxis::PriceAxis;
 use crate::timeaxis;
 use ta::Candles;
 use ta::registry::{
-    Anchors, Output, Pane as TvPane, Params, PlotData, PlotStyle, StudyContext, TvId, compute,
-    compute_with, def, inputs_summary,
+    Anchors, Output, Pane as TvPane, PaneDecor, Params, PlotData, PlotStyle, StudyContext, TvId,
+    compute, compute_with, def, inputs_summary,
 };
 
 /// One attached indicator instance.
@@ -24,6 +24,8 @@ pub struct Layer {
     pub params: Params,
     pub visible: bool,
     pub data: Output,
+    /// TV's guide levels and zone fills for this study (`registry::decor`).
+    pub decor: PaneDecor,
 }
 
 /// Pane content kind.
@@ -366,6 +368,7 @@ impl ChartState {
             params,
             visible: true,
             data,
+            decor: ta::registry::decor(id),
         };
         let target = match def(id).pane {
             TvPane::Price => PaneKind::Price,
@@ -891,6 +894,8 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             if !l.visible {
                 continue;
             }
+            // Guides and zone washes sit behind the plots, clipped to the pane.
+            crate::decor::draw(&pp, &st.view, &ax, &l.data.plots, &l.decor);
             for pl in &l.data.plots {
                 if pl.default_hidden || pl.series.len() != cd.len() {
                     continue;
