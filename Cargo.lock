@@ -2080,7 +2080,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "marketdata"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -3622,7 +3622,7 @@ dependencies = [
 
 [[package]]
 name = "ta"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -3692,7 +3692,7 @@ dependencies = [
 
 [[package]]
 name = "tickchart"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "egui",
@@ -3704,7 +3704,7 @@ dependencies = [
 
 [[package]]
 name = "tickview"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "crossbeam-channel",
@@ -4988,7 +4988,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "image",
  "resvg",
