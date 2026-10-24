@@ -280,6 +280,21 @@ fn qa_settings_close(from_browser: bool) -> ! {
     std::process::exit(i32::from(!ok) * 3);
 }
 
+/// Window/taskbar icon: the committed master raster of `pack/tickview-mark.svg`
+/// — the same artwork the README header shows and the installers bundle.
+#[cfg(not(target_arch = "wasm32"))]
+fn app_icon() -> eframe::egui::IconData {
+    let img = image::load_from_memory(include_bytes!("../pack/tickview-mark.png"))
+        .expect("bundled app icon decodes")
+        .into_rgba8();
+    let (width, height) = img.dimensions();
+    eframe::egui::IconData {
+        rgba: img.into_raw(),
+        width,
+        height,
+    }
+}
+
 fn main() -> eframe::Result {
     #[cfg(not(target_arch = "wasm32"))]
     if let Ok(gesture) = std::env::var("TICKVIEW_QA_GESTURE") {
@@ -293,7 +308,8 @@ fn main() -> eframe::Result {
         viewport: eframe::egui::ViewportBuilder::default()
             .with_inner_size([1440.0, 900.0])
             .with_min_inner_size([980.0, 620.0])
-            .with_title("TickView"),
+            .with_title("TickView")
+            .with_icon(app_icon()),
         ..Default::default()
     };
     eframe::run_native(
