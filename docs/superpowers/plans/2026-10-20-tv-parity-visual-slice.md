@@ -65,7 +65,7 @@ Run:
 git status --short
 ```
 
-Expected: the modified/untracked product files listed in the session context, including `crates/app/src/toolpanel.rs`, `research/tradingview-left-toolbar.md`, and `docs/screenshots/phase6-toolpanel-*.png`.
+Expected: the modified/untracked product files listed in the session context, including `crates/app/src/toolpanel.rs`, `research/reference-app-left-toolbar.md`, and `docs/screenshots/phase6-toolpanel-*.png`.
 
 - [ ] **Step 3: Commit the baseline**
 
@@ -77,7 +77,7 @@ git add PARITY.md README.md \
   crates/app/src/toolpanel.rs \
   crates/tickchart/src/chart.rs crates/tickchart/src/drawings.rs \
   docs/screenshots/phase6-toolpanel-dark.png docs/screenshots/phase6-toolpanel-light.png \
-  research/tradingview-left-toolbar.md research/tv-toolbar-crop.png research/tv-toolbar-web.png
+  research/reference-app-left-toolbar.md research/tv-toolbar-crop.png research/tv-toolbar-web.png
 git commit -m "feat: grouped reference-app drawing tool panel"
 ```
 
