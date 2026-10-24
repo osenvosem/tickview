@@ -5,7 +5,7 @@
 <h1 align="center">TickView</h1>
 
 <p align="center">
-  <b>A native charting terminal in Rust + egui.</b><br>
+  <b>A native TradingView-parity charting terminal in Rust + egui.</b><br>
   Candles, 83 indicators, 90 drawing tools, watchlist, alerts and bar replay —<br>
   with free, keyless market data. No Electron, no account, no API keys.
 </p>
@@ -30,7 +30,7 @@
 
 - **Charting**: 8 intervals (1m–1M), 8 series styles, log scale, multi-pane
   with grabbable splitters, crosshair with snap magnet, rectangle zoom.
-- **Indicators**: 83, with reference-matching names and defaults, golden-value tested math,
+- **Indicators**: 83, with TradingView-matching names and defaults, golden-value tested math,
   per-parameter editor, favourites, templates, HTF resampling and session VWAP.
 - **Drawings**: 90 verified tools — trend lines, pitchforks, Gann/Fibonacci,
   chart patterns, Elliott waves, forecasting, shapes, notes, images, emoji,
@@ -150,8 +150,9 @@ stored and no market data is redistributed. TickView is alpha software and
 nothing it displays is investment advice.
 
 TickView is an independent, clean-room reimplementation of charting-terminal
-behaviour studied from a commercial app's public UI; it is not affiliated with,
-endorsed by, or sponsored by that app's vendor.
+behaviour studied from TradingView's public UI. It is not affiliated with,
+endorsed by, or sponsored by TradingView, Inc.; "TradingView" is a trademark
+of TradingView, Inc.
 
 ## Architecture
 
@@ -162,7 +163,7 @@ endorsed by, or sponsored by that app's vendor.
 | `tickchart` | chart engine: axes, series styles, drawing catalog, panes, legend, replay |
 | `app` | shell: tabs, rail, watchlist, dialogs, persistence |
 
-Parity with the studied app is tracked in [`PARITY.md`](PARITY.md) and the
+Parity with TradingView is tracked in [`PARITY.md`](PARITY.md) and the
 generated [`docs/parity/STATUS.md`](docs/parity/STATUS.md); evidence lives in
 [`docs/evidence/`](docs/evidence/).
 

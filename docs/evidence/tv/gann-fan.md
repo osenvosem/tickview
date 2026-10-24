@@ -1,6 +1,6 @@
 # Gann fan parity evidence
 
-- Target: the reference desktop app (version 3.4.1).
+- Target: TradingView Desktop 3.4.1.
 - Ratio labels: `1/8 1/4 1/3 1/2 1/1 2/1 3/1 4/1 8/1`.
 - The `1/1` ray is the drag line between the two placed anchors.
 - Rays extend forward in the drag direction; the opposite direction is not drawn.
@@ -10,8 +10,8 @@
 - Computed prices are mapped through `PriceAxis`, including log scale.
 - Official help reference:
   <https://www.tradingview.com/support/solutions/43000518151-gann-fan-drawing-tool/>
-- Live reference screenshot: `docs/screenshots/tv/gann-fan.png` — still pending; it
-  requires a manual capture from the reference desktop app. The in-app proof
+- Live-TV screenshot: `docs/screenshots/tv/gann-fan.png` — still pending; it
+  requires a manual capture from the TradingView desktop app. The in-app proof
   for this slice is `docs/screenshots/parity/gann-fan-dark.png`
   (`TICKVIEW_SCENE=gannf TICKVIEW_THEME=dark`).
 - Regression tests:

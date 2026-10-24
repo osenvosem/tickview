@@ -2,7 +2,7 @@
 """Generate crates/app/assets/openmoji/catalog.json from an OpenMoji checkout.
 
 Filters data/openmoji.json down to the grid catalog: base emoji only (no
-skin-tone variants), CLDR groups mapped to the eight reference-style tabs
+skin-tone variants), CLDR groups mapped to the eight TradingView-style tabs
 (Smileys merges smileys-emotion + people-body). `component` swatches and the
 OpenMoji/Unicode extras groups stay out of the grid. Copies the matching color
 SVGs into crates/app/assets/openmoji/color/ keeping upstream filenames.

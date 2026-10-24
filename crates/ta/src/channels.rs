@@ -58,7 +58,7 @@ pub struct DayPivots {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PivotKind {
     Classic,
-    /// Reference "Standard" — identical to Classic.
+    /// TradingView "Standard" — identical to Classic.
     Standard,
     Camarilla,
     Woodie,
@@ -179,7 +179,7 @@ pub fn donchian(cd: &Candles, len: usize) -> Donchian {
     }
 }
 
-/// Envelope: SMA basis ± `pct` percent (reference default length 20, deviation 5%).
+/// Envelope: SMA basis ± `pct` percent (TV default length 20, deviation 5%).
 #[must_use]
 pub fn envelope(src: &[f64], len: usize, pct: f64) -> Envelope {
     let basis = sma(src, len);
@@ -356,7 +356,7 @@ pub fn historical_volatility(c: &[f64], len: usize, ann: f64) -> Series {
     out
 }
 
-/// Parkinson high-low volatility (reference default 55).
+/// Parkinson high-low volatility (TV default 55).
 #[must_use]
 #[allow(clippy::needless_range_loop)]
 pub fn parkinson(h: &[f64], l: &[f64], len: usize, ann: f64) -> Series {

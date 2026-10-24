@@ -72,7 +72,7 @@ pub struct Palette {
     pub warning: Color32,
     pub info: Color32,
     pub selection: Color32,
-    /// Rail background (the reference app uses a neutral pane color).
+    /// Rail background (TradingView uses a neutral pane color).
     pub rail_bg: Color32,
     /// Inverted fill for the selected rail tool in the grouped tool panel.
     pub rail_active: Color32,

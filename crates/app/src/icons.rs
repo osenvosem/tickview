@@ -1721,7 +1721,7 @@ impl Icon {
                 ));
             }
             Self::DragHandle => {
-                // Reference-app grip: 2x3 dot stack. `dot` centers map through
+                // TradingView grip: 2x3 dot stack. `dot` centers map through
                 // the box but the radius is raw pixels, so r 1.3 keeps the
                 // dots distinct at every size (large radii merged the columns
                 // into a solid pill in the 14 px toolbar box).
@@ -1867,7 +1867,7 @@ impl Icon {
                 line(19.4, 4.4, 17.6, 6.2);
             }
             Self::Magic => {
-                // Wand with two sparkles (the app's "Magic" performance tool).
+                // Wand with two sparkles (TV "Magic" performance tool).
                 path(&[(4.8, 19.2), (14.2, 9.8)]);
                 line(12.6, 8.2, 15.8, 11.4);
                 line(17.4, 3.6, 17.4, 6.8);
@@ -1876,7 +1876,7 @@ impl Icon {
                 line(18.6, 10.4, 21.0, 10.4);
             }
             Self::Source => {
-                // Curly braces: the app's "hide inputs in legend" toggle.
+                // Curly braces: TV's "hide inputs in legend" toggle.
                 path(&[
                     (9.0, 4.0),
                     (7.0, 4.0),
@@ -1944,10 +1944,10 @@ mod tests {
                 _ => None,
             })
             .collect();
-        assert_eq!(dots.len(), 6, "reference grip is exactly six dots");
+        assert_eq!(dots.len(), 6, "TV grip is exactly six dots");
         let xs: Vec<f32> = dots.iter().map(|p| p.x).collect();
         let ys: Vec<f32> = dots.iter().map(|p| p.y).collect();
-        // Reference grip: even ~square dot grid that stays legible - both pitch
+        // TV grip: even ~square dot grid that stays legible - both pitch
         // axes well above the 2.6 px dot diameter (no merging), and the
         // whole cluster narrower than tall.
         let gap_x = xs.iter().copied().fold(f32::NEG_INFINITY, f32::max)

@@ -5,7 +5,7 @@ const MIN: i64 = 60;
 const HOUR: i64 = 3_600;
 const DAY: i64 = 86_400;
 
-/// Ladder of tick steps (seconds), reference-app granularity.
+/// Ladder of tick steps (seconds), TradingView-like granularity.
 pub const LADDER: [i64; 19] = [
     1,
     5,

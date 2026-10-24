@@ -1,4 +1,4 @@
-//! Reference-app-style study legend actions bar and context menu.
+//! TradingView-style study legend actions bar and context menu.
 //!
 //! Hovering a study's legend (or pinning it with a click) reveals a small bar
 //! with the study's name, its inputs, an eye / gear / braces / trash / `⋯` row
@@ -31,7 +31,7 @@ pub enum MenuAction {
     ToggleVisible,
     Remove,
     OpenSettings,
-    /// The braces toggle: hide the input list from the legend.
+    /// TV's braces toggle: hide the input list from the legend.
     ToggleInputs,
 }
 
@@ -55,9 +55,9 @@ pub struct Model<'a> {
     pub locked: bool,
     /// Pane the study currently occupies; marks the matching `Move to` row.
     pub pane: Option<PaneKind>,
-    /// The bar belongs to the study the user clicked (the accent border).
+    /// The bar belongs to the study the user clicked (TV's accent border).
     pub selected: bool,
-    /// The braces toggle: the input list is part of the row.
+    /// TV's braces toggle: the input list is part of the row.
     pub show_inputs: bool,
 }
 
@@ -255,7 +255,7 @@ pub fn bar(ui: &Ui, p: &Palette, st: &mut State, m: &Model, anchor: Rect, bounds
     } else {
         anchor
     };
-    // Paint the hovered value just past the bar's right border.
+    // TV paints the hovered value just past the bar's right border.
     if let Some(v) = m.value {
         ui.painter().text(
             bar_rect.right_center() + vec2(6.0, 0.0),
@@ -797,7 +797,7 @@ mod tests {
             Vec::<MenuAction>::new(),
             "nothing was clicked"
         );
-        // Paint the hovered value just past the bar's right border.
+        // TV paints the hovered value just past the bar's right border.
         let value = out
             .shapes
             .iter()

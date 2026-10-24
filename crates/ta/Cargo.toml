@@ -1,6 +1,6 @@
 [package]
 name = "ta"
-description = "Technical-analysis primitives, indicators and reference-app-parity registry"
+description = "Technical-analysis primitives, indicators and TradingView-parity registry"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

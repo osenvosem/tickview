@@ -24,7 +24,7 @@ pub struct Layer {
     pub params: Params,
     pub visible: bool,
     pub data: Output,
-    /// The reference app's guide levels and zone fills for this study (`registry::decor`).
+    /// TV's guide levels and zone fills for this study (`registry::decor`).
     pub decor: PaneDecor,
 }
 
@@ -89,7 +89,7 @@ pub struct LegendRow {
     pub rect: Rect,
     /// Hovered, selected, or kept alive by an open bar/menu over this row.
     pub hot: bool,
-    /// Pinned by a click (the reference app's selection: accent-bordered bar).
+    /// Pinned by a click (TV's selection: the accent-bordered bar).
     pub selected: bool,
 }
 
@@ -121,8 +121,8 @@ pub struct ChartState {
     /// Screen rect of an open app overlay (tool flyout, utility menu, emoji
     /// picker); wheel/keyboard pan is ignored while the pointer is inside.
     pub hover_block: Option<Rect>,
-    /// Magnet also snaps to visible study overlay values (the reference app's
-    /// "Snap to indicators").
+    /// Magnet also snaps to visible study overlay values (TV "Snap to
+    /// indicators").
     pub magnet_snap_indicators: bool,
     /// Volume pane visibility (Hide positions and orders).
     pub volume_pane_hidden: bool,
@@ -132,7 +132,7 @@ pub struct ChartState {
     pub zoom_sel: Option<(Pos2, Pos2)>,
     /// Live multi-select marquee in screen space.
     pub marquee: Option<(Pos2, Pos2)>,
-    /// Press-drag-release drafted a multi-point tool this gesture (reference app).
+    /// Press-drag-release drafted a multi-point tool this gesture (TV).
     pub drag_drafted: bool,
     /// Toolbar-driven screen-space movement applied to the selection next frame.
     pending_toolbar_move: Vec2,
@@ -148,17 +148,17 @@ pub struct ChartState {
     drag_pane: Option<usize>,
     drag_drawing: Option<DrawingDrag>,
     /// Reshaping drag: (drawing id, anchor slot) when an endpoint handle of
-    /// the single selected drawing was pressed (reference-app anchor editing).
+    /// the single selected drawing was pressed (TV anchor editing).
     drag_anchor: Option<(u64, usize)>,
     /// Last open-path anchor click (pos, time) for double-click finish.
     last_anchor_click: Option<(egui::Pos2, f64)>,
-    /// Show the OHLC values tooltip after the pointer rests (reference-app parity).
+    /// Show the OHLC values tooltip after the pointer rests (TV parity).
     pub values_tooltip: bool,
-    /// Indicator panes and legends ignore mouse editing (reference lock indicators).
+    /// Indicator panes and legends ignore mouse editing (TV lock indicators).
     pub indicators_locked: bool,
     /// (position, time) when the pointer became still, for long-press.
     hover_still: Option<(Pos2, f64)>,
-    /// Every legend row painted this frame, in pane order. The reference app can show an
+    /// Every legend row painted this frame, in pane order. TV can show an
     /// actions bar on several rows at once (one selected + one hovered), so
     /// the app needs the whole set, not a single slot.
     pub legend_rows: Vec<LegendRow>,
@@ -168,7 +168,7 @@ pub struct ChartState {
     /// The bar covers its legend row, so without this the row would stop being
     /// hot the moment the pointer moves onto the bar and the bar would flash.
     pub legend_keep_hot: Option<TvId>,
-    /// Studies whose input list is hidden from the legend (the braces toggle).
+    /// Studies whose input list is hidden from the legend (TV's braces toggle).
     pub legend_inputs_hidden: Vec<TvId>,
     /// Right-press landed on this study's legend this frame (id, pointer).
     pub legend_menu_req: Option<(TvId, Pos2)>,
@@ -179,7 +179,7 @@ pub struct ChartState {
 #[derive(Clone, Debug)]
 struct DrawingDrag {
     /// Drawings that move together: the pressed object plus the rest of the
-    /// multi-selection (the reference app drags the whole selected group).
+    /// multi-selection (TradingView drags the whole selected group).
     ids: Vec<u64>,
     last: Anchor,
 }
@@ -286,7 +286,7 @@ impl ChartState {
         }
     }
 
-    /// Attach (or replace) the source file of an Image drawing (reference app).
+    /// Attach (or replace) the source file of an Image drawing (TV).
     pub fn set_image_path(&mut self, id: u64, path: String) {
         if let Some(d) = self.drawings.iter_mut().find(|d| d.id == id) {
             d.image_path = Some(path);
@@ -335,7 +335,7 @@ impl ChartState {
     }
 
     /// True while the user is dragging a drawing or one of its anchors.
-    /// The edit toolbar hides during a drag (reference-app behaviour) and the chart
+    /// The edit toolbar hides during a drag (TV behaviour) and the chart
     /// keeps the pointer for the move.
     #[must_use]
     pub fn drawing_drag_active(&self) -> bool {
@@ -740,7 +740,7 @@ pub fn replay_delay_ms(speed: f64) -> u64 {
 }
 
 /// Width of the hover-values tooltip box: the widest line plus 8 px side
-/// padding, never narrower than 200 px nor wider than the plot (the reference app sizes
+/// padding, never narrower than 200 px nor wider than the plot (TV sizes
 /// the box to its contents).
 #[must_use]
 pub fn values_tooltip_width(widest_line: f32, plot_width: f32) -> f32 {
@@ -1155,7 +1155,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
                 Color32::WHITE,
             );
         }
-        // Values tooltip after the pointer rests (reference long-press parity).
+        // Values tooltip after the pointer rests (TV long-press parity).
         let now = ui.input(|i| i.time);
         if st.values_tooltip
             && !st.tools.tool.is_tool()
@@ -1235,7 +1235,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
     }
 
-    // Legends (overlaid labels). The reference app shows a plain row per study and swaps it
+    // Legends (overlaid labels). TV shows a plain row per study and swaps it
     // for the app's actions bar while the row is hovered or selected. Several
     // rows can be swapped at once (one selected + one hovered), so every row
     // is reported in `legend_rows` and a row's text is skipped only while its
@@ -1285,7 +1285,7 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
         }
         for l in &pane.layers {
             let d = def(l.id);
-            // The reference app's row: title, inputs, then one value per plotted series in its
+            // TV's row: title, inputs, then one value per plotted series in its
             // own colour. A hidden study keeps its row, greyed out.
             let mut segs: Vec<(String, Color32)> = vec![(
                 d.tv_name.to_owned(),
@@ -1383,14 +1383,14 @@ pub fn ui(ui: &mut Ui, st: &mut ChartState, cd: &Candles) -> ChartEvent {
             pos.y.clamp(plot.min.y, plot.max.y),
         ));
         st.hover = st.view.index_at(pos.x);
-        // Track a resting pointer for the long-press values tooltip (reference app).
+        // Track a resting pointer for the long-press values tooltip (TV).
         let now = ui.input(|i| i.time);
         match st.hover_still {
             Some((p0, _)) if p0.distance(pos) <= 3.0 => {}
             _ => st.hover_still = Some((pos, now)),
         }
     }
-    // A press on the plot deselects the pinned legend (reference app). `legend_rows` is
+    // A press on the plot deselects the pinned legend (TV). `legend_rows` is
     // this frame's verdict, so pressing a row selects it without undoing it.
     if resp.clicked() && !st.legend_rows.iter().any(|r| r.hot) {
         st.legend_pinned = None;
@@ -1405,7 +1405,7 @@ fn plot_value(plot: &PlotData, i: usize) -> Option<f64> {
         .filter(|v| v.is_finite())
 }
 
-/// Last finite value of a series (the reference app shows it when the pointer is elsewhere).
+/// Last finite value of a series (TV shows it when the pointer is elsewhere).
 fn last_finite(plot: &PlotData) -> Option<f64> {
     plot.series
         .iter()
@@ -1477,7 +1477,7 @@ fn handle_input(
     let primary_pressed = ctx.input(|i| i.pointer.button_pressed(egui::PointerButton::Primary));
     let add_mod = ctx.input(|i| i.modifiers.command);
 
-    // Reference app: arming a pen and pressing the canvas deselects objects. Handles
+    // TV: arming a pen and pressing the canvas deselects objects. Handles
     // must never sit under an active drawing tool — grabbing one used to
     // commit a duplicate while the original stayed in place.
     if drawing_tool && primary_pressed && !st.selection.is_empty() {
@@ -1540,7 +1540,7 @@ fn handle_input(
         st.price_zoom = None;
     }
 
-    // Reference app: Backspace/Delete removes selected drawings no matter where the
+    // TV: Backspace/Delete removes selected drawings no matter where the
     // pointer sits, unless a widget (text field, picker) owns the keyboard.
     if !st.locked
         && !st.selection.is_empty()
@@ -1575,7 +1575,7 @@ fn handle_input(
                 && kind.points() >= 2
                 && let Some(anchor) = drawings::anchor_at(cd, &st.view, ax, pos, false)
             {
-                // Reference app: press-drag-release drafts multi-point tools; the
+                // TV: press-drag-release drafts multi-point tools; the
                 // pressed point is anchor one, the release is anchor two.
                 st.tools.click(anchor);
                 st.drag_drafted = true;
@@ -1628,7 +1628,7 @@ fn handle_input(
                         magnet_snap_values(st, pos).as_deref(),
                     );
                     if st.selection.multi() && st.selection.contains(id) {
-                        // Reference app: dragging any member of a multi-selection moves the group.
+                        // TV: dragging any member of a multi-selection moves the group.
                         st.selected_from_press = Some(id);
                         let ids: Vec<u64> = st.selection.ids().iter().copied().collect();
                         let any_draggable = !st.locked
@@ -1671,7 +1671,7 @@ fn handle_input(
                 );
             }
         } else if let Some((id, slot)) = st.drag_anchor {
-            // Reference app: dragging a selected drawing's anchor handle reshapes it.
+            // TV: dragging a selected drawing's anchor handle reshapes it.
             if let Some(pos) = pointer
                 && price_rect.contains(pos)
                 && let Some(anchor) = drawings::anchor_at_with_snap_values(
@@ -1865,7 +1865,7 @@ fn handle_input(
                         .as_ref()
                         .is_some_and(|draft| draft.kind.is_open_path())
                 {
-                    // egui's click counter misses synthetic input; the reference app finishes
+                    // egui's click counter misses synthetic input; TV finishes
                     // open paths on a second press at the same spot.
                     st.last_anchor_click = None;
                     if let Some(drawing) = st.tools.finish_open_path() {
@@ -1878,7 +1878,7 @@ fn handle_input(
             }
         } else if let Some(id) = hit_drawing(st, cd, ax, pos, price_rect) {
             if add_mod {
-                // Reference app: ⌘/Ctrl+click toggles objects into a multi-selection.
+                // TV: ⌘/Ctrl+click toggles objects into a multi-selection.
                 st.selection.set_multi(true);
                 st.selection.toggle(id);
             } else {
@@ -2043,7 +2043,7 @@ fn hit_drawing(
     pos: Pos2,
     price_rect: Rect,
 ) -> Option<u64> {
-    // Reference app: hidden drawings (globally, per object, or magic mode) are not
+    // TV: hidden drawings (globally, per object, or magic mode) are not
     // interactive.
     if st.drawings_hidden || st.tools.tool == crate::drawings::DrawTool::Performance {
         return None;
@@ -2218,7 +2218,7 @@ mod tests {
 
     #[test]
     fn values_tooltip_widens_for_long_ohlc_lines() {
-        // BTC-sized prices overflow the old fixed 200 px box (reference-app parity).
+        // BTC-sized prices overflow the old fixed 200 px box (TV parity).
         assert_eq!(values_tooltip_width(260.0, 800.0), 276.0);
         assert_eq!(values_tooltip_width(120.0, 800.0), 200.0);
         assert_eq!(values_tooltip_width(1_000.0, 800.0), 800.0);
@@ -2226,7 +2226,7 @@ mod tests {
 
     #[test]
     fn default_drawing_paints_tv_blue() {
-        // Unstyled drawings render the reference app's blue (#2962FF), not grey,
+        // Unstyled drawings render TradingView blue (#2962FF), not grey,
         // in both themes.
         for pal in [Palette::dark(), Palette::light()] {
             let ctx = egui::Context::default();
@@ -2792,7 +2792,7 @@ mod tests {
         assert_eq!(st.drawings.len(), 1);
         let price = st.drawings[0].a.price;
 
-        // Reference app: locking protects existing drawings; new ones still place.
+        // TV: locking protects existing drawings; new ones still place.
         st.locked = true;
         st.tools.set_tool(crate::drawings::DrawTool::HLine);
         click(&ctx, &mut st, &cd, Pos2::new(800.0, 345.0));
@@ -2883,7 +2883,7 @@ mod tests {
         let y1 = find_click_y(&ctx, &mut st, &cd, x, 1).expect("hit first HLine");
         st.selection.clear();
 
-        // Reference app: plain click selects; ⌘/Ctrl+click toggles a second object in.
+        // TV: plain click selects; ⌘/Ctrl+click toggles a second object in.
         click(&ctx, &mut st, &cd, Pos2::new(x, y1));
         click_mod(&ctx, &mut st, &cd, Pos2::new(x, y2));
         assert!(st.selection.contains(1));
@@ -3085,7 +3085,7 @@ mod tests {
             vec![egui::Event::PointerMoved(macd_rect.center())],
         );
 
-        // The reference app keeps the selected study's bar up while another row is hovered.
+        // TV keeps the selected study's bar up while another row is hovered.
         let hot: Vec<TvId> = st
             .legend_rows
             .iter()
@@ -3162,7 +3162,7 @@ mod tests {
             vec![TvId::Macd]
         );
 
-        // The reference app keeps the row of a hidden study: the eye has to stay reachable so
+        // TV keeps the row of a hidden study: the eye has to stay reachable so
         // the study can be shown again.
         st.set_visible(TvId::Macd, false);
         frame(&ctx, &mut st, &cd, vec![]);
@@ -3238,7 +3238,7 @@ mod tests {
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
         let strings: Vec<&str> = texts.iter().map(|(_, t)| t.as_str()).collect();
-        // The reference app's row: name, inputs, then one number per plotted series. No swatch
+        // TV's row: name, inputs, then one number per plotted series. No swatch
         // character — the colour lives in the text itself.
         assert_eq!(strings.first().copied(), Some("MACD"), "row: {strings:?}");
         assert!(
@@ -3565,7 +3565,7 @@ mod tests {
             Pos2::new(812.0, 300.0),
             egui::Modifiers::default(),
         );
-        // Reference app: lock protects existing objects; new brush strokes still land.
+        // TV: lock protects existing objects; new brush strokes still land.
         assert_eq!(st.drawings.len(), 1);
     }
 

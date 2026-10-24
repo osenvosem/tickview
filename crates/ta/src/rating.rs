@@ -1,4 +1,4 @@
-//! Composite ratings mirroring the reference app's "Rating" summaries (chart-less).
+//! Composite ratings mirroring TradingView's "Rating" summaries (chart-less).
 //! Deterministic documented rules; UI renders Strong Buy … Strong Sell.
 
 use crate::Candles;

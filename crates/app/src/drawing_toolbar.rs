@@ -1,7 +1,7 @@
-//! Reference-app-style object toolbar for the current drawing selection.
+//! TradingView-style object toolbar for the current drawing selection.
 //!
 //! The bar lives in the chart's top-right corner instead of following an anchor,
-//! matching the reference app's selected-object actions.
+//! matching TradingView's selected-object actions.
 
 use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, Id, Margin, Order, Rect, RichText, Sense,
@@ -55,7 +55,7 @@ pub fn interval_selection(selected: &[&str]) -> Option<Vec<String>> {
     (ordered.len() < TV_INTERVALS.len()).then_some(ordered)
 }
 
-/// The reference app's fixed color row for drawing styles.
+/// TradingView's fixed color row for drawing styles.
 pub const SWATCHES: [[u8; 4]; 8] = [
     [41, 98, 255, 255],
     [38, 166, 154, 255],
@@ -67,7 +67,7 @@ pub const SWATCHES: [[u8; 4]; 8] = [
     [120, 123, 134, 255],
 ];
 
-/// The reference app's drawing intervals for per-object visibility.
+/// TradingView's drawing intervals for per-object visibility.
 pub const TV_INTERVALS: [&str; 8] = ["1m", "5m", "15m", "1h", "4h", "D", "W", "1M"];
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -186,7 +186,7 @@ pub fn bar_rect(bounds: Rect, width: f32, bbox: Option<Rect>) -> Rect {
     let width = width.min(bounds.width() - 32.0).max(120.0);
     let x = (bounds.right() - 16.0 - width).max(bounds.left() + 16.0);
     let top = Rect::from_min_size(egui::pos2(x, bounds.top() + 16.0), vec2(width, BAR_H));
-    // The reference app keeps the bar off the object it edits: if the default top-right
+    // TV keeps the bar off the object it edits: if the default top-right
     // slot covers the selection, park the bar just below-right of it.
     if let Some(sel) = bbox
         && top.intersects(sel)
@@ -330,7 +330,7 @@ pub fn show(ui: &Ui, p: &Palette, state: &mut ToolbarState, model: &ToolbarModel
                 ui.horizontal(|ui| {
                     if let Some(delta) = drag_handle(ui, p) {
                         // The grip moves the toolbar itself, never the
-                        // drawing (reference parity).
+                        // drawing (TV parity).
                         state.offset += delta;
                     }
                     if widgets::icon_button(
@@ -639,7 +639,7 @@ fn popup_rect_and_actions(
                             let color = Color32::from_rgb(swatch[0], swatch[1], swatch[2]);
                             let (rect, resp) =
                                 ui.allocate_exact_size(vec2(15.0, 15.0), Sense::click());
-                            // An unset color renders as the reference blue; mark that swatch active.
+                            // An unset color renders as TV blue; mark that swatch active.
                             let current = common.color.map(|c| c.or(Some(DEFAULT_COLOR)));
                             let active = current == Some(Some(swatch));
                             ui.painter().rect_filled(rect, 2.0, color);

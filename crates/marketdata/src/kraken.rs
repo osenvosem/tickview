@@ -40,7 +40,7 @@ impl Kraken {
         }
     }
 
-    /// App interval -> Kraken OHLC minutes. Anything else (5m, 2h, seconds…)
+    /// TV interval -> Kraken OHLC minutes. Anything else (5m, 2h, seconds…)
     /// reports `NotSupported` so the router falls through to Yahoo/Binance.
     #[must_use]
     pub fn kraken_interval(iv: Interval) -> Option<u32> {

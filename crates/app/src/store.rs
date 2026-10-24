@@ -23,11 +23,11 @@ fn default_spacing() -> f32 {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SavedIndicator {
-    /// Reference-app study name, e.g. "Moving Average".
+    /// TradingView study name, e.g. "Moving Average".
     pub name: String,
     #[serde(default)]
     pub params: Vec<(String, SavedVal)>,
-    /// The study layer is present but its plots are hidden (eye toggle).
+    /// The study layer is present but its plots are hidden (TV eye toggle).
     #[serde(default)]
     pub hidden: bool,
 }
@@ -142,7 +142,7 @@ pub struct SavedTab {
     /// Study layers hidden via the Hide drawings menu.
     #[serde(default)]
     pub indicators_hidden: bool,
-    /// Study layers are locked against mouse editing (reference parity).
+    /// Study layers are locked against mouse editing (TV parity).
     #[serde(default)]
     pub indicators_locked: bool,
 }
@@ -180,7 +180,7 @@ pub struct SavedConfig {
     /// Strong magnet mode uses a wider OHLC snap radius.
     #[serde(default)]
     pub magnet_strong: bool,
-    /// Magnet snaps to visible indicator values too (reference parity).
+    /// Magnet snaps to visible indicator values too (TV parity).
     #[serde(default)]
     pub magnet_snap_indicators: bool,
     /// Keep the drawing tool selected after completing an object.
@@ -195,14 +195,14 @@ pub struct SavedConfig {
     /// Drawing tools starred in the grouped tool panel.
     #[serde(default)]
     pub drawing_favorites: Vec<Tool>,
-    /// Reference-app names of studies starred in the chart legend menu, in
+    /// TradingView names of studies starred in the chart legend menu, in
     /// favourite order (names, so unknown entries drop on load).
     #[serde(default)]
     pub study_favorites: Vec<String>,
-    /// Show the values tooltip after the cursor rests on a bar (reference parity).
+    /// Show the values tooltip after the cursor rests on a bar (TV parity).
     #[serde(default = "default_true")]
     pub values_tooltip_long_press: bool,
-    /// Remove-all also deletes locked drawings (reference parity toggle).
+    /// Remove-all also deletes locked drawings (TV parity toggle).
     #[serde(default)]
     pub always_remove_locked: bool,
 

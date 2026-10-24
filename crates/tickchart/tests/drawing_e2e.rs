@@ -1,11 +1,11 @@
 //! End-to-end interaction harness: drives the real `chart::ui` input path
 //! headlessly through egui with synthetic pointer/keyboard events, then
-//! asserts reference-identical behavior for every drawing tool and the
+//! asserts TradingView-identical behavior for every drawing tool and the
 //! canvas-wide interaction grammar (magnet, lock, hide, eraser, selection,
 //! marquee, zoom, keyboard).
 //!
-//! Expected values are derived from reference-documented definitions and the live
-//! desktop inspection (`research/reference-app-left-toolbar.md`,
+//! Expected values are derived from TV-documented definitions and the live
+//! desktop inspection (`research/tradingview-left-toolbar.md`,
 //! `docs/evidence/tv-left-rail-utility-menus-2026-10-21.md`), never by
 //! reusing production geometry helpers except where noted.
 
@@ -172,7 +172,7 @@ impl Harness {
         self.press(a, mods);
         let mut steps = 6.0;
         // An open path takes one bar per crossed move; keep the count under
-        // control so N clicks stay N anchors (reference semantics).
+        // control so N clicks stay N anchors (TV semantics).
         if self
             .st
             .tools
@@ -305,11 +305,11 @@ fn every_click_tool_creates_exactly_tv_anchor_count() {
         assert_eq!(
             stored_points(d),
             pts.len().max(2),
-            "{tool:?} stored {} points, the reference catalog says {}",
+            "{tool:?} stored {} points, TV catalog says {}",
             stored_points(d),
             pts.len()
         );
-        // Anchors quantize to bar timestamps like the reference app.
+        // Anchors quantize to bar timestamps like TV.
         for (k, (i, price)) in pts.iter().enumerate() {
             let anchors = {
                 let mut v = vec![d.a, d.b];
@@ -365,7 +365,7 @@ fn open_paths_finish_on_double_click() {
             last = h.pt(70 + k * 15, lo + span * (0.30 + 0.10 * k as f64));
             h.click(last);
         }
-        // Second press of the pair completes the open path (reference app).
+        // Second press of the pair completes the open path (TV).
         let ev = h.double_click(last);
         assert!(ev.drawing_completed, "{tool:?} double-click did not finish");
         assert_eq!(h.st.drawings.len(), 1);
@@ -497,7 +497,7 @@ fn hidden_globals_and_objects_are_not_interactive() {
     h.click(p2);
     assert_eq!(h.st.drawings.len(), 2, "eraser deleted while hidden-all");
 
-    // Magic cursor hides and blocks like hide-all (reference app).
+    // Magic cursor hides and blocks like hide-all (TV).
     h.st.drawings_hidden = false;
     h.st.tools.set_tool(DrawTool::Performance);
     h.click(p1);
@@ -507,7 +507,7 @@ fn hidden_globals_and_objects_are_not_interactive() {
 
 #[test]
 fn locked_canvas_selects_and_creates_but_never_moves() {
-    // Reference "Lock drawings": everything stays selectable, nothing moves; new
+    // TV "Lock drawings": everything stays selectable, nothing moves; new
     // drawings are still allowed.
     let mut h = Harness::new(DrawTool::HLine);
     let p = h.pt(120, 150.0);
@@ -560,7 +560,7 @@ fn cmd_click_multi_select_and_group_drag() {
     h.st.tools.set_tool(DrawTool::Cursor);
     h.click(p2);
     // p2 with the Cursor tool is an empty click (no line there yet): add a
-    // second line programmatically on the reference anchor prices, then multi-select.
+    // second line programmatically on the TV anchor prices, then multi-select.
     let _ = p2;
     h.st.drawings.push(Drawing::new(
         9_999,
@@ -584,7 +584,7 @@ fn cmd_click_multi_select_and_group_drag() {
     assert!(h.st.selection.contains(id1), "cmd-click dropped first id");
     assert!(h.st.selection.contains(id2), "cmd-click missed second");
 
-    // Dragging any group member moves the whole group (reference app).
+    // Dragging any group member moves the whole group (TV).
     let before1 = h.st.drawings[0].a.price;
     let before2 = h.st.drawings[1].a.price;
     let target = h.pt(120, 150.0);
@@ -605,7 +605,7 @@ fn cmd_click_multi_select_and_group_drag() {
     assert!(!h.st.selection.contains(id1));
     assert!(h.st.selection.contains(id2));
 
-    // Plain click collapses to a single selection (reference app).
+    // Plain click collapses to a single selection (TV).
     h.click(q2m);
     assert_eq!(h.st.selection.len(), 1);
     assert!(h.st.selection.contains(id2));
@@ -768,7 +768,7 @@ fn eraser_removes_topmost_only_keeps_locked_and_interval() {
         !h.st.drawings.iter().any(|d| d.id == 4),
         "visible line at 160 was kept"
     );
-    // Locked line is also unerasable (the reference keeps locked objects).
+    // Locked line is also unerasable (TV keeps locked objects).
     h.click(h.pt(100, 120.0));
     assert!(h.st.drawings.iter().any(|d| d.id == 2));
 }
@@ -948,7 +948,7 @@ fn selected_anchor_drag_moves_only_that_anchor() {
 
 #[test]
 fn press_drag_release_completes_two_point_tools() {
-    // Reference app: lines, channels, fibs and shapes are drawn by press-drag-release;
+    // TV: lines, channels, fibs and shapes are drawn by press-drag-release;
     // the release places anchor two. TickView once only accepted click-click,
     // so real trackpad drags silently produced nothing.
     for tool in [
@@ -1003,7 +1003,7 @@ fn drag_does_not_disturb_click_placement() {
 
 #[test]
 fn drag_extends_past_last_bar_into_future_space() {
-    // Reference app: drawings are not glued to the newest candle; the empty future
+    // TV: drawings are not glued to the newest candle; the empty future
     // space right of the last bar accepts anchors and renders them there.
     let mut h = Harness::new(DrawTool::TrendLine);
     let (lo, hi) = h.lo_hi();
@@ -1032,7 +1032,7 @@ fn drag_extends_past_last_bar_into_future_space() {
 
 #[test]
 fn backspace_deletes_selection_without_hover() {
-    // Reference app: the keyboard removes the selected drawing regardless of where the
+    // TV: the keyboard removes the selected drawing regardless of where the
     // pointer is; the old code required hovering the chart at keypress.
     let mut h = Harness::new(DrawTool::HLine);
     let (lo, hi) = h.lo_hi();
@@ -1050,7 +1050,7 @@ fn backspace_deletes_selection_without_hover() {
 
 #[test]
 fn drag_grabs_and_moves_selected_drawing() {
-    // Reference app: grab a drawing body and move it; the drag engages and anchors
+    // TV: grab a drawing body and move it; the drag engages and anchors
     // follow. The edit toolbar must be gone during the drag (app-side gate
     // uses drawing_drag_active()).
     let mut h = Harness::new(DrawTool::TrendLine);
@@ -1090,7 +1090,7 @@ fn drag_grabs_and_moves_selected_drawing() {
 
 #[test]
 fn vline_in_future_space_drags_both_directions() {
-    // A vertical line placed right of the last bar (future space) must
+    // A vertical line placed right of the last bar (TV future space) must
     // drag deeper into the future AND back onto the bars. move_drawing once
     // clamped both endpoints to the newest bar, so the delta was always 0.
     let mut h = Harness::new(DrawTool::VLine);
@@ -1126,7 +1126,7 @@ fn vline_in_future_space_drags_both_directions() {
 
 #[test]
 fn arming_a_pen_deselects_so_handles_cannot_duplicate() {
-    // Reference app: switching to a drawing tool drops the object selection; anchor
+    // TV: switching to a drawing tool drops the object selection; anchor
     // handles must never be grabbable under an armed pen (that path used to
     // commit a duplicate line while the original stayed put).
     let mut h = Harness::new(DrawTool::TrendLine);

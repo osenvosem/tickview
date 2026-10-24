@@ -1,5 +1,5 @@
 //! Core series primitives. NaN marks warm-up/undefined values.
-//! Semantics are Pine/reference-aligned: windows require all-finite inputs;
+//! Semantics are Pine/TradingView-aligned: windows require all-finite inputs;
 //! recursive averages carry their previous value through NaN inputs.
 
 use crate::Candles;
@@ -11,7 +11,7 @@ pub type Series = Vec<f64>;
 pub enum Seed {
     /// First observed value (Pine `ta.ema` default).
     FirstBar,
-    /// SMA of the first `len` values (RSI-style smoothing).
+    /// SMA of the first `len` values (TradingView RSI-style smoothing).
     Sma,
     /// Fixed seed value applied at the first bar.
     Value(f64),

@@ -1,6 +1,6 @@
 # Study catalog extraction — method and decisions
 
-**Captured:** the reference desktop app (version 3.4.1, Electron bundle; RE session
+**Captured:** TradingView Desktop 3.4.1 (Electron bundle; RE session
 `docs/evidence/tv-live-re-2026-10-19.md`).
 
 ## Sources (spec §7.1 precedence)
@@ -10,7 +10,7 @@
    `tv-corestudies` / `tv-prostudies`). 42 rows carry readable numeric/bool
    defaults + `wire_id`; 24 rows were resolved by name only (no `wire_id` in
    the payload projection). For those 24 the catalog assigns the provisional
-   id `STD;<TickViewKey>` (`source: "derived"`), following the app's own
+   id `STD;<TickViewKey>` (`source: "derived"`), following TV's own
    `STD;` naming for pack studies. The gap is recorded per row; none of the
    24 changes TickView behavior.
 2. **Per-study `metaInfo` fetches** — 58 files, copied verbatim to
@@ -37,7 +37,7 @@ catalog has exactly 84 rows: 66 wire + 17 new + 1 excluded.
   `STD;Rank_Correlation_Index` — spec §10.3 provides the optional
   comparison series; TickView already aligns comparison candles for the
   overlay.
-- **Volume profile / anchored VWAP:** shipped by the reference as drawing tools, not
+- **Volume profile / anchored VWAP:** shipped by TV as drawing tools, not
   studies. Verified in the drawings manifest (M2, `LineToolTradedVolumeProfile`
   family + anchored VWAP). The study-side `VWAP` (session VWAP) is audited
   here via session anchors (plan task 9). No study-level profile entry is
@@ -52,7 +52,7 @@ disagree, the bundle value is used and the conflict is recorded here:
 
 | Study | Bundle defaults (in_N) | Docs note |
 |---|---|---|
-| Aroon | len 14 | reference docs say 25 — bundle wins; open question logged |
+| Aroon | len 14 | TV docs say 25 — bundle wins; open question logged |
 | ATR | len 14, smoothing RMA | matches docs |
 | BB Width | len 20, mult 2.0, source close | matches docs |
 | Chandelier Exit | len 22, ATR len 22, mult 3.0 | matches docs |
@@ -75,7 +75,7 @@ disagree, the bundle value is used and the conflict is recorded here:
 
 ## Known uncertainties
 
-- `Correlation_Coeff` default symbol is literally `GOOG` (the reference default);
+- `Correlation_Coeff` default symbol is literally `GOOG` (TV's default);
   TickView substitutes the active comparison series instead — documented in
   the study entry notes.
 - Connors %R rank-percentile window semantics (RSI(2) percentile rank over
@@ -86,7 +86,7 @@ disagree, the bundle value is used and the conflict is recorded here:
 - `KeltnerChannels` source default was `hl2`; wire `enum_inputs.source = "close"` → default fixed to close.
 - `Envelope` deviation default was 5%; wire `inputs.percent = 10` → fixed to 10.
 - `LinReg` stddev multiplier was 1.0; wire `upper diviation = 2` → fixed to 2.0.
-- `Supertrend` and `EMA Ribbons` have no wire row; defaults follow reference docs (ATR 10 / factor 3; ribbon 8..169 Fibonacci set) — open questions.
+- `Supertrend` and `EMA Ribbons` have no wire row; defaults follow TV docs (ATR 10 / factor 3; ribbon 8..169 Fibonacci set) — open questions.
 - `Vwap` goldens deferred to session-anchor work (T9); `Pivots` needs day-aggregation evidence — both stay in-progress.
 
 ## Final catalog audit findings (T14)
@@ -103,11 +103,11 @@ disagree, the bundle value is used and the conflict is recorded here:
   Volatility Stop (20/2.0), Williams Fractals (2/2), ZigZag (deviation 5,
   depth 10), Correlation Coefficient (20), Rank Correlation Index (10).
 - The earlier Know-Sure-Thing open question is resolved: the wire row is
-  KST-shaped (not mislabeled), and the reference's KST weights its four ROC legs
+  KST-shaped (not mislabeled), and TV's KST weights its four ROC legs
   1..4 — Rust `oscs::kst` fixed accordingly and regolden.
-- SMI Ergodic: bundle values 20/5 win over docs 10/3/3 (the reference ships 20/5;
+- SMI Ergodic: bundle values 20/5 win over docs 10/3/3 (TV ships 20/5;
   docs lag). ZigZag depth 10 per bundle.
-- Correlation studies use the active comparison series in place of the
+- Correlation studies use the active comparison series in place of TV's
   literal `GOOG` default; without a comparison they render as an empty
   (all-NaN) pane rather than guessing a second symbol.
 
@@ -121,9 +121,9 @@ disagree, the bundle value is used and the conflict is recorded here:
   computed for every smoothing type, so the yellow line tracks the `Type`
   dropdown and the bands appear only for "SMA + Bollinger Bands".
 - `ParamSpec` gained `group`, `legend` and `active`. The settings dialog renders
-  the reference's titled sections (`RSI SETTINGS`, `SMOOTHING`, ...) and keeps controls the
+  TV's titled sections (`RSI SETTINGS`, `SMOOTHING`, ...) and keeps controls the
   active rules disable visible but greyed (`BB StdDev` while `Type = SMA`);
-  `legend: false` inputs stay out of the legend summary, which keeps the
+  `legend: false` inputs stay out of the legend summary, which keeps TV's
   `14 close` shape.
 - egui pitfall: mesh vertex colours are stored pre-multiplied. Passing raw rgb
   with a small alpha erased the zone washes on the light theme and burned them

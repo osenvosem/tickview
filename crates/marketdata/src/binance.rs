@@ -27,7 +27,7 @@ impl Binance {
         }
     }
 
-    /// App interval -> Binance kline interval. `1s` spot klines don't exist.
+    /// TV interval -> Binance kline interval. `1s` spot klines don't exist.
     #[must_use]
     pub fn binance_interval(iv: Interval) -> Option<&'static str> {
         let m = iv.mult;

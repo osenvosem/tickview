@@ -1,4 +1,4 @@
-//! Bar geometry: pixel↔index mapping with reference-app spacing + right offset.
+//! Bar geometry: pixel↔index mapping with TV-style spacing + right offset.
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct View {
@@ -12,7 +12,7 @@ pub struct View {
     pub count: usize,
 }
 
-/// Reference-like limits.
+/// TV-like limits.
 pub const MIN_SPACING: f32 = 0.5;
 pub const MAX_SPACING: f32 = 40.0;
 
@@ -62,7 +62,7 @@ impl View {
 
     /// Nearest bar index for a plot-area x; `None` when no data or left of
     /// the oldest bar. Indices past the last bar are allowed so drawings can
-    /// extend into future space (reference app); capped at a screen-width beyond data.
+    /// extend into future space (TV); capped at a screen-width beyond data.
     #[must_use]
     pub fn index_at(&self, x: f32) -> Option<usize> {
         if self.count == 0 {
@@ -127,7 +127,7 @@ mod tests {
         assert_eq!(v.x_of(98), 368.0);
         assert_eq!(v.index_at(376.0), Some(99));
         assert_eq!(v.index_at(367.9), Some(98));
-        // Future space (reference app): past the last bar is addressable up to a cap.
+        // Future space (TV): past the last bar is addressable up to a cap.
         assert_eq!(v.index_at(450.0), Some(108));
         assert_eq!(v.index_at(5_000.0), None);
         let (s, e) = v.visible();

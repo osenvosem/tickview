@@ -189,7 +189,7 @@ pub struct Tab {
     pub drawings_hidden: bool,
     /// Study layers hidden on this tab.
     pub indicators_hidden: bool,
-    /// Study layers are locked against mouse editing (the reference app's lock-indicators toggle).
+    /// Study layers are locked against mouse editing (TV lock indicators).
     pub indicators_locked: bool,
     pub toolbar: drawing_toolbar::ToolbarState,
     /// Legend actions bar / study menu state for this tab.
@@ -260,7 +260,7 @@ impl Tab {
             self.chart.set_visible(id, false);
         }
         // Only a seeded QA scene pins its bar: a normal launch shows no bar,
-        // because the reference app reveals one on hover or click, not on load.
+        // because TV reveals one on hover or click, not on load.
         if let Some(id) = bar_id {
             self.chart.legend_pinned.get_or_insert(id);
         }
@@ -270,7 +270,7 @@ impl Tab {
 /// The selected-object edit toolbar shows whenever a drawing is selected and
 /// drawings are visible. It survives background reloads (live polling, older
 /// history — anchors are timestamp-keyed) and hides while a drawing or
-/// anchor is being dragged, exactly like the reference app.
+/// anchor is being dragged, exactly like TradingView.
 #[must_use]
 pub fn toolbar_visible_for(hidden: bool, has_selection: bool, drag_active: bool) -> bool {
     !hidden && has_selection && !drag_active
@@ -696,7 +696,7 @@ impl Tool {
         }
     }
 
-    /// The reference app's optional keyboard shortcut for this tool, when it has one
+    /// TradingView's optional keyboard shortcut for this tool, when it has one
     /// and we implement the tool. The hint is drawn in the tool flyout.
     #[must_use]
     pub fn shortcut(self) -> Option<&'static str> {
@@ -903,7 +903,7 @@ pub struct TickView {
     pub alert_price: f64,
     pub alert_cond: usize,
     pub toast: Option<(String, Instant)>,
-    /// Studies starred from the chart legend menu (the reference app's favourites).
+    /// Studies starred from the chart legend menu (TV favourites).
     pub study_favorites: Vec<TvId>,
 
     pub theme: ThemeMode,
@@ -927,7 +927,7 @@ pub struct TickView {
     next_poll: Instant,
     next_watch: Instant,
     dirty_drawings: bool,
-    /// Image drawing awaiting a file selection after the first drag (the reference app).
+    /// Image drawing awaiting a file selection after the first drag (TV).
     image_pending: Option<u64>,
     save_at: Instant,
     stream_tx: Option<Sender<Msg>>,
@@ -1570,7 +1570,7 @@ impl TickView {
     }
 
     /// `TICKVIEW_SCENE=trend`: one representative of each trend-family kind
-    /// for geometry review against reference-app crops.
+    /// for geometry review against TV reference crops.
     fn seed_trend(&mut self, ti: usize) {
         self.tabs[ti].chart.drawings.clear();
         let total = self.tabs[ti].candles.t.len();
@@ -3227,7 +3227,7 @@ impl TickView {
         let esc = ctx.input(|i| i.key_pressed(Key::Escape));
         if esc {
             let ti = self.active;
-            // The reference app closes overlays innermost-out: study menu, then chart bar, then
+            // TV closes overlays innermost-out: study menu, then chart bar, then
             // the dialog.
             if self.tabs[ti].study_bar.menu.take().is_some() {
                 ctx.input_mut(|i| {
@@ -3266,7 +3266,7 @@ impl TickView {
             return;
         }
 
-        // Reference app: Alt+L locks/unlocks all drawings on the active chart.
+        // TV: Alt+L locks/unlocks all drawings on the active chart.
         if ctx.input(|i| i.modifiers.alt && !i.modifiers.command && i.key_pressed(Key::L)) {
             let locked = !self.tabs[self.active].locked;
             self.set_drawings_locked(locked);
@@ -3297,7 +3297,7 @@ impl TickView {
             self.select_tool(tool);
             return;
         }
-        // Reference app: Alt+A adds every favourite study to the active chart.
+        // TV: Alt+A adds every favourite study to the active chart.
         if ctx.input(|i| i.modifiers.alt && !i.modifiers.command && i.key_pressed(Key::A)) {
             let favs = self.study_favorites.clone();
             let mut added = 0usize;
@@ -3415,7 +3415,7 @@ impl TickView {
         self.persist();
     }
 
-    /// Reference app: Magnet -> Snap to indicators.
+    /// TV: Magnet -> Snap to indicators.
     pub(crate) fn toggle_magnet_snap_indicators(&mut self) {
         self.magnet_snap_indicators = !self.magnet_snap_indicators;
         self.magnet = true;
@@ -3438,7 +3438,7 @@ impl TickView {
         self.persist();
     }
 
-    /// Reference app: Hide all indicators / Show all indicators.
+    /// TV: Hide all indicators / Show all indicators.
     pub(crate) fn set_indicators_hidden(&mut self, hidden: bool) {
         let ti = self.active;
         self.tabs[ti].indicators_hidden = hidden;
@@ -3447,7 +3447,7 @@ impl TickView {
         self.persist();
     }
 
-    /// Reference app: Remove indicators… — delete every study on this tab.
+    /// TV: Remove indicators… — delete every study on this tab.
     pub(crate) fn remove_all_indicators(&mut self) {
         let ti = self.active;
         let n = self.tabs[ti].chart.remove_all_indicators();
@@ -3500,7 +3500,7 @@ impl TickView {
         }
     }
 
-    /// Reference app: Lock indicators row in the lock options menu.
+    /// TV: Lock indicators row in the lock options menu.
     pub(crate) fn set_indicators_locked(&mut self, locked: bool) {
         let tab = &mut self.tabs[self.active];
         tab.indicators_locked = locked;
@@ -3508,13 +3508,13 @@ impl TickView {
         self.persist();
     }
 
-    /// Reference app: the main lock button locks drawings and indicators together.
+    /// TV: the main lock button locks drawings and indicators together.
     pub(crate) fn set_all_locked(&mut self, locked: bool) {
         self.set_drawings_locked(locked);
         self.set_indicators_locked(locked);
     }
 
-    /// Reference app: Values tooltip on long press (cursors menu toggle).
+    /// TV: Values tooltip on long press (cursors menu toggle).
     pub(crate) fn toggle_values_tooltip(&mut self) {
         self.cfg.values_tooltip_long_press = !self.cfg.values_tooltip_long_press;
         let on = self.cfg.values_tooltip_long_press;
@@ -3524,13 +3524,13 @@ impl TickView {
         self.persist();
     }
 
-    /// Reference app: Always remove locked drawings (remove options toggle).
+    /// TV: Always remove locked drawings (remove options toggle).
     pub(crate) fn toggle_always_remove_locked(&mut self) {
         self.cfg.always_remove_locked = !self.cfg.always_remove_locked;
         self.persist();
     }
 
-    /// Live counts for the Remove options menu labels (reference app).
+    /// Live counts for the Remove options menu labels (TV).
     #[must_use]
     pub(crate) fn drawings_count(&self) -> usize {
         self.tabs[self.active].chart.drawings.len()
@@ -3648,7 +3648,7 @@ impl TickView {
                 let ev: ChartEvent = tickchart::chart_ui(ui, &mut tab.chart, &tab.candles);
                 reset_tool = ev.drawing_completed && !keep_drawing;
                 if ev.drawing_completed {
-                    // The reference app opens the file picker right after placing an image.
+                    // TV opens the file picker right after placing an image.
                     self.image_pending = tab
                         .chart
                         .drawings
@@ -3732,7 +3732,7 @@ impl TickView {
                     self.tabs[ti].toolbar.popup = drawing_toolbar::Popup::None;
                 }
                 // Study legend actions bars + study menu. `chart_ui` reported
-                // every legend row this frame; the reference app shows a bar on each row that is
+                // every legend row this frame; TV shows a bar on each row that is
                 // hovered or selected, at the same time, so draw one per row.
                 if let Some((id, at)) = self.tabs[ti].chart.legend_menu_req.take() {
                     self.tabs[ti].study_bar.menu = Some((id, Some(at)));
@@ -3756,7 +3756,7 @@ impl TickView {
                     .map(|r| (r.id, r.rect))
                     .collect();
                 let menu_id = self.tabs[ti].study_bar.menu.map(|(id, _)| id);
-                // The reference app keeps a study's bar up while its menu is open, even though
+                // TV keeps a study's bar up while its menu is open, even though
                 // the pointer has left the row by then.
                 if let Some(id) = menu_id.filter(|id| !rows.iter().any(|(r, _)| r == id)) {
                     if let Some(rect) = self.tabs[ti]
@@ -4340,7 +4340,7 @@ impl TickView {
                 .num_columns(2)
                 .spacing([16.0, 8.0])
                 .show(ui, |ui| {
-                    // The reference app groups the inputs into titled sections and greys out
+                    // TV groups the inputs into titled sections and greys out
                     // the ones the current settings make irrelevant; params
                     // without a `group` stay a flat list, as before.
                     let mut draft_params = Params::with_defaults(d);
@@ -4369,7 +4369,7 @@ impl TickView {
                         let enabled = ta::registry::control_active(d, param, &draft_params);
                         let name_color = if enabled { p.text } else { p.faint };
                         if matches!(param.kind, ParamKind::Bool { .. }) {
-                            // The reference app puts the box in front of its label and leaves the
+                            // TV puts the box in front of its label and leaves the
                             // value column empty; a disabled rule ignores clicks.
                             let mut b = ed.draft[i].b();
                             let hit = widgets::checkbox(ui, p, &mut b, param.name);
@@ -4841,7 +4841,7 @@ mod tests {
         assert!(tab_toolbar_visible(&tab), "toolbar vanished during reload");
         tab.drawings_hidden = true;
         assert!(!tab_toolbar_visible(&tab), "hidden drawings kept toolbar");
-        // The reference app hides the edit bar while an object drag is in flight.
+        // TV hides the edit bar while an object drag is in flight.
         assert!(toolbar_visible_for(false, true, false));
         assert!(
             !toolbar_visible_for(false, true, true),
@@ -4875,7 +4875,7 @@ mod tests {
     }
 
     #[test]
-    fn reference_app_alt_shortcuts_resolve_to_the_rail_tools() {
+    fn tradingview_alt_shortcuts_resolve_to_the_rail_tools() {
         assert_eq!(Tool::from_shortcut_key(egui::Key::T), Some(Tool::TrendLine));
         assert_eq!(Tool::from_shortcut_key(egui::Key::H), Some(Tool::HLine));
         assert_eq!(Tool::from_shortcut_key(egui::Key::J), Some(Tool::HRay));

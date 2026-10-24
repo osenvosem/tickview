@@ -1,8 +1,8 @@
-# TickView reference-app parity — Milestone 1 Visual Slice Implementation Plan
+# TickView TradingView Parity — Milestone 1 Visual Slice Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship the first verified parity slice: correct Gann fan geometry, pointing/grabbing cursors, reference-style top-right selected-tool bar with working multi-select and object actions, and an original one-icon-per-tool drawing-UI icon set with a proof sheet.
+**Goal:** Ship the first verified parity slice: correct Gann fan geometry, pointing/grabbing cursors, TradingView-style top-right selected-tool bar with working multi-select and object actions, and an original one-icon-per-tool drawing-UI icon set with a proof sheet.
 
 **Architecture:** Keep geometry and drawing actions in `tickchart`; keep presentation and app-state application in `tickview`. Replace the single selected id with a small `Selection` value object, add per-drawing visibility/lock fields with serde defaults, and extract the selected-tool bar into `drawing_toolbar.rs`. The catalog manifest starts as a validated seed and is expanded by later milestones.
 
@@ -65,7 +65,7 @@ Run:
 git status --short
 ```
 
-Expected: the modified/untracked product files listed in the session context, including `crates/app/src/toolpanel.rs`, `research/reference-app-left-toolbar.md`, and `docs/screenshots/phase6-toolpanel-*.png`.
+Expected: the modified/untracked product files listed in the session context, including `crates/app/src/toolpanel.rs`, `research/tradingview-left-toolbar.md`, and `docs/screenshots/phase6-toolpanel-*.png`.
 
 - [ ] **Step 3: Commit the baseline**
 
@@ -77,8 +77,8 @@ git add PARITY.md README.md \
   crates/app/src/toolpanel.rs \
   crates/tickchart/src/chart.rs crates/tickchart/src/drawings.rs \
   docs/screenshots/phase6-toolpanel-dark.png docs/screenshots/phase6-toolpanel-light.png \
-  research/reference-app-left-toolbar.md research/tv-toolbar-crop.png research/tv-toolbar-web.png
-git commit -m "feat: grouped reference-app drawing tool panel"
+  research/tradingview-left-toolbar.md research/tv-toolbar-crop.png research/tv-toolbar-web.png
+git commit -m "feat: grouped TradingView drawing tool panel"
 ```
 
 Expected: commit succeeds; `git status --short` no longer lists those files. The spec and this plan remain separately committed.
@@ -538,7 +538,7 @@ git commit -m "feat: add drawing z-order, clone, and toolbar movement"
 
 ---
 
-## Task 4: Replace Gann fan with reference ratio geometry
+## Task 4: Replace Gann fan with TradingView ratio geometry
 
 **Files:**
 - Modify: `crates/tickchart/src/drawings.rs`
@@ -663,12 +663,12 @@ Call this from `hit_drawing` when `d.kind == DrawingKind::GannFan`.
 - [ ] **Step 4: Add evidence**
 
 Create `docs/evidence/tv/gann-fan.md` containing:
-- Target: the reference desktop app 3.4.1.
+- Target: TradingView Desktop 3.4.1.
 - Ratio labels: `1/8 1/4 1/3 1/2 1/1 2/1 3/1 4/1 8/1`.
 - The 1×1 ray is the drag line; rays extend forward only.
 - Price slope formula `r × (p1 − p0) / (b1 − b0)`.
 - Log scale maps computed prices through `PriceAxis`.
-- Official help reference and live reference-app screenshot path.
+- Official help reference and live-TV screenshot path.
 - Test names from this task.
 - Known limitation: labels shift vertically to avoid overlap; geometry is unaffected.
 
@@ -678,7 +678,7 @@ Create `docs/evidence/tv/gann-fan.md` containing:
 cargo test -p tickchart gann_
 cargo test -p tickview
 git add crates/tickchart/src/drawings.rs crates/tickchart/src/chart.rs docs/evidence/tv/gann-fan.md
-git commit -m "fix: use reference ratio geometry for Gann fan"
+git commit -m "fix: use TradingView ratio geometry for Gann fan"
 ```
 
 ---
@@ -811,7 +811,7 @@ Add variants, names, and `paint` arms:
 | `LayerForward` | `layer-forward` | Two stacked bars with an up chevron. |
 | `LayerBackward` | `layer-backward` | Two stacked bars with a down chevron. |
 
-Use the existing 24-unit coordinate helpers. Do not copy the reference app's SVG paths.
+Use the existing 24-unit coordinate helpers. Do not copy TradingView SVG paths.
 
 - [ ] **Step 4: Add the proof-sheet window**
 
@@ -1504,7 +1504,7 @@ git commit -m "docs: add milestone 1 parity evidence and QA"
 
 ## Acceptance checklist
 
-- [ ] Gann fan renders nine reference ratios; 1×1 is the drag line; hit-testing includes every ray and label.
+- [ ] Gann fan renders nine TV ratios; 1×1 is the drag line; hit-testing includes every ray and label.
 - [ ] Hovering a drawing in select mode shows `PointingHand`; dragging shows `Grabbing`; drawing tools keep the crosshair.
 - [ ] The selected-tool bar is fixed in the chart’s top-right, 44 px high, content-sized, 16 px inset, and excludes chart input.
 - [ ] Style, width, color, settings, lock, delete, multi-select, z-order, clone, copy/paste, hide, and interval visibility all work.

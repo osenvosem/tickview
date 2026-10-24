@@ -226,7 +226,7 @@ jobs:
           {
             echo "**TickView ${VERSION} - alpha.**"
             echo
-            echo "Reference-app-parity charting terminal in Rust + egui. This is alpha"
+            echo "TradingView-parity charting terminal in Rust + egui. This is alpha"
             echo "software: expect rough edges, and back up any settings you care about"
             echo "(\`~/.config/tickview/config.json\`) before upgrading."
             echo

@@ -1,6 +1,6 @@
 [package]
 name = "tickview"
-description = "TickView — reference-app parity native chart app (eframe)"
+description = "TickView — TradingView-parity native chart app (eframe)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -44,8 +44,8 @@ priority = "optional"
 depends = "libc6, libx11-6, libxcb1, libxkbcommon0, libwayland-client0, libgl1, libegl1"
 recommends = "xdg-desktop-portal"
 extended-description = """\
-Reference-app parity charting terminal in Rust + egui: multi-tab charts, eight
-interval and eight series styles, 83 reference-app-named studies, the full
+TradingView-parity charting terminal in Rust + egui: multi-tab charts, eight
+interval and eight series styles, 83 TradingView-named studies, the full
 drawing catalog, watchlist, alerts and bar replay.
 
 Alpha quality. Market data comes from free, keyless public endpoints (Yahoo,

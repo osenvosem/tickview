@@ -40,15 +40,13 @@ Frankfurter and ExchangeRate-API. No market data is bundled in, or redistributed
 by, any TickView artifact; local caches live in the user's own config directory
 and are governed by each provider's terms of use.
 
-## Reference charting application
+## TradingView
 
 TickView is an independent reimplementation of charting-terminal behaviour that
-was studied from the public UI of a popular commercial charting application. Its
-own code and artwork are original; no code, binary or asset of that application
-is shipped. Study identifiers, default parameter values and iconography
-conventions were recorded from that application's public study metadata for
-interoperability, and screenshots used as parity evidence live in
-`docs/evidence/` (repository only, never in a released artifact). TickView is
-not affiliated with, endorsed by, or sponsored by the operator of that
-application; all product names and trademarks are the property of their
-respective owners.
+was studied from TradingView's public UI. Its own code and artwork are original;
+no TradingView code, binary or asset is shipped. Study identifiers, default
+parameter values and iconography conventions were recorded from TradingView's
+public study metadata for interoperability, and screenshots used as parity
+evidence live in `docs/evidence/` (repository only, never in a released
+artifact). TickView is not affiliated with, endorsed by, or sponsored by
+TradingView, Inc.; "TradingView" is a trademark of TradingView, Inc.

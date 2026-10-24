@@ -1,21 +1,21 @@
-# TickView Full Parity with a Popular Trading App — Design
+# TickView Full TradingView Parity — Design
 
 **Date:** 2026-10-20  
-**Target:** The reference desktop app 3.4.1 behavior, as observed in the local Electron bundle and live chart UI  
+**Target:** TradingView Desktop 3.4.1 behavior, as observed in the local Electron bundle and live chart UI  
 **Status:** Approved design; implementation plan pending
 
 ## 1. Summary
 
-TickView has a working chart engine, 81 rail tools, 77 drawing kinds, and 66 studies named after a popular trading app’s built-ins. The remaining gaps are not isolated bugs: the catalog is narrower than the reference app’s, many drawing tools reuse generic icons, drawing geometry is only partially equivalent to the reference app, hover/selection affordances are incomplete, and the selected-drawing toolbar does not follow the reference app’s top-right action bar.
+TickView has a working chart engine, 81 rail tools, 77 drawing kinds, and 66 TradingView-named studies. The remaining gaps are not isolated bugs: the catalog is narrower than TradingView, many drawing tools reuse generic icons, drawing geometry is only partially TV-equivalent, hover/selection affordances are incomplete, and the selected-drawing toolbar does not follow TradingView’s top-right action bar.
 
 This design introduces a verifiable parity program:
 
 1. A checked-in parity manifest as the single source of truth for every in-scope tool and study.
 2. A golden-test harness and evidence trail for formulas, geometry, defaults, and interactions.
-3. A first visual milestone that fixes Gann fan geometry, adds the pointer cursor, replaces the current style panel with the reference app’s top-right action bar, and establishes the original drawing-UI icon set.
+3. A first visual milestone that fixes Gann fan geometry, adds the pointer cursor, replaces the current style panel with TV’s top-right action bar, and establishes the original drawing-UI icon set.
 4. Catalog milestones that audit every existing drawing/study and add every missing in-scope technical tool/study.
 
-“Correct” means verified against metadata/logic extracted from the reference app, official documentation, and deterministic value or geometry comparisons. It does not mean “looks plausible.”
+“Correct” means verified against extracted TradingView metadata/logic, official documentation, and deterministic value or geometry comparisons. It does not mean “looks plausible.”
 
 ## 2. Current State
 
@@ -27,21 +27,21 @@ This design introduces a verifiable parity program:
 - The current selected-drawing toolbar is 236 px wide, follows the drawing’s last anchor, and exposes color/width/line/fill/text controls.
 - `ChartState.tools.selected` is a single `Option<u64>`.
 - Drawings are persisted in creation order; there is no per-drawing hidden flag, interval visibility, clipboard, or explicit z-order action.
-- The Gann fan currently draws seven fixed screen angles around the drag direction, which is visually and geometrically different from the reference app.
+- The Gann fan currently draws seven fixed screen angles around the drag direction, which is visually and geometrically different from TradingView.
 
 ## 3. Goals
 
-- Recreate the visual language of the reference app’s drawing UI with an **original** icon family and the same interaction affordances.
-- Make Gann fan and every other in-scope drawing tool behave like the reference app.
+- Recreate the visual language of TradingView’s drawing UI with an **original** icon family and the same interaction affordances.
+- Make Gann fan and every other in-scope drawing tool behave like TradingView.
 - Make every currently exposed indicator mathematically and visually correct, with defaults and plot behavior verified.
 - Add every missing in-scope built-in technical study and drawing tool.
 - Show a pointer cursor when hovering a drawing in select mode and a grabbing cursor while dragging.
-- Replace the anchor-following style panel with a functional top-right selected-tool bar modeled on the reference app.
+- Replace the anchor-following style panel with a functional top-right selected-tool bar modeled on TradingView.
 - Make completeness auditable: no untracked tool, no dead menu item, no icon reuse, no unverified “done” claim.
 
 ## 4. Non-Goals
 
-- Copying the reference app’s proprietary SVG/icon assets pixel-for-pixel. Icons are original vector geometry in a similar visual language.
+- Copying TradingView’s proprietary SVG/icon assets pixel-for-pixel. Icons are original vector geometry in a similar visual language.
 - Strategies, broker/account integration, Pine Script, cloud sync, social publishing, posts/ideas, images, emoji/sticker picker, or media objects.
 - Fundamentals, economic-calendar, and non-price data feeds.
 - Reworking the application chrome outside the drawing UI. The icon scope is the rail, flyouts, favorites, selected-tool bar, and drawing context menus.
@@ -49,12 +49,12 @@ This design introduces a verifiable parity program:
 
 ## 5. Terminology
 
-- **In-scope catalog:** every technical indicator and technical drawing tool built into the reference app that operates on chart price/volume/time data or derived calculations.
+- **In-scope catalog:** every built-in TradingView technical indicator and technical drawing tool that operates on chart price/volume/time data or derived calculations.
 - **Manifest:** the canonical JSON catalog and status ledger.
 - **Verified:** implementation exists, golden tests pass, evidence is linked, and visual/interaction QA is complete.
-- **Missing:** present in the in-scope reference catalog but not yet implemented in TickView.
+- **Missing:** present in the in-scope TradingView catalog but not yet implemented in TickView.
 - **Excluded:** deliberately out of scope, with a written reason; excluded entries cannot appear as menu items.
-- **Golden test:** deterministic fixture plus expected values/geometry from the reference app or an independent reference.
+- **Golden test:** deterministic fixture plus expected values/geometry from TV or an independent reference.
 
 ## 6. Parity Manifest
 
@@ -109,7 +109,7 @@ A manifest validation test fails when:
 
 - A `tv_id` or `tickview_id` is duplicated.
 - An implemented drawing/study enum variant has no manifest entry.
-- An in-scope extracted reference-catalog item has no entry.
+- An in-scope extracted TV catalog item has no entry.
 - A drawing icon id is duplicated or missing.
 - A `verified` entry has no test id or no existing evidence file.
 - An `excluded` entry has no `exclusion_reason`.
@@ -141,10 +141,10 @@ Evidence lives under `docs/evidence/tv/`:
 
 Source precedence:
 
-1. Extracted reference-app bundle logic and metadata for the exact target version.
-2. The reference app’s official documentation/help pages.
+1. Extracted TradingView bundle logic and metadata for the exact target version.
+2. Official TradingView documentation/help pages.
 3. Independent reference implementation or published formula.
-4. Empirical value comparison in the live chart of the reference app.
+4. Empirical value comparison in the live TV chart.
 
 If a source is unavailable, the evidence note records exactly what was inferred and how it was validated.
 
@@ -173,7 +173,7 @@ If a source is unavailable, the evidence note records exactly what was inferred 
 
 ### 8.1 Gann Fan
 
-The current fan is replaced by a ratio-based fan matching the reference app.
+The current fan is replaced by a ratio-based TV fan.
 
 - The two anchors define origin `(b0, p0)` and the 1×1 endpoint `(b1, p1)`.
 - The ratio set is `1/8, 1/4, 1/3, 1/2, 1/1, 2/1, 3/1, 4/1, 8/1`.
@@ -187,7 +187,7 @@ The current fan is replaced by a ratio-based fan matching the reference app.
 - Selected/draft handles remain at the two anchors.
 - Hit-testing uses all rays with a small tolerance.
 
-Exact label offsets, colors, and clipping behavior are verified against the live desktop copy of the reference app before the milestone is accepted.
+Exact label offsets, colors, and clipping behavior are verified against the live TV desktop copy before the milestone is accepted.
 
 ### 8.2 Pointer Cursor
 
@@ -236,11 +236,11 @@ Behavior:
 
 Scope: rail, flyouts, favorites, selected-tool bar, drawing settings, and drawing context menus.
 
-- 24×24 viewbox, 1.5 px primary stroke, rounded caps/joins, filled where the reference app uses a filled silhouette.
-- Original geometry with a slightly softer/rounder feel than the reference app; no copied assets.
+- 24×24 viewbox, 1.5 px primary stroke, rounded caps/joins, filled where TV uses a filled silhouette.
+- Original geometry with a slightly softer/rounder feel than TV; no copied assets.
 - One icon per drawing tool; no reuse for distinct tools. Utility actions may share a glyph only when the meaning is identical.
 - Every icon is legible at 20, 24, and 28 px in dark and light themes.
-- A proof sheet compares the reference app’s crop with the TickView glyph at all three sizes.
+- A proof sheet compares the TV reference crop with the TickView glyph at all three sizes.
 - Icon names are unique, tested, and referenced by the manifest.
 
 The proof sheet is reviewed before the full icon set is integrated.
@@ -263,7 +263,7 @@ Audit all 77 existing kinds for:
 
 ### 9.2 Missing Technical Drawings
 
-The extracted reference catalog is reconciled against TickView. Missing in-scope technical drawings are added, including data-derived tools where applicable:
+The extracted TV catalog is reconciled against TickView. Missing in-scope technical drawings are added, including data-derived tools where applicable:
 
 - Volume Profile variants (fixed range, session, visible range) with POC/VAH/VAL and histogram rendering.
 - Anchored VWAP drawing.
@@ -358,7 +358,7 @@ Deliverables:
 - Drawing-UI icon proof sheet and review gate.
 - Dark/light visual QA.
 
-Exit criteria: all visual-slice tests pass; Gann fan and toolbar match the reference app; no dead actions.
+Exit criteria: all visual-slice tests pass; Gann fan and toolbar match TV reference; no dead actions.
 
 ### Milestone 2 — Drawing Catalog
 
@@ -381,7 +381,7 @@ Deliverables:
 - Data-derived VWAP/profile studies.
 - Study manifest evidence and visual QA.
 
-Exit criteria: every in-scope study is `verified`; all defaults/plots/pane behavior match the reference app; edge-case and no-lookahead tests pass.
+Exit criteria: every in-scope study is `verified`; all defaults/plots/pane behavior match TV; edge-case and no-lookahead tests pass.
 
 ### Milestone 4 — Final Parity Pass
 
@@ -395,11 +395,11 @@ Exit criteria: every in-scope manifest entry is `verified`; zero missing/exclude
 
 ## 15. Acceptance Criteria
 
-- Every in-scope drawing tool and study of the reference app has a manifest entry and is `verified`.
+- Every in-scope TradingView drawing tool and study has a manifest entry and is `verified`.
 - Every drawing tool has a unique, legible original icon.
-- Gann fan matches the reference app’s ratio geometry across normal/log scales, zoom levels, and drag directions.
+- Gann fan matches TV ratio geometry across normal/log scales, zoom levels, and drag directions.
 - Hovering a drawing in select mode shows the pointer cursor; dragging uses the grabbing cursor.
-- The selected-tool bar is fixed top-right, matches the reference app’s structure, and every visible action is functional.
+- The selected-tool bar is fixed top-right, matches TV’s structure, and every visible action is functional.
 - No dead menu or toolbar items.
 - Existing 238 tests remain green; new tests cover all added behavior.
 - `cargo fmt --all`, `cargo test --workspace`, `cargo clippy --workspace --all-targets`, and `git diff --check` pass.
@@ -408,7 +408,7 @@ Exit criteria: every in-scope manifest entry is `verified`; zero missing/exclude
 
 | Risk | Mitigation |
 |---|---|
-| The reference app’s bundle is minified/obfuscated; some formulas are not directly extractable. | Use metadata + official docs + empirical values; record the evidence gap and validate against live output from the reference app. |
+| TV bundle is minified/obfuscated; some formulas are not directly extractable. | Use metadata + official docs + empirical values; record the evidence gap and validate against live TV output. |
 | Full built-in catalog is large and open-ended. | Manifest inventory and four milestones; exclude non-technical features explicitly. |
 | Data-derived tools require substantial new subsystems. | Isolate context/aggregation work; add data-independent items first. |
 | Icon work is subjective and slow. | Proof sheet at 20/24/28 px before integration; unique-id and coverage tests. |
@@ -419,7 +419,7 @@ Exit criteria: every in-scope manifest entry is `verified`; zero missing/exclude
 
 - `docs/parity/catalog.json` — parity manifest.
 - `docs/evidence/tv/` — extracted metadata, screenshots, formula notes, reference values.
-- `docs/superpowers/specs/2026-10-20-full-parity-design.md` — this design.
+- `docs/superpowers/specs/2026-10-20-tradingview-full-parity-design.md` — this design.
 - `crates/app/src/drawing_toolbar.rs` — top-right selected-tool bar and popovers.
 - `crates/app/src/icons.rs` — original drawing-UI icon registry and proof-sheet source data.
 - `crates/app/src/toolpanel.rs` — rail/flyout integration and icon wiring.

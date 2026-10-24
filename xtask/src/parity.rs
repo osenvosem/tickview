@@ -1,6 +1,6 @@
 //! Parity manifest validation: `docs/parity/catalog.json` → `docs/parity/STATUS.md`.
 //!
-//! The catalog is the machine-readable record of reference-app feature parity.
+//! The catalog is the machine-readable record of TradingView feature parity.
 //! `xtask parity` validates it; `xtask parity --write` also regenerates the
 //! human-readable status tables.
 
@@ -73,7 +73,7 @@ pub fn workspace_root() -> std::path::PathBuf {
         .to_path_buf()
 }
 
-/// Anchor count for a reference-app tool: a fixed count, or a variable mode name
+/// Anchor count for a TV tool: a fixed count, or a variable mode name
 /// (`freehand`, `open-path`).
 #[derive(serde::Deserialize, Clone, Debug)]
 #[serde(untagged)]
@@ -82,7 +82,7 @@ pub enum Anchors {
     Mode(#[allow(dead_code)] String),
 }
 
-/// One row of the extracted reference-app drawing catalog.
+/// One row of the extracted TradingView drawing catalog.
 #[derive(serde::Deserialize)]
 pub struct TvTool {
     pub tv_id: String,
@@ -99,11 +99,11 @@ pub struct TvTool {
     #[allow(dead_code)]
     pub interaction: String,
     pub scope: String,
-    #[allow(dead_code)] // reason lives in the manifest Entry; reference side is documentation
+    #[allow(dead_code)] // reason lives in the manifest Entry; TV side is documentation
     pub exclusion_reason: Option<String>,
 }
 
-/// The extracted reference-app drawing catalog (`docs/evidence/tv/drawings-catalog.json`).
+/// The extracted TV drawing catalog (`docs/evidence/tv/drawings-catalog.json`).
 #[derive(serde::Deserialize)]
 pub struct TvCatalog {
     #[allow(dead_code)]
@@ -113,12 +113,12 @@ pub struct TvCatalog {
     pub tools: Vec<TvTool>,
 }
 
-/// Parse the extracted reference drawing catalog JSON.
+/// Parse the extracted TV drawing catalog JSON.
 ///
 /// # Errors
 /// Returns a message when the JSON does not match the catalog shape.
 pub fn parse_tv_catalog(json: &str) -> Result<TvCatalog, String> {
-    serde_json::from_str(json).map_err(|error| format!("invalid reference catalog JSON: {error}"))
+    serde_json::from_str(json).map_err(|error| format!("invalid TV catalog JSON: {error}"))
 }
 
 /// Parse `DrawingKind` variant names from the tickchart source text.
@@ -148,7 +148,7 @@ fn parse_enum_variants(src: &str, head: &str) -> Vec<String> {
         .collect()
 }
 
-/// One row of the extracted reference-app study catalog
+/// One row of the extracted TV study catalog
 /// (`docs/evidence/tv/studies-catalog.json`).
 #[derive(serde::Deserialize)]
 pub struct TvStudy {
@@ -176,16 +176,15 @@ pub struct TvStudiesCatalog {
     pub tools: Vec<TvStudy>,
 }
 
-/// Parse the extracted reference study catalog JSON.
+/// Parse the extracted TV study catalog JSON.
 ///
 /// # Errors
 /// Returns a message when the JSON does not match the catalog shape.
 pub fn parse_tv_studies(json: &str) -> Result<TvStudiesCatalog, String> {
-    serde_json::from_str(json)
-        .map_err(|error| format!("invalid reference studies catalog JSON: {error}"))
+    serde_json::from_str(json).map_err(|error| format!("invalid TV studies catalog JSON: {error}"))
 }
 
-/// Study-side validation: implemented-id coverage, reference-catalog coverage,
+/// Study-side validation: implemented-id coverage, TV-catalog coverage,
 /// verified coverage (>=2 tests, >=1 evidence), and pane consistency against
 /// the bundle's `is_price_study`. Coverage rules are skipped while the
 /// manifest carries no study entries (pre-M3 manifests stay valid).
@@ -232,7 +231,7 @@ pub fn validate_studies(
             "in-scope" => {
                 if !manifest_tv_ids.contains(tool.tv_id.as_str()) {
                     errors.push(format!(
-                        "in-scope reference-app study {} has no manifest entry",
+                        "in-scope TV study {} has no manifest entry",
                         tool.tv_id
                     ));
                 }
@@ -241,13 +240,13 @@ pub fn validate_studies(
                 Some(entry) if entry.status == "excluded" => {}
                 Some(_) => {
                     errors.push(format!(
-                        "reference-app study {} is excluded but not excluded",
+                        "TV study {} is excluded but not excluded",
                         tool.tv_id
                     ));
                 }
                 None => {
                     errors.push(format!(
-                        "excluded reference-app study {} has no manifest entry",
+                        "excluded TV study {} has no manifest entry",
                         tool.tv_id
                     ));
                 }
@@ -259,10 +258,7 @@ pub fn validate_studies(
     let tv_catalog_ids: HashSet<&str> = tv.tools.iter().map(|tool| tool.tv_id.as_str()).collect();
     for entry in &catalog.studies {
         if !tv_catalog_ids.contains(entry.tv_id.as_str()) {
-            errors.push(format!(
-                "{}: tv_id not in reference studies catalog",
-                entry.tv_id
-            ));
+            errors.push(format!("{}: tv_id not in TV studies catalog", entry.tv_id));
         }
     }
 
@@ -286,13 +282,13 @@ pub fn validate_studies(
         };
         if is_price && entry.pane != "price" {
             errors.push(format!(
-                "{}: pane {:?} but the reference catalog marks it a price study",
+                "{}: pane {:?} but TV marks it a price study",
                 entry.tv_id, entry.pane
             ));
         }
         if !is_price && entry.pane == "price" {
             errors.push(format!(
-                "{}: pane price but the reference catalog marks it non-price",
+                "{}: pane price but TV marks it non-price",
                 entry.tv_id
             ));
         }
@@ -300,7 +296,7 @@ pub fn validate_studies(
     errors
 }
 
-/// Full validation: structural rules plus reference-catalog coverage, implemented-kind
+/// Full validation: structural rules plus TV-catalog coverage, implemented-kind
 /// coverage, and verified-drawing coverage (≥3 tests, ≥2 evidence incl. png).
 #[must_use]
 pub fn validate_full(
@@ -344,7 +340,7 @@ pub fn validate_full(
             "in-scope" => {
                 if !manifest_tv_ids.contains(tool.tv_id.as_str()) {
                     errors.push(format!(
-                        "in-scope reference-app tool {} has no manifest entry",
+                        "in-scope TV tool {} has no manifest entry",
                         tool.tv_id
                     ));
                 }
@@ -353,13 +349,13 @@ pub fn validate_full(
                 Some(entry) if entry.status == "excluded" => {}
                 Some(_) => {
                     errors.push(format!(
-                        "reference-app tool {} is excluded but not excluded",
+                        "TV tool {} is excluded but not excluded",
                         tool.tv_id
                     ));
                 }
                 None => {
                     errors.push(format!(
-                        "excluded reference-app tool {} has no manifest entry",
+                        "excluded TV tool {} has no manifest entry",
                         tool.tv_id
                     ));
                 }
@@ -371,7 +367,7 @@ pub fn validate_full(
     let tv_catalog_ids: HashSet<&str> = tv.tools.iter().map(|tool| tool.tv_id.as_str()).collect();
     for entry in &catalog.drawings {
         if !tv_catalog_ids.contains(entry.tv_id.as_str()) {
-            errors.push(format!("{}: tv_id not in reference catalog", entry.tv_id));
+            errors.push(format!("{}: tv_id not in TV catalog", entry.tv_id));
         }
     }
 
@@ -486,9 +482,9 @@ pub fn render_status(json: &str) -> Result<String, Vec<String>> {
     let studies = counts(&catalog.studies);
 
     let mut out = String::new();
-    out.push_str("# TickView ↔ reference app parity status\n\n");
+    out.push_str("# TickView ↔ TradingView parity status\n\n");
     out.push_str(&format!(
-        "Source: reference app {} (captured {}).\n\n",
+        "Source: TradingView {} (captured {}).\n\n",
         catalog.source.app_version, catalog.source.captured
     ));
     out.push_str(&format!(
@@ -519,7 +515,7 @@ fn push_table(out: &mut String, title: &str, entries: &[Entry]) {
         out.push_str("_None yet._\n\n");
         return;
     }
-    out.push_str("| Name | Reference id | TickView id | Icon | Status |\n");
+    out.push_str("| Name | TradingView id | TickView id | Icon | Status |\n");
     out.push_str("|---|---|---|---|---|\n");
     for entry in entries {
         out.push_str(&format!(
@@ -742,8 +738,8 @@ mod tests {
     #[test]
     fn tv_catalog_has_92_ids_and_one_excluded() {
         let path = workspace_root().join("docs/evidence/tv/drawings-catalog.json");
-        let json = std::fs::read_to_string(path).expect("reference drawing catalog exists");
-        let catalog = parse_tv_catalog(&json).expect("reference catalog parses");
+        let json = std::fs::read_to_string(path).expect("TV drawing catalog exists");
+        let catalog = parse_tv_catalog(&json).expect("TV catalog parses");
         // 87 LineTools + FontIcon + 4 cursor rows; milestone 5 brought
         // Post/Idea in scope, leaving Image (media) and the duplicate arrow
         // cursor excluded.
@@ -771,7 +767,7 @@ mod tests {
         ids.sort_unstable();
         let total = ids.len();
         ids.dedup();
-        assert_eq!(ids.len(), total, "duplicate tv_id in reference catalog");
+        assert_eq!(ids.len(), total, "duplicate tv_id in TV catalog");
     }
 
     fn tv_json(rows: &[String]) -> String {
@@ -825,7 +821,7 @@ mod tests {
         assert!(
             errors
                 .iter()
-                .any(|e| e.contains("in-scope reference-app tool LineToolX has no manifest entry")),
+                .any(|e| e.contains("in-scope TV tool LineToolX has no manifest entry")),
             "{errors:?}"
         );
     }
@@ -840,7 +836,7 @@ mod tests {
         assert!(
             errors
                 .iter()
-                .any(|e| e.contains("reference-app tool A is excluded but not excluded")),
+                .any(|e| e.contains("TV tool A is excluded but not excluded")),
             "{errors:?}"
         );
     }
@@ -871,7 +867,7 @@ mod tests {
         let catalog =
             std::fs::read_to_string(root.join("docs/parity/catalog.json")).expect("manifest");
         let tv = std::fs::read_to_string(root.join("docs/evidence/tv/drawings-catalog.json"))
-            .expect("reference catalog");
+            .expect("TV catalog");
         let kinds_src = std::fs::read_to_string(root.join("crates/tickchart/src/drawings.rs"))
             .expect("drawings.rs");
         let kinds = parse_kind_variants(&kinds_src);

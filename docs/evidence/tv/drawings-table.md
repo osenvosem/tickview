@@ -1,12 +1,12 @@
 # Table (`LineToolTable`)
 
-Source: the reference app (version 3.4.1, captured 2026-10-20), live inspection.
+Source: TradingView 3.4.1 (captured 2026-10-20), live inspection.
 
 ## Behavior
 
-- Two anchors define the table rect; the reference inserts a default 3x3 grid
+- Two anchors define the table rect; TV inserts a default 3x3 grid
   (`tickchart::default_grid()`).
-- Settings popover: rows/cols steppers (1..=12, the reference allows larger; clamped)
+- Settings popover: rows/cols steppers (1..=12, TV allows larger; clamped)
   and per-cell text fields; cell index = `row * cols + col`, row-major.
 - Resizing the grid keeps existing cell texts and pads empties
   (`StyleEdit::Grid` resizes `cells`).
@@ -21,13 +21,13 @@ Source: the reference app (version 3.4.1, captured 2026-10-20), live inspection.
 
 ## Interaction
 
-- Selection hits anywhere inside the table rect (the reference selects the whole table).
+- Selection hits anywhere inside the table rect (TV selects the whole table).
 
-## Open questions (validated on the live reference 2026-10-20)
+## Open questions (validated on live TV 2026-10-20)
 
-- Cell text is WYSIWYG-editable on-canvas in the reference; our edit UX is the settings
+- TV cell text is WYSIWYG-editable on-canvas; our edit UX is the settings
   popover (functionally equivalent, different affordance).
-- Header-row styling (bold first row) in the reference not modeled.
+- TV header-row styling (bold first row) not modeled.
 
 ## Verification
 

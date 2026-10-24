@@ -1,22 +1,22 @@
 # TickView Milestone 5 — Tool-panel containment, content, icons
 
-Spec: `docs/superpowers/specs/2026-10-20-reference-app-full-parity-design.md` §4/§5
-(flyout + rail), `research/reference-app-left-toolbar.md` (live reference structure).
+Spec: `docs/superpowers/specs/2026-10-20-tradingview-full-parity-design.md` §4/§5
+(flyout + rail), `research/tradingview-left-toolbar.md` (live TV structure).
 Scope driver: user review of the tool panel on 2026-10-21 (six items).
 
 Builder calls I made (no user input needed):
 - Scroll containment gates wheel/keyboard pan whenever the pointer is over an
   open overlay (flyout, utility menu, emoji picker); the rail stays live.
-- `Post`/`Idea` (bundle `LineToolTweet`/`LineToolIdea`) become local content-card
+- `Post`/`Idea` (TV `LineToolTweet`/`LineToolIdea`) become local content-card
   drawings (author/title + body); no social links exist offline.
 - The Icons group opens an emoji picker; glyphs render via a bundled outline
   emoji font (Noto Emoji, monochrome — egui/ab_glyph cannot render color-bitmap
   emoji). Placement is a one-anchor `Emoji` drawing storing the char.
 - Cursor tools `Dot`/`Arrow`/`Demonstration`/`Magic` are crosshair/pointer
-  modes (reference semantics), not drawing kinds, so the drawing manifest is unchanged
+  modes (TV semantics), not drawing kinds, so the drawing manifest is unchanged
   by them. `LineToolImage` stays excluded: no file-picker dependency added.
 
-## Task 1 — Overlay containment + reference section dividers
+## Task 1 — Overlay containment + TV section dividers
 
 Files: `crates/tickchart/src/chart.rs`, `crates/app/src/toolpanel.rs`,
 `crates/app/src/app.rs`.
@@ -27,7 +27,7 @@ Files: `crates/tickchart/src/chart.rs`, `crates/app/src/toolpanel.rs`,
       rect each frame and clears it when no overlay is open (including after a
       scrim click).
 - [x] `section_rule` draws its 1 px line edge-to-edge across the flyout
-      (extend x by `FLYOUT_PAD`), matching the reference's full-bleed dividers.
+      (extend x by `FLYOUT_PAD`), matching TV's full-bleed dividers.
 - [x] Tests: scroll delta ignored while `hover_block` contains pointer; pans
       otherwise; hover_block=None keeps current behavior.
 
@@ -37,7 +37,7 @@ Files: `crates/app/src/toolpanel.rs`, `crates/app/src/app.rs`,
 `crates/tickchart/src/drawings.rs`, `crates/app/src/icons.rs`,
 `docs/parity/catalog.json`.
 
-- [x] Forecasting group: VOLUME-BASED section before MEASURERS (reference order).
+- [x] Forecasting group: VOLUME-BASED section before MEASURERS (TV order).
 - [x] Annotation group: TEXT AND NOTES row order Text, Note, Price note, Pin,
       Table, Callout, Comment, Price label, Signpost, Flag mark; add second
       section `CONTENT` = [Post, Idea].
@@ -61,7 +61,7 @@ Files: `crates/app/src/toolpanel.rs`, `crates/app/src/app.rs`,
 - [x] Bundle `NotoEmoji-Regular.ttf` (outline emoji, OFL) into
       `crates/app/assets/fonts/`, register in `theme.rs` font fallback chain.
 - [x] 8th rail group `Icons` (default `Tool::Emoji`, new `Icon::Icons` smiley
-      glyph) — main click and arrow both open the picker (reference
+      glyph) — main click and arrow both open the picker (TV
       `openDropdownByClick`); picker is NOT a tool flyout.
 - [x] Picker panel: width 354, height min(679, content−8); category tab row
       (Smileys & People, Animals & Nature, Food & Drink, Activity, Travel &
@@ -78,7 +78,7 @@ Files: `crates/app/src/toolpanel.rs`, `crates/app/src/app.rs`,
 `crates/tickchart/src/chart.rs`, `crates/app/src/icons.rs`.
 
 - [x] CURSORS section order: Cross, Dot, Arrow, Demonstration, Magic, Eraser
-      (reference app). New `Tool::{DotCursor, ArrowCursor, Demonstration, Magic}` +
+      (TV). New `Tool::{DotCursor, ArrowCursor, Demonstration, Magic}` +
       labels + new glyphs (`cursor-dot`, `cursor-arrow`, `demonstration`
       spotlight, `magic` wand).
 - [x] Chart behavior: `ArrowCursor` = plain pointer, no crosshair lines;

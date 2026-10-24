@@ -1,7 +1,7 @@
-//! Indicator registry: reference-app ids, names, default parameters,
+//! Indicator registry: TradingView-style ids, names, default parameters,
 //! plot metadata (style/colors), and compute dispatch.
 //!
-//! Parameter defaults mirror the reference app's built-ins. Where the exact default
+//! Parameter defaults mirror TradingView built-ins. Where TV's exact default
 //! is unknowable from the outside, the chosen value is documented here and
 //! user-editable in the indicator settings dialog.
 
@@ -15,7 +15,7 @@ use crate::series;
 use crate::trends;
 use crate::vols;
 
-/// Reference-aligned colors (ARGB).
+/// TV-aligned colors (ARGB).
 pub const BLUE: u32 = 0xFF_29_62_FF;
 pub const ORANGE: u32 = 0xFF_FF_6D_00;
 pub const TEAL: u32 = 0xFF_26_A6_9A;
@@ -146,7 +146,7 @@ pub struct ParamSpec {
     pub kind: ParamKind,
     /// Section title in the settings dialog (`None` keeps the flat list).
     pub group: Option<&'static str>,
-    /// Print the value in the legend input summary. The app hides helper inputs
+    /// Print the value in the legend input summary. TV hides helper inputs
     /// (smoothing, BB multiplier, timeframe) from the legend.
     pub legend: bool,
     /// Enablement rule; a disabled control stays in the dialog, greyed out.
@@ -323,7 +323,7 @@ pub struct Def {
     pub plots: &'static [PlotSpec],
 }
 
-/// A horizontal guide line in a study's pane (`hline`).
+/// A horizontal guide line in a study's pane (TV `hline`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GuideSpec {
     pub value: f64,
@@ -334,7 +334,7 @@ pub struct GuideSpec {
     pub dash: bool,
 }
 
-/// A translucent region painted behind a study's plots (`fill`).
+/// A translucent region painted behind a study's plots (TV `fill`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum FillSpec {
     /// Flat band between two constant levels.
@@ -345,7 +345,7 @@ pub enum FillSpec {
         alpha: u8,
     },
     /// Vertical gradient between plot `plot` and the constant `near`, ramping to
-    /// `alpha` at `far` and fading to nothing at `near` (the zone gradient).
+    /// `alpha` at `far` and fading to nothing at `near` (TV's zone gradient).
     /// Columns where the series sits on the far side of `near` are skipped.
     Gradient {
         plot: usize,
@@ -382,7 +382,7 @@ pub fn control_active(def: &Def, spec: &ParamSpec, params: &Params) -> bool {
 
 /// Pane decorations for a study. Only RSI carries its captured decoration set
 /// (`docs/evidence/tv/studies/STD_RSI.json`); everything else falls back to
-/// dashed grey guides at its `hlines` values, which is how the app renders ordinary
+/// dashed grey guides at its `hlines` values, which is how TV renders ordinary
 /// oscillator levels.
 #[must_use]
 pub fn decor(id: TvId) -> PaneDecor {
@@ -408,7 +408,7 @@ pub fn decor(id: TvId) -> PaneDecor {
 /// Study inputs as legend text, in declaration order (`Params` is a
 /// `BTreeMap` and would sort alphabetically): `Int`/`Float` print integral
 /// values without decimals and others with two, `Enum` prints the variant
-/// label, `Bool` is omitted (the legend shows neither checkboxes nor names).
+/// label, `Bool` is omitted (TV's legend shows neither checkboxes nor names).
 #[must_use]
 pub fn inputs_summary(d: &Def, params: &Params) -> String {
     let mut parts: Vec<String> = Vec::new();
@@ -420,7 +420,7 @@ pub fn inputs_summary(d: &Def, params: &Params) -> String {
             continue;
         }
         // `val` falls back to the spec default, so layers created with sparse
-        // params still show the full input list.
+        // params still show TV's full input list.
         let v = params.val(d, spec.key);
         match spec.kind {
             ParamKind::Enum { variants, .. } => {
@@ -588,12 +588,12 @@ pub fn source_series(cd: &Candles, idx: usize) -> Vec<f64> {
 
 pub const GREEN: u32 = 0xFF_4C_AF_50;
 pub const YELLOW: u32 = 0xFF_FF_EE_58;
-/// RSI-based MA yellow (`#FDD835`).
+/// TV's RSI-based MA yellow (`#FDD835`).
 pub const GOLD: u32 = 0xFF_FD_D8_35;
-/// Oversold red (`#F23645`).
+/// TV's oversold red (`#F23645`).
 pub const CRIMSON: u32 = 0xFF_F2_36_45;
 
-/// Smoothing types offered by the RSI study (index 2 also draws Bollinger Bands).
+/// Smoothing types offered by TV's RSI (index 2 also draws Bollinger Bands).
 pub const RSI_MA_VARIANTS: &[&str] = &[
     "None",
     "SMA",
@@ -2254,7 +2254,7 @@ fn compute_id(
             let rsi = oscs::rsi(&src, p.i(defn, "length"));
             let kind = p.e(defn, "ma_type");
             let mlen = p.i(defn, "ma_len").max(1);
-            // The smoothing dropdown; only "SMA + Bollinger Bands" (index 2)
+            // TV's smoothing dropdown; only "SMA + Bollinger Bands" (index 2)
             // adds bands around the MA of the RSI.
             let ma = match kind {
                 0 => series::nan_like(&rsi),
@@ -3256,7 +3256,7 @@ mod legend_text_tests {
     #[test]
     fn inputs_summary_resolves_missing_keys_and_drops_bools() {
         let d = def(TvId::Rsi);
-        // A layer created without overrides still shows the full input list.
+        // A layer created without overrides still shows TV's input list.
         assert_eq!(inputs_summary(d, &Params::default()), "14 close");
         let bool_only = Def {
             id: TvId::Rsi,
@@ -3292,7 +3292,7 @@ mod legend_text_tests {
     }
 }
 
-/// The RSI study as captured in `docs/evidence/tv/studies/STD_RSI.json`: four
+/// TV's RSI as captured in `docs/evidence/tv/studies/STD_RSI.json`: four
 /// plots (line, MA of the line, Bollinger bands), the smoothing menu, and the
 /// pane decoration (guides at 70/50/30 plus the three fills).
 #[cfg(test)]

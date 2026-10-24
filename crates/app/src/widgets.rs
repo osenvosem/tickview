@@ -222,7 +222,7 @@ impl<'a> Seg<'a> {
     }
 }
 
-/// A reference-app-style interval segmented control. Returns the clicked index;
+/// A TradingView-style interval segmented control. Returns the clicked index;
 /// greyed segments never fire, and say why on hover.
 pub fn segmented(ui: &mut Ui, p: &Palette, segs: &[Seg<'_>], selected: usize) -> Option<usize> {
     let compact = ui.available_width() < 700.0;

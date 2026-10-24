@@ -1400,7 +1400,7 @@ pub struct Drawing {
     /// Per-object editing lock; global lock still overrides interaction.
     #[serde(default, skip_serializing_if = "is_false")]
     pub locked: bool,
-    /// Local file path for the Image tool (`LineToolImage`).
+    /// Local file path for the Image tool (TV LineToolImage).
     #[serde(default)]
     pub image_path: Option<String>,
 }
@@ -1411,7 +1411,7 @@ fn default_reg_dev() -> f32 {
     1.0
 }
 
-/// Default table grid, matching the reference freshly-inserted table.
+/// Default table grid, matching TV's freshly-inserted table.
 #[must_use]
 pub fn default_grid() -> [u8; 2] {
     [3, 3]
@@ -1421,7 +1421,7 @@ const fn is_false(value: &bool) -> bool {
     !*value
 }
 
-/// Initial style for a finished drawing (reference default: pitchforks unfilled).
+/// Initial style for a finished drawing (TV default: pitchforks unfilled).
 #[must_use]
 pub fn kind_defaults(kind: DrawingKind) -> DrawingStyle {
     match kind {
@@ -1577,7 +1577,7 @@ impl Drawing {
             let stroke_hit = points
                 .windows(2)
                 .any(|pair| distance_to_segment(p, pair[0], pair[1]) <= TOL);
-            // The reference app selects filled polygons anywhere inside, not just edges.
+            // TV selects filled polygons anywhere inside, not just edges.
             let interior = match self.kind {
                 DrawingKind::Sector => {
                     points.len() >= 3 && point_in_triangle(p, points[0], points[1], points[2])
@@ -1615,13 +1615,13 @@ impl Drawing {
         if self.kind == DrawingKind::Circle {
             let r = Rect::from_two_pos(a, b);
             let radius = r.width().min(r.height()) * 0.5;
-            // The reference app selects the filled disc interior too.
+            // TV selects the filled disc interior too.
             return (p.distance(r.center()) - radius).abs() <= TOL
                 || (self.style.fill && p.distance(r.center()) <= radius);
         }
         match self.kind {
             DrawingKind::Brush | DrawingKind::Highlighter => {
-                // Full stroke path a -> b -> captured vertices (the reference selects the
+                // Full stroke path a -> b -> captured vertices (TV selects the
                 // painted trail, including the initial drag segment).
                 self.screen_points(&map)
                     .windows(2)
@@ -1829,7 +1829,7 @@ impl Drawing {
                     .windows(2)
                     .any(|w| distance_to_segment(p, w[0], w[1]) <= TOL)
             }
-            // Markers select by their glyph extent (~14px around anchor).
+            // TV markers select by their glyph extent (~14px around anchor).
             DrawingKind::ArrowMarker | DrawingKind::ArrowMarkUp | DrawingKind::ArrowMarkDown => {
                 p.distance(a) <= 16.0
             }
@@ -1960,7 +1960,7 @@ pub fn pitchfork_lines(
 }
 
 /// Median plus two parallels for any pitchfork variant, clipped to `plot`.
-/// Origins per reference definitions: Schiff anchors at half the median vector,
+/// Origins per TV definitions: Schiff anchors at half the median vector,
 /// Modified Schiff at the midpoint of the first two pivots, Inside at that
 /// midpoint with the second rail pulled to the midpoint of the first and
 /// third pivots.
@@ -2034,7 +2034,7 @@ pub fn position_rr(entry: f64, target: f64, stop: f64) -> Option<f64> {
     (rr.is_finite() && rr > 0.0).then_some(rr)
 }
 
-/// Signed price and percent delta of `level` versus `entry`, reference label style.
+/// Signed price and percent delta of `level` versus `entry`, TV label style.
 #[must_use]
 pub fn position_delta(entry: f64, level: f64) -> String {
     let d = level - entry;
@@ -2829,7 +2829,7 @@ fn draw_one(
                     };
                     format!("{} → {}{pct}", fmt_price(d.a.price), fmt_price(d.b.price))
                 }
-                // Date ranges report the bar count; combined kinds both.
+                // TV date ranges report the bar count; combined kinds both.
                 DrawingKind::DateRange => match bars {
                     Some(n) => format!("{n} {suffix}"),
                     None => "Date range".to_owned(),
@@ -3072,7 +3072,7 @@ fn draw_one(
                 p.text(center, Align2::CENTER_CENTER, clipped, small.clone(), color);
             }
         }
-        // Plain text: glyph run at the anchor, no bubble.
+        // TV plain text: glyph run at the anchor, no bubble.
         DrawingKind::Text => {
             let text = if d.style.text.is_empty() {
                 "Text"
@@ -3180,7 +3180,7 @@ fn draw_one(
     }
 
     if selected || draft {
-        // The reference shows one handle per anchor the kind declares; the stored b is
+        // TV shows one handle per anchor the kind declares; the stored b is
         // a duplicate for single-point kinds.
         let mut handles = if d.kind.points() == 1 {
             vec![pa]
@@ -3390,7 +3390,7 @@ fn fib_arc_ratios() -> [f32; 6] {
 }
 
 /// Straight strokes painted by the ratio-based Gann/Fib tools. Shared by the
-/// hit arms so selection matches every visible stroke (reference behavior).
+/// hit arms so selection matches every visible stroke (TV behavior).
 #[must_use]
 pub fn gannfib_hit_segments(
     kind: DrawingKind,
@@ -3557,7 +3557,7 @@ pub fn gannfib_hit_curves(
     out
 }
 
-/// Two full sine cycles between `a` and `b`, amplitude from `c` (reference sine
+/// Two full sine cycles between `a` and `b`, amplitude from `c` (TV sine
 /// line). Shared by paint and hit.
 #[must_use]
 pub fn sine_points(a: Pos2, b: Pos2, c: Pos2) -> Vec<Pos2> {
@@ -3728,7 +3728,7 @@ fn paint_fib_speed_fan(
 }
 
 /// Gann square complex rays: origin corner to fractional points on the far
-/// edges (reference 1x1..1x8 / 2x1..8x1 family).
+/// edges (TV 1x1..1x8 / 2x1..8x1 family).
 fn paint_gann_complex(p: &Painter, rect: Rect, origin: Pos2, stroke: Stroke) {
     let far_x = if origin.x <= rect.center().x {
         rect.max.x
@@ -3901,7 +3901,7 @@ fn paint_gann_grid(p: &Painter, rect: Rect, stroke: Stroke, fill: bool, fill_col
     paint_line(p, rect.right_top(), rect.left_bottom(), stroke, None);
 }
 
-/// The reference app's default drawing color (#2962FF), used whenever a drawing
+/// TradingView's default drawing color (#2962FF), used whenever a drawing
 /// carries no explicit style color.
 pub const DEFAULT_COLOR: [u8; 4] = [41, 98, 255, 255];
 pub const GANN_FAN_RATIOS: [f32; 9] = [0.125, 0.25, 1.0 / 3.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0];
@@ -4326,7 +4326,7 @@ fn truncate_to_width(p: &egui::Painter, text: &str, font: FontId, max_w: f32) ->
 
 /// Move both anchors by a bar-index delta and a price delta.
 pub fn move_drawing(d: &mut Drawing, from: Anchor, to: Anchor, cd: &Candles) -> bool {
-    // Future-zone anchors (space right of the last bar) must map to
+    // Future-zone anchors (TV space right of the last bar) must map to
     // extrapolated indices; clamping them both to the last bar made
     // future drawings undraggable (delta always zero).
     let Some(from_i) = nearest_index_ext(cd, from.t) else {
@@ -4361,7 +4361,7 @@ fn shift_anchor(anchor: &mut Anchor, di: i64, dp: f64, cd: &Candles) -> bool {
     let i = nearest_index(cd, anchor.t).unwrap_or(0) as i64;
     let shifted = i + di;
     // Beyond the last bar, shift in time directly so drawings can live in
-    // future space instead of sticking to the newest candle.
+    // future space (TV) instead of sticking to the newest candle.
     anchor.t = if anchor.t > cd.t[last as usize] || shifted > last {
         anchor.t + di * cd.interval_ms()
     } else {
@@ -4372,7 +4372,7 @@ fn shift_anchor(anchor: &mut Anchor, di: i64, dp: f64, cd: &Candles) -> bool {
 }
 
 /// Like [`nearest_index`], but timestamps beyond the last bar map to future
-/// bar indices so drawings can extend past the newest candle (reference app).
+/// bar indices so drawings can extend past the newest candle (TV).
 #[must_use]
 pub fn nearest_index_ext(cd: &Candles, t: i64) -> Option<usize> {
     if cd.t.is_empty() {
@@ -4433,7 +4433,7 @@ fn point_in_triangle(p: Pos2, a: Pos2, b: Pos2, c: Pos2) -> bool {
 }
 
 /// True when `p` projects inside the parallelogram spanned by base `a b` and
-/// the perpendicular offset of `c` (rotated rectangle fill).
+/// the perpendicular offset of `c` (TV rotated rectangle fill).
 #[must_use]
 fn rotated_rect_contains(p: Pos2, a: Pos2, b: Pos2, c: Pos2, tol: f32) -> bool {
     let base = b - a;
@@ -4587,11 +4587,11 @@ mod tests {
         );
         let plot = Rect::from_min_max(Pos2::ZERO, Pos2::new(200.0, 50.0));
         assert!(d.hit(Pos2::new(0.0, 20.0), map, plot));
-        // Reference app: unfilled shapes select on the border only.
+        // TV: unfilled shapes select on the border only.
         let mut unfilled = d.clone();
         unfilled.style.fill = false;
         assert!(!unfilled.hit(Pos2::new(50.0, 20.0), map, plot));
-        // Reference app: filled shapes also select in the interior.
+        // TV: filled shapes also select in the interior.
         let mut filled = d.clone();
         filled.style.fill = true;
         assert!(filled.hit(Pos2::new(50.0, 20.0), map, plot));
@@ -4743,7 +4743,7 @@ mod tests {
             DrawingStyle::default().color_or(&pal),
             Color32::from_rgb(41, 98, 255)
         );
-        // Fixed blue in both themes, like the reference app.
+        // Fixed blue in both themes, like TV.
         assert_eq!(
             DrawingStyle::default().color_or(&Palette::light()),
             Color32::from_rgb(41, 98, 255)

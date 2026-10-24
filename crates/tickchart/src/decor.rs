@@ -1,4 +1,4 @@
-//! The reference app's pane decoration for studies: dashed guide levels, flat translucent
+//! TV's pane decoration for studies: dashed guide levels, flat translucent
 //! bands between two levels, and zone gradients that fade out at a threshold
 //! (RSI's green overbought / red oversold washes). Painted behind the plots.
 //!
@@ -63,7 +63,7 @@ fn tint(color: u32, alpha: u8) -> Color32 {
 }
 
 /// One gradient as vertex-coloured triangles: alpha follows the series value, so
-/// the wash is strongest at `far` and dies at `near` (the overbought/oversold
+/// the wash is strongest at `far` and dies at `near` (TV's overbought/oversold
 /// gradients). Each bar in a run contributes a quad between the threshold and
 /// its own value, clipped to the `[near, far]` window.
 #[must_use]

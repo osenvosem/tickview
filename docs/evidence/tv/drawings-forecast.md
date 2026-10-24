@@ -1,13 +1,13 @@
-# Forecasting / measurement family — reference evidence
+# Forecasting / measurement family — TV evidence
 
-Source: the reference app (version 3.4.1) left toolbar (captured 2026-10-20) + reference docs
+Source: TradingView 3.4.1 left toolbar (captured 2026-10-20) + TV docs
 (<https://www.tradingview.com/support/solutions/43000502049-long-position/>
 and siblings). Golden harness:
 `crates/tickchart/tests/drawing_goldens.rs` (`run_forecast_family`).
 
-## Anchors (reference catalog = TickView, all confirmed)
+## Anchors (TV catalog = TickView, all confirmed)
 
-| Kind | Reference id | Anchors | Reference interaction |
+| Kind | TV id | Anchors | TV interaction |
 |---|---|---|---|
 | LongPosition | `LineToolRiskRewardLong` | 3 | entry, target, stop |
 | ShortPosition | `LineToolRiskRewardShort` | 3 | entry, target, stop |
@@ -18,10 +18,10 @@ and siblings). Golden harness:
 | DatePriceRange | `LineToolDateAndPriceRange` | 2 | two-point |
 
 The earlier manifest note flagged `LineToolProjection` anchor uncertainty;
-resolved here: the reference records **3** anchors (drag defines the left edge, the
+resolved here: TV records **3** anchors (drag defines the left edge, the
 third corner sets the wedge opening) and TickView matches.
 
-## Reference behavior pinned
+## TV behavior pinned
 
 - Risk/forecast boxes select **anywhere inside** the profit/loss band, from
   the entry time to the right edge (`p.x >= entry.x`, price within
@@ -30,10 +30,10 @@ third corner sets the wedge opening) and TickView matches.
 - `Sector` selects **inside the filled wedge** (`point_in_triangle`) in
   addition to its edges — previously edges-only.
 - Range kinds select anywhere inside the rectangle (unchanged).
-- Labels follow reference conventions: PriceRange `p1 → p2 (+x.xx%)`, DateRange
+- Labels follow TV conventions: PriceRange `p1 → p2 (+x.xx%)`, DateRange
   `N bars`, DatePriceRange `p · N bars`. Date ranges previously painted a
   static "Date range" chip with no measurement.
-- R/R chip `R/R 1 : r` and Δ price/% chips unchanged (already reference-shaped).
+- R/R chip `R/R 1 : r` and Δ price/% chips unchanged (already TV-shaped).
 - `measure_summary` (shared with InfoLine): signed delta, percent, bar count —
   hand-checked `+10.00 (+10.00%) · 60 bars`.
 
