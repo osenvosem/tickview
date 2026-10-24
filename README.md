@@ -50,7 +50,7 @@
       <br><sub><b>Symbol search</b> — <code>⌘K</code>: category chips, exchange labels, curated offline index.</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/parity/phase6-toolpanel-dark.png" alt="Grouped drawing tool rail with open flyout and favourite stars" width="100%">
+      <img src="docs/screenshots/phase6-toolpanel-dark.png" alt="Grouped drawing tool rail with open flyout and favourite stars" width="100%">
       <br><sub><b>Grouped tool rail</b> — one button per family, flyout selectors, global favourites.</sub>
     </td>
   </tr>
