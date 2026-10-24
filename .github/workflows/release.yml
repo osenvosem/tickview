@@ -246,8 +246,10 @@ jobs:
             echo "| \`tickview-${VERSION}-linux-amd64.deb\` / \`.rpm\` / \`.tar.gz\` | Linux x86_64 |"
             echo "| \`tickview-${VERSION}-linux-arm64.deb\` / \`.rpm\` / \`.tar.gz\` | Linux ARM64 |"
             echo
-            echo "macOS builds are ad-hoc signed, not notarized: right-click -> Open past"
-            echo "Gatekeeper on first launch."
+            echo "macOS builds are ad-hoc signed, not notarized. On first launch, allow the"
+            echo "app in System Settings -> Privacy & Security -> Open Anyway, or run:"
+            echo
+            echo '    xattr -d com.apple.quarantine /Applications/TickView.app'
             if [ -n "$prev" ]; then
               echo
               echo "### Changes since ${prev}"

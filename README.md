@@ -130,8 +130,24 @@ Grab a prebuilt installer from [GitHub Releases](https://github.com/osenvosem/ti
 | Windows 10/11 (x86_64 / ARM64) | `.zip` |
 | Linux (amd64 / arm64) | `.deb`, `.rpm`, `.tar.gz` |
 
-macOS builds are ad-hoc signed (no Developer ID), so first launch needs
-right-click → Open. Releases are prerelease until 1.0.
+### macOS first launch
+
+Releases are ad-hoc signed — no Apple Developer ID notarization (yet) — so
+Gatekeeper blocks the first launch with *"Apple could not verify TickView is
+free of malware"*. Mount the `.dmg`, drag the app to Applications, then do
+one of these once:
+
+1. **System Settings → Privacy & Security** → near the bottom, under
+   *Security*, you will see *"TickView" was blocked* → **Open Anyway** →
+   **Open**. (On macOS 14 and older, right-click the app → Open works
+   instead.)
+2. Or clear the quarantine flag from Terminal:
+
+   ```sh
+   xattr -d com.apple.quarantine /Applications/TickView.app
+   ```
+
+Either way it is a one-time step; every launch after that is normal.
 
 ### Build from source
 
