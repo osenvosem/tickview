@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>A native charting terminal in Rust + egui.</b><br>
-  Candles, 83 studies, 90 drawing tools, watchlist, alerts and bar replay —<br>
+  Candles, 83 indicators, 90 drawing tools, watchlist, alerts and bar replay —<br>
   with free, keyless market data. No Electron, no account, no API keys.
 </p>
 
@@ -30,7 +30,7 @@
 
 - **Charting**: 8 intervals (1m–1M), 8 series styles, log scale, multi-pane
   with grabbable splitters, crosshair with snap magnet, rectangle zoom.
-- **Studies**: 83 reference-named indicators with golden-value tested math,
+- **Indicators**: 83, with reference-matching names and defaults, golden-value tested math,
   per-parameter editor, favourites, templates, HTF resampling and session VWAP.
 - **Drawings**: 90 verified tools — trend lines, pitchforks, Gann/Fibonacci,
   chart patterns, Elliott waves, forecasting, shapes, notes, images, emoji,
@@ -60,8 +60,8 @@
       <br><sub><b>Gann &amp; Fibonacci</b> — ratio-accurate fans and level sets, verified on linear and log axes.</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/parity/studybar-dark.png" alt="Study legend rows turned into action bars with eye, gear and menu buttons" width="100%">
-      <br><sub><b>Study legend actions</b> — hover a legend row: swatch, inputs, eye, gear, menu (alert, reorder, move, remove).</sub>
+      <img src="docs/screenshots/parity/studybar-dark.png" alt="Indicator legend rows turned into action bars with eye, gear and menu buttons" width="100%">
+      <br><sub><b>Indicator legend actions</b> — hover a legend row: swatch, inputs, eye, gear, menu (alert, reorder, move, remove).</sub>
     </td>
   </tr>
   <tr>
@@ -70,8 +70,8 @@
       <br><sub><b>Indicator browser</b> — favourites, templates, keyword search; <code>⌥A</code> adds all favourites.</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/parity/rsi-editor-dark.png" alt="Study input editor dialog with parameter fields" width="100%">
-      <br><sub><b>Parameter editor</b> — every study input editable, live-applied and persisted.</sub>
+      <img src="docs/screenshots/parity/rsi-editor-dark.png" alt="Indicator input editor dialog with parameter fields" width="100%">
+      <br><sub><b>Parameter editor</b> — every indicator input editable, live-applied and persisted.</sub>
     </td>
   </tr>
   <tr>
@@ -115,9 +115,9 @@
 | `⌘,` | settings |
 | `⌥T` `⌥H` `⌥J` `⌥V` `⌥C` `⌥F` | trendline, horizontal line/ray, vertical line, crossline, fib retracement |
 | `⇧⌥R` | rectangle |
-| `⌥A` | add all favourite studies |
+| `⌥A` | add all favourite indicators |
 | `⌥L` | lock/unlock drawings |
-| `Esc` | close dialogs, unpin study legend rows |
+| `Esc` | close dialogs, unpin indicator legend rows |
 | `Space`, `←` `→` | replay play/pause, step |
 
 ## Install
@@ -157,7 +157,7 @@ endorsed by, or sponsored by that app's vendor.
 
 | Crate | Role |
 | --- | --- |
-| `ta` | indicator engine: 83 studies, golden-value tests, HTF/comparison context |
+| `ta` | indicator engine: 83 indicators, golden-value tests, HTF/comparison context |
 | `marketdata` | providers, router + circuit breaker, search, SQLite cache, Binance websocket, alerts |
 | `tickchart` | chart engine: axes, series styles, drawing catalog, panes, legend, replay |
 | `app` | shell: tabs, rail, watchlist, dialogs, persistence |
