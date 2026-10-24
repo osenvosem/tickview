@@ -1,7 +1,9 @@
 # Third-party notices
 
-TickView's own source code is MIT licensed (see `LICENSE`). The binary
-distributes third-party artwork and fonts under their own licenses:
+TickView's own source code is dual-licensed under the MIT license (see
+`LICENSE-MIT`) or the Apache License 2.0 (see `LICENSE-APACHE`), at your
+option. The binary distributes third-party artwork and fonts under their own
+licenses:
 
 ## Fonts
 

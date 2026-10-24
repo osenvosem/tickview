@@ -35,7 +35,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/tickview"
 sed -e "s/@VERSION@/$VERSION/g" "$PACK/macos/Info.plist.in" >"$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
-cp "$ROOT/LICENSE" "$ROOT/THIRD_PARTY_NOTICES.md" "$APP/Contents/Resources/"
+cp "$ROOT/LICENSE-MIT" "$ROOT/LICENSE-APACHE" "$ROOT/THIRD_PARTY_NOTICES.md" "$APP/Contents/Resources/"
 
 ICONSET="$STAGE/AppIcon.iconset"
 mkdir -p "$ICONSET"

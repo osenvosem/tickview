@@ -27,6 +27,6 @@
         <key>NSHighResolutionCapable</key>
         <true/>
         <key>NSHumanReadableCopyright</key>
-        <string>Copyright (c) 2026 osenvosem - MIT licensed. Alpha software.</string>
+        <string>Copyright (c) 2026 osenvosem - MIT or Apache-2.0 licensed. Alpha software.</string>
 </dict>
 </plist>

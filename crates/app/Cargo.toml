@@ -4,7 +4,7 @@ description = "TickView — reference-app parity native chart app (eframe)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "(MIT OR Apache-2.0) AND OFL-1.1 AND CC-BY-SA-4.0"
 homepage = "https://github.com/osenvosem/tickview"
 repository = "https://github.com/osenvosem/tickview"
 
@@ -37,9 +37,10 @@ maintainer = "osenvosem <osenvosem@users.noreply.github.com>"
 copyright = "2026 osenvosem"
 section = "utils"
 priority = "optional"
-# cargo-deb takes the control `License` field from `package.license` (MIT for
-# the code) and has no `license`/`license-files` metadata keys of its own, so
-# the OFL font and CC BY-SA OpenMoji texts are installed as assets below.
+# cargo-deb takes the control `License` field from `package.license` (the code
+# is dual MIT/Apache-2.0, bundled fonts and glyphs add OFL-1.1 and CC BY-SA
+# 4.0) and has no `license`/`license-files` metadata keys of its own, so the
+# license texts are installed as assets below.
 depends = "libc6, libx11-6, libxcb1, libxkbcommon0, libwayland-client0, libgl1, libegl1"
 recommends = "xdg-desktop-portal"
 extended-description = """\
@@ -55,20 +56,22 @@ assets = [
     ["pack/tickview.desktop", "usr/share/applications/tickview.desktop", "644"],
     ["pack/tickview-mark.svg", "usr/share/icons/hicolor/scalable/apps/tickview.svg", "644"],
     ["pack/tickview-mark.png", "usr/share/icons/hicolor/1024x1024/apps/tickview.png", "644"],
-    ["../../LICENSE", "usr/share/doc/tickview/LICENSE", "644"],
+    ["../../LICENSE-MIT", "usr/share/doc/tickview/LICENSE-MIT", "644"],
+    ["../../LICENSE-APACHE", "usr/share/doc/tickview/LICENSE-APACHE", "644"],
     ["../../THIRD_PARTY_NOTICES.md", "usr/share/doc/tickview/THIRD_PARTY_NOTICES.md", "644"],
     ["assets/openmoji/LICENSE.txt", "usr/share/doc/tickview/copyright-openmoji.txt", "644"],
 ]
 
 [package.metadata.generate-rpm]
 auto-req = "no"
-license = "MIT AND OFL-1.1 AND CC-BY-SA-4.0"
+license = "(MIT OR Apache-2.0) AND OFL-1.1 AND CC-BY-SA-4.0"
 assets = [
     { source = "target/release/tickview", dest = "/usr/bin/tickview", mode = "755" },
     { source = "pack/tickview.desktop", dest = "/usr/share/applications/tickview.desktop", mode = "644" },
     { source = "pack/tickview-mark.svg", dest = "/usr/share/icons/hicolor/scalable/apps/tickview.svg", mode = "644" },
     { source = "pack/tickview-mark.png", dest = "/usr/share/icons/hicolor/1024x1024/apps/tickview.png", mode = "644" },
-    { source = "../../THIRD_PARTY_NOTICES.md", dest = "/usr/share/doc/tickview/THIRD_PARTY_NOTICES.md", mode = "644" },
+    { source = "../../LICENSE-MIT", dest = "/usr/share/doc/tickview/LICENSE-MIT", mode = "644" },
+    { source = "../../LICENSE-APACHE", dest = "/usr/share/doc/tickview/LICENSE-APACHE", mode = "644" },
 ]
 
 [package.metadata.generate-rpm.requires]

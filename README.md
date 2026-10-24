@@ -13,7 +13,7 @@
 <p align="center">
   <img alt="100% Rust" src="https://img.shields.io/badge/100%25-Rust-b7410e?style=flat-square&logo=rust">
   <img alt="macOS · Windows · Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-2f7bf5?style=flat-square">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-3a3a3a?style=flat-square">
+  <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-3a3a3a?style=flat-square">
   <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-d69e2e?style=flat-square">
   <a href="https://github.com/osenvosem/tickview/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/osenvosem/tickview/actions/workflows/ci.yml/badge.svg?style=flat-square"></a>
 </p>
@@ -168,6 +168,8 @@ generated [`docs/parity/STATUS.md`](docs/parity/STATUS.md); evidence lives in
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Bundled artwork and fonts (Inter, IBM Plex
-Mono, Noto Emoji, OpenMoji) are covered by OFL-1.1 / CC BY-SA 4.0; full
-provenance in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+MIT or Apache-2.0, at your option — see
+[`LICENSE-MIT`](LICENSE-MIT) / [`LICENSE-APACHE`](LICENSE-APACHE). Bundled
+artwork and fonts (Inter, IBM Plex Mono, Noto Emoji, OpenMoji) are covered by
+OFL-1.1 / CC BY-SA 4.0; full provenance in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

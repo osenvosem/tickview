@@ -135,7 +135,7 @@ jobs:
         run: |
           mkdir -p dist "$STAGE"
           cp "target/${{ matrix.target }}/release/tickview" "$STAGE/"
-          cp LICENSE README.md THIRD_PARTY_NOTICES.md "$STAGE/"
+          cp LICENSE-MIT LICENSE-APACHE README.md THIRD_PARTY_NOTICES.md "$STAGE/"
           tar czf "dist/${STAGE}.tar.gz" "$STAGE"
 
       - name: Package .deb (Linux)
@@ -183,7 +183,7 @@ jobs:
           $Stage = "tickview-$Version-windows-$Arch"
           New-Item -ItemType Directory -Force -Path dist, $Stage | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/tickview.exe" $Stage
-          Copy-Item LICENSE, README.md, THIRD_PARTY_NOTICES.md $Stage
+          Copy-Item LICENSE-MIT, LICENSE-APACHE, README.md, THIRD_PARTY_NOTICES.md $Stage
           Compress-Archive -Path $Stage -DestinationPath "dist/$Stage.zip"
 
       - uses: actions/upload-artifact@v7
